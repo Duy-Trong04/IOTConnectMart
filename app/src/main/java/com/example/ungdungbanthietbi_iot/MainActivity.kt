@@ -19,8 +19,9 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             UngDungBanThietBi_IOTTheme {
-                CartScreen()
+                //CartScreen()
                 //FavoritesScreen()
+                CheckoutScreen()
             }
         }
     }
