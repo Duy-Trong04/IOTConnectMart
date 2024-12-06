@@ -6,7 +6,7 @@ data class ProductState(
     val id: Int,
     val name: String,
     val price: Double,
-    var quantity: MutableState<Int>,
+    var quantity: Int,
     val imageUrl: String,
-    var isSelected: MutableState<Boolean>
+    var isSelected: Boolean
 )

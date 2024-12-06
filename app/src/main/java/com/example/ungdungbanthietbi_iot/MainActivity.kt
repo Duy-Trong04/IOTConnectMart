@@ -20,6 +20,7 @@ class MainActivity : ComponentActivity() {
         setContent {
             UngDungBanThietBi_IOTTheme {
                 CartScreen()
+                //FavoritesScreen()
             }
         }
     }
