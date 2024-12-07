@@ -21,7 +21,8 @@ class MainActivity : ComponentActivity() {
             UngDungBanThietBi_IOTTheme {
                 //CartScreen()
                 //FavoritesScreen()
-                CheckoutScreen()
+                //CheckoutScreen()
+                SearchScreen()
             }
         }
     }
