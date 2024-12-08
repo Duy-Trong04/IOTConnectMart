@@ -22,7 +22,8 @@ class MainActivity : ComponentActivity() {
                 //CartScreen()
                 //FavoritesScreen()
                 //CheckoutScreen()
-                SearchScreen()
+                //SearchScreen()
+                SearchResultsScreen()
             }
         }
     }
