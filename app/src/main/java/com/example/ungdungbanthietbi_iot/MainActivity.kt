@@ -23,7 +23,8 @@ class MainActivity : ComponentActivity() {
                 //FavoritesScreen()
                 //CheckoutScreen()
                 //SearchScreen()
-                SearchResultsScreen()
+                //SearchResultsScreen()
+                AddressSelectionScreen()
             }
         }
     }

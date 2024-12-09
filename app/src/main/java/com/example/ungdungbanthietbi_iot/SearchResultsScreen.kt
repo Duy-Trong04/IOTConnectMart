@@ -57,9 +57,18 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.ungdungbanthietbi_iot.ui.theme.UngDungBanThietBi_IOTTheme
 
+
+//Nguoi Viet: Duy Trọng
+//Ngay Viet: 08/12
+//Input:
+//Output:
+//Thuat toan xu ly: Hiển thị màn hình tìm kiếm sản phẩm với thanh tìm kiếm, các tab lọc (Liên quan, Mới nhất, Bán chạy, Giá),
+// và danh sách sản phẩm dạng lưới.
+//-------------------------
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
 fun SearchResultsScreen() {
+
     // Danh sách các sản phẩm (giả lập)
     var products by remember {
         mutableStateOf(listOf(
@@ -74,7 +83,11 @@ fun SearchResultsScreen() {
             ProductState(9, "Product 9", 15000.0, 1, "placeholder", false)
         ))
     }
+
+    // Scaffold cung cấp bố cục cơ bản với TopAppBar
     Scaffold(
+
+        // Thanh tiêu đề
         topBar = {
             TopAppBar(
                 title = {
@@ -85,10 +98,11 @@ fun SearchResultsScreen() {
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        // Search input field
+
+                        // Ô nhập để tìm kiếm sản phẩm
                         OutlinedTextField(
-                            value = "",
-                            onValueChange = {},
+                            value = "",// Giá trị trong ô nhập
+                            onValueChange = {},// Hàm xử lý khi thay đổi văn bản
                             modifier = Modifier
                                 .weight(1f)
                                 .height(50.dp),
@@ -98,7 +112,7 @@ fun SearchResultsScreen() {
                                 focusedTextColor = Color.Black,
                                 unfocusedTextColor = Color.Black
                             ),
-                            placeholder = { Text(text = "Produc 1")},
+                            placeholder = { Text(text = "Produc 1")},// Gợi ý trong ô nhập
                             textStyle = TextStyle(
                                 fontSize = 16.sp,
                                 textAlign = TextAlign.Start
@@ -106,7 +120,8 @@ fun SearchResultsScreen() {
                             shape = RoundedCornerShape(20.dp),
                             singleLine = true
                         )
-                        // Search icon
+
+                        // Nút biểu tượng lọc sản phẩm
                         IconButton(onClick = {/* Perform search */}) {
                             Icon(imageVector = Icons.Filled.FilterAlt, contentDescription = "",
                                 tint = Color.White
@@ -114,21 +129,24 @@ fun SearchResultsScreen() {
                         }
                     }
                 },
+
+                // Nút quay lại
                 navigationIcon = { Icon(imageVector = Icons.Default.ArrowBack, contentDescription = "") },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = Color(0xFF5D9EFF),
-                    titleContentColor = Color.White,
-                    navigationIconContentColor = Color.White
+                    containerColor = Color(0xFF5D9EFF),// Màu nền
+                    titleContentColor = Color.White,// Màu chữ
+                    navigationIconContentColor = Color.White// Màu biểu tượng
                 )
             )
         }
     ) { padding ->
-        var selectedTabIndex by remember { mutableStateOf(0) }
+        var selectedTabIndex by remember { mutableStateOf(0) }// Lưu trạng thái tab được chọn
 
         Column(modifier = Modifier
             .fillMaxSize()
             .padding(padding)) {
-            // Tab row
+
+            // Hàng tab cho các loại lọc sản phẩm
             TabRow(
                 selectedTabIndex = selectedTabIndex,
                 modifier = Modifier.fillMaxWidth()
@@ -154,20 +172,22 @@ fun SearchResultsScreen() {
                     onClick = { selectedTabIndex = 3 }
                 )
             }
-            // Tab content
+
+            // Nội dung theo từng tab
             when (selectedTabIndex) {
                 0 -> {
+                    // Hiển thị danh sách sản phẩm
                     LazyVerticalGrid(
-                        columns = GridCells.Fixed(2),
-                        contentPadding = PaddingValues(horizontal = 16.dp)
+                        columns = GridCells.Fixed(2),// Hiển thị 2 cột
+                        contentPadding = PaddingValues(horizontal = 16.dp)// Padding hai bên
                     ) {
-                        items(products.chunked(2)) { productPair ->
+                        items(products.chunked(2)) { productPair ->// Chia nhóm 2 sản phẩm
                             Column(
                                 verticalArrangement = Arrangement.spacedBy(8.dp),
                                 modifier = Modifier.padding(vertical = 8.dp)
                             ) {
                                 productPair.forEach { product ->
-                                    ProductCard(productState = product)
+                                    ProductCard(productState = product) // Hiển thị mỗi sản phẩm
                                 }
                             }
                         }
@@ -229,6 +249,12 @@ fun SearchResultsScreen() {
     }
 }
 
+//Nguoi Viet: Duy Trọng
+//Ngay Viet: 08/12
+//Input:
+//Output:
+//Thuat toan xu ly: Hiển thị chi tiết sản phẩm gồm: ảnh, tên, và giá trong một thẻ giao diện.
+//-------------------------
 @Composable
 fun ProductCard(productState: ProductState) {
     Card(
@@ -241,6 +267,8 @@ fun ProductCard(productState: ProductState) {
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
+
+            // Hình ảnh sản phẩm
             Image(
                 painter = painterResource(id = android.R.drawable.ic_menu_gallery),
                 contentDescription = "Product Image",
