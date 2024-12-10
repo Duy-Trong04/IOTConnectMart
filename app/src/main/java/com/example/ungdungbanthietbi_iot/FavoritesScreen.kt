@@ -107,7 +107,7 @@ fun FavoritesScreen() {
                 modifier = Modifier
                     .fillMaxWidth()
                     .background(Color.White)
-                    .padding(4.dp)
+                    .padding(10.dp)
             ) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
