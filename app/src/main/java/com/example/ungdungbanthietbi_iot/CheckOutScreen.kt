@@ -21,8 +21,10 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material.icons.filled.LocationOn
+import androidx.compose.material3.BottomAppBar
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Checkbox
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -105,105 +107,112 @@ fun CheckoutScreen() {
             )
         },
         bottomBar = {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(8.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                Text(
-                    "Tổng thanh toán: ${"%,.0f".format(totalAmount)}đ",
-                    style = TextStyle(fontWeight = FontWeight.Bold, fontSize = 16.sp)
-                )
-                Button(
-                    onClick = { /* Xử lý thanh toán */ },
-                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF5D9EFF)),
-                    shape = RoundedCornerShape(5.dp)
+            BottomAppBar (
+                containerColor = Color.Transparent,
+                modifier = Modifier.fillMaxWidth().height(180.dp)
+            ){
+                // Thanh hiển thị tổng giá và nút mua hàng
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(8.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
                 ) {
-                    Text("Đặt hàng", color = Color.White)
+                    Text(
+                        "Tổng thanh toán: ${"%,.0f".format(totalAmount)}đ",
+                        style = TextStyle(fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                    )
+                    Button(
+                        onClick = { /* Xử lý thanh toán */ },
+                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF5D9EFF)),
+                        shape = RoundedCornerShape(5.dp),
+                        elevation = ButtonDefaults.buttonElevation(5.dp),
+                    ) {
+                        Text("Đặt hàng", color = Color.White)
+                    }
                 }
             }
         }
-    ) { padding ->
-        Column(
-            modifier = Modifier
-                .padding(padding)
-                .fillMaxSize()
-        ) {
-            // Địa chỉ giao hàng
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .background(Color(0xFFF8F8F8))
-                    .padding(16.dp)
-            ) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    modifier = Modifier.fillMaxWidth()
+    ) {
+        LazyColumn (
+            modifier = Modifier.padding(it)
+        ){
+            item {
+                // Địa chỉ giao hàng
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(Color(0xFFF8F8F8))
+                        .padding(16.dp)
                 ) {
-                    Column(modifier = Modifier.weight(1f)) {
-                        Row (
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.Start,
-                            verticalAlignment = Alignment.CenterVertically
-                        ){
-                            Icon(imageVector = Icons.Filled.LocationOn,
-                                contentDescription = "",
-                                tint = Color.Red
-                            )
-                            Text("Trương Duy Trọng", fontWeight = FontWeight.Bold, fontSize = 16.sp)
-                        }
-                        Spacer(modifier = Modifier.height(4.dp))
-                        Text(address, color = Color.Gray)
-                    }
-                    IconButton(
-                        onClick = {}
-                    ) {
-                        Icon(imageVector = Icons.Filled.ChevronRight,
-                            contentDescription = ""
-                        )
-                    }
-                }
-            }
-
-            Spacer(modifier = Modifier.height(8.dp))
-
-            // Danh sách sản phẩm
-            LazyColumn(modifier = Modifier.weight(1f)) {
-                items(products) { product ->
-                    CheckoutItem(
-                        product = product
-                    )
-                }
-            }
-
-            Spacer(modifier = Modifier.height(5.dp))
-
-            // Phương thức thanh toán
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(5.dp)
-            ) {
-                Text("Phương thức thanh toán", fontWeight = FontWeight.Bold, fontSize = 16.sp)
-                Spacer(modifier = Modifier.height(0.dp))
-
-                val paymentMethods = listOf("Thanh toán khi nhận hàng (COD)", "Momo")
-                paymentMethods.forEach { method ->
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clickable { selectedPaymentMethod = method }
-                            .padding(vertical = 4.dp)
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        modifier = Modifier.fillMaxWidth()
                     ) {
-                        RadioButton(
-                            selected = selectedPaymentMethod == method,
-                            onClick = { selectedPaymentMethod = method }
-                        )
-                        Text(text = method, modifier = Modifier.padding(start = 4.dp))
+                        Column(modifier = Modifier.weight(1f)) {
+                            Row (
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.Start,
+                                verticalAlignment = Alignment.CenterVertically
+                            ){
+                                Icon(imageVector = Icons.Filled.LocationOn,
+                                    contentDescription = "",
+                                    tint = Color.Red
+                                )
+                                Text("Trương Duy Trọng", fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                            }
+                            Spacer(modifier = Modifier.height(4.dp))
+                            Text(address, color = Color.Gray)
+                        }
+                        IconButton(
+                            onClick = {}
+                        ) {
+                            Icon(imageVector = Icons.Filled.ChevronRight,
+                                contentDescription = ""
+                            )
+                        }
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(8.dp))
+            }
+
+            // Danh sách sản phẩm
+            items(products) { product ->
+                CheckoutItem(
+                    product = product
+                )
+            }
+
+            item {
+                Spacer(modifier = Modifier.height(5.dp))
+
+                // Phương thức thanh toán
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(5.dp)
+                ) {
+                    Text("Phương thức thanh toán", fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                    Spacer(modifier = Modifier.height(0.dp))
+
+                    val paymentMethods = listOf("Thanh toán khi nhận hàng (COD)", "Momo")
+                    paymentMethods.forEach { method ->
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable { selectedPaymentMethod = method }
+                                .padding(vertical = 4.dp)
+                        ) {
+                            RadioButton(
+                                selected = selectedPaymentMethod == method,
+                                onClick = { selectedPaymentMethod = method }
+                            )
+                            Text(text = method, modifier = Modifier.padding(start = 4.dp))
+                        }
                     }
                 }
             }

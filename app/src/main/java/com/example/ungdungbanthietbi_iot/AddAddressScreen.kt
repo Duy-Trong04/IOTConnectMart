@@ -1,6 +1,7 @@
 package com.example.ungdungbanthietbi_iot
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -12,6 +13,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material3.BottomAppBar
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Divider
@@ -35,6 +37,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
@@ -87,53 +90,57 @@ fun AddAddressScreen(){
         },
         // Thanh điều hướng hoặc nút hành động ở dưới cùng (bottomBar)
         bottomBar = {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .background(Color.White)
-                    .padding(10.dp)
-            ) {
-                // Nút Switch: Đặt làm địa chỉ mặc định
-                Row(
+            BottomAppBar (
+                containerColor = Color.Transparent,
+                modifier = Modifier.fillMaxWidth().height(180.dp)
+            ){
+                Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(8.dp),
-                    verticalAlignment = Alignment.CenterVertically
+                        .background(Color.White)
+                        .padding(10.dp)
                 ) {
-                    Text(
-                        text = "Đặt làm địa chỉ mặc định",
-                        modifier = Modifier.weight(1f),
-                        fontSize = 16.sp
-                    )
-                    Switch(
-                        checked = isDefaultAddress,
-                        onCheckedChange = { isDefaultAddress = it },
-                        colors = SwitchDefaults.colors(
-                            checkedThumbColor = Color(0xFF00C3FF),// Màu khi bật
-                            uncheckedThumbColor = Color.Gray, // Màu khi tắt
-                            checkedTrackColor = Color(0xFF5D9EFF)// Màu đường chạy khi bật
+                    // Nút Switch: Đặt làm địa chỉ mặc định
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(8.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = "Đặt làm địa chỉ mặc định",
+                            modifier = Modifier.weight(1f),
+                            fontSize = 16.sp
+                        )
+                        Switch(
+                            checked = isDefaultAddress,
+                            onCheckedChange = { isDefaultAddress = it },
+                            colors = SwitchDefaults.colors(
+                                checkedThumbColor = Color(0xFF00C3FF),// Màu khi bật
+                                uncheckedThumbColor = Color.Gray, // Màu khi tắt
+                                checkedTrackColor = Color(0xFF5D9EFF)// Màu đường chạy khi bật
+                            ),
+                            modifier = Modifier.scale(0.8f)// Thu nhỏ kích thước Switch
+                        )
+                    }
+                    Divider()
+                    Spacer(modifier = Modifier.height(8.dp))
+                    // Nút thêm địa chỉ
+                    Button(
+                        modifier = Modifier.fillMaxWidth(),
+                        onClick = { /* Thêm logic thêm địa chỉ */ },
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = Color(0xFF5D9EFF)
                         ),
-                        modifier = Modifier.scale(0.8f)// Thu nhỏ kích thước Switch
-                    )
-                }
-                Divider()
-                Spacer(modifier = Modifier.height(8.dp))
-                // Nút thêm địa chỉ
-                Button(
-                    modifier = Modifier.fillMaxWidth(),
-                    onClick = { /* Thêm logic thêm địa chỉ */ },
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = Color(0xFF5D9EFF)
-                    ),
-                    shape = RoundedCornerShape(10.dp),// Bo góc nút
-                    elevation = ButtonDefaults.buttonElevation(4.dp)// Tạo độ nổi
-                ) {
-                    Text("THÊM ĐỊA CHỈ", fontSize = 18.sp)
+                        shape = RoundedCornerShape(5.dp),// Bo góc nút
+                        elevation = ButtonDefaults.buttonElevation(5.dp)// Tạo độ nổi
+                    ) {
+                        Text("THÊM ĐỊA CHỈ", fontSize = 18.sp)
+                    }
                 }
             }
         }
-
-    ){
+    ) {
         // Nội dung chính (LazyColumn) hiển thị danh sách các trường nhập liệu
         LazyColumn (
             modifier = Modifier.fillMaxWidth().padding(it).background(Color.White)

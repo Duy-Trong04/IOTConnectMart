@@ -25,7 +25,8 @@ class MainActivity : ComponentActivity() {
                 //SearchScreen()
                 //SearchResultsScreen()
                 //AddressSelectionScreen()
-                AddAddressScreen()
+                //AddAddressScreen()
+                OrderDetailsScreen()
             }
         }
     }

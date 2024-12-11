@@ -21,8 +21,10 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.ungdungbanthietbi_iot.ui.theme.UngDungBanThietBi_IOTTheme
 
 //Nguoi Viet: Duy Trọng
 //Ngay Viet: 05/12
@@ -102,44 +104,51 @@ fun CartScreen() {
             )
         },
         bottomBar = {
-            // Thanh hiển thị tổng giá và nút mua hàng
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .background(Color.White)
-                    .padding(10.dp)
-            ) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceBetween
+            BottomAppBar (
+                containerColor = Color.Transparent,
+                modifier = Modifier.fillMaxWidth().height(180.dp)
+            ){
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(10.dp)
                 ) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        // Checkbox chọn tất cả
-                        Checkbox(
-                            checked = isAllSelected,
-                            onCheckedChange = { selected ->
-                                products = products.map { it.copy(isSelected = selected) }.toMutableList()
-                            }
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            // Checkbox chọn tất cả
+                            Checkbox(
+                                checked = isAllSelected,
+                                onCheckedChange = { selected ->
+                                    products = products.map { it.copy(isSelected = selected) }.toMutableList()
+                                }
+                            )
+                            Text("Tất cả")
+                        }
+                        // Hiển thị tổng giá thanh toán
+                        Text(
+                            "Tổng thanh toán: ${totalPrice} VNĐ",
+                            style = TextStyle(color = Color.Black, fontSize = 16.sp)
                         )
-                        Text("Tất cả", modifier = Modifier.padding(top = 13.dp))
                     }
-                    // Hiển thị tổng giá thanh toán
-                    Text(
-                        "Tổng thanh toán: ${totalPrice} VNĐ",
-                        style = TextStyle(color = Color.Black, fontSize = 16.sp)
-                    )
-                }
-                Spacer(modifier = Modifier.height(8.dp))
-                // Nút mua hàng
-                Button(
-                    modifier = Modifier.fillMaxWidth(),
-                    onClick = { /* Checkout logic */ },
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = Color(0xFF5D9EFF)
-                    )
-                ) {
-                    Text("MUA HÀNG ($totalSelected)")
+                    Spacer(modifier = Modifier.height(8.dp))
+                    // Nút mua hàng
+                    Button(
+                        modifier = Modifier.fillMaxWidth(),
+                        onClick = { /* Checkout logic */ },
+                        shape = RoundedCornerShape(5.dp),
+                        elevation = ButtonDefaults.buttonElevation(5.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = Color(0xFF5D9EFF)
+                        )
+                    ) {
+                        Text("MUA HÀNG ($totalSelected)")
+                    }
                 }
             }
         }
@@ -249,5 +258,13 @@ fun CartItem(
                 contentDescription = "Remove Item"
             )
         }
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun CartScreenPreview1() {
+    UngDungBanThietBi_IOTTheme {
+        CartScreen()
     }
 }
