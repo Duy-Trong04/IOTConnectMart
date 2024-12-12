@@ -44,6 +44,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.navigation.NavController
 
 
 //Nguoi Viet: Duy Trọng
@@ -56,7 +57,7 @@ import androidx.compose.ui.unit.sp
 //-------------------------
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun AddAddressScreen(){
+fun AddAddressScreen(navController: NavController){
     // Biến trạng thái lưu thông tin nhập vào
     var fullName by remember { mutableStateOf("") }// Tên đầy đủ
     var phoneNumber by remember { mutableStateOf("") }// Số điện thoại
@@ -79,7 +80,9 @@ fun AddAddressScreen(){
                 ),
                 navigationIcon = {
                     // Nút quay lại
-                    IconButton(onClick = { /* Back action */ }) {
+                    IconButton(onClick = {
+                        navController.popBackStack()
+                    }) {
                         Icon(
                             imageVector = Icons.Filled.ArrowBack,
                             contentDescription = "Back"
@@ -92,7 +95,7 @@ fun AddAddressScreen(){
         bottomBar = {
             BottomAppBar (
                 containerColor = Color.Transparent,
-                modifier = Modifier.fillMaxWidth().height(180.dp)
+                modifier = Modifier.fillMaxWidth().height(175.dp)
             ){
                 Column(
                     modifier = Modifier
@@ -123,8 +126,6 @@ fun AddAddressScreen(){
                             modifier = Modifier.scale(0.8f)// Thu nhỏ kích thước Switch
                         )
                     }
-                    Divider()
-                    Spacer(modifier = Modifier.height(8.dp))
                     // Nút thêm địa chỉ
                     Button(
                         modifier = Modifier.fillMaxWidth(),
@@ -237,8 +238,8 @@ fun AddAddressScreen(){
     }
 }
 
-@Preview(showBackground = true)
-@Composable
-fun AddressPreview() {
-    AddAddressScreen()
-}
+//@Preview(showBackground = true)
+//@Composable
+//fun AddressPreview() {
+//    AddAddressScreen()
+//}

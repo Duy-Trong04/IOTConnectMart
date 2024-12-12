@@ -105,7 +105,7 @@ fun FavoritesScreen() {
         bottomBar = {
             BottomAppBar (
                 containerColor = Color.Transparent,
-                modifier = Modifier.fillMaxWidth().height(180.dp)
+                modifier = Modifier.fillMaxWidth().height(165.dp)
             ){
                 // Thanh hiển thị tổng giá và nút mua hàng
                 Column(
@@ -124,7 +124,11 @@ fun FavoritesScreen() {
                             checked = isAllSelected,
                             onCheckedChange = { selected ->
                                 products = products.map { it.copy(isSelected = selected) }
-                            }
+                            },
+                            colors = CheckboxDefaults.colors(
+                                checkedColor = Color(0xFF5D9EFF),
+                                uncheckedColor = Color.Gray
+                            )
                         )
                         Text("Tất cả", modifier = Modifier.padding(top = 0.dp))
                     }
@@ -199,7 +203,11 @@ fun FavoritesItem(
         // Checkbox chọn sản phẩm
         Checkbox(
             checked = product.isSelected,
-            onCheckedChange = onSelectChange
+            onCheckedChange = onSelectChange,
+            colors = CheckboxDefaults.colors(
+                checkedColor = Color(0xFF5D9EFF),
+                uncheckedColor = Color.Gray
+            )
         )
         // Hình ảnh sản phẩm (chỉ là giả)
         Image(

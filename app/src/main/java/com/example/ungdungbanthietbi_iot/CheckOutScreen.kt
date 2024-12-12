@@ -50,6 +50,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.navigation.NavController
 
 
 //Nguoi Viet: Duy Trọng
@@ -62,7 +63,7 @@ import androidx.compose.ui.unit.sp
 //-------------------------
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun CheckoutScreen() {
+fun CheckoutScreen(navController:NavController) {
     // Danh sách sản phẩm (fake)
     val products = remember {
         mutableStateListOf(
@@ -109,7 +110,7 @@ fun CheckoutScreen() {
         bottomBar = {
             BottomAppBar (
                 containerColor = Color.Transparent,
-                modifier = Modifier.fillMaxWidth().height(180.dp)
+                modifier = Modifier.fillMaxWidth()
             ){
                 // Thanh hiển thị tổng giá và nút mua hàng
                 Row(
@@ -124,12 +125,12 @@ fun CheckoutScreen() {
                         style = TextStyle(fontWeight = FontWeight.Bold, fontSize = 16.sp)
                     )
                     Button(
-                        onClick = { /* Xử lý thanh toán */ },
+                        onClick = {navController.navigate(Screen.Order_Detail.route)},
                         colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF5D9EFF)),
                         shape = RoundedCornerShape(5.dp),
                         elevation = ButtonDefaults.buttonElevation(5.dp),
                     ) {
-                        Text("Đặt hàng", color = Color.White)
+                        Text("Đặt hàng", color = Color.White, fontSize = 18.sp)
                     }
                 }
             }
@@ -145,6 +146,9 @@ fun CheckoutScreen() {
                         .fillMaxWidth()
                         .background(Color(0xFFF8F8F8))
                         .padding(16.dp)
+                        .clickable{
+                            navController.navigate(Screen.Address_Selection.route)
+                        }
                 ) {
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
@@ -167,7 +171,9 @@ fun CheckoutScreen() {
                             Text(address, color = Color.Gray)
                         }
                         IconButton(
-                            onClick = {}
+                            onClick = {
+                                navController.navigate(Screen.Address_Selection.route)
+                            }
                         ) {
                             Icon(imageVector = Icons.Filled.ChevronRight,
                                 contentDescription = ""
@@ -196,7 +202,6 @@ fun CheckoutScreen() {
                         .padding(5.dp)
                 ) {
                     Text("Phương thức thanh toán", fontWeight = FontWeight.Bold, fontSize = 16.sp)
-                    Spacer(modifier = Modifier.height(0.dp))
 
                     val paymentMethods = listOf("Thanh toán khi nhận hàng (COD)", "Momo")
                     paymentMethods.forEach { method ->

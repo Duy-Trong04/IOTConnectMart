@@ -38,6 +38,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.navigation.NavController
 
 
 //Nguoi Viet: Duy Trọng
@@ -48,7 +49,7 @@ import androidx.compose.ui.unit.sp
 //-------------------------
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun AddressSelectionScreen(){
+fun AddressSelectionScreen(navController: NavController){
     // Danh sách địa chỉ mẫu
     var addressList by remember {
         mutableStateOf(
@@ -74,7 +75,9 @@ fun AddressSelectionScreen(){
                     navigationIconContentColor = Color.White
                 ),
                 navigationIcon = {
-                    IconButton(onClick = { /* TODO: Back action */ }) {
+                    IconButton(onClick = {
+                        navController.popBackStack()
+                    }) {
                         Icon(Icons.Default.ArrowBack, contentDescription = null)
                     }
                 }
@@ -107,7 +110,9 @@ fun AddressSelectionScreen(){
                         modifier = Modifier.fillMaxWidth(),
                         contentAlignment = Alignment.Center
                     ) {
-                        TextButton(onClick = { /* TODO: Add new address logic */ }) {
+                        TextButton(onClick = {
+                            navController.navigate(Screen.Add_Address.route)
+                        }) {
                             Icon(
                                 Icons.Default.AddCircleOutline,
                                 contentDescription = null,
@@ -196,8 +201,8 @@ data class Address(
     val isDefault: Boolean// Xác định địa chỉ mặc định
 )
 
-@Preview(showBackground = true)
-@Composable
-fun AddressSelectionPreview() {
-    AddressSelectionScreen()
-}
+//@Preview(showBackground = true)
+//@Composable
+//fun AddressSelectionPreview() {
+//    AddressSelectionScreen()
+//}

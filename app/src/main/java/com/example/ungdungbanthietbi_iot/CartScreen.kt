@@ -106,7 +106,7 @@ fun CartScreen() {
         bottomBar = {
             BottomAppBar (
                 containerColor = Color.Transparent,
-                modifier = Modifier.fillMaxWidth().height(180.dp)
+                modifier = Modifier.fillMaxWidth().height(165.dp)
             ){
                 Column(
                     modifier = Modifier
@@ -126,7 +126,11 @@ fun CartScreen() {
                                 checked = isAllSelected,
                                 onCheckedChange = { selected ->
                                     products = products.map { it.copy(isSelected = selected) }.toMutableList()
-                                }
+                                },
+                                colors = CheckboxDefaults.colors(
+                                    checkedColor = Color(0xFF5D9EFF),
+                                    uncheckedColor = Color.Gray
+                                )
                             )
                             Text("Tất cả")
                         }
@@ -208,7 +212,11 @@ fun CartItem(
             checked = product.isSelected,
             onCheckedChange = { selected ->
                 onSelectChange(selected)
-            }
+            },
+            colors = CheckboxDefaults.colors(
+                checkedColor = Color(0xFF5D9EFF),
+                uncheckedColor = Color.Gray
+            )
         )
         // Hình ảnh sản phẩm (chỉ là giả)
         Image(

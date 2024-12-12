@@ -45,12 +45,13 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.navigation.NavController
 import com.example.ungdungbanthietbi_iot.ui.theme.UngDungBanThietBi_IOTTheme
 
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun OrderDetailsScreen() {
+fun OrderDetailsScreen(navController: NavController) {
     data class ReceiverInfo(val name: String, val phone: String, val address: String)
 
     val orderCode = "123456789"
@@ -83,7 +84,9 @@ fun OrderDetailsScreen() {
                 ),
                 navigationIcon = {
                     // Nút quay lại
-                    IconButton(onClick = { /* Back action */ }) {
+                    IconButton(onClick = {
+                        navController.popBackStack()
+                    }) {
                         Icon(
                             imageVector = Icons.Filled.ArrowBack,
                             contentDescription = "Back"
@@ -97,184 +100,179 @@ fun OrderDetailsScreen() {
                 containerColor = Color.Transparent,
                 modifier = Modifier.fillMaxWidth()
             ){
-                Row(
+                Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(10.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
+                        .padding(10.dp)
                 ) {
-                    // Nút "Hủy đơn hàng"
-                    Button(
-                        onClick = { /* Xử lý hủy đơn hàng */ },
-                        modifier = Modifier
-                            .weight(0.8f)
-                            .padding(end = 4.dp),
-                        shape = RoundedCornerShape(5.dp),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = Color(0xFF5D9EFF)
-                        ),
-                        elevation = ButtonDefaults.buttonElevation(5.dp)
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Text(text = "Hủy đơn hàng", color = Color.White,
-                            fontSize = 14.sp
-                        )
-                    }
-                    // Nút "Xác nhận đã nhận hàng"
-                    Button(
-                        onClick = { /* Xử lý xác nhận */ },
-                        modifier = Modifier
-                            .weight(1f)
-                            .padding(start = 4.dp),
-                        shape = RoundedCornerShape(8.dp),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = Color(0xFF5D9EFF)
-                        ),
-                        elevation = ButtonDefaults.buttonElevation(5.dp)
-                    ) {
-                        Text(text = "Xác nhận đã nhận hàng", color = Color.White,
-                            fontSize = 14.sp
-                        )
+                        // Nút "Hủy đơn hàng"
+                        Button(
+                            onClick = { /* Xử lý hủy đơn hàng */ },
+                            modifier = Modifier
+                                .weight(0.8f)
+                                .padding(end = 4.dp),
+                            shape = RoundedCornerShape(5.dp),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = Color(0xFF5D9EFF)
+                            ),
+                            elevation = ButtonDefaults.buttonElevation(5.dp)
+                        ) {
+                            Text(
+                                text = "Hủy đơn hàng", color = Color.White,
+                                fontSize = 14.sp
+                            )
+                        }
+                        // Nút "Xác nhận đã nhận hàng"
+                        Button(
+                            onClick = { /* Xử lý xác nhận */ },
+                            modifier = Modifier
+                                .weight(1f)
+                                .padding(start = 4.dp),
+                            shape = RoundedCornerShape(8.dp),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = Color(0xFF5D9EFF)
+                            ),
+                            elevation = ButtonDefaults.buttonElevation(5.dp)
+                        ) {
+                            Text(
+                                text = "Xác nhận đã nhận hàng", color = Color.White,
+                                fontSize = 14.sp
+                            )
+                        }
                     }
                 }
             }
         }
     ) {
-        LazyColumn {
+        LazyColumn (
+            modifier = Modifier.padding(it).padding(16.dp)
+        ){
             item{
-                Column(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(it)
-                        .padding(16.dp)
+                // Mã vận đơn
+                Text(
+                    text = "Mã vận đơn: ${orderCode}",
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 16.sp,
+                    modifier = Modifier.padding(bottom = 8.dp)
+                )
+
+                // Trạng thái đơn hàng
+                Card(
+                    shape = RoundedCornerShape(8.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = Color(0xFFE0F7FA)
+                    ),
+                    modifier = Modifier.fillMaxWidth()
                 ) {
-                    // Mã vận đơn
                     Text(
-                        text = "Mã vận đơn: ${orderCode}",
+                        text = orderStatus[1],
+                        fontSize = 14.sp,
+                        color = Color(0xFF00796B),
+                        modifier = Modifier.padding(8.dp)
+                    )
+                }
+                Spacer(modifier = Modifier.height(16.dp))
+                // Thông tin người nhận
+                Row(modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = "Thông tin người nhận",
                         fontWeight = FontWeight.Bold,
                         fontSize = 16.sp,
                         modifier = Modifier.padding(bottom = 8.dp)
                     )
-
-                    // Trạng thái đơn hàng
-                    Card(
-                        shape = RoundedCornerShape(8.dp),
-                        colors = CardDefaults.cardColors(
-                            containerColor = Color(0xFFE0F7FA)
-                        ),
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Text(
-                            text = orderStatus[1],
-                            fontSize = 14.sp,
-                            color = Color(0xFF00796B),
-                            modifier = Modifier.padding(8.dp)
-                        )
-                    }
-
-                    Spacer(modifier = Modifier.height(16.dp))
-
-                    // Thông tin người nhận
-                    Row(modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text(
-                            text = "Thông tin người nhận",
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 16.sp,
+                    TextButton(onClick = {} ){
+                        Text(text = "Sửa", fontSize = 16.sp,
+                            color = Color(0xFF5D9EFF),
                             modifier = Modifier.padding(bottom = 8.dp)
                         )
-                        TextButton(onClick = {} ){
-                            Text(text = "Sửa", fontSize = 16.sp,
-                                color = Color(0xFF5D9EFF),
-                                modifier = Modifier.padding(bottom = 8.dp)
-                            )
-                        }
                     }
-                    Card(
-                        shape = RoundedCornerShape(8.dp),
-                        elevation = CardDefaults.cardElevation(4.dp),
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Column(modifier = Modifier.padding(8.dp)) {
-                            Text(text = "Tên: ${receiver.name}", fontSize = 14.sp)
-                            Text(text = "Số điện thoại: ${receiver.phone}", fontSize = 14.sp)
-                            Text(text = "Địa chỉ: ${receiver.address}", fontSize = 14.sp)
-                        }
+                }
+                Card(
+                    shape = RoundedCornerShape(8.dp),
+                    elevation = CardDefaults.cardElevation(4.dp),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Column(modifier = Modifier.padding(8.dp)) {
+                        Text(text = "Tên: ${receiver.name}", fontSize = 14.sp)
+                        Text(text = "Số điện thoại: ${receiver.phone}", fontSize = 14.sp)
+                        Text(text = "Địa chỉ: ${receiver.address}", fontSize = 14.sp)
                     }
-
-                    Spacer(modifier = Modifier.height(16.dp))
-
-                    // Chi tiết sản phẩm
-                    Text(
-                        text = "Chi tiết sản phẩm",
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 16.sp,
-                        modifier = Modifier.padding(bottom = 8.dp)
-                    )
-                    Card(
-                        shape = RoundedCornerShape(8.dp),
-                        elevation = CardDefaults.cardElevation(4.dp),
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Column(modifier = Modifier.padding(8.dp)) {
-                            products.forEach { product ->
-                                Row(
-                                    modifier = Modifier.fillMaxWidth().padding(4.dp),
-                                    horizontalArrangement = Arrangement.SpaceBetween,
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
-                                    Row(
-                                        modifier = Modifier.weight(1f),
-                                        verticalAlignment = Alignment.CenterVertically
-                                    ) {
-                                        // Thêm hình ảnh sản phẩm
-//                                Image(
-//                                    painter = painterResource(id = R.drawable.ic_placeholder),
-//                                    contentDescription = product.name,
-//                                    modifier = Modifier
-//                                        .height(40.dp)
-//                                        .padding(end = 8.dp)
-//                                )
-                                        Image(
-                                            painter = painterResource(id = android.R.drawable.ic_menu_gallery),
-                                            contentDescription = "Product Image",
-                                            modifier = Modifier.size(80.dp)
-                                        )
-                                        Text(
-                                            text = product.name,
-                                            fontSize = 16.sp
-                                        )
-                                    }
-                                    Text(
-                                        text = "${product.quantity}x  ${product.price}",
-                                        fontSize = 14.sp,
-                                    )
-                                }
-                            }
-                            Divider()
+                }
+                Spacer(modifier = Modifier.height(16.dp))
+                // Chi tiết sản phẩm
+                Text(
+                    text = "Chi tiết sản phẩm",
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 16.sp,
+                    modifier = Modifier.padding(bottom = 8.dp)
+                )
+                Card(
+                    shape = RoundedCornerShape(8.dp),
+                    elevation = CardDefaults.cardElevation(4.dp),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Column(modifier = Modifier.padding(8.dp)) {
+                        products.forEach { product ->
                             Row(
-                                modifier = Modifier.fillMaxWidth(),
+                                modifier = Modifier.fillMaxWidth().padding(4.dp),
                                 horizontalArrangement = Arrangement.SpaceBetween,
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
+                                Row(
+                                    modifier = Modifier.weight(1f),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    // Thêm hình ảnh sản phẩm
+//                                Image(
+//                                   painter = painterResource(id = R.drawable.ic_placeholder),
+//                                   contentDescription = product.name,
+//                                   modifier = Modifier
+//                                       .height(40.dp)
+//                                       .padding(end = 8.dp)
+//                               )
+                                    Image(
+                                        painter = painterResource(id = android.R.drawable.ic_menu_gallery),
+                                        contentDescription = "Product Image",
+                                        modifier = Modifier.size(80.dp)
+                                    )
+                                    Text(
+                                        text = product.name,
+                                        fontSize = 16.sp
+                                    )
+                                }
                                 Text(
-                                    text = "Tổng cộng",
-                                    fontWeight = FontWeight.Bold,
-                                    fontSize = 16.sp
-                                )
-                                Text(
-                                    text = "${totalAmount}",
-                                    fontWeight = FontWeight.Bold,
-                                    fontSize = 16.sp,
-                                    color = Color.Red
+                                    text = "${product.quantity}x  ${product.price}",
+                                    fontSize = 14.sp
                                 )
                             }
                         }
+                        Divider()
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = "Tổng cộng",
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 16.sp
+                            )
+                            Text(
+                                text = "${totalAmount}",
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 16.sp,
+                                color = Color.Red
+                            )
+                        }
                     }
-
-                    Spacer(modifier = Modifier.height(16.dp))
                 }
             }
         }
@@ -282,10 +280,10 @@ fun OrderDetailsScreen() {
 }
 
 
-@Preview(showBackground = true)
-@Composable
-fun OrderDetailsScreenPreview() {
-    UngDungBanThietBi_IOTTheme {
-        OrderDetailsScreen()
-    }
-}
+//@Preview(showBackground = true)
+//@Composable
+//fun OrderDetailsScreenPreview() {
+//    UngDungBanThietBi_IOTTheme {
+//        OrderDetailsScreen()
+//    }
+//}
