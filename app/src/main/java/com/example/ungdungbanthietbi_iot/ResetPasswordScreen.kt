@@ -106,7 +106,7 @@ fun ResetPasswordScreen(navController: NavController) {
 
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(
-                        text = "IOT Connect Smart",
+                        text = "IOT Connect Mart",
                         fontSize = 27.sp,
                         color = Color(0xFF085979),
                         fontWeight = FontWeight.Bold
@@ -117,6 +117,7 @@ fun ResetPasswordScreen(navController: NavController) {
                     Box(
                         modifier = Modifier
                             .width(350.dp)
+                            .height(70.dp)
                             .padding(vertical = 8.dp)
                             .background(Color.White, shape = MaterialTheme.shapes.small)
                             .border(1.dp, Color(0xFF085979), shape = MaterialTheme.shapes.small)
@@ -152,6 +153,7 @@ fun ResetPasswordScreen(navController: NavController) {
                     Box(
                         modifier = Modifier
                             .width(350.dp)
+                            .height(70.dp)
                             .padding(vertical = 8.dp)
                             .background(Color.White, shape = MaterialTheme.shapes.small)
                             .border(1.dp, Color(0xFF085979), shape = MaterialTheme.shapes.small)

@@ -22,7 +22,7 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             UngDungBanThietBi_IOTTheme {
-                navController = rememberNavController()
+               navController = rememberNavController()
                 NavGraph(navController=navController)
             }
         }

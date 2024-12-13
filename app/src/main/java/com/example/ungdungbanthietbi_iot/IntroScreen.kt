@@ -66,13 +66,14 @@ fun IntroScreen(onTimeout: () -> Unit) {
         content = { padding ->
             Box(
                 modifier = Modifier
-                    .fillMaxSize()
-                    .padding(16.dp),
+                    .fillMaxSize(),
+                    //.padding(16.dp),
                 contentAlignment = Alignment.Center
             ) {
                 Column(
+                    modifier = Modifier.padding(padding),
                     horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.Center
+                   // verticalArrangement = Arrangement.Center
                 ) {
                     // Hiển thị logo với hiệu ứng fade-in
                     Image(
@@ -87,7 +88,7 @@ fun IntroScreen(onTimeout: () -> Unit) {
 
                     // Tiêu đề với hiệu ứng fade-in
                     Text(
-                        text = "IOT Connect Smart",
+                        text = "IOT Connect Mart",
                         fontSize = 27.sp,
                         color = Color(0xFF085979),
                         fontWeight = FontWeight.Bold,

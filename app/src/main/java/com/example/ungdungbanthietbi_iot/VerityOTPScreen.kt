@@ -28,6 +28,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -48,6 +49,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
+import kotlinx.coroutines.delay
 
 /** Giao diện màn hình xác thực OTP (VerifyOTPScreen)
  * -------------------------------------------
@@ -74,6 +76,18 @@ fun VerifyOTPScreen(navController: NavController) {
     var OTP by remember { mutableStateOf("") }
     // Khởi tạo FocusRequester cho các trường nhập liệu
     val focusRequesterOTP = remember { FocusRequester() }
+    // Trạng thái lưu thời gian đếm ngược
+    var timeLeft by remember { mutableStateOf(0) }
+
+    // Hàm xử lý khi nhấn vào "Tại đây"
+    // Sử dụng LaunchedEffect để đếm ngược
+    LaunchedEffect(timeLeft) {
+        if (timeLeft > 0) {
+            delay(1000) // Chờ 1 giây
+            timeLeft-- // Giảm giá trị
+        }
+    }
+
     Scaffold(
         modifier = Modifier.fillMaxWidth(),
         content = { padding ->
@@ -102,9 +116,8 @@ fun VerifyOTPScreen(navController: NavController) {
                         modifier = Modifier.size(320.dp)
                     )
 
-                    Spacer(modifier = Modifier.height(8.dp))
                     Text(
-                        text = "IOT Connect Smart",
+                        text = "IOT Connect Mart",
                         fontSize = 27.sp,
                         color = Color(0xFF085979),
                         fontWeight = FontWeight.Bold
@@ -115,6 +128,7 @@ fun VerifyOTPScreen(navController: NavController) {
                     Box(
                         modifier = Modifier
                             .width(350.dp)
+                            .height(70.dp)
                             .padding(vertical = 8.dp)
                             .background(Color.White, shape = MaterialTheme.shapes.small)
                             .border(1.dp, Color(0xFF085979), shape = MaterialTheme.shapes.small)
@@ -146,54 +160,51 @@ fun VerifyOTPScreen(navController: NavController) {
                             )
                         }
                     }
-                    Row(
-                        modifier = Modifier
-                            .width(370.dp)
-                            .padding(horizontal = 13.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    )
-                    {
-                        //Button
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Row(modifier = Modifier.fillMaxWidth().padding(start = 18.dp)) {
+                        Text(
+                            text = "Gửi lại mã OTP",
+                            fontSize = 15.sp,
+                            fontWeight = FontWeight.Bold,
+                        )
                         Spacer(modifier = Modifier.height(16.dp))
-                        Button(
-                            onClick = { /* Yêu cầu gửi lại mã OTP */ },
+
+                        // Text với trạng thái thay đổi
+                        Text(
+                            text = if (timeLeft > 0) " sau $timeLeft giây" else " Tại đây",
+                            color = if (timeLeft > 0) Color.Black else Color.Red,
+                            fontWeight = FontWeight.Bold,
                             modifier = Modifier
-                                .weight(1f)
-                                .padding(end = 10.dp)
-                                .border(1.dp, Color(0xFF00C3FF), shape = MaterialTheme.shapes.small)
-                                .height(50.dp),
-                            shape = MaterialTheme.shapes.small,
-                            colors = ButtonDefaults.buttonColors(containerColor = Color.White)
-                        ) {
-                            Text(
-                                text = "GỬI LẠi",
-                                fontSize = 20.sp,
-                                color = Color(0xFF00C3FF),
-                                fontWeight = FontWeight.Bold
-                            )
-                        }
-                        Button(
-                            onClick = { /* Chuyển sang màn hình cập nhật mật khẩu(ResetPasswordScreen) */
-                                navController.navigate(Screen.ResetPasswordScreen.route)
-                            },
-                            modifier = Modifier
-                                .weight(1f)
-                                .padding(start = 10.dp)
-                                .height(50.dp),
-                            shape = MaterialTheme.shapes.small,
-                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF00C3FF))
-                        ) {
-                            Text(
-                                text = "XÁC NHẬN",
-                                fontSize = 20.sp,
-                                fontWeight = FontWeight.Bold
-                            )
-                        }
+                                // Xử lý sự kiện khi người dùng nhấn vào "Tại đây"
+                                .clickable(enabled = timeLeft == 0) {
+                                    // Nếu thời gian đếm ngược bằng 0, gửi lại mã OTP
+                                    if (timeLeft == 0) {
+                                        // Gửi lại mã OTP và cập nhật thời gian đếm ngược
+                                        timeLeft = 30
+                                    }
+                                }
+                        )
                     }
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Button(
+                        onClick = { /* Chuyển sang màn hình cập nhật mật khẩu(ResetPasswordScreen) */
+                            navController.navigate(Screen.ResetPasswordScreen.route)
+                        },
+                        modifier = Modifier.width(350.dp)
+                            .height(50.dp),
+                        shape = MaterialTheme.shapes.small,
+                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF00C3FF))
+                    ) {
+                        Text(
+                            text = "XÁC NHẬN",
+                            fontSize = 20.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+
                 }
             }
 
         }
     )
-
 }

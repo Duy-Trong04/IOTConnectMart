@@ -101,9 +101,9 @@ fun LoginScreen(navController: NavController) {
                         modifier = Modifier.size(320.dp)
                     )
 
-                    Spacer(modifier = Modifier.height(8.dp))
+                    //Spacer(modifier = Modifier.height(8.dp))
                     Text(
-                        text = "IOT Connect Smart",
+                        text = "IOT Connect Mart",
                         fontSize = 27.sp,
                         color = Color(0xFF085979),
                         fontWeight = FontWeight.Bold
@@ -114,6 +114,7 @@ fun LoginScreen(navController: NavController) {
                     Box(
                         modifier = Modifier
                             .width(350.dp)
+                            .height(70.dp)
                             .padding(vertical = 8.dp)
                             .background(Color.White, shape = MaterialTheme.shapes.small)
                             .border(1.dp, Color(0xFF085979), shape = MaterialTheme.shapes.small)
@@ -149,6 +150,7 @@ fun LoginScreen(navController: NavController) {
                     Box(
                         modifier = Modifier
                             .width(350.dp)
+                            .height(70.dp)
                             .padding(vertical = 8.dp)
                             .background(Color.White, shape = MaterialTheme.shapes.small)
                             .border(1.dp, Color(0xFF085979), shape = MaterialTheme.shapes.small)
@@ -183,7 +185,7 @@ fun LoginScreen(navController: NavController) {
                             )
                             Image(
                                 painter = painterResource(
-                                    id = if (isPasswordVisible) R.drawable.an else R.drawable.hien
+                                    id = if (isPasswordVisible) R.drawable.hien else R.drawable.an
                                 ),
                                 contentDescription = "",
                                 modifier = Modifier
@@ -193,6 +195,7 @@ fun LoginScreen(navController: NavController) {
                                         isPasswordVisible = !isPasswordVisible
                                     },
                             )
+                            Spacer(modifier = Modifier.width(8.dp))
                         }
                     }
 
@@ -221,7 +224,7 @@ fun LoginScreen(navController: NavController) {
                         shape = MaterialTheme.shapes.small,
                         colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF00C3FF))
                     ) {
-                        Text(text = "ĐĂNG NHẬP", fontSize = 30.sp, fontWeight = FontWeight.Bold)
+                        Text(text = "ĐĂNG NHẬP", fontSize = 20.sp, fontWeight = FontWeight.Bold)
                     }
 
                     Spacer(modifier = Modifier.height(16.dp))
