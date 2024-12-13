@@ -6,7 +6,7 @@ plugins {
 
 android {
     namespace = "com.example.ungdungbanthietbi_iot"
-    compileSdk = 34
+    compileSdk = 35
 
     defaultConfig {
         applicationId = "com.example.ungdungbanthietbi_iot"
@@ -56,4 +56,10 @@ dependencies {
     androidTestImplementation(libs.androidx.ui.test.junit4)
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
+    implementation ("androidx.compose.material:material:1.7.5")
+    implementation ("androidx.compose.ui:ui:1.7.5")
+    implementation("androidx.navigation:navigation-compose:2.8.4")
+    implementation("androidx.compose.foundation:foundation:1.7.6")
+    implementation("androidx.compose.animation:animation:1.7.6")
+
 }
