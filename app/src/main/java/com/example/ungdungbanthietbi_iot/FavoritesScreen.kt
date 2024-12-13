@@ -24,15 +24,23 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.ungdungbanthietbi_iot.ui.theme.UngDungBanThietBi_IOTTheme
 
-
-//Nguoi Viet: Duy Trọng
-//Ngay Viet: 05/12
-//Input:
-//Output:
-//Thuat toan xu ly:
-// Hiển thị màn hình sản phẩm yêu thích, có xử lý check chọn nhiều sản phẩm để thêm vào giỏ hàng
-// hoặc xóa khỏi danh sách yêu thích.
-//-------------------------
+/** Giao diện màn hình yêu thích (FavoritesScreen)
+ * -------------------------------------------
+ * Người code: Duy Trọng
+ * Ngày viết: 05/12/2024
+ * Lần cập nhật cuối cùng: 13/12/2024
+ * -------------------------------------------
+ * Input:
+ *
+ * Output: Hiển thị màn hình sản phẩm yêu thích, có xử lý check chọn nhiều sản phẩm để thêm vào giỏ hàng
+ * hoặc xóa khỏi danh sách yêu thích.
+ * ------------------------------------------------------------
+ * Người cập nhật:
+ * Ngày cập nhật:
+ * ------------------------------------------------------------
+ * Nội dung cập nhật:
+ *
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun FavoritesScreen() {
@@ -176,15 +184,26 @@ fun FavoritesScreen() {
     }
 }
 
-
-//Nguoi Viet: Duy Trọng
-//Ngay Viet: 05/12
-//Input:
-//Output:
-//Thuat toan xu ly:
-// Hiển thị danh sách sản phẩm yêu thích gồm tên sản phẩm, giá, hình ảnh, icon Delete và 1 ô checkbox để người dùng có
-// thể thêm vào giỏ hàng nhiều hoặc xóa nhiều sản phẩm khỏi danh sách yêu thích cùng 1 lúc.
-//-------------------------
+/** Card chứa thông tin sản phẩm yêu thích (FavoritesItem)
+ * -------------------------------------------
+ * Người code: Duy Trọng
+ * Ngày viết: 05/12/2024
+ * Lần cập nhật cuối cùng: 13/12/2024
+ * -------------------------------------------
+ * Input: product: ProductState,
+ * onRemove: () -> Unit,
+ * onQuantityChange: (Int) -> Unit,
+ * onSelectChange: (Boolean) -> Unit
+ *
+ * Output: Hiển thị danh sách sản phẩm yêu thích gồm tên sản phẩm, giá, hình ảnh, icon Delete và 1 ô checkbox để người dùng có
+ * thể thêm vào giỏ hàng nhiều hoặc xóa nhiều sản phẩm khỏi danh sách yêu thích cùng 1 lúc.
+ * ------------------------------------------------------------
+ * Người cập nhật:
+ * Ngày cập nhật:
+ * ------------------------------------------------------------
+ * Nội dung cập nhật:
+ *
+ */
 @Composable
 fun FavoritesItem(
     product: ProductState,
@@ -242,10 +261,10 @@ fun FavoritesItem(
     }
 }
 
-@Preview(showBackground = true)
-@Composable
-fun CartScreenPreview() {
-    UngDungBanThietBi_IOTTheme {
-        FavoritesScreen()
-    }
-}
+//@Preview(showBackground = true)
+//@Composable
+//fun CartScreenPreview() {
+//    UngDungBanThietBi_IOTTheme {
+//        FavoritesScreen()
+//    }
+//}

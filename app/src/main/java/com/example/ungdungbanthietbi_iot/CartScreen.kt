@@ -26,13 +26,23 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.ungdungbanthietbi_iot.ui.theme.UngDungBanThietBi_IOTTheme
 
-//Nguoi Viet: Duy Trọng
-//Ngay Viet: 05/12
-//Input:
-//Output:
-//Thuat toan xu ly:
-// Hiển thị màn hình giỏ hàng, có xu lý check chọn nhiều sản phẩm để mua hoặc xóa khỏi giỏ hàng và hiển thị tổng tiền.
-//-------------------------
+
+/** Giao diện màn hình giỏ hàng (CartScreen)
+ * -------------------------------------------
+ * Người code: Duy Trọng
+ * Ngày viết: 05/12/2024
+ * Lần cập nhật cuối cùng: 13/12/2024
+ * -------------------------------------------
+ * Input:
+ *
+ * Output: Hiển thị màn hình giỏ hàng, có xu lý check chọn nhiều sản phẩm để mua hoặc xóa khỏi giỏ hàng và hiển thị tổng tiền.
+ * ------------------------------------------------------------
+ * Người cập nhật:
+ * Ngày cập nhật:
+ * ------------------------------------------------------------
+ * Nội dung cập nhật:
+ *
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CartScreen() {
@@ -184,14 +194,27 @@ fun CartScreen() {
     }
 }
 
-//Nguoi Viet: Duy Trọng
-//Ngay Viet: 05/12
-//Input:
-//Output:
-//Thuat toan xu ly:
-// Hiển thị danh sách sản phẩm có trong giỏ hàng gồm tên sản phẩm, giá, số lượng, hình ảnh, icon Delete và 1 ô checkbox để người dùng có
-// thể mua nhiều hoặc xóa nhiều sản phẩm cùng 1 lúc.
-//-------------------------
+/** Card chứa thông tin từng của sản phẩm trong giỏ hàng (CartItem)
+ * -------------------------------------------
+ * Người code: Duy Trọng
+ * Ngày viết: 05/12/2024
+ * Lần cập nhật cuối cùng: 13/12/2024
+ * -------------------------------------------
+ * Input:
+ *  product: ProductState,
+ *  onRemove: () -> Unit,
+ *  onQuantityChange: (Int) -> Unit,
+ *  onSelectChange: (Boolean) -> Unit
+ *
+ * Output: Hiển thị danh sách sản phẩm có trong giỏ hàng gồm tên sản phẩm, giá, số lượng, hình ảnh,
+ * icon Delete và 1 ô checkbox để người dùng có thể mua nhiều hoặc xóa nhiều sản phẩm cùng 1 lúc.
+ * ------------------------------------------------------------
+ * Người cập nhật:
+ * Ngày cập nhật:
+ * ------------------------------------------------------------
+ * Nội dung cập nhật:
+ *
+ */
 @Composable
 fun CartItem(
     product: ProductState,
@@ -269,10 +292,10 @@ fun CartItem(
     }
 }
 
-@Preview(showBackground = true)
-@Composable
-fun CartScreenPreview1() {
-    UngDungBanThietBi_IOTTheme {
-        CartScreen()
-    }
-}
+//@Preview(showBackground = true)
+//@Composable
+//fun CartScreenPreview1() {
+//    UngDungBanThietBi_IOTTheme {
+//        CartScreen()
+//    }
+//}

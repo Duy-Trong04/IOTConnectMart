@@ -40,13 +40,22 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 
-
-//Nguoi Viet: Duy Trọng
-//Ngay Viet: 09/12
-//Input:
-//Output:
-//Thuat toan xu ly: Hiển thị danh sách địa chỉ nhận hàng, cho phép chọn địa chỉ mặc định và thêm địa chỉ mới.
-//-------------------------
+/** Giao diện màn hình chọn địa chỉ (AddressSelectionScreen)
+ * -------------------------------------------
+ * Người code: Duy Trọng
+ * Ngày viết: 09/12/2024
+ * Lần cập nhật cuối cùng: 13/12/2024
+ * -------------------------------------------
+ * Input: tham số navController kiểu NavController
+ *
+ * Output: Hiển thị danh sách địa chỉ nhận hàng, cho phép chọn địa chỉ mặc định và thêm địa chỉ mới.
+ * ------------------------------------------------------------
+ * Người cập nhật:
+ * Ngày cập nhật:
+ * ------------------------------------------------------------
+ * Nội dung cập nhật:
+ *
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AddressSelectionScreen(navController: NavController){
@@ -134,12 +143,22 @@ fun AddressSelectionScreen(navController: NavController){
 
 }
 
-//Nguoi Viet: Duy Trọng
-//Ngay Viet: 09/12
-//Input:
-//Output:
-//Thuat toan xu ly: Hiển thị chi tiết một địa chỉ, hỗ trợ chọn và chỉnh sửa địa chỉ.
-//-------------------------
+/** Card chứa thông tin của từng địa chỉ (AddressItem)
+ * -------------------------------------------
+ * Người code: Duy Trọng
+ * Ngày viết: 09/12/2024
+ * Lần cập nhật cuối cùng: 13/12/2024
+ * -------------------------------------------
+ * Input: address: Address, isSelected: Boolean, onSelectClick: () -> Unit
+ *
+ * Output: Hiển thị chi tiết một địa chỉ, hỗ trợ chọn và chỉnh sửa địa chỉ.
+ * ------------------------------------------------------------
+ * Người cập nhật:
+ * Ngày cập nhật:
+ * ------------------------------------------------------------
+ * Nội dung cập nhật:
+ *
+ */
 @Composable
 fun AddressItem(
     address: Address,

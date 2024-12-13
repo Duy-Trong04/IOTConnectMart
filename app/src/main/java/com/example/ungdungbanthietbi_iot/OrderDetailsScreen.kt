@@ -48,15 +48,36 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.example.ungdungbanthietbi_iot.ui.theme.UngDungBanThietBi_IOTTheme
 
-
+/** Giao diện màn hình chi tiết đơn hàng (OrderDetailsScreen)
+ * -------------------------------------------
+ * Người code: Duy Trọng
+ * Ngày viết: 11/12/2024
+ * Lần cập nhật cuối cùng: 13/12/2024
+ * -------------------------------------------
+ * Input: navController: NavController
+ *
+ * Output: Hiển thị chi tiết đơn hàng, bao gồm thông tin người nhận,
+ * danh sách sản phẩm và tổng tiền đơn hàng. Người dùng có thể hủy hoặc xác nhận đơn hàng.
+ * ------------------------------------------------------------
+ * Người cập nhật:
+ * Ngày cập nhật:
+ * ------------------------------------------------------------
+ * Nội dung cập nhật:
+ *
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun OrderDetailsScreen(navController: NavController) {
-    data class ReceiverInfo(val name: String, val phone: String, val address: String)
+    // Data class representing information about the receiver
+    data class ReceiverInfo(val name: String, val phone: String, val address: String) //Lưu trữ thông tin của người nhận đơn hàng (tên, số điện thoại, địa chỉ).
 
+    // Mã vận đơn và danh sách trạng thái đơn hàng (giả)
     val orderCode = "123456789"
-    val orderStatus = listOf("Đang xử lý", "Chờ lấy hàng", "Đang giao hàng", "Đã giao hàng") // Danh sách trạng thái đơn hàng
+    // Danh sách trạng thái đơn hàng
+    val orderStatus = listOf("Đang xử lý", "Chờ lấy hàng", "Đang giao hàng", "Đã giao hàng")
+    // Thông tin người nhận
     val receiver = ReceiverInfo("Trần Thị B", "0987654321", "456 Đường XYZ, Quận 1, TP. HCM")
+    // Lưu trạng thái các sản phẩm trong đơn hàng
     var products by remember {
         mutableStateOf(listOf(
             ProductState(1, "Sản phẩm 1", 10000.0, 1, "placeholder", false),
@@ -64,6 +85,7 @@ fun OrderDetailsScreen(navController: NavController) {
             ProductState(3, "Sản phẩm 3", 30000.0, 1, "placeholder", false),
         ))
     }
+    // Tính tổng tiền của các sản phẩm trong đơn hàng
     val totalAmount = products.sumOf { it.quantity * it.price }
 
     Scaffold(
@@ -265,6 +287,7 @@ fun OrderDetailsScreen(navController: NavController) {
                                 fontWeight = FontWeight.Bold,
                                 fontSize = 16.sp
                             )
+                            // Tổng tiền
                             Text(
                                 text = "${totalAmount}",
                                 fontWeight = FontWeight.Bold,

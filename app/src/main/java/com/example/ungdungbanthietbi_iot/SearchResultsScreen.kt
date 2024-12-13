@@ -57,14 +57,23 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.ungdungbanthietbi_iot.ui.theme.UngDungBanThietBi_IOTTheme
 
-
-//Nguoi Viet: Duy Trọng
-//Ngay Viet: 08/12
-//Input:
-//Output:
-//Thuat toan xu ly: Hiển thị màn hình tìm kiếm sản phẩm với thanh tìm kiếm, các tab lọc (Liên quan, Mới nhất, Bán chạy, Giá),
-// và danh sách sản phẩm dạng lưới.
-//-------------------------
+/** Giao diện màn hình kết qua tìm kiếm (SearchResultsScreen)
+ * -------------------------------------------
+ * Người code: Duy Trọng
+ * Ngày viết: 08/12/2024
+ * Lần cập nhật cuối cùng: 13/12/2024
+ * -------------------------------------------
+ * Input:
+ *
+ * Output: Hiển thị màn hình tìm kiếm sản phẩm với thanh tìm kiếm, các tab lọc (Liên quan, Mới nhất, Bán chạy, Giá),
+ * và danh sách sản phẩm dạng lưới.
+ * ------------------------------------------------------------
+ * Người cập nhật:
+ * Ngày cập nhật:
+ * ------------------------------------------------------------
+ * Nội dung cập nhật:
+ *
+ */
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
 fun SearchResultsScreen() {
@@ -249,12 +258,23 @@ fun SearchResultsScreen() {
     }
 }
 
-//Nguoi Viet: Duy Trọng
-//Ngay Viet: 08/12
-//Input:
-//Output:
-//Thuat toan xu ly: Hiển thị chi tiết sản phẩm gồm: ảnh, tên, và giá trong một thẻ giao diện.
-//-------------------------
+
+/** Card chứa thông tin sản phẩm của giao diện tìm kiếm (ProductCard)
+ * -------------------------------------------
+ * Người code: Duy Trọng
+ * Ngày viết: 08/12/2024
+ * Lần cập nhật cuối cùng: 13/12/2024
+ * -------------------------------------------
+ * Input: productState: ProductState
+ *
+ * Output: Hiển thị chi tiết sản phẩm gồm: ảnh, tên, và giá trong một thẻ giao diện.
+ * ------------------------------------------------------------
+ * Người cập nhật:
+ * Ngày cập nhật:
+ * ------------------------------------------------------------
+ * Nội dung cập nhật:
+ *
+ */
 @Composable
 fun ProductCard(productState: ProductState) {
     Card(
@@ -281,10 +301,10 @@ fun ProductCard(productState: ProductState) {
     }
 }
 
-@Preview(showBackground = true)
-@Composable
-fun SearchResultsScreenPreview() {
-    UngDungBanThietBi_IOTTheme {
-        SearchResultsScreen()
-    }
-}
+//@Preview(showBackground = true)
+//@Composable
+//fun SearchResultsScreenPreview() {
+//    UngDungBanThietBi_IOTTheme {
+//        SearchResultsScreen()
+//    }
+//}

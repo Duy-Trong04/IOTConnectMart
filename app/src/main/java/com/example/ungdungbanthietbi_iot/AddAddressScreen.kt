@@ -46,15 +46,23 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 
-
-//Nguoi Viet: Duy Trọng
-//Ngay Viet: 10/12
-//Input: Họ tên, SĐT, Địa chỉ
-//Output:
-//Thuat toan xu ly: Hiển thị giao diện thêm địa chỉ mới, bao gồm các TextField để nhập
-// thông tin và một Switch để đặt làm địa chỉ mặc định.
-// Có nút "THÊM ĐỊA CHỈ" để thêm địa chỉ vào danh sách.
-//-------------------------
+/** Giao diện màn hình thêm địa chỉ (AddAddressScreen)
+ * -------------------------------------------
+ * Người code: Duy Trọng
+ * Ngày viết: 10/12/2024
+ * Lần cập nhật cuối cùng: 13/12/2024
+ * -------------------------------------------
+ * Input: tham số navController kiểu NavController
+ *
+ * Output: Hiển thị giao diện thêm địa chỉ mới, bao gồm các TextField để nhập
+ * thông tin và một Switch để đặt làm địa chỉ mặc định. Có nút "THÊM ĐỊA CHỈ" để thêm địa chỉ vào danh sách.
+ * ------------------------------------------------------------
+ * Người cập nhật:
+ * Ngày cập nhật:
+ * ------------------------------------------------------------
+ * Nội dung cập nhật:
+ *
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AddAddressScreen(navController: NavController){

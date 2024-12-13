@@ -53,14 +53,22 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 
 
-//Nguoi Viet: Duy Trọng
-//Ngay Viet: 06/12
-//Input:
-//Output:
-//Thuat toan xu ly:
-// Hiển thị màn hình thanh toán, có xu lý chọn phương thức thanh toán hoặc hiện thị 1 hoặc nhiều sản phẩm,
-// tổng thanh toán
-//-------------------------
+/** Giao diện màn hình thanh toán (CheckoutScreen)
+ * -------------------------------------------
+ * Người code: Duy Trọng
+ * Ngày viết: 06/12/2024
+ * Lần cập nhật cuối cùng: 13/12/2024
+ * -------------------------------------------
+ * Input: tham số navController kiểu NavController
+ *
+ * Output: Hiển thị màn hình thanh toán, có xu lý chọn phương thức thanh toán hoặc hiện thị 1 hoặc nhiều sản phẩm, tổng thanh toán
+ * ------------------------------------------------------------
+ * Người cập nhật:
+ * Ngày cập nhật:
+ * ------------------------------------------------------------
+ * Nội dung cập nhật:
+ *
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CheckoutScreen(navController:NavController) {
@@ -226,13 +234,22 @@ fun CheckoutScreen(navController:NavController) {
 }
 
 
-//Nguoi Viet: Duy Trọng
-//Ngay Viet: 06/12
-//Input:
-//Output:
-//Thuat toan xu ly:
-// Hiển thị thông tin của 1 sản phẩm gồm tên, giá, số lượng và tổng tiền của phẩm đó
-//-------------------------
+/** Card chứa thông tin sản phẩm của màn hình thanh toán (CheckoutItem)
+ * -------------------------------------------
+ * Người code: Duy Trọng
+ * Ngày viết: 06/12/2024
+ * Lần cập nhật cuối cùng: 13/12/2024
+ * -------------------------------------------
+ * Input: product: ProductState,
+ *
+ * Output: Hiển thị thông tin của 1 sản phẩm gồm tên, giá, số lượng và tổng tiền của phẩm đó
+ * ------------------------------------------------------------
+ * Người cập nhật:
+ * Ngày cập nhật:
+ * ------------------------------------------------------------
+ * Nội dung cập nhật:
+ *
+ */
 @Composable
 fun CheckoutItem(
     product: ProductState,

@@ -55,6 +55,23 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.ungdungbanthietbi_iot.ui.theme.UngDungBanThietBi_IOTTheme
 
+/** Giao diện màn hình đánh giá, bình luận (RatingScreen)
+ * -------------------------------------------
+ * Người code: Duy Trọng
+ * Ngày viết: 12/12/2024
+ * Lần cập nhật cuối cùng: 13/12/2024
+ * -------------------------------------------
+ * Input:
+ *
+ * Output: Hiển thị  đánh giá sản phẩm bằng cách chọn số sao, nhập nhận xét, thêm ảnh, và gửi đánh giá.
+ * Nó bao gồm các tính năng như chế độ ẩn danh, thanh điều hướng, và giao diện cuộn để tổ chức các thành phần một cách hợp lý.
+ * ------------------------------------------------------------
+ * Người cập nhật:
+ * Ngày cập nhật:
+ * ------------------------------------------------------------
+ * Nội dung cập nhật:
+ *
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun RatingScreen(){
@@ -240,22 +257,13 @@ fun RatingScreen(){
                 }
             }
         }
-//        Column(
-//            modifier = Modifier
-//                .fillMaxSize()
-//                .padding(paddingValues)
-//                .padding(16.dp)
-//        ) {
-//
-//
-//        }
     }
 }
 
-@Preview(showBackground = true)
-@Composable
-fun RatingScreenPreview() {
-    UngDungBanThietBi_IOTTheme {
-        RatingScreen()
-    }
-}
+//@Preview(showBackground = true)
+//@Composable
+//fun RatingScreenPreview() {
+//    UngDungBanThietBi_IOTTheme {
+//        RatingScreen()
+//    }
+//}

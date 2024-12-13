@@ -52,15 +52,24 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
-
-//Nguoi Viet: Duy Trọng
-//Ngay Viet: 07/12
-//Input: tên sản phẩm cần tìm
-//Output: hiển từ khóa trùng với từ khóa mà người dùng vừa nhập
-//Thuat toan xu ly:
-// hiển thị giao diện tìm kiếm sản phẩm, quản lý lịch sử tìm kiếm,
-// gợi ý từ khóa, và hiển thị kết quả tìm kiếm dựa trên từ khóa nhập vào
-//-------------------------
+/** Giao diện màn hình tìm kiếm (SearchScreen)
+ * -------------------------------------------
+ * Người code: Duy Trọng
+ * Ngày viết: 07/12/2024
+ * Lần cập nhật cuối cùng: 13/12/2024
+ * -------------------------------------------
+ * Input:
+ *
+ * Output: Hiển từ khóa trùng với từ khóa mà người dùng vừa nhập,
+ * hiển thị giao diện tìm kiếm sản phẩm, quản lý lịch sử tìm kiếm,
+ * gợi ý từ khóa, và hiển thị kết quả tìm kiếm dựa trên từ khóa nhập vào
+ * ------------------------------------------------------------
+ * Người cập nhật:
+ * Ngày cập nhật:
+ * ------------------------------------------------------------
+ * Nội dung cập nhật:
+ *
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SearchScreen(){
@@ -220,14 +229,23 @@ fun SearchScreen(){
     }
 }
 
-//Nguoi Viet: Duy Trọng
-//Ngay Viet: 07/12
-//Input:
-//Output:
-//Thuat toan xu ly:
-// hiển thị một mục sản phẩm trong danh sách, bao gồm tên sản phẩm và một đường kẻ phân cách.
-// Mục này có thể được nhấn để mở chi tiết sản phẩm (hiện chưa triển khai)
-//-------------------------
+/** Card chứa thông tin sản phẩm của giao diện tìm kiếm (ProductItem)
+ * -------------------------------------------
+ * Người code: Duy Trọng
+ * Ngày viết: 07/12/2024
+ * Lần cập nhật cuối cùng: 13/12/2024
+ * -------------------------------------------
+ * Input: product: ProductState
+ *
+ * Output: Hiển thị một mục sản phẩm trong danh sách, bao gồm tên sản phẩm và một đường kẻ phân cách.
+ * Mục này có thể được nhấn để mở chi tiết sản phẩm (hiện chưa triển khai).
+ * ------------------------------------------------------------
+ * Người cập nhật:
+ * Ngày cập nhật:
+ * ------------------------------------------------------------
+ * Nội dung cập nhật:
+ *
+ */
 @Composable
 fun ProductItem(product: ProductState) {
     Row(
@@ -244,14 +262,22 @@ fun ProductItem(product: ProductState) {
     }
 }
 
-//Nguoi Viet: Duy Trọng
-//Ngay Viet: 07/12
-//Input:
-//Output:
-//Thuat toan xu ly:
-// hiển thị các gợi ý tìm kiếm cho người dùng. Mỗi gợi ý bao gồm một hình ảnh đại diện của sản phẩm và tên sản phẩm.
-// Các gợi ý này có thể được nhấn để thực hiện tìm kiếm chi tiết hơn
-//-------------------------
+/** Giao diện màn hình gợi ý tìm kiếm (SearchSuggestion)
+ * -------------------------------------------
+ * Người code: Duy Trọng
+ * Ngày viết: 07/12/2024
+ * Lần cập nhật cuối cùng: 13/12/2024
+ * -------------------------------------------
+ * Input: product: ProductState
+ *
+ * Output: Các gợi ý này có thể được nhấn để thực hiện tìm kiếm chi tiết hơn
+ * ------------------------------------------------------------
+ * Người cập nhật:
+ * Ngày cập nhật:
+ * ------------------------------------------------------------
+ * Nội dung cập nhật:
+ *
+ */
 @Composable
 fun SearchSuggestion(product: ProductState) {
     Box(
