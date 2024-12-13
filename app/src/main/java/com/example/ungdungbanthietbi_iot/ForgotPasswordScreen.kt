@@ -47,10 +47,11 @@ import androidx.navigation.NavController
  * Input: tham số navController kiểu NavController
  *
  * Output: Chứa các thành phần giao diện của màn hình lấy lại mật khẩu
- * ------------------------------------------------------------
+ * ---------------------------------------------------------------------
  * Người cập nhật:
+ * --------------------------------------------------------------------
  * Ngày cập nhật:
- * ------------------------------------------------------------
+ * ----------------------------------------------------------------------
  * Nội dung cập nhật:
  *
  */
@@ -93,7 +94,7 @@ fun ForgotPasswordScreen(navController: NavController) {
 
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(
-                        text = "IOT ConnectSmart",
+                        text = "IOT Connect Smart",
                         fontSize = 27.sp,
                         color = Color(0xFF085979),
                         fontWeight = FontWeight.Bold

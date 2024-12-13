@@ -103,7 +103,7 @@ fun LoginScreen(navController: NavController) {
 
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(
-                        text = "IOT ConnectSmart",
+                        text = "IOT Connect Smart",
                         fontSize = 27.sp,
                         color = Color(0xFF085979),
                         fontWeight = FontWeight.Bold

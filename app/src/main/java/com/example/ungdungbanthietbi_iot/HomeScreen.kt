@@ -99,7 +99,7 @@ fun HomeScreen(navController: NavController) {
                 ) {
 
                     Text(
-                        text = "IOT  ConnectSmart",
+                        text = "IOT Connect Smart",
                         modifier = Modifier.padding(5.dp),
                         color = Color.White,
                         fontWeight = FontWeight.Bold
@@ -161,7 +161,7 @@ fun HomeScreen(navController: NavController) {
                 TopAppBar(
                     title = {
                         Text(
-                            text = "IOT  ConnectSmart",
+                            text = "IOT Connect Smart",
                             fontWeight = FontWeight.Bold,
                             modifier = Modifier.fillMaxWidth().padding(start = 50.dp),
                             textAlign = TextAlign.Center
