@@ -25,9 +25,6 @@ import androidx.compose.ui.tooling.preview.Preview
  ------------------------
  Input: không
  Output: Hiện thị Màn hình Chọn(Chỉnh sửa) giới tính
-
- ---
- Cập nhật lại Sửa từ column thành LazyColumn
 */
 @OptIn(ExperimentalMaterial3Api::class)
 @Preview(showBackground = true)

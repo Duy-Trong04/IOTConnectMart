@@ -69,9 +69,7 @@ fun AccountSettingsScreen(navController: NavHostController, onBack: () -> Unit =
 
                 item{ Text(text = "Hỗ trợ", fontWeight = FontWeight.Bold,fontSize = 16.sp) }
                 item { SettingItem(title = "Liên hệ", onClick = { /* Thêm chức năng cho liên hệ */navController.navigate(Screen.ContactScreen.route) }) }
-
-                item { SettingItem(title = "Điều khoản IOT Connect Mart", onClick = { /* Thêm chức năng cho điều khoản IOT Connect Mart */ }) }
-
+                item { SettingItem(title = "Điều khoản IOT Connect Mart", onClick = { /* Thêm chức năng cho điều khoản IOT ConnectSmart */ }) }
                 item { SettingItem(title = "Giới thiệu về ứng dụng", onClick = { /* Thêm chức năng cho giới thiệu về ứng dụng */ }) }
 
                 item {
