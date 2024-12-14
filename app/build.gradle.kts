@@ -41,6 +41,17 @@ android {
 
 dependencies {
 
+    implementation ("com.google.accompanist:accompanist-pager:0.28.0")
+    implementation ("com.google.accompanist:accompanist-pager-indicators:0.28.0")
+    implementation ("com.google.accompanist:accompanist-flowlayout:0.28.0")
+    implementation("androidx.compose.ui:ui:1.0.5")
+    implementation("androidx.compose.material3:material3:1.0.0")
+    implementation("androidx.compose.material:material-icons-core:1.0.5")
+    implementation("androidx.compose.material:material-icons-extended:1.0.5")
+    implementation("androidx.navigation:navigation-compose:2.8.4")
+    implementation("com.google.code.gson:gson:2.11.0")
+    implementation("io.coil-kt:coil-compose:2.7.0")
+
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)
