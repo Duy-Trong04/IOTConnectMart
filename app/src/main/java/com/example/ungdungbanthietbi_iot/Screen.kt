@@ -26,8 +26,13 @@ sealed class Screen(var route: String) {
     object HomeScreen : Screen("HomeScreen")
     object ProductDetailsScreen : Screen("ProductDetailsScreen")
     object IntroScreen : Screen("IntroScreen")
+
+
     object Address_Selection:Screen("address_selection_screen")
     object Add_Address:Screen("add_address_screen")
     object Check_Out:Screen("check_out_screen")
     object Order_Detail:Screen("order_detail_screen")
+    object Search_Screen:Screen("search_screen")
+    object Search_Results:Screen("search_results_screen")
+    object Favorites_Screen:Screen("favorites_screen")
 }

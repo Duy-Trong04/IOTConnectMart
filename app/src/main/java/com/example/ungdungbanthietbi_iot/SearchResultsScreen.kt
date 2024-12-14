@@ -55,6 +55,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.navigation.NavController
 import com.example.ungdungbanthietbi_iot.ui.theme.UngDungBanThietBi_IOTTheme
 
 /** Giao diện màn hình kết qua tìm kiếm (SearchResultsScreen)
@@ -76,7 +77,7 @@ import com.example.ungdungbanthietbi_iot.ui.theme.UngDungBanThietBi_IOTTheme
  */
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
-fun SearchResultsScreen() {
+fun SearchResultsScreen(navController: NavController) {
 
     // Danh sách các sản phẩm (giả lập)
     var products by remember {
@@ -140,7 +141,13 @@ fun SearchResultsScreen() {
                 },
 
                 // Nút quay lại
-                navigationIcon = { Icon(imageVector = Icons.Default.ArrowBack, contentDescription = "") },
+                navigationIcon = {
+                    IconButton(onClick = {
+                        navController.popBackStack()
+                    }) {
+                        Icon(Icons.Default.ArrowBack, contentDescription = null)
+                    }
+                },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = Color(0xFF5D9EFF),// Màu nền
                     titleContentColor = Color.White,// Màu chữ

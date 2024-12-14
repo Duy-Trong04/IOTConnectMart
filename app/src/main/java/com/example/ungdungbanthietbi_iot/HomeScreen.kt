@@ -37,6 +37,7 @@ import androidx.compose.material3.ModalNavigationDrawer
 import androidx.compose.material3.NavigationDrawerItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.rememberDrawerState
@@ -195,7 +196,7 @@ fun HomeScreen(navController: NavController) {
                         {
                             // Icon Tìm kiếm
                             IconButton(onClick = {
-                                // Xử lý sự kiện tìm kiếm ở đây
+                                navController.navigate(Screen.Search_Screen.route)
                             }) {
                                 Icon(
                                     imageVector = Icons.Default.Search,
@@ -424,10 +425,14 @@ fun HomeScreen(navController: NavController) {
                             color = Color(0xFF085979),
                             fontWeight = FontWeight.Bold
                         )
-                        Text("Xem tất cả", modifier = Modifier.padding(20.dp),
-                            color = Color.Gray,
-                            fontWeight = FontWeight.Bold
-                        )
+                        TextButton(onClick = {
+                            navController.navigate(Screen.Favorites_Screen.route)
+                        }) {
+                            Text("Xem tất cả", modifier = Modifier.padding(20.dp),
+                                color = Color.Gray,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
                     }
                     LazyRow(modifier = Modifier.fillMaxWidth().padding(10.dp)
                         .clickable{

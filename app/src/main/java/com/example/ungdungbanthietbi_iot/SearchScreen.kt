@@ -51,6 +51,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.navigation.NavController
 
 /** Giao diện màn hình tìm kiếm (SearchScreen)
  * -------------------------------------------
@@ -72,7 +73,7 @@ import androidx.compose.ui.unit.sp
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun SearchScreen(){
+fun SearchScreen(navController: NavController){
     // Biến lưu giá trị từ ô tìm kiếm
     var searchQuery by remember { mutableStateOf("") }
 
@@ -130,7 +131,9 @@ fun SearchScreen(){
                             singleLine = true
                         )
                         // Icon tìm kiếm
-                        IconButton(onClick = {/* Thực hiện tìm kiếm */}) {
+                        IconButton(onClick = {
+                            navController.navigate(Screen.Search_Results.route)
+                        }) {
                             Icon(imageVector = Icons.Filled.Search, contentDescription = "",
                                 tint = Color.White,
                             )
@@ -138,7 +141,13 @@ fun SearchScreen(){
                     }
 
                 },
-                navigationIcon = { Icon(imageVector = Icons.Default.ArrowBack, contentDescription = "") },
+                navigationIcon = {
+                    IconButton(onClick = {
+                        navController.popBackStack()
+                    }) {
+                        Icon(Icons.Default.ArrowBack, contentDescription = null)
+                    }
+                },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = Color(0xFF5D9EFF),
                     titleContentColor = Color.White,

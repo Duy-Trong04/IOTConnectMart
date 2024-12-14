@@ -22,6 +22,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.navigation.NavController
 import com.example.ungdungbanthietbi_iot.ui.theme.UngDungBanThietBi_IOTTheme
 
 /** Giao diện màn hình yêu thích (FavoritesScreen)
@@ -43,7 +44,7 @@ import com.example.ungdungbanthietbi_iot.ui.theme.UngDungBanThietBi_IOTTheme
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun FavoritesScreen() {
+fun FavoritesScreen(navController: NavController) {
     // Danh sách sản phẩm trong giỏ hàng (dữ liệu giả)
     var products by remember {
         mutableStateOf(listOf(
@@ -101,7 +102,9 @@ fun FavoritesScreen() {
                 },
                 navigationIcon = {
                     // Nút quay lại
-                    IconButton(onClick = { /* Back action */ }) {
+                    IconButton(onClick = {
+                        navController.popBackStack()
+                    }) {
                         Icon(
                             imageVector = Icons.Filled.ArrowBack,
                             contentDescription = "Back"

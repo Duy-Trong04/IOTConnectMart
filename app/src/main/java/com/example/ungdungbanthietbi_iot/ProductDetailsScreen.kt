@@ -26,8 +26,8 @@ import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.ShoppingCart
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.BottomAppBar
-import androidx.compose.material.Button
-import androidx.compose.material.ButtonDefaults
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CheckboxDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -205,7 +205,7 @@ fun ProductDetailsScreen(navController: NavController) {
                                         Row(verticalAlignment = Alignment.CenterVertically) {
                                             Button(onClick = { if (quantity > 1) quantity-- },
                                                 colors = ButtonDefaults.buttonColors(
-                                                    backgroundColor = Color.White,
+                                                    containerColor = Color.White,
                                                 ),
                                                 ) {
                                                 Text("-", color = Color.Red, fontWeight = FontWeight.Bold)
@@ -215,7 +215,7 @@ fun ProductDetailsScreen(navController: NavController) {
                                             Spacer(modifier = Modifier.width(8.dp))
                                             Button(onClick = { quantity++ },
                                                 colors = ButtonDefaults.buttonColors(
-                                                    backgroundColor = Color.White,
+                                                    containerColor = Color.White,
                                                 ),
                                                 ) {
                                                 Text("+", color = Color(0xFF008000), fontWeight = FontWeight.Bold)
@@ -232,7 +232,7 @@ fun ProductDetailsScreen(navController: NavController) {
                                             showDialog = false
                                         },
                                         colors = ButtonDefaults.buttonColors(
-                                            backgroundColor = Color(0xFF5D9EFF),
+                                            containerColor = Color(0xFF5D9EFF),
                                             contentColor = Color.White
                                         ),
                                         modifier = Modifier

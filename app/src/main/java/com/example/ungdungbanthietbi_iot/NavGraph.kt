@@ -60,7 +60,7 @@ fun NavGraph(navController:NavHostController){
         ){
             AddAddressScreen(navController)
         }
-        composable(route = Screen.ResetPasswordScreen.route){
+        composable(route = Screen.ResetPasswordScreen.route) {
             ResetPasswordScreen(navController)
         }
         composable(
@@ -81,6 +81,21 @@ fun NavGraph(navController:NavHostController){
             route = Screen.Order_Detail.route
         ){
             OrderDetailsScreen(navController)
+        }
+        composable(
+            route = Screen.Search_Screen.route
+        ){
+            SearchScreen(navController)
+        }
+        composable(
+            route = Screen.Search_Results.route
+        ){
+            SearchResultsScreen(navController)
+        }
+        composable(
+            route = Screen.Favorites_Screen.route
+        ){
+            FavoritesScreen(navController)
         }
     }
 }
