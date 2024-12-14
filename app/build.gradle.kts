@@ -61,5 +61,5 @@ dependencies {
     implementation("androidx.navigation:navigation-compose:2.8.4")
     implementation("androidx.compose.foundation:foundation:1.7.6")
     implementation("androidx.compose.animation:animation:1.7.6")
-
+    implementation ("androidx.compose.material:material-icons-extended:1.5.1")
 }

@@ -1,6 +1,7 @@
 package com.example.ungdungbanthietbi_iot
 
 import androidx.compose.runtime.Composable
+import androidx.navigation.NavHost
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -23,7 +24,7 @@ import androidx.navigation.compose.composable
  */
 
 @Composable
-fun NavGraph(navController: NavHostController){
+fun NavGraph(navController:NavHostController){
     NavHost(
         navController = navController,
         // Màn hình đầu tiên hiển thị
@@ -39,18 +40,33 @@ fun NavGraph(navController: NavHostController){
                     }
                 }
             })
-            }
+        }
         composable(route = Screen.HomeScreen.route){
             HomeScreen(navController)
         }
         composable(route = Screen.LoginScreen.route){
             LoginScreen(navController)
         }
+        composable(
+            route = Screen.Check_Out.route
+        ){
+            CheckoutScreen(navController)
+        }
         composable(route = Screen.RegisterScreen.route){
             RegisterScreen(navController)
         }
+        composable(
+            route = Screen.Add_Address.route
+        ){
+            AddAddressScreen(navController)
+        }
         composable(route = Screen.ResetPasswordScreen.route){
             ResetPasswordScreen(navController)
+        }
+        composable(
+            route = Screen.Address_Selection.route
+        ){
+            AddressSelectionScreen(navController)
         }
         composable(route = Screen.VerifyOTPScreen.route) {
             VerifyOTPScreen(navController)
@@ -60,6 +76,11 @@ fun NavGraph(navController: NavHostController){
         }
         composable(route = Screen.ProductDetailsScreen.route) {
             ProductDetailsScreen(navController)
+        }
+        composable(
+            route = Screen.Order_Detail.route
+        ){
+            OrderDetailsScreen(navController)
         }
     }
 }

@@ -16,14 +16,23 @@ import androidx.navigation.compose.rememberNavController
 import com.example.ungdungbanthietbi_iot.ui.theme.UngDungBanThietBi_IOTTheme
 
 class MainActivity : ComponentActivity() {
+    lateinit var navController: NavHostController
     override fun onCreate(savedInstanceState: Bundle?) {
-        lateinit var navController: NavHostController
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
             UngDungBanThietBi_IOTTheme {
                 navController = rememberNavController()
-                NavGraph(navController=navController)
+                NavGraph(navController = navController)
+                //CartScreen()
+                //FavoritesScreen()
+                //CheckoutScreen()
+                //SearchScreen()
+                //SearchResultsScreen()
+                //AddressSelectionScreen()
+                //AddAddressScreen()
+                //OrderDetailsScreen()
+                //RatingScreen()
             }
         }
     }
