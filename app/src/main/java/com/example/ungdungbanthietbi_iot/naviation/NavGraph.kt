@@ -8,12 +8,10 @@ import androidx.navigation.compose.composable
 import com.example.ungdungbanthietbi_iot.screen.Setting.ChangePassword
 import com.example.ungdungbanthietbi_iot.screen.Setting.ContactScreen
 import com.example.ungdungbanthietbi_iot.screen.personal.AccountSettingsScreen
-import com.example.ungdungbanthietbi_iot.screen.personal.CalendarScreen
 import com.example.ungdungbanthietbi_iot.screen.personal.EditEmailScreen
 import com.example.ungdungbanthietbi_iot.screen.personal.EditPhoneScreen
 import com.example.ungdungbanthietbi_iot.screen.personal.EditProfileScreen
 import com.example.ungdungbanthietbi_iot.screen.personal.EditUsername
-import com.example.ungdungbanthietbi_iot.screen.personal.GenderSelectionScreen
 import com.example.ungdungbanthietbi_iot.screen.personal.OrderListScreen
 import com.example.ungdungbanthietbi_iot.screen.personal.PersonalScreen
 
@@ -47,14 +45,6 @@ fun NavGraph(navController: NavHostController) {
         //Dẫn đến màn chọn(chỉnh sửa) Username
         composable(Screen.EditUsernamScreen.route) {
             EditUsername(onBack = { navController.popBackStack() })
-        }
-        //Dẫn đến màn chọn(chỉnh sửa) giới tính
-        composable(Screen.GenderSelectionScreen.route) {
-            GenderSelectionScreen(onBack = { navController.popBackStack() })
-        }
-        //Dẫn đến màn chọn(chỉnh sửa) ngày sinh
-        composable(Screen.DatePickerScreen.route) {
-            CalendarScreen(onBack = { navController.popBackStack() })
         }
         //Dẫn đến màn chọn(chỉnh sửa) SỐ ĐIỆN THOẠI
         composable(Screen.EditPhoneScreen.route) {

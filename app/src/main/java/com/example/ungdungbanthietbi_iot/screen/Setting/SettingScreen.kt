@@ -14,6 +14,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
@@ -27,11 +28,16 @@ import com.example.ungdungbanthietbi_iot.naviation.Screen
 //Ngày viết: 12/7/2024
 //Input:
 //Output:Màn hình thiết lập tài khoản của người dùng
+//Chinh sua ngay 14/12/2024
+//chinh sua kich thuoc Button bang 1/2 man hinh hien tai
 
 @OptIn(ExperimentalMaterial3Api::class)
 //@Preview(showBackground = true)
 @Composable
 fun AccountSettingsScreen(navController: NavHostController, onBack: () -> Unit = {}) {
+    //Bien lay kich thuoc man hinh hien tai
+    val configuration = LocalConfiguration.current
+    val screenWidth = configuration.screenWidthDp.dp
     Scaffold(
         topBar = {
             TopAppBar(
@@ -73,26 +79,33 @@ fun AccountSettingsScreen(navController: NavHostController, onBack: () -> Unit =
                 item { SettingItem(title = "Giới thiệu về ứng dụng", onClick = { /* Thêm chức năng cho giới thiệu về ứng dụng */ }) }
 
                 item {
-                    Button(
-                        onClick = { /* Thêm chức năng đăng xuất */ },
-                        colors = ButtonDefaults.buttonColors(containerColor = Color.White),
-                        shape = RoundedCornerShape(50),
+                    Box(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(vertical = 16.dp)
-                            .border(
-                                width = 2.dp,
-                                color = Color(0xFF5F9EFF),
-                                shape = RoundedCornerShape(50)
+                            .padding(vertical = 16.dp),
+                        contentAlignment = Alignment.Center
+                    ){
+                        Button(
+                            onClick = { /* Thêm chức năng đăng xuất */ },
+                            colors = ButtonDefaults.buttonColors(containerColor = Color.White),
+                            shape = RoundedCornerShape(50),
+                            modifier = Modifier
+                                .width(screenWidth/2)
+                                .padding(vertical = 16.dp)
+                                .border(
+                                    width = 2.dp,
+                                    color = Color(0xFF5F9EFF),
+                                    shape = RoundedCornerShape(50)
+                                )
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.ExitToApp,
+                                contentDescription = "Đăng xuất",
+                                tint = Color(0xFF5F9EFF)
                             )
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.ExitToApp,
-                            contentDescription = "Đăng xuất",
-                            tint = Color(0xFF5F9EFF)
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text(text = "ĐĂNG XUẤT", color = Color(0xFF5F9EFF))
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(text = "ĐĂNG XUẤT", color = Color(0xFF5F9EFF))
+                        }
                     }
                 }
 

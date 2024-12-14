@@ -1,10 +1,12 @@
 package com.example.ungdungbanthietbi_iot.screen.Setting
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
@@ -19,8 +21,10 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -28,15 +32,22 @@ import androidx.compose.ui.unit.sp
 
 /*
 Người thực hiện: NGUYỄN MẠNH CƯỜNG
-Ngày viết: 12/7/2024
+Ngày viết: 7/12/2024
 Input:
 Output:Màn hình Lien he
+
+Ngày chinh sua : 14/12/2024
+Noi dung chinh sua: kich thuoc Button bang 1/2 man hinh hien tai
 * */
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Preview(showBackground = true)
 @Composable
 fun ContactScreen(onBack: () -> Unit = {}) {
+
+    //Bien lay kich thuoc man hinh hien tai
+    val configuration = LocalConfiguration.current
+    val screenWidth = configuration.screenWidthDp.dp
     Scaffold(
         topBar = {
             TopAppBar(
@@ -89,12 +100,19 @@ fun ContactScreen(onBack: () -> Unit = {}) {
                     )
                 }
                 item {
-                    Button(
-                        modifier = Modifier.fillMaxWidth(),
-                        colors = ButtonDefaults.buttonColors(containerColor =Color(0xFF5F9EFF) ),
-                        onClick = { /*Chuc nang xac nhan doi mat khau*/ }
-                    ) {
-                        Text("Gửi")
+                    Box (
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 16.dp),
+                        contentAlignment = Alignment.Center
+                    ){
+                        Button(
+                            modifier = Modifier.width(screenWidth/2),
+                            colors = ButtonDefaults.buttonColors(containerColor =Color(0xFF5F9EFF) ),
+                            onClick = { /*Chuc nang xac nhan doi mat khau*/ }
+                        ) {
+                            Text("Gửi")
+                        }
                     }
                 }
             }

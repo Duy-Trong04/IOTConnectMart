@@ -23,19 +23,9 @@ import java.time.YearMonth
 import java.time.format.DateTimeFormatter
 import java.util.*
 
-
-
-/*Người thực hiện: Nguyễn Mạnh Cường
- Ngày viết: 12/12/2024
- ------------------------
- Input: không
- Output: In ra lịch để cập nhật ngay sinh
-*/
-
 @OptIn(ExperimentalMaterial3Api::class)
-@Preview(showBackground = true)
 @Composable
-fun CalendarScreen(onBack: () -> Unit = {}) {
+fun CalendarDialog(onDismiss: () -> Unit, onDateSelected: (LocalDate) -> Unit) {
     var selectedDate by remember { mutableStateOf(LocalDate.now().dayOfMonth) }
     var selectedMonth by remember { mutableStateOf(LocalDate.now().monthValue) }
     var selectedYear by remember { mutableStateOf(LocalDate.now().year) }
@@ -44,29 +34,35 @@ fun CalendarScreen(onBack: () -> Unit = {}) {
     val daysInMonth = (1..currentMonthYear.lengthOfMonth()).toList()
     val monthYearFormatter = DateTimeFormatter.ofPattern("MMMM yyyy", Locale.getDefault())
 
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = {
-                    Text("Lịch", fontSize = 20.sp, fontWeight = FontWeight.Bold)
-                },
-                navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(imageVector = Icons.Default.ArrowBack, contentDescription = "Back", tint = Color.White)
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = Color(0xFF5F9EFF),
-                    titleContentColor = Color.White
-                )
-            )
+    // Kiểm tra xem thiết bị có phải là máy tính bảng hay không
+    val isTablet = isTablet()
+
+    // Đặt kích thước font chữ dựa trên loại thiết bị
+    val fontSize = if (isTablet) 24.sp else 16.sp
+    val dayFontSize = if (isTablet) 20.sp else 14.sp
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        confirmButton = {
+            Button(onClick = {
+                onDateSelected(LocalDate.of(selectedYear, selectedMonth, selectedDate))
+            }) {
+                Text("Xác nhận", color = Color.White)
+            }
         },
-        content = { paddingValues ->
+        dismissButton = {
+            Button(onClick = onDismiss) {
+                Text("Đóng", color = Color.White)
+            }
+        },
+        title = {
+            Text("Chọn ngày sinh", fontSize = fontSize, fontWeight = FontWeight.Bold)
+        },
+        text = {
             Column(
                 modifier = Modifier
-                    .fillMaxSize()
-                    .padding(paddingValues)
-                    .padding(16.dp),
+                    .fillMaxWidth()
+                    .padding(8.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
@@ -88,7 +84,7 @@ fun CalendarScreen(onBack: () -> Unit = {}) {
                     }
                     Text(
                         text = "${currentMonthYear.format(monthYearFormatter)}",
-                        fontSize = if (isTablet()) 24.sp else 18.sp,
+                        fontSize = fontSize,
                         fontWeight = FontWeight.Bold,
                         color = Color(0xFF5F9EFF)
                     )
@@ -105,7 +101,7 @@ fun CalendarScreen(onBack: () -> Unit = {}) {
                 }
 
                 // Header: Sun - Sat
-                val daysOfWeek = listOf("S", "M", "T", "W", "T", "F", "S")
+                val daysOfWeek = listOf("CN", "T2", "T3", "T4", "T5", "T6", "T7")
                 LazyVerticalGrid(
                     columns = GridCells.Fixed(7),
                     modifier = Modifier.fillMaxWidth()
@@ -113,7 +109,7 @@ fun CalendarScreen(onBack: () -> Unit = {}) {
                     items(daysOfWeek) { day ->
                         Text(
                             text = day,
-                            fontSize = if (isTablet()) 20.sp else 16.sp,
+                            fontSize = dayFontSize,
                             fontWeight = FontWeight.Bold,
                             color = Color.Gray,
                             modifier = Modifier.padding(8.dp)
@@ -124,7 +120,7 @@ fun CalendarScreen(onBack: () -> Unit = {}) {
                     items(daysInMonth) { date ->
                         Text(
                             text = date.toString(),
-                            fontSize = if (isTablet()) 20.sp else 16.sp,
+                            fontSize = dayFontSize,
                             fontWeight = if (date == selectedDate) FontWeight.Bold else FontWeight.Normal, // Highlight the selected date
                             color = if (date == selectedDate) Color.Red else Color.Black,
                             modifier = Modifier
@@ -133,38 +129,10 @@ fun CalendarScreen(onBack: () -> Unit = {}) {
                         )
                     }
                 }
-
-                Spacer(modifier = Modifier.height(16.dp))
-
-                // Buttons
-                Row(
-                    horizontalArrangement = Arrangement.SpaceEvenly,
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Button(
-                        onClick = { /* Xử lý nút CLEAR */ },
-                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF5F9EFF))
-                    ) {
-                        Text("CLEAR", color = Color.White, fontSize = if (isTablet()) 20.sp else 16.sp)
-                    }
-                    Button(
-                        onClick = { /* Xử lý nút ACTION */ },
-                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF5F9EFF))
-                    ) {
-                        Text("ACTION", color = Color.White, fontSize = if (isTablet()) 20.sp else 16.sp)
-                    }
-                    Button(
-                        onClick = { /* Xử lý nút SET */ },
-                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF5F9EFF))
-                    ) {
-                        Text("SET", color = Color.White, fontSize = if (isTablet()) 20.sp else 16.sp)
-                    }
-                }
             }
         }
     )
 }
-
 
 //Input: Không có tham số đầu vào.
 //Hàm sử dụng LocalConfiguration.current để lấy cấu hình hiện tại của thiết bị.
