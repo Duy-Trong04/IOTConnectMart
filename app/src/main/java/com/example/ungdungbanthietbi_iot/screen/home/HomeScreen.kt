@@ -1,4 +1,4 @@
-package com.example.ungdungbanthietbi_iot
+package com.example.ungdungbanthietbi_iot.screen.home
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -19,10 +19,12 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Call
+import androidx.compose.material.icons.filled.Category
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Menu
-import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.ShoppingCart
@@ -53,6 +55,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
+import com.example.ungdungbanthietbi_iot.R
+import com.example.ungdungbanthietbi_iot.navigation.Screen
 import kotlinx.coroutines.launch
 
 /** Giao diện màn hình Trang chủ (HomeScreen)
@@ -100,7 +104,7 @@ fun HomeScreen(navController: NavController) {
                 ) {
 
                     Text(
-                        text = "IOT Connect Smart",
+                        text = "IOT Connect Mart",
                         modifier = Modifier.padding(5.dp),
                         color = Color.White,
                         fontWeight = FontWeight.Bold
@@ -162,7 +166,7 @@ fun HomeScreen(navController: NavController) {
                 TopAppBar(
                     title = {
                         Text(
-                            text = "IOT Connect Smart",
+                            text = "IOT Connect Mart",
                             fontWeight = FontWeight.Bold,
                             modifier = Modifier.fillMaxWidth().padding(start = 50.dp),
                             textAlign = TextAlign.Center
@@ -228,28 +232,52 @@ fun HomeScreen(navController: NavController) {
                         .fillMaxWidth()
                         .border(1.dp, Color.Black)
                 ){
-                    Row(modifier = Modifier.fillMaxWidth()){
-                        Icon(
-                            imageVector = Icons.Default.Home,
-                            contentDescription = "Trang chủ",
-                            modifier = Modifier.weight(1f),
-                            tint = Color(0xFF5D9EFF)
-                        )
-                        Icon(
-                            imageVector = Icons.Default.Menu,
-                            contentDescription = "",
-                            modifier = Modifier.weight(1f),
-                        )
-                        Icon(
-                            imageVector = Icons.Default.Notifications,
-                            contentDescription = "Thông báo",
-                            modifier = Modifier.weight(1f),
-                        )
-                        Icon(
-                            imageVector = Icons.Default.Person,
-                            contentDescription = "Tài khoản",
-                            modifier = Modifier.weight(1f),
-                        )
+                    Row(modifier = Modifier.fillMaxWidth()
+                        .padding(start = 5.dp, end = 5.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ){
+                        IconButton(onClick = {
+                            navController.navigate(Screen.HomeScreen.route)
+                        }) {
+                            Icon(
+                                imageVector = Icons.Default.Home,
+                                contentDescription = "Trang chủ",
+                                modifier = Modifier.weight(1f),
+                                tint = Color(0xFF5D9EFF)
+                            )
+                        }
+                        IconButton(onClick = {
+                            scope.launch {
+                                // mở và đóng drawer
+                                navdrawerState.apply {
+                                    if (isClosed) open() else close()
+                                }
+                            }
+                        }) {
+                            Icon(
+                                imageVector = Icons.Default.Category,
+                                contentDescription = "danh mục",
+                                modifier = Modifier.weight(1f),
+                            )
+                        }
+                        IconButton(onClick = {
+                            navController.navigate(Screen.ContactScreen.route)
+                        }) {
+                            Icon(
+                                imageVector = Icons.Default.Email,
+                                contentDescription = "liên hệ",
+                                modifier = Modifier.weight(1f),
+                            )
+                        }
+                        IconButton(onClick = {
+                            navController.navigate(Screen.PersonalScreen.route)
+                        }) {
+                            Icon(
+                                imageVector = Icons.Default.Person,
+                                contentDescription = "Tài khoản",
+                                modifier = Modifier.weight(1f),
+                            )
+                        }
                     }
                 }
             }

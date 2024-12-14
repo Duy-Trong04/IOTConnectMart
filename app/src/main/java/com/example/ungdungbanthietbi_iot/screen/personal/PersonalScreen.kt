@@ -32,7 +32,7 @@ import androidx.navigation.NavHostController
 import coil.compose.AsyncImage
 import com.example.ungdungbanthietbi_iot.R
 import com.example.ungdungbanthietbi_iot.data.Product
-import com.example.ungdungbanthietbi_iot.naviation.Screen
+import com.example.ungdungbanthietbi_iot.navigation.Screen
 import com.google.accompanist.flowlayout.FlowRow
 import com.google.accompanist.flowlayout.MainAxisAlignment
 
@@ -44,7 +44,7 @@ import com.google.accompanist.flowlayout.MainAxisAlignment
  Input: không
  Output: Hiện thị Màn hình Hồ sơ của người dùng
 */
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 //@Preview(showBackground = true)
 @Composable
 fun PersonalScreen(
@@ -74,17 +74,23 @@ fun PersonalScreen(
                 },
                 actions = {
                     IconButton(
-                        onClick = {/*Thuc hien chuc nang Setting*/navcontroller.navigate(Screen.SettingScreen.route)}) {
+                        onClick = {
+                            navcontroller.navigate(Screen.SettingScreen.route)
+                        }) {
                     Icon(Icons.Filled.Settings, contentDescription = "Setting")
                     }
                     IconButton(
-                        onClick = {/*Thuc hien chuc nang Giỏ hàng*/}) {
+                        onClick = {
+                            navcontroller.navigate(Screen.Cart_Screen.route)
+                        }) {
                         Icon(Icons.Filled.ShoppingCart, contentDescription = "Gio hang")
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = Color(0xFF5F9EFF),
-                    titleContentColor = Color.White
+                    titleContentColor = Color.White,
+                    navigationIconContentColor = Color.White,
+                    actionIconContentColor = Color.White
                 )
             )
         },

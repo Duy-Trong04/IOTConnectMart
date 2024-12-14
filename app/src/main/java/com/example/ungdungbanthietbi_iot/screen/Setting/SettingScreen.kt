@@ -21,7 +21,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
-import com.example.ungdungbanthietbi_iot.naviation.Screen
+import com.example.ungdungbanthietbi_iot.navigation.Screen
 
 
 //Người thực hiện: NGUYỄN MẠNH CƯỜNG
@@ -74,7 +74,8 @@ fun AccountSettingsScreen(navController: NavHostController, onBack: () -> Unit =
                 item { SettingItem(title = "Cài đặt riêng tư", onClick = { /* Thêm chức năng cho cài đặt riêng tư */ }) }
 
                 item{ Text(text = "Hỗ trợ", fontWeight = FontWeight.Bold,fontSize = 16.sp) }
-                item { SettingItem(title = "Liên hệ", onClick = { /* Thêm chức năng cho liên hệ */navController.navigate(Screen.ContactScreen.route) }) }
+                item { SettingItem(title = "Liên hệ", onClick = { /* Thêm chức năng cho liên hệ */navController.navigate(
+                    Screen.ContactScreen.route) }) }
                 item { SettingItem(title = "Điều khoản IOT Connect Mart", onClick = { /* Thêm chức năng cho điều khoản IOT ConnectSmart */ }) }
                 item { SettingItem(title = "Giới thiệu về ứng dụng", onClick = { /* Thêm chức năng cho giới thiệu về ứng dụng */ }) }
 

@@ -28,7 +28,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.navigation.NavHostController
 import coil.compose.rememberImagePainter
 import coil.annotation.ExperimentalCoilApi
-import com.example.ungdungbanthietbi_iot.naviation.Screen
+import com.example.ungdungbanthietbi_iot.navigation.Screen
 import java.time.format.DateTimeFormatter
 
 
@@ -42,7 +42,7 @@ import java.time.format.DateTimeFormatter
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalCoilApi::class)
 //@Preview(showBackground = true)
 @Composable
-fun EditProfileScreen(navController: NavHostController, onBack: () -> Unit = {}) {
+fun EditProfileScreen(navController: NavHostController) {
     var userName by remember { mutableStateOf("Nguyen Van A") }
     var gender by remember { mutableStateOf("Nam") }
     var birthDate by remember { mutableStateOf("01/01/1990") }
@@ -66,7 +66,9 @@ fun EditProfileScreen(navController: NavHostController, onBack: () -> Unit = {})
                     )
                 },
                 navigationIcon = {
-                    IconButton(onClick = onBack) {
+                    IconButton(onClick = {
+                        navController.popBackStack()
+                    }) {
                         Icon(
                             imageVector = Icons.Default.ArrowBack,
                             contentDescription = "Back",
@@ -126,7 +128,8 @@ fun EditProfileScreen(navController: NavHostController, onBack: () -> Unit = {})
                     }
                 }
                 item {
-                    BoxEditProfile(label = "Tên người dùng", value = userName, onClick = { /*Chuyển trang đổi user name*/navController.navigate(Screen.EditUsernamScreen.route) })
+                    BoxEditProfile(label = "Tên người dùng", value = userName, onClick = { /*Chuyển trang đổi user name*/navController.navigate(
+                        Screen.EditUsernamScreen.route) })
                 }
                 item {
                     BoxEditProfile(label = "Giới tính", value = gender, onClick = { /*Chuyển trang đổi giới tính*/ showGenderDialog=true})

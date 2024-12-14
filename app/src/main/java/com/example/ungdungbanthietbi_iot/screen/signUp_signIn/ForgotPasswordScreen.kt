@@ -1,4 +1,4 @@
-package com.example.ungdungbanthietbi_iot
+package com.example.ungdungbanthietbi_iot.screen.signUp_signIn
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -37,6 +37,8 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
+import com.example.ungdungbanthietbi_iot.R
+import com.example.ungdungbanthietbi_iot.navigation.Screen
 
 /** Giao diện màn hình lấy lại mật khẩu (ForgotPasswordScreen)
  * -------------------------------------------

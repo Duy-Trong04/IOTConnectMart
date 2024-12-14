@@ -1,11 +1,10 @@
-package com.example.ungdungbanthietbi_iot
+package com.example.ungdungbanthietbi_iot.screen.signUp_signIn
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -17,12 +16,9 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -36,26 +32,25 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
-import androidx.compose.ui.text.input.PasswordVisualTransformation
-import androidx.compose.ui.text.input.VisualTransformation
-import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
+import com.example.ungdungbanthietbi_iot.R
+import com.example.ungdungbanthietbi_iot.navigation.Screen
 
-/** Giao diện màn hình cập nhật mật khẩu (ResetPasswordScreen)
+/** Giao diện màn hình xác thực OTP (VerifyOTPScreen)
  * -------------------------------------------
  * Người code: Văn Nam Cao
- * Ngày viết: 09/12/2024
+ * Ngày viết: 10/12/2024
  * Lần cập nhật cuối cùng: 13/12/2024
  * -------------------------------------------
  * Input: tham số navController kiểu NavController
  *
- * Output: Chứa các thành phần giao diện của màn hình cập nhật mật khẩu
+ * Output: Chứa các thành phần giao diện của màn hình xác thực OTP
  * ------------------------------------------------------------
  * Người cập nhật:
  * Ngày cập nhật:
@@ -67,15 +62,11 @@ import androidx.navigation.NavController
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 
-fun ResetPasswordScreen(navController: NavController) {
-    // Biến nhận dữ liệu mật khẩu mới từ người dùng
-    var newPassword by remember { mutableStateOf("") }
-    // Biến nhận dữ liệu nhập lại mật khầu từ người dùng
-    var comfirmPassword by remember { mutableStateOf("") }
+fun VerifyOTPScreen(navController: NavController) {
+    // Biến nhận dữ liệu mã OTP từ người dùng
+    var OTP by remember { mutableStateOf("") }
     // Khởi tạo FocusRequester cho các trường nhập liệu
-    val focusRequesterNewPassword = remember { FocusRequester() }
-    val focusRequesterComfirmPassword = remember { FocusRequester() }
-
+    val focusRequesterOTP = remember { FocusRequester() }
     Scaffold(
         modifier = Modifier.fillMaxWidth(),
         content = { padding ->
@@ -90,7 +81,7 @@ fun ResetPasswordScreen(navController: NavController) {
                     Spacer(modifier = Modifier.height(70.dp))
 
                     Text(
-                        text = "ĐĂNG NHẬP",
+                        text = "XÁC THỰC OTP",
                         fontSize = 27.sp,
                         color = Color(0xFF085979),
                         fontWeight = FontWeight.Bold
@@ -113,7 +104,7 @@ fun ResetPasswordScreen(navController: NavController) {
                     )
 
                     Spacer(modifier = Modifier.height(16.dp))
-                    //New Password
+                    //Mã OTP
                     Box(
                         modifier = Modifier
                             .width(350.dp)
@@ -126,77 +117,71 @@ fun ResetPasswordScreen(navController: NavController) {
                             modifier = Modifier.fillMaxWidth()
                         ) {
                             BasicTextField(
-                                value = newPassword,
-                                onValueChange = { newPassword = it },
+                                value = OTP,
+                                onValueChange = { OTP = it },
                                 modifier = Modifier
                                     .weight(1f)
                                     .padding(vertical = 8.dp)
                                     .background(Color.White, shape = MaterialTheme.shapes.small)
-                                    .focusRequester(focusRequesterNewPassword)
+                                    .focusRequester(focusRequesterOTP)
                                     .padding(8.dp),
-                                // khi người dùng chưa nhập thì hiện nội dung mặc định trong Text( cụ thể trong đây là NewPassword )
+                                // khi người dùng chưa nhập thì hiện nội dung mặc định trong Text( cụ thể trong đây là OTP )
                                 decorationBox = { innerTextField ->
-                                    if (newPassword.isEmpty()) {
-                                        Text(text = "NewPassword", color = Color.Gray)
+                                    if (OTP.isEmpty()) {
+                                        Text(text = "OTP", color = Color.Gray)
                                     }
                                     innerTextField()
                                 },
                                 keyboardOptions = KeyboardOptions.Default.copy(
-                                    imeAction = ImeAction.Next
+                                    imeAction = ImeAction.Done,
+                                    keyboardType = KeyboardType.Number
                                 )
                             )
                         }
                     }
-
-                    //Comfirm Password
-                    Box(
-                        modifier = Modifier
-                            .width(350.dp)
-                            .padding(vertical = 8.dp)
-                            .background(Color.White, shape = MaterialTheme.shapes.small)
-                            .border(1.dp, Color(0xFF085979), shape = MaterialTheme.shapes.small)
-                    ) {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            modifier = Modifier.fillMaxWidth()
-                        ) {
-                            BasicTextField(
-                                value = comfirmPassword,
-                                onValueChange = { comfirmPassword = it },
-                                modifier = Modifier
-                                    .weight(1f)
-                                    .padding(vertical = 8.dp)
-                                    .background(Color.White, shape = MaterialTheme.shapes.small)
-                                    .focusRequester(focusRequesterComfirmPassword)
-                                    .padding(8.dp),
-                                // khi người dùng chưa nhập thì hiện nội dung mặc định trong Text( cụ thể trong đây là ComfirmPassword )
-                                decorationBox = { innerTextField ->
-                                    if (comfirmPassword.isEmpty()) {
-                                        Text(text = "ComfirmPassword", color = Color.Gray)
-                                    }
-                                    innerTextField()
-                                },
-                                keyboardOptions = KeyboardOptions.Default.copy(
-                                    imeAction = ImeAction.Next
-                                )
-                            )
-                        }
-                    }
-
-                    //Button
-                    Spacer(modifier = Modifier.height(16.dp))
-                    Button(
-                        onClick = { /* Chuyển sang màn hình đăng nhập(LoginScreen) */
-                            navController.navigate(Screen.LoginScreen.route)
-                        },
+                    Row(
                         modifier = Modifier
                             .width(370.dp)
-                            .padding(bottom = 10.dp)
-                            .height(50.dp),
-                        shape = MaterialTheme.shapes.small,
-                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF00C3FF))
-                    ) {
-                        Text(text = "XÁC NHẬN", fontSize = 30.sp, fontWeight = FontWeight.Bold)
+                            .padding(horizontal = 13.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    )
+                    {
+                        //Button
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Button(
+                            onClick = { /* Yêu cầu gửi lại mã OTP */ },
+                            modifier = Modifier
+                                .weight(1f)
+                                .padding(end = 10.dp)
+                                .border(1.dp, Color(0xFF00C3FF), shape = MaterialTheme.shapes.small)
+                                .height(50.dp),
+                            shape = MaterialTheme.shapes.small,
+                            colors = ButtonDefaults.buttonColors(containerColor = Color.White)
+                        ) {
+                            Text(
+                                text = "GỬI LẠi",
+                                fontSize = 20.sp,
+                                color = Color(0xFF00C3FF),
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                        Button(
+                            onClick = { /* Chuyển sang màn hình cập nhật mật khẩu(ResetPasswordScreen) */
+                                navController.navigate(Screen.ResetPasswordScreen.route)
+                            },
+                            modifier = Modifier
+                                .weight(1f)
+                                .padding(start = 10.dp)
+                                .height(50.dp),
+                            shape = MaterialTheme.shapes.small,
+                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF00C3FF))
+                        ) {
+                            Text(
+                                text = "XÁC NHẬN",
+                                fontSize = 20.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
                     }
                 }
             }

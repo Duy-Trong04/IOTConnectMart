@@ -1,4 +1,4 @@
-package com.example.ungdungbanthietbi_iot
+package com.example.ungdungbanthietbi_iot.screen.product_detail
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -52,6 +52,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.navigation.NavController
+import com.example.ungdungbanthietbi_iot.R
+import com.example.ungdungbanthietbi_iot.navigation.Screen
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
