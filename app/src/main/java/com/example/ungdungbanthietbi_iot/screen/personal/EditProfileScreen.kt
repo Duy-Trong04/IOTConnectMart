@@ -29,7 +29,7 @@ import androidx.navigation.NavHostController
 import coil.compose.rememberImagePainter
 import coil.annotation.ExperimentalCoilApi
 import com.example.ungdungbanthietbi_iot.naviation.Screen
-
+import java.time.format.DateTimeFormatter
 
 
 /*Người thực hiện: Nguyễn Mạnh Cường
@@ -49,6 +49,11 @@ fun EditProfileScreen(navController: NavHostController, onBack: () -> Unit = {})
     var phoneNumber by remember { mutableStateOf("0123456789") }
     var email by remember { mutableStateOf("email@example.com") }
     var profileImage by remember { mutableStateOf("https://hoanghamobile.com/tin-tuc/wp-content/uploads/2023/07/anh-dep-thien-nhien-thump.jpg") }
+
+    // Biến trạng thái để điều khiển hiển thị dialog
+    var showGenderDialog by remember { mutableStateOf(false) }
+    var showCalendarDialog by remember { mutableStateOf(false) }
+
 
     Scaffold(
         topBar = {
@@ -124,10 +129,10 @@ fun EditProfileScreen(navController: NavHostController, onBack: () -> Unit = {})
                     BoxEditProfile(label = "Tên người dùng", value = userName, onClick = { /*Chuyển trang đổi user name*/navController.navigate(Screen.EditUsernamScreen.route) })
                 }
                 item {
-                    BoxEditProfile(label = "Giới tính", value = gender, onClick = { /*Chuyển trang đổi giới tính*/ navController.navigate(Screen.GenderSelectionScreen.route)})
+                    BoxEditProfile(label = "Giới tính", value = gender, onClick = { /*Chuyển trang đổi giới tính*/ showGenderDialog=true})
                 }
                 item {
-                    BoxEditProfile(label = "Ngày sinh", value = birthDate, onClick = { /*Chuyển trang đổi ngày sinh*/ navController.navigate(Screen.DatePickerScreen.route)})
+                    BoxEditProfile(label = "Ngày sinh", value = birthDate, onClick = { /*Chuyển trang đổi ngày sinh*/ showCalendarDialog = true})
                 }
                 item {
                     BoxEditProfile(label = "Số điện thoại", value = phoneNumber, onClick = { /*Chuyển trang đổi số điện thoại*/navController.navigate(Screen.EditPhoneScreen.route) })
@@ -136,6 +141,26 @@ fun EditProfileScreen(navController: NavHostController, onBack: () -> Unit = {})
                     BoxEditProfile(label = "Email", value = email, onClick = { /*Chuyển trang đổi email*/navController.navigate(Screen.EditEmailScreen.route) })
                 }
             }
+            // Hiển thị dialog chọn giới tính nếu trạng thái showGenderDialog là true
+            if (showGenderDialog) {
+                GenderSelectionDialog(
+                    onDismiss = { showGenderDialog = false },
+                    onGenderSelected = { selectedGender ->
+                        gender = selectedGender
+                        showGenderDialog = false
+                    }
+                )
+            }
+            if (showCalendarDialog) {
+                CalendarDialog(
+                    onDismiss = { showCalendarDialog = false },
+                    onDateSelected = { selectedDate ->
+                birthDate = selectedDate.format(DateTimeFormatter.ofPattern("dd/MM/yyyy"))
+                showCalendarDialog = false
+                    }
+                )
+            }
+
         }
     )
 }

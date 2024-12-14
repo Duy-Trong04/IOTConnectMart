@@ -29,6 +29,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
@@ -47,6 +48,9 @@ import androidx.compose.ui.unit.sp
 @Preview(showBackground = true)
 @Composable
 fun ChangePassword(onBack: () -> Unit = {}) {
+    //Bien lay kich thuoc man hinh hien tai
+    val configuration = LocalConfiguration.current
+    val screenWidth = configuration.screenWidthDp.dp
     Scaffold(
         topBar = {
             TopAppBar(
@@ -105,13 +109,20 @@ fun ChangePassword(onBack: () -> Unit = {}) {
                     )
                 }
                 item {
-                    Button(
-                        modifier = Modifier.fillMaxWidth(),
-                        colors = ButtonDefaults.buttonColors(containerColor =Color(0xFF5F9EFF) ),
-                        onClick = { /*Chuc nang xac nhan doi mat khau*/ }
-                    ) {
-                        Text("Xác nhận")
-                    }
+                   Box(
+                       modifier = Modifier
+                           .fillMaxWidth()
+                           .padding(vertical = 16.dp),
+                       contentAlignment = Alignment.Center
+                   ){
+                       Button(
+                           modifier = Modifier.width(screenWidth/2),
+                           colors = ButtonDefaults.buttonColors(containerColor =Color(0xFF5F9EFF) ),
+                           onClick = { /*Chuc nang xac nhan doi mat khau*/ }
+                       ) {
+                           Text("Xác nhận")
+                       }
+                   }
                 }
             }
         }
