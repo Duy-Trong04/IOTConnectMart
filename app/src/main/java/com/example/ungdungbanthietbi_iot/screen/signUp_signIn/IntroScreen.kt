@@ -85,7 +85,7 @@ fun IntroScreen(onTimeout: () -> Unit) {
 
                     // Tiêu đề với hiệu ứng fade-in
                     Text(
-                        text = "IOT Connect Smart",
+                        text = "IOT Connect Mart",
                         fontSize = 27.sp,
                         color = Color(0xFF085979),
                         fontWeight = FontWeight.Bold,

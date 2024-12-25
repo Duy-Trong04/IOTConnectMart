@@ -35,7 +35,9 @@ sealed class Screen(var route: String) {
     object Search_Results: Screen("search_results_screen")
     object Favorites_Screen: Screen("favorites_screen")
     object Cart_Screen:Screen("cart_screen")
+    object Product_Reviews:Screen("product_reviews")
     object Rating_Screen:Screen("rating_screen")
+    object Rating_History:Screen("rating_history")
 
     //Các màn hình Personal (Hồ sơ cá nhân)
     object PersonalScreen : Screen("PersonalScreen")

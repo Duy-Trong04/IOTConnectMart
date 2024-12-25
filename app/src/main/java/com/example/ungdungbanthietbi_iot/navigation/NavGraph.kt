@@ -29,6 +29,8 @@ import com.example.ungdungbanthietbi_iot.screen.personal.EditProfileScreen
 import com.example.ungdungbanthietbi_iot.screen.personal.EditUsername
 import com.example.ungdungbanthietbi_iot.screen.personal.OrderListScreen
 import com.example.ungdungbanthietbi_iot.screen.personal.PersonalScreen
+import com.example.ungdungbanthietbi_iot.screen.rating.ProductReviewsScreen
+import com.example.ungdungbanthietbi_iot.screen.rating.RatingHistoryScreen
 
 /** Chuyển hướng (NavGraph)
  * -------------------------------------------
@@ -104,6 +106,14 @@ fun NavGraph(navController:NavHostController){
         //Màn hình thanh toán
         composable(route = Screen.Cart_Screen.route) {
             CartScreen(navController)
+        }
+        //Màn hình tất cả đánh giá, bình luận
+        composable(route = Screen.Product_Reviews.route) {
+            ProductReviewsScreen(navController)
+        }
+        //Màn hình lịch sử đánh giá, bình luận
+        composable(route = Screen.Rating_History.route) {
+            RatingHistoryScreen(navController)
         }
         //Màn hình xem chi tiết đơn hàng
         composable(

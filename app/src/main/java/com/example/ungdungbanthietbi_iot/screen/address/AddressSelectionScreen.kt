@@ -76,8 +76,10 @@ fun AddressSelectionScreen(navController: NavController){
     Scaffold (
         topBar = {
             TopAppBar(
-                title = { Text("Địa chỉ nhận hàng", fontSize = 22.sp,
-                    modifier = Modifier.fillMaxWidth(), textAlign = TextAlign.Center) },
+                title = { Text("Địa chỉ nhận hàng",
+                    modifier = Modifier.fillMaxWidth(), textAlign = TextAlign.Center,
+                    fontWeight = FontWeight.Bold
+                ) },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = Color(0xFF5D9EFF),
                     titleContentColor = Color.White,

@@ -1,5 +1,6 @@
 package com.example.ungdungbanthietbi_iot.screen.home
 
+import android.annotation.SuppressLint
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -7,6 +8,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -17,25 +19,34 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Call
 import androidx.compose.material.icons.filled.Category
 import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.Email
+import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.ShoppingCart
+import androidx.compose.material.icons.filled.Upload
 import androidx.compose.material3.BottomAppBar
 import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FabPosition
+import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.FloatingActionButtonDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.ModalDrawerSheet
 import androidx.compose.material3.ModalNavigationDrawer
+import androidx.compose.material3.NavigationBar
+import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.NavigationDrawerItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -44,16 +55,24 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.example.ungdungbanthietbi_iot.R
 import com.example.ungdungbanthietbi_iot.navigation.Screen
@@ -70,10 +89,10 @@ import kotlinx.coroutines.launch
  * Output: Chứa các thành phần giao diện của màn hình Trang chủ
  *  như có danh sách sản phẩm nổi bật, sản phẩm yêu thích, sản phẩm gợi ý
  * ------------------------------------------------------------
- * Người cập nhật:
- * Ngày cập nhật:
+ * Người cập nhật: Duy Trọng
+ * Ngày cập nhật: 19/12/2024
  * ------------------------------------------------------------
- * Nội dung cập nhật:
+ * Nội dung cập nhật: thêm nút nổi để khi ấn thì sẽ trượt lên trên
  *
  */
 
@@ -88,6 +107,19 @@ fun HomeScreen(navController: NavController) {
         "Thiết bị cảm biến",
         "Xả kho",
     )
+    // Tạo LazyListState để quản lý trạng thái cuộn
+    val listState = rememberLazyListState()
+    // Coroutine để thực hiện cuộn
+    val coroutineScope = rememberCoroutineScope()
+    // Biến trạng thái để theo dõi có đang cuộn hay không
+    var isScrolling by remember { mutableStateOf(false) }
+    // Biến trạng thái để sản phẩm yêu thích không
+    var isFavorite by remember { mutableStateOf(false) }
+
+    // Theo dõi trạng thái cuộn
+    LaunchedEffect(listState.isScrollInProgress) {
+        isScrolling = listState.isScrollInProgress
+    }
 
     // Danh mục
     ModalNavigationDrawer(
@@ -107,6 +139,7 @@ fun HomeScreen(navController: NavController) {
                         text = "IOT Connect Mart",
                         modifier = Modifier.padding(5.dp),
                         color = Color.White,
+                        fontSize = 20.sp,
                         fontWeight = FontWeight.Bold
                     )
 
@@ -130,9 +163,12 @@ fun HomeScreen(navController: NavController) {
                 HorizontalDivider()
                 Text(
                     text = "T R A N G  C H Ủ",
-                    modifier = Modifier.padding(15.dp),
+                    modifier = Modifier.padding(12.dp).clickable {
+                        navController.navigate(Screen.HomeScreen.route)
+                    },
                     color = Color(0xFF5D9EFF),
-                    fontWeight = FontWeight.Bold
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 18.sp
                 )
                 countries.forEach { country ->
                     NavigationDrawerItem(
@@ -155,7 +191,8 @@ fun HomeScreen(navController: NavController) {
                             ) {
                                 Text(text = country)
                             }
-                        }, selected = false, onClick = { /* Chọn danh mục */ })
+                        }, selected = false, onClick = { /* Chọn danh mục */ }
+                    )
                 }
             }
         }
@@ -168,11 +205,12 @@ fun HomeScreen(navController: NavController) {
                         Text(
                             text = "IOT Connect Mart",
                             fontWeight = FontWeight.Bold,
-                            modifier = Modifier.fillMaxWidth().padding(start = 50.dp),
+                            fontSize = 22.sp,
+                            modifier = Modifier.fillMaxWidth(),
                             textAlign = TextAlign.Center
                         )
                     },
-                    colors = TopAppBarDefaults.smallTopAppBarColors(
+                    colors = TopAppBarDefaults.topAppBarColors(
                         containerColor = Color(0xFF5D9EFF),
                         titleContentColor = Color.White
                     ),
@@ -194,32 +232,15 @@ fun HomeScreen(navController: NavController) {
                         }
                     },
                     actions = {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                        )
-                        {
-                            // Icon Tìm kiếm
-                            IconButton(onClick = {
-                                navController.navigate(Screen.Search_Screen.route)
-                            }) {
-                                Icon(
-                                    imageVector = Icons.Default.Search,
-                                    contentDescription = "Tìm kiếm",
-                                    tint = Color.White
-                                )
-                            }
-
-                            // Icon Giỏ hàng
-                            IconButton(onClick = {
-                                // vào màn hình giỏ hàng nếu chưa đăng nhập thì vào màn hình đăng nhập(LoginScreen)
-                                navController.navigate(Screen.LoginScreen.route)
-                            }) {
-                                Icon(
-                                    imageVector = Icons.Default.ShoppingCart,
-                                    contentDescription = "Giỏ hàng",
-                                    tint = Color.White
-                                )
-                            }
+                        IconButton(onClick = {
+                            // vào màn hình giỏ hàng nếu chưa đăng nhập thì vào màn hình đăng nhập(LoginScreen)
+                            navController.navigate(Screen.LoginScreen.route)
+                        }
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.ShoppingCart, contentDescription = "Giỏ hàng",
+                                tint = Color.White
+                            )
                         }
                     }
                 )
@@ -230,69 +251,159 @@ fun HomeScreen(navController: NavController) {
                     contentColor = Color.Black,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .border(1.dp, Color.Black)
+                        //.border(1.dp, Color.Black)
                 ){
                     Row(modifier = Modifier.fillMaxWidth()
-                        .padding(start = 5.dp, end = 5.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween
+                        .padding(start = 25.dp, end = 25.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
                     ){
-                        IconButton(onClick = {
-                            navController.navigate(Screen.HomeScreen.route)
-                        }) {
-                            Icon(
-                                imageVector = Icons.Default.Home,
-                                contentDescription = "Trang chủ",
-                                modifier = Modifier.weight(1f),
-                                tint = Color(0xFF5D9EFF)
-                            )
-                        }
-                        IconButton(onClick = {
-                            scope.launch {
-                                // mở và đóng drawer
-                                navdrawerState.apply {
-                                    if (isClosed) open() else close()
-                                }
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            modifier = Modifier.size(70.dp)
+                        ) {
+                            Box (
+                                modifier = Modifier.size(50.dp)
+                                    .clip(CircleShape)
+                                    .clickable { navController.navigate(Screen.HomeScreen.route) }
+                                    .background(Color(0xFF5D9EFF), RoundedCornerShape(5.dp)),
+                                contentAlignment = Alignment.Center,
+
+                                ){
+                                Icon(
+                                    imageVector = Icons.Default.Home,
+                                    contentDescription = "Trang chủ",
+                                    //modifier = Modifier.weight(1f),
+                                    modifier = Modifier.size(25.dp),
+                                    tint = Color.White
+                                )
                             }
-                        }) {
-                            Icon(
-                                imageVector = Icons.Default.Category,
-                                contentDescription = "danh mục",
-                                modifier = Modifier.weight(1f),
+                            Text(
+                                text = "Trang chủ",
+                                fontSize = 14.sp,
+                                color = Color.Black
                             )
                         }
-                        IconButton(onClick = {
-                            navController.navigate(Screen.ContactScreen.route)
-                        }) {
-                            Icon(
-                                imageVector = Icons.Default.Email,
-                                contentDescription = "liên hệ",
-                                modifier = Modifier.weight(1f),
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            modifier = Modifier.size(70.dp)
+                        ) {
+                            Box (
+                                modifier = Modifier.size(50.dp)
+                                    .clip(CircleShape)
+                                    .clickable {
+                                        scope.launch {
+                                            // mở và đóng drawer
+                                            navdrawerState.apply {
+                                                if (isClosed) open() else close()
+                                            }
+                                        }
+                                    },
+                                contentAlignment = Alignment.Center,
+                            ){
+                                Icon(
+                                    imageVector = Icons.Default.Category,
+                                    contentDescription = "danh mục",
+                                    //modifier = Modifier.weight(1f),
+                                    modifier = Modifier.size(25.dp),
+                                    tint = Color.Black
+                                )
+                            }
+                            Text(
+                                text = "Danh mục",
+                                fontSize = 14.sp,
+                                color = Color.Black
                             )
                         }
-                        IconButton(onClick = {
-                            navController.navigate(Screen.PersonalScreen.route)
-                        }) {
-                            Icon(
-                                imageVector = Icons.Default.Person,
-                                contentDescription = "Tài khoản",
-                                modifier = Modifier.weight(1f),
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            modifier = Modifier.size(70.dp)
+                        ) {
+                            Box (
+                                modifier = Modifier.size(50.dp)
+                                    .clip(CircleShape)
+                                    .clickable {
+                                        navController.navigate(Screen.Search_Screen.route)
+                                    },
+                                contentAlignment = Alignment.Center,
+                            ){
+                                Icon(
+                                    imageVector = Icons.Default.Search,
+                                    contentDescription = "Tìm kiếm",
+                                    //modifier = Modifier.weight(1f),
+                                    modifier = Modifier.size(25.dp),
+                                    tint = Color.Black
+                                )
+                            }
+                            Text(
+                                text = "Tìm kiếm",
+                                fontSize = 14.sp,
+                                color = Color.Black
+                            )
+                        }
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            modifier = Modifier.size(70.dp)
+                        ) {
+                            Box (
+                                modifier = Modifier.size(50.dp)
+                                    .clip(CircleShape)
+                                    .clickable {
+                                        navController.navigate(Screen.PersonalScreen.route)
+                                    },
+                                contentAlignment = Alignment.Center,
+                            ){
+                                Icon(
+                                    imageVector = Icons.Default.Person,
+                                    contentDescription = "Tài khoản",
+                                    //modifier = Modifier.weight(1f),
+                                    modifier = Modifier.size(25.dp),
+                                    tint = Color.Black
+                                )
+                            }
+                            Text(
+                                text = "Tôi",
+                                fontSize = 14.sp,
+                                color = Color.Black
                             )
                         }
                     }
                 }
-            }
+            },
+            floatingActionButton = {
+                FloatingActionButton(onClick = {
+                    coroutineScope.launch {
+                        listState.animateScrollToItem(0) // Cuộn đến mục đầu tiên
+                    }
+                },
+                    modifier = Modifier.size(50.dp).clip(CircleShape),
+                    contentColor = Color.White,
+                    elevation = FloatingActionButtonDefaults.elevation(
+                        defaultElevation = if (isScrolling) 0.dp else 6.dp // Không đổ bóng khi trong suốt
+                    ),
+                    containerColor = Color(0xFF5D9EFF).copy(alpha = if (isScrolling) 0.2f else 0.8f)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Upload,
+                        contentDescription = "Nút lên",
+                        modifier = Modifier.size(25.dp)
+                    )
+                }
+            },
+            floatingActionButtonPosition = FabPosition.End
         ) {
             padding ->
             LazyColumn(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(padding),
+                state = listState
             )
             {
                 item {
                     Image(
                         painter = painterResource(R.drawable.den2),
-                        contentDescription = "sk nổi bật",
+                        contentDescription = "event nổi bật",
                         modifier = Modifier
                             .fillMaxWidth()
                             .size(200.dp),
@@ -376,11 +487,17 @@ fun HomeScreen(navController: NavController) {
                                         textAlign = TextAlign.Center
                                     )
                                 }
-                                Image(
-                                    painter = painterResource(R.drawable.tim),
-                                    contentDescription = "sp nổi bật",
+                                IconButton(onClick = {
+                                    isFavorite = !isFavorite
+                                    //Thêm vào danh sách yêu thích or xóa khỏi danh sách
+                                },
                                     modifier = Modifier.size(20.dp).align(Alignment.TopEnd)
-                                )
+                                ) {
+                                    Icon(imageVector = if(isFavorite) Icons.Filled.Favorite else Icons.Filled.FavoriteBorder,
+                                        contentDescription = "",
+                                        tint = Color.Red
+                                    )
+                                }
                             }
                         }
                         item {
@@ -405,11 +522,17 @@ fun HomeScreen(navController: NavController) {
                                         textAlign = TextAlign.Center
                                     )
                                 }
-                                Image(
-                                    painter = painterResource(R.drawable.timtrang),
-                                    contentDescription = "sp nổi bật",
+                                IconButton(onClick = {
+                                    isFavorite = !isFavorite
+                                    //Thêm vào danh sách yêu thích or xóa khỏi danh sách
+                                },
                                     modifier = Modifier.size(20.dp).align(Alignment.TopEnd)
-                                )
+                                ) {
+                                    Icon(imageVector = if(isFavorite) Icons.Filled.Favorite else Icons.Filled.FavoriteBorder,
+                                        contentDescription = "",
+                                        tint = Color.Red
+                                    )
+                                }
                             }
                         }
                         item{
@@ -434,11 +557,17 @@ fun HomeScreen(navController: NavController) {
                                         textAlign = TextAlign.Center
                                     )
                                 }
-                                Image(
-                                    painter = painterResource(R.drawable.timtrang),
-                                    contentDescription = "sp nổi bật",
+                                IconButton(onClick = {
+                                    isFavorite = !isFavorite
+                                    //Thêm vào danh sách yêu thích or xóa khỏi danh sách
+                                },
                                     modifier = Modifier.size(20.dp).align(Alignment.TopEnd)
-                                )
+                                ) {
+                                    Icon(imageVector = if(isFavorite) Icons.Filled.Favorite else Icons.Filled.FavoriteBorder,
+                                        contentDescription = "",
+                                        tint = Color.Red
+                                    )
+                                }
                             }
                         }
                     }
@@ -449,18 +578,18 @@ fun HomeScreen(navController: NavController) {
 
                         horizontalArrangement = Arrangement.SpaceBetween
                     ){
-                        Text("Sản phẩm yêu thích", modifier = Modifier.padding(20.dp),
+                        Text(text = "Sản phẩm yêu thích",
+                            modifier = Modifier.padding(20.dp),
                             color = Color(0xFF085979),
                             fontWeight = FontWeight.Bold
                         )
-                        TextButton(onClick = {
+                        Text(text = "Xem tất cả",
+                            modifier = Modifier.padding(20.dp).clickable {
                             navController.navigate(Screen.Favorites_Screen.route)
-                        }) {
-                            Text("Xem tất cả", modifier = Modifier.padding(20.dp),
-                                color = Color.Gray,
-                                fontWeight = FontWeight.Bold
-                            )
-                        }
+                        },
+                            color = Color.Gray,
+                            fontWeight = FontWeight.Bold
+                        )
                     }
                     LazyRow(modifier = Modifier.fillMaxWidth().padding(10.dp)
                         .clickable{
@@ -661,4 +790,3 @@ fun HomeScreen(navController: NavController) {
         }
     }
 }
-

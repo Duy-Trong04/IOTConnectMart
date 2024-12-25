@@ -81,7 +81,8 @@ fun RatingScreen(){
         topBar = {
             TopAppBar(
                 title = { Text("Đánh giá sản phẩm",
-                    modifier = Modifier.fillMaxWidth(), textAlign = TextAlign.Center
+                    modifier = Modifier.fillMaxWidth(), textAlign = TextAlign.Center,
+                    fontWeight = FontWeight.Bold
                 )},
                 navigationIcon = {
                     IconButton(onClick = { /* Back action */ }) {

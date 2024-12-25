@@ -1,14 +1,23 @@
 package com.example.ungdungbanthietbi_iot.screen.personal
 
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Category
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.List
 import androidx.compose.material.icons.filled.LocalShipping
 import androidx.compose.material.icons.filled.Menu
+import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.ShoppingCart
 import androidx.compose.material.icons.filled.Star
@@ -16,9 +25,12 @@ import androidx.compose.material.icons.filled.VerifiedUser
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
@@ -28,6 +40,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.navigation.NavController
 import androidx.navigation.NavHostController
 import coil.compose.AsyncImage
 import com.example.ungdungbanthietbi_iot.R
@@ -35,7 +48,7 @@ import com.example.ungdungbanthietbi_iot.data.Product
 import com.example.ungdungbanthietbi_iot.navigation.Screen
 import com.google.accompanist.flowlayout.FlowRow
 import com.google.accompanist.flowlayout.MainAxisAlignment
-
+import kotlinx.coroutines.launch
 
 
 /*Người thực hiện: Nguyễn Mạnh Cường
@@ -48,187 +61,428 @@ import com.google.accompanist.flowlayout.MainAxisAlignment
 //@Preview(showBackground = true)
 @Composable
 fun PersonalScreen(
-    navcontroller:NavHostController
+    navController: NavController
 ) {
     //Dữ liệu mẫu
     val products = remember {
         listOf(
-            Product(1, "Sản phẩm 1", 100000, "https://via.placeholder.com/150"),
-            Product(2, "Sản phẩm 2", 150000, "https://via.placeholder.com/150"),
-            Product(3, "Sản phẩm 3", 200000, "https://via.placeholder.com/150"),
-            Product(4, "Sản phẩm 4", 200000, "https://via.placeholder.com/150"),
-            Product(5, "Sản phẩm 5", 200000, "https://via.placeholder.com/150"),
-            Product(6, "Sản phẩm 6", 200000, "https://via.placeholder.com/150")
+            Product(1, "Sản phẩm 1", 100000.0, 1, "https://via.placeholder.com/150", false),
+            Product(2, "Sản phẩm 2", 150000.0, 22,"https://via.placeholder.com/150", false),
+            Product(3, "Sản phẩm 3", 200000.0, 10,"https://via.placeholder.com/150", false),
+            Product(4, "Sản phẩm 4", 200000.0, 2,"https://via.placeholder.com/150", false),
+            Product(5, "Sản phẩm 5", 200000.0, 6,"https://via.placeholder.com/150", false),
+            Product(6, "Sản phẩm 6", 200000.0, 5, "https://via.placeholder.com/150", false)
         )
     }
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = {
-                    Text("Hồ sơ cá nhân", fontSize = 20.sp, fontWeight = FontWeight.Bold)
-                },
-                navigationIcon = {
-                    IconButton(onClick = { /* Thực hiện chức năng  Chọn menu*/ }) {
-                        Icon(Icons.Filled.Menu, contentDescription = "Menu")
-                    }
-                },
-                actions = {
-                    IconButton(
-                        onClick = {
-                            navcontroller.navigate(Screen.SettingScreen.route)
-                        }) {
-                    Icon(Icons.Filled.Settings, contentDescription = "Setting")
-                    }
-                    IconButton(
-                        onClick = {
-                            navcontroller.navigate(Screen.Cart_Screen.route)
-                        }) {
-                        Icon(Icons.Filled.ShoppingCart, contentDescription = "Gio hang")
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = Color(0xFF5F9EFF),
-                    titleContentColor = Color.White,
-                    navigationIconContentColor = Color.White,
-                    actionIconContentColor = Color.White
-                )
-            )
-        },
+    val navdrawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
+    val scope = rememberCoroutineScope() //xử lý suspending fun (mở và đóng drawer)
+    val countries = listOf(
+        "Điện gia dụng",
+        "Điện chiếu sáng",
+        "Thiết bị cảm biến",
+        "Xả kho",
+    )
 
-        content = { paddingValues ->
-            LazyColumn(
-                modifier = Modifier
-                    .padding(paddingValues)
-                    .padding(16.dp),
-                verticalArrangement = Arrangement.Center
-            ) {
-                item {
-                   Box(
-                       modifier = Modifier
-                           .fillMaxWidth()
-                           .height(150.dp)
-                           .clickable {
-                               //Chuyển màn hình chỉnh sửa hồ sơ
-                               navcontroller.navigate(Screen.EditProfileScreen.route)
-                           },
-                       contentAlignment = Alignment.CenterStart
-                   ){
-                       Row(
-                           horizontalArrangement = Arrangement.Center,
-                           verticalAlignment = Alignment.CenterVertically
-                       ) {
-                           Image(
-                               painter = painterResource(id = R.drawable.avatar),
-                               contentDescription = null,
-                               modifier = Modifier
-                                   .size(100.dp)
-                                   .clip(CircleShape),
-                               contentScale = ContentScale.Crop
-                           )
-                           Text(
-                               text = "Tên khách hàng",
-                               modifier = Modifier.padding(start = 16.dp),
-                               fontSize = 20.sp,
-                               fontWeight = FontWeight.Bold
-                           )
-                       }
-                   }
+    // Danh mục
+    ModalNavigationDrawer(
+        drawerState = navdrawerState,
+        drawerContent = {
+            ModalDrawerSheet {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(Color(0xFF5D9EFF))
+                        .padding(5.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+
+                    Text(
+                        text = "IOT Connect Mart",
+                        modifier = Modifier.padding(5.dp),
+                        color = Color.White,
+                        fontWeight = FontWeight.Bold
+                    )
+
+                    Icon(
+                        imageVector = Icons.Default.Close,
+                        contentDescription = "Đóng danh mục",
+                        modifier = Modifier
+                            .padding(end = 5.dp)
+                            .size(24.dp)
+                            .clickable {
+                                // thoát danh mục
+                                scope.launch {
+                                    navdrawerState.apply {
+                                        if (isClosed) open() else close()
+                                    }
+                                }
+                            },
+                        tint = Color.White
+                    )
                 }
-
-                item {
-                    Spacer(modifier = Modifier.height(16.dp))
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
+                HorizontalDivider()
+                Text(
+                    text = "T R A N G  C H Ủ",
+                    modifier = Modifier.padding(12.dp).clickable {
+                        navController.navigate(Screen.HomeScreen.route)
+                    },
+                    color = Color(0xFF5D9EFF),
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 18.sp
+                )
+                countries.forEach { country ->
+                    NavigationDrawerItem(
+                        label = {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(
+                                        vertical = 5.dp,
+                                        horizontal = 5.dp
+                                    )
+                                    .drawBehind {
+                                        drawLine(
+                                            color = Color.Black,
+                                            start = Offset(0f, size.height),
+                                            end = Offset(size.width, size.height),
+                                            strokeWidth = 1.dp.toPx()
+                                        )
+                                    }
+                            ) {
+                                Text(text = country)
+                            }
+                        }, selected = false, onClick = { /* Chọn danh mục */ })
+                }
+            }
+        }
+    ) {
+        Scaffold(
+            topBar = {
+                TopAppBar(
+                    title = {
+                        Text("Hồ sơ cá nhân", fontWeight = FontWeight.Bold)
+                    },
+                    navigationIcon = {
+                        IconButton(onClick = {
+                            scope.launch {
+                                // mở và đóng drawer
+                                navdrawerState.apply {
+                                    if (isClosed) open() else close()
+                                }
+                            }
+                        }) {
+                            Icon(imageVector = Icons.Default.Menu,
+                                contentDescription = "List"
+                            )
+                        }
+                    },
+                    actions = {
+                        IconButton(
+                            onClick = {
+                                navController.navigate(Screen.SettingScreen.route)
+                            }) {
+                            Icon(Icons.Filled.Settings, contentDescription = "Setting")
+                        }
+                        IconButton(
+                            onClick = {
+                                navController.navigate(Screen.Cart_Screen.route)
+                            }) {
+                            Icon(Icons.Filled.ShoppingCart, contentDescription = "Gio hang")
+                        }
+                    },
+                    colors = TopAppBarDefaults.topAppBarColors(
+                        containerColor = Color(0xFF5F9EFF),
+                        titleContentColor = Color.White,
+                        navigationIconContentColor = Color.White,
+                        actionIconContentColor = Color.White
+                    )
+                )
+            },
+            bottomBar = {
+                BottomAppBar(
+                    containerColor = Color.White,
+                    contentColor = Color.Black,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                    //.border(1.dp, Color.Black)
+                ){
+                    Row(modifier = Modifier.fillMaxWidth()
+                        .padding(start = 25.dp, end = 25.dp),
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text(text = "Đơn Mua", fontSize = 20.sp, fontWeight = FontWeight.Bold)
-                        TextButton(
-                            onClick = {
-                                // Chuyển màn hình Lịch sử mua hàng
-                                //Chuyển đến màn hình OrderListScreen(Lịch sử mua hàng)
-                                //ở tab có vị tris thứ 3
-                                navcontroller.navigate("OrderListScreen/3")
-                            }
+                    ){
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            modifier = Modifier.size(70.dp)
                         ) {
-                            Text(text = "Lịch sử mua hàng")
+                            Box (
+                                modifier = Modifier.size(50.dp)
+                                    .clip(CircleShape)
+                                    .clickable { navController.navigate(Screen.HomeScreen.route) },
+                                contentAlignment = Alignment.Center,
+
+                                ){
+                                Icon(
+                                    imageVector = Icons.Default.Home,
+                                    contentDescription = "Trang chủ",
+                                    //modifier = Modifier.weight(1f),
+                                    modifier = Modifier.size(25.dp),
+                                    tint = Color.Black
+                                )
+                            }
+                            Text(
+                                text = "Trang chủ",
+                                fontSize = 14.sp,
+                                color = Color.Black
+                            )
+                        }
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            modifier = Modifier.size(70.dp)
+                        ) {
+                            Box (
+                                modifier = Modifier.size(50.dp)
+                                    .clip(CircleShape)
+                                    .clickable {
+                                        scope.launch {
+                                            // mở và đóng drawer
+                                            navdrawerState.apply {
+                                                if (isClosed) open() else close()
+                                            }
+                                        }
+                                    },
+                                contentAlignment = Alignment.Center,
+                            ){
+                                Icon(
+                                    imageVector = Icons.Default.Category,
+                                    contentDescription = "danh mục",
+                                    //modifier = Modifier.weight(1f),
+                                    modifier = Modifier.size(25.dp),
+                                    tint = Color.Black
+                                )
+                            }
+                            Text(
+                                text = "Danh mục",
+                                fontSize = 14.sp,
+                                color = Color.Black
+                            )
+                        }
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            modifier = Modifier.size(70.dp)
+                        ) {
+                            Box (
+                                modifier = Modifier.size(50.dp)
+                                    .clip(CircleShape)
+                                    .clickable {
+                                        navController.navigate(Screen.Search_Screen.route)
+                                    },
+                                contentAlignment = Alignment.Center,
+                            ){
+                                Icon(
+                                    imageVector = Icons.Default.Search,
+                                    contentDescription = "Tìm kiếm",
+                                    //modifier = Modifier.weight(1f),
+                                    modifier = Modifier.size(25.dp),
+                                    tint = Color.Black
+                                )
+                            }
+                            Text(
+                                text = "Tìm kiếm",
+                                fontSize = 14.sp,
+                                color = Color.Black
+                            )
+                        }
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            modifier = Modifier.size(70.dp)
+                        ) {
+                            Box (
+                                modifier = Modifier.size(50.dp)
+                                    .clip(CircleShape)
+                                    .clickable {
+                                        navController.navigate(Screen.PersonalScreen.route)
+                                    }
+                                    .background(Color(0xFF5D9EFF), RoundedCornerShape(5.dp)),
+                                contentAlignment = Alignment.Center,
+                            ){
+                                Icon(
+                                    imageVector = Icons.Default.Person,
+                                    contentDescription = "Tài khoản",
+                                    //modifier = Modifier.weight(1f),
+                                    modifier = Modifier.size(25.dp),
+                                    tint = Color.White
+                                )
+                            }
+                            Text(
+                                text = "Tôi",
+                                fontSize = 14.sp,
+                                color = Color.Black
+                            )
                         }
                     }
-                    Column(
-                        modifier = Modifier
-                            .padding(8.dp)
-                            .fillMaxWidth()
-                    ) {
+                }
+            },
+
+            content = { paddingValues ->
+                LazyColumn(
+                    modifier = Modifier
+                        .padding(paddingValues)
+                        .padding(16.dp),
+                    verticalArrangement = Arrangement.Center
+                ) {
+                    item {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(150.dp)
+                                .clickable {
+                                    //Chuyển màn hình chỉnh sửa hồ sơ
+                                    navController.navigate(Screen.EditProfileScreen.route)
+                                },
+                            contentAlignment = Alignment.CenterStart
+                        ) {
+                            Row(
+                                horizontalArrangement = Arrangement.Center,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Image(
+                                    painter = painterResource(id = R.drawable.avatar),
+                                    contentDescription = null,
+                                    modifier = Modifier
+                                        .size(100.dp)
+                                        .clip(CircleShape),
+                                    contentScale = ContentScale.Crop
+                                )
+                                Column(
+                                    modifier = Modifier.fillMaxWidth()
+                                ) {
+                                    Text(
+                                        text = "Nguyễn Văn A",
+                                        modifier = Modifier.padding(start = 16.dp),
+                                        fontSize = 20.sp,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                    Spacer(modifier = Modifier.height(3.dp))
+                                    Text(
+                                        text = "abc@gmail.com",
+                                        modifier = Modifier.padding(start = 16.dp),
+                                        fontSize = 20.sp,
+                                        fontWeight = FontWeight.W300
+                                    )
+                                    Spacer(modifier = Modifier.height(3.dp))
+                                    Text(
+                                        text = "0123456789",
+                                        modifier = Modifier.padding(start = 16.dp),
+                                        fontSize = 20.sp,
+                                        fontWeight = FontWeight.W300
+                                    )
+                                }
+                            }
+                        }
+                    }
+
+                    item {
+                        Spacer(modifier = Modifier.height(16.dp))
                         Row(
                             modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceAround,
+                            horizontalArrangement = Arrangement.SpaceBetween,
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            OrderStatusItem(
-                                icon = Icons.Filled.VerifiedUser,
-                                description = "Chờ xác nhận",
-                                //Chuyen den tab chờ xác nhận
-                                onclick = {
-                                    navcontroller.navigate("OrderListScreen/0")
+                            Text(text = "Đơn Mua", fontSize = 20.sp, fontWeight = FontWeight.Bold)
+                            TextButton(
+                                onClick = {
+                                    // Chuyển màn hình Lịch sử mua hàng
                                     //Chuyển đến màn hình OrderListScreen(Lịch sử mua hàng)
-                                    //ở tab có vị trí thứ 0
+                                    //ở tab có vị tris thứ 3
+                                    navController.navigate("OrderListScreen/3")
                                 }
-                            )
-                            OrderStatusItem(
-                                icon = Icons.Filled.LocalShipping,
-                                description = "Chờ giao hàng",
-                                //Chuyển màn hình tab Chờ giao hàng
-                                onclick = {
-                                    //Chuyển đến màn hình OrderListScreen(Lịch sử mua hàng)
-                                    //ở tab có vị trí thứ 1
-                                    navcontroller.navigate("OrderListScreen/1")
-                                }
-                            )
-                            OrderStatusItem(
-                                icon = Icons.Filled.LocalShipping,
-                                description = "Chờ lấy hàng",
-                                //Chuyển màn hình tab Chờ lấy hàng
-                                onclick = {
-                                    //Chuyển đến màn hình OrderListScreen(Lịch sử mua hàng)
-                                    //ở tab có vị trí thứ 2
-                                    navcontroller.navigate("OrderListScreen/2")
-                                }
-                            )
-                            OrderStatusItem(
-                                icon = Icons.Filled.Star,
-                                description = "Đánh Giá",
-                                //Chuyển màn hình đánh giá sản phẩm
-                                onclick = {
-                                    /*Thực hiện chức năng chuyển màn hình đánh giá*/
-                                }
-                            )
+                            ) {
+                                Text(text = "Lịch sử mua hàng")
+                            }
                         }
-                    }
-                    Spacer(modifier = Modifier.height(16.dp))
-                    Text(text = "Sản phẩm đề cử", fontSize = 20.sp, fontWeight = FontWeight.Bold)
-                    Spacer(modifier = Modifier.height(8.dp))
-                }
-
-                item {
-                    Box(
-                        modifier = Modifier.fillMaxWidth(),
-                        contentAlignment = Alignment.Center
-                    ){
-                        FlowRow(
-                            mainAxisSpacing = 16.dp,
-                            crossAxisSpacing = 16.dp,
-                            modifier = Modifier.fillMaxWidth(),
-                            mainAxisAlignment = MainAxisAlignment.Center
+                        Column(
+                            modifier = Modifier
+                                .padding(8.dp)
+                                .fillMaxWidth()
                         ) {
-                            products.forEach { product ->
-                                ProductCard(product)
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceAround,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                OrderStatusItem(
+                                    icon = Icons.Filled.VerifiedUser,
+                                    description = "Chờ xác nhận",
+                                    //Chuyen den tab chờ xác nhận
+                                    onclick = {
+                                        navController.navigate("OrderListScreen/0")
+                                        //Chuyển đến màn hình OrderListScreen(Lịch sử mua hàng)
+                                        //ở tab có vị trí thứ 0
+                                    }
+                                )
+                                OrderStatusItem(
+                                    icon = Icons.Filled.LocalShipping,
+                                    description = "Chờ lấy hàng",
+                                    //Chuyển màn hình tab Chờ giao hàng
+                                    onclick = {
+                                        //Chuyển đến màn hình OrderListScreen(Lịch sử mua hàng)
+                                        //ở tab có vị trí thứ 1
+                                        navController.navigate("OrderListScreen/1")
+                                    }
+                                )
+                                OrderStatusItem(
+                                    icon = Icons.Filled.LocalShipping,
+                                    description = "Chờ giao hàng",
+                                    //Chuyển màn hình tab Chờ lấy hàng
+                                    onclick = {
+                                        //Chuyển đến màn hình OrderListScreen(Lịch sử mua hàng)
+                                        //ở tab có vị trí thứ 2
+                                        navController.navigate("OrderListScreen/2")
+                                    }
+                                )
+                                OrderStatusItem(
+                                    icon = Icons.Filled.Star,
+                                    description = "Đánh Giá",
+                                    //Chuyển màn hình đánh giá sản phẩm
+                                    onclick = {
+                                        /*Thực hiện chức năng chuyển màn hình đánh giá*/
+                                        navController.navigate(Screen.Rating_History.route)
+                                    }
+                                )
+                            }
+                        }
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Text(
+                            text = "Sản phẩm đề cử",
+                            fontSize = 20.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                    }
+
+                    item {
+                        Box(
+                            modifier = Modifier.fillMaxWidth(),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            FlowRow(
+                                mainAxisSpacing = 16.dp,
+                                crossAxisSpacing = 16.dp,
+                                modifier = Modifier.fillMaxWidth(),
+                                mainAxisAlignment = MainAxisAlignment.Center
+                            ) {
+                                products.forEach { product ->
+                                    ProductCard(product)
+                                }
                             }
                         }
                     }
                 }
             }
-        }
-    )
+        )
+    }
 }
 
 @Composable
@@ -249,7 +503,7 @@ fun ProductCard(product: Product) {
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             AsyncImage(
-                model = product.ImageUrl,
+                model = product.imageUrl,
                 contentDescription = null,
                 modifier = Modifier
                     .size(100.dp)
@@ -257,12 +511,12 @@ fun ProductCard(product: Product) {
                 contentScale = ContentScale.Crop
             )
             Text(
-                text = product.NameProduct,
+                text = product.name,
                 fontSize = 14.sp,
                 modifier = Modifier.padding(top = 8.dp)
             )
             Text(
-                text = "Giá: ${product.Price}",
+                text = "Giá: ${product.price}",
                 fontSize = 14.sp,
                 color = Color.Red
             )
@@ -292,3 +546,4 @@ fun OrderStatusItem(icon: ImageVector, description: String,onclick:()->Unit) {
         )
     }
 }
+

@@ -47,7 +47,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
-import com.example.ungdungbanthietbi_iot.ProductState
+import com.example.ungdungbanthietbi_iot.data.Product
 import com.example.ungdungbanthietbi_iot.navigation.Screen
 
 /** Giao diện màn hình kết qua tìm kiếm (SearchResultsScreen)
@@ -74,15 +74,15 @@ fun SearchResultsScreen(navController: NavController) {
     // Danh sách các sản phẩm (giả lập)
     var products by remember {
         mutableStateOf(listOf(
-            ProductState(1, "Product 1", 10000.0, 1, "placeholder", false),
-            ProductState(2, "Product 2", 20000.0, 2, "placeholder", false),
-            ProductState(3, "Product 3", 15000.0, 1, "placeholder", false),
-            ProductState(4, "Product 4", 10000.0, 1, "placeholder", false),
-            ProductState(5, "Product 5", 20000.0, 2, "placeholder", false),
-            ProductState(6, "Product 6", 15000.0, 1, "placeholder", false),
-            ProductState(7, "Product 7", 10000.0, 1, "placeholder", false),
-            ProductState(8, "Product 8", 20000.0, 2, "placeholder", false),
-            ProductState(9, "Product 9", 15000.0, 1, "placeholder", false)
+            Product(1, "Product 1", 10000.0, 1, "placeholder", false),
+            Product(2, "Product 2", 20000.0, 2, "placeholder", false),
+            Product(3, "Product 3", 15000.0, 1, "placeholder", false),
+            Product(4, "Product 4", 10000.0, 1, "placeholder", false),
+            Product(5, "Product 5", 20000.0, 2, "placeholder", false),
+            Product(6, "Product 6", 15000.0, 1, "placeholder", false),
+            Product(7, "Product 7", 10000.0, 1, "placeholder", false),
+            Product(8, "Product 8", 20000.0, 2, "placeholder", false),
+            Product(9, "Product 9", 15000.0, 1, "placeholder", false)
         ))
     }
 
@@ -287,7 +287,7 @@ fun SearchResultsScreen(navController: NavController) {
  *
  */
 @Composable
-fun ProductCard(productState: ProductState) {
+fun ProductCard(productState: Product) {
     Card(
         modifier = Modifier
             .fillMaxWidth()

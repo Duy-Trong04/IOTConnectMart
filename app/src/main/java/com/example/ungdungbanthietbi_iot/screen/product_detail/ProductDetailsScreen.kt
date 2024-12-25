@@ -22,19 +22,23 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.AccountBox
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.AddShoppingCart
+import androidx.compose.material.icons.filled.Remove
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.ShoppingCart
 import androidx.compose.material.icons.filled.Star
+import androidx.compose.material.icons.filled.SupportAgent
+import androidx.compose.material.icons.filled.ThumbUp
 import androidx.compose.material3.BottomAppBar
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Checkbox
-import androidx.compose.material3.CheckboxDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
@@ -92,14 +96,15 @@ fun ProductDetailsScreen(navController: NavController) {
                         Text(
                             text = "Chi tiết sản phẩm",
                             fontWeight = FontWeight.Bold,
-                            modifier = Modifier.fillMaxWidth().padding(start = 70.dp),
+                            modifier = Modifier.fillMaxWidth(),
                             textAlign = TextAlign.Center
                         )
+                },
+                navigationIcon = {
                     IconButton(
                         onClick = {
                             // Quay về màn hình danh sách sản phẩm
                             navController.navigate(Screen.HomeScreen.route) },
-                        modifier = Modifier.padding(start = 10.dp)
                     ) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Default.ArrowBack,
@@ -119,7 +124,7 @@ fun ProductDetailsScreen(navController: NavController) {
                     {
                         // Icon Tìm kiếm
                         IconButton(onClick = {
-                            // Xử lý sự kiện tìm kiếm ở đây
+                            navController.navigate(Screen.Search_Screen.route)
                         }) {
                             Icon(
                                 imageVector = Icons.Default.Search,
@@ -131,6 +136,7 @@ fun ProductDetailsScreen(navController: NavController) {
                         // Icon Giỏ hàng
                         IconButton(onClick = {
                             // vào màn hình giỏ hàng
+                            navController.navigate(Screen.Cart_Screen.route)
                         }) {
                             Icon(
                                 imageVector = Icons.Default.ShoppingCart,
@@ -148,20 +154,29 @@ fun ProductDetailsScreen(navController: NavController) {
                 contentColor = Color.Black,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .border(1.dp, Color.Black)
+                    //.border(1.dp, Color.Black)
             ) {
-                Row(modifier = Modifier.fillMaxWidth()) {
-                    Icon(
-                        imageVector = Icons.Default.AccountBox,
-                        contentDescription = "Trang chủ",
-                        modifier = Modifier.weight(1f),
-
+                Row(modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceAround,
+                    verticalAlignment = Alignment.CenterVertically) {
+                    IconButton(onClick = {
+                        navController.navigate(Screen.ContactScreen.route)
+                    }) {
+                        Icon(
+                            imageVector = Icons.Default.SupportAgent,
+                            contentDescription = "Liên hệ",
+                            modifier = Modifier.weight(1f)
                         )
-                    Icon(
-                        imageVector = Icons.Default.ShoppingCart,
-                        contentDescription = "Giỏ hàng",
-                        modifier = Modifier.weight(1f).clickable { showDialog = true },
-                    )
+                    }
+                    IconButton(onClick = {
+                        showDialog = true
+                    }) {
+                        Icon(
+                            imageVector = Icons.Default.AddShoppingCart,
+                            contentDescription = "Thêm vào giỏ hàng",
+                            modifier = Modifier.weight(1f)
+                        )
+                    }
                     // Dialog hiển thị khi người dùng nhấn nút
                     if (showDialog) {
                         Dialog(onDismissRequest = { showDialog = false }) {
@@ -181,15 +196,16 @@ fun ProductDetailsScreen(navController: NavController) {
                                             modifier = Modifier.size(100.dp)
                                         )
                                         Column(){
-                                        Text(
-                                            text = "Giá: xxxxx",
-                                            modifier = Modifier.padding(start = 16.dp),
-                                            color = Color.Red
-                                        )
                                             Text(
-                                            text = "Kho: xxxxx",
-                                            modifier = Modifier.padding(start = 16.dp)
-                                        )
+                                                text = "Giá: xxxxx",
+                                                modifier = Modifier.padding(start = 16.dp),
+                                                color = Color.Red
+                                            )
+                                            Spacer(modifier = Modifier.height(8.dp))
+                                            Text(
+                                                text = "Kho: xxxxx",
+                                                modifier = Modifier.padding(start = 16.dp)
+                                            )
                                         }
                                     }
                                     Row(
@@ -202,25 +218,24 @@ fun ProductDetailsScreen(navController: NavController) {
                                             modifier = Modifier.padding(top = 10.dp),
                                             fontSize = 20.sp
                                         )
-
                                         // Chọn số lượng sản phẩm
                                         Row(verticalAlignment = Alignment.CenterVertically) {
-                                            Button(onClick = { if (quantity > 1) quantity-- },
-                                                colors = ButtonDefaults.buttonColors(
-                                                    containerColor = Color.White,
-                                                ),
-                                                ) {
-                                                Text("-", color = Color.Red, fontWeight = FontWeight.Bold)
+                                            IconButton(onClick = {
+                                                if (quantity > 1) quantity--
+                                            }) {
+                                                Icon(imageVector = Icons.Filled.Remove,
+                                                    contentDescription = "Trừ"
+                                                )
                                             }
                                             Spacer(modifier = Modifier.width(8.dp))
                                             Text(text = "$quantity")
                                             Spacer(modifier = Modifier.width(8.dp))
-                                            Button(onClick = { quantity++ },
-                                                colors = ButtonDefaults.buttonColors(
-                                                    containerColor = Color.White,
-                                                ),
-                                                ) {
-                                                Text("+", color = Color(0xFF008000), fontWeight = FontWeight.Bold)
+                                            IconButton(onClick = {
+                                                quantity++
+                                            }) {
+                                                Icon(imageVector = Icons.Filled.Add,
+                                                    contentDescription = "Trừ"
+                                                )
                                             }
                                         }
                                     }
@@ -237,26 +252,38 @@ fun ProductDetailsScreen(navController: NavController) {
                                             containerColor = Color(0xFF5D9EFF),
                                             contentColor = Color.White
                                         ),
-                                        modifier = Modifier
-                                            .align(Alignment.End)
+                                        shape = RoundedCornerShape(5.dp),
+                                        elevation = ButtonDefaults.buttonElevation(5.dp),
+                                        modifier = Modifier.fillMaxWidth()
                                     ) {
                                         Text("Thêm vào giỏ hàng",
                                             color = Color.White,
                                             fontWeight = FontWeight.Bold,
+                                            fontSize = 18.sp
                                         )
                                     }
                                 }
                             }
                         }
                     }
-                    Text(
-                        text = "Mua Ngay",
-                        modifier = Modifier.weight(1f)
-                            .clickable {/* Chuyển sang màn hình mua hàng */ },
-                        textAlign = TextAlign.Center,
-                        color = Color(0xFF5D9EFF),
-                        fontWeight = FontWeight.Bold
-                    )
+                    Button(
+                        onClick = {
+                            navController.navigate(Screen.Check_Out.route)
+                        },
+                        modifier = Modifier.width(240.dp),
+                        shape = RoundedCornerShape(5.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = Color(0xFF5D9EFF),
+                        ),
+                    ){
+                        Text(
+                            text = "Mua Ngay",
+                            textAlign = TextAlign.Center,
+                            color = Color.White,
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 20.sp
+                        )
+                    }
                 }
             }
         }
@@ -378,7 +405,8 @@ fun ProductDetailsScreen(navController: NavController) {
                 {
                     Row(
                         modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
                         Text(
                             "Đánh giá sản phẩm",
@@ -387,10 +415,13 @@ fun ProductDetailsScreen(navController: NavController) {
                             fontSize = 20.sp
                         )
                         Text(
-                            "Xem tất cả >",
+                            "Xem tất cả",
                             color = Color(0xFF085979),
                             fontWeight = FontWeight.Bold,
-                            fontSize = 13.sp
+                            fontSize = 13.sp,
+                            modifier = Modifier.clickable {
+                                navController.navigate(Screen.Product_Reviews.route)
+                            }
                         )
                     }
                     Row(
@@ -445,15 +476,14 @@ fun ProductDetailsScreen(navController: NavController) {
                                 horizontalArrangement = Arrangement.End,
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
-                                Checkbox(
-                                    checked = isChecked1,
-                                    onCheckedChange = { isChecked1 = it },
-                                    colors = CheckboxDefaults.colors(
-                                        checkedColor = Color.Green, // Màu dấu tích khi được chọn
-                                        uncheckedColor = Color.Gray, // Màu của ô khi chưa được chọn
-                                        checkmarkColor = Color.White // Màu của dấu tích
+                                IconButton(onClick = {
+                                    isChecked1 = !isChecked1
+                                }) {
+                                    Icon(imageVector = Icons.Filled.ThumbUp,
+                                        contentDescription = "Like",
+                                        tint = if(isChecked1) Color(0xFFFBC02D) else Color.Gray
                                     )
-                                )
+                                }
                                 Text("Hữu ích", modifier = Modifier.padding(end = 5.dp))
                             }
                         }
@@ -494,15 +524,14 @@ fun ProductDetailsScreen(navController: NavController) {
                                 horizontalArrangement = Arrangement.End,
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
-                                Checkbox(
-                                    checked = isChecked2,
-                                    onCheckedChange = { isChecked2 = it },
-                                    colors = CheckboxDefaults.colors(
-                                        checkedColor = Color.Green, // Màu dấu tích khi được chọn
-                                        uncheckedColor = Color.Gray, // Màu của ô khi chưa được chọn
-                                        checkmarkColor = Color.White // Màu của dấu tích
+                                IconButton(onClick = {
+                                    isChecked2 = !isChecked2
+                                }) {
+                                    Icon(imageVector = Icons.Filled.ThumbUp,
+                                        contentDescription = "Like",
+                                        tint = if(isChecked2) Color(0xFFFBC02D) else Color.Gray
                                     )
-                                )
+                                }
                                 Text("Hữu ích", modifier = Modifier.padding(end = 5.dp))
                             }
                         }

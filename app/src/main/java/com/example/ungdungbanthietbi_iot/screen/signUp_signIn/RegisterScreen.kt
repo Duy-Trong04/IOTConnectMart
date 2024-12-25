@@ -18,12 +18,25 @@ import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.AccountBox
+import androidx.compose.material.icons.filled.AccountCircle
+import androidx.compose.material.icons.filled.Email
+import androidx.compose.material.icons.filled.Key
+import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material.icons.filled.Person4
+import androidx.compose.material.icons.filled.Phone
+import androidx.compose.material.icons.filled.Visibility
+import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextField
+import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -57,10 +70,11 @@ import com.example.ungdungbanthietbi_iot.navigation.Screen
  *
  * Output: Chứa các thành phần giao diện của màn hình đăng ký
  * ------------------------------------------------------------
- * Người cập nhật:
- * Ngày cập nhật:
+ *
+ * Người cập nhật: Duy Trọng
+ * Ngày cập nhật: 21/12/2024
  * ------------------------------------------------------------
- * Nội dung cập nhật:
+ * Nội dung cập nhật: chỉnh sửa lại các TextField, layout
  *
  */
 
@@ -104,11 +118,11 @@ fun RegisterScreen(navController: NavController) {
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
                 item {
-                    Spacer(modifier = Modifier.height(70.dp))
+                    Spacer(modifier = Modifier.height(50.dp))
 
                     Text(
                         text = "ĐĂNG KÝ",
-                        fontSize = 37.sp,
+                        fontSize = 27.sp,
                         color = Color(0xFF085979),
                         fontWeight = FontWeight.Bold
                     )
@@ -118,12 +132,10 @@ fun RegisterScreen(navController: NavController) {
                         // Thay "logo" bằng tên file ảnh của bạn
                         painter = painterResource(id = R.drawable.logo),
                         contentDescription = "Logo",
-                        modifier = Modifier.size(320.dp)
+                        modifier = Modifier.size(300.dp)
                     )
-
-                    Spacer(modifier = Modifier.height(8.dp))
                     Text(
-                        text = "IOT Connect Smart",
+                        text = "IOT Connect Mart",
                         fontSize = 27.sp,
                         color = Color(0xFF085979),
                         fontWeight = FontWeight.Bold
@@ -131,253 +143,167 @@ fun RegisterScreen(navController: NavController) {
 
                     Spacer(modifier = Modifier.height(16.dp))
                     //Họ
-                    Box(
-                        modifier = Modifier
-                            .width(350.dp)
-                            .padding(vertical = 8.dp)
-                            .background(Color.White, shape = MaterialTheme.shapes.small)
-                            .border(1.dp, Color(0xFF085979), shape = MaterialTheme.shapes.small)
-                    ) {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            modifier = Modifier.fillMaxWidth()
-                        ) {
-                            BasicTextField(
-                                value = ho,
-                                onValueChange = { ho = it },
-                                modifier = Modifier
-                                    .weight(1f)
-                                    .padding(vertical = 8.dp)
-                                    .background(Color.White, shape = MaterialTheme.shapes.small)
-                                    .focusRequester(focusRequesterHo)
-                                    .padding(8.dp),
-                                // khi người dùng chưa nhập thì hiện nội dung mặc định trong Text( cụ thể trong đây là Họ )
-                                decorationBox = { innerTextField ->
-                                    if (ho.isEmpty()) {
-                                        Text(text = "Họ", color = Color.Gray)
-                                    }
-                                    innerTextField()
-                                },
-                                keyboardOptions = KeyboardOptions.Default.copy(
-                                    imeAction = ImeAction.Next
-                                )
+                    TextField(
+                        value = ho,
+                        onValueChange = {ho = it},
+                        modifier = Modifier.width(350.dp).padding(4.dp),
+                        placeholder = { Text(text = "Họ") },
+                        leadingIcon = {
+                            Icon(imageVector = Icons.Default.AccountCircle,
+                                contentDescription = "Họ"
                             )
-                        }
-                    }
+                        },
+                        colors = TextFieldDefaults.colors(
+                            focusedContainerColor = Color.White,
+                            unfocusedContainerColor = Color.White,
+                            focusedIndicatorColor = Color(0xFF00C3FF)
+                        ),
+                        singleLine = true,
+                        keyboardOptions = KeyboardOptions.Default.copy(
+                            imeAction = ImeAction.Next
+                        )
+                    )
 
                     //Tên
-                    Box(
-                        modifier = Modifier
-                            .width(350.dp)
-                            .padding(vertical = 8.dp)
-                            .background(Color.White, shape = MaterialTheme.shapes.small)
-                            .border(1.dp, Color(0xFF085979), shape = MaterialTheme.shapes.small)
-                    ) {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            modifier = Modifier.fillMaxWidth()
-                        ) {
-                            BasicTextField(
-                                value = ten,
-                                onValueChange = { ten = it },
-                                modifier = Modifier
-                                    .weight(1f)
-                                    .padding(vertical = 8.dp)
-                                    .background(Color.White, shape = MaterialTheme.shapes.small)
-                                    .focusRequester(focusRequesterTen)
-                                    .padding(8.dp),
-                                // khi người dùng chưa nhập thì hiện nội dung mặc định trong Text( cụ thể trong đây là Tên )
-                                decorationBox = { innerTextField ->
-                                    if (ten.isEmpty()) {
-                                        Text(text = "Tên", color = Color.Gray)
-                                    }
-                                    innerTextField()
-                                },
-                                keyboardOptions = KeyboardOptions.Default.copy(
-                                    imeAction = ImeAction.Next
-                                )
+                    TextField(
+                        value = ten,
+                        onValueChange = {ten = it},
+                        modifier = Modifier.width(350.dp).padding(4.dp),
+                        placeholder = { Text(text = "Tên") },
+                        leadingIcon = {
+                            Icon(imageVector = Icons.Default.AccountBox,
+                                contentDescription = "Tên"
                             )
-                        }
-                    }
+                        },
+                        colors = TextFieldDefaults.colors(
+                            focusedContainerColor = Color.White,
+                            unfocusedContainerColor = Color.White,
+                            focusedIndicatorColor = Color(0xFF00C3FF)
+                        ),
+                        singleLine = true,
+                        keyboardOptions = KeyboardOptions.Default.copy(
+                            keyboardType = KeyboardType.Text,
+                            imeAction = ImeAction.Next
+                        )
+                    )
 
                     //SDT
-                    Box(
-                        modifier = Modifier
-                            .width(350.dp)
-                            .padding(vertical = 8.dp)
-                            .background(Color.White, shape = MaterialTheme.shapes.small)
-                            .border(1.dp, Color(0xFF085979), shape = MaterialTheme.shapes.small)
-                    ) {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            modifier = Modifier.fillMaxWidth()
-                        ) {
-                            BasicTextField(
-                                value = sdt,
-                                onValueChange = { sdt = it },
-                                modifier = Modifier
-                                    .weight(1f)
-                                    .padding(vertical = 8.dp)
-                                    .background(Color.White, shape = MaterialTheme.shapes.small)
-                                    .focusRequester(focusRequesterSdt)
-                                    .padding(8.dp),
-                                // khi người dùng chưa nhập thì hiện nội dung mặc định trong Text( cụ thể trong đây là SDT )
-                                decorationBox = { innerTextField ->
-                                    if (sdt.isEmpty()) {
-                                        Text(text = "SDT", color = Color.Gray)
-                                    }
-                                    innerTextField()
-                                },
-                                // Sử dụng bàn phím số
-                                keyboardOptions = KeyboardOptions.Default.copy(
-                                    keyboardType = KeyboardType.Number
-                                    , imeAction = ImeAction.Next
-                                )
+                    TextField(
+                        value = sdt,
+                        onValueChange = {sdt = it},
+                        modifier = Modifier.width(350.dp).padding(4.dp),
+                        placeholder = { Text(text = "SĐT") },
+                        leadingIcon = {
+                            Icon(imageVector = Icons.Default.Phone,
+                                contentDescription = "SĐT"
                             )
-                        }
-                    }
+                        },
+                        colors = TextFieldDefaults.colors(
+                            focusedContainerColor = Color.White,
+                            unfocusedContainerColor = Color.White,
+                            focusedIndicatorColor = Color(0xFF00C3FF)
+                        ),
+                        singleLine = true,
+                        keyboardOptions = KeyboardOptions.Default.copy(
+                            keyboardType = KeyboardType.Phone
+                            , imeAction = ImeAction.Next
+                        )
+                    )
 
                     //email
-                    Box(
-                        modifier = Modifier
-                            .width(350.dp)
-                            .padding(vertical = 8.dp)
-                            .background(Color.White, shape = MaterialTheme.shapes.small)
-                            .border(1.dp, Color(0xFF085979), shape = MaterialTheme.shapes.small)
-                    ) {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            modifier = Modifier.fillMaxWidth()
-                        ) {
-                            BasicTextField(
-                                value = email,
-                                onValueChange = { email = it },
-                                modifier = Modifier
-                                    .weight(1f)
-                                    .padding(vertical = 8.dp)
-                                    .background(Color.White, shape = MaterialTheme.shapes.small)
-                                    .focusRequester(focusRequesterEmail)
-                                    .padding(8.dp),
-                                // khi người dùng chưa nhập thì hiện nội dung mặc định trong Text( cụ thể trong đây là Email )
-                                decorationBox = { innerTextField ->
-                                    if (email.isEmpty()) {
-                                        Text(text = "Email", color = Color.Gray)
-                                    }
-                                    innerTextField()
-                                },
-                                keyboardOptions = KeyboardOptions.Default.copy(
-                                    imeAction = ImeAction.Next
-                                )
+                    TextField(
+                        value = email,
+                        onValueChange = {email = it},
+                        modifier = Modifier.width(350.dp).padding(4.dp),
+                        placeholder = { Text(text = "Email") },
+                        leadingIcon = {
+                            Icon(imageVector = Icons.Default.Email,
+                                contentDescription = "Email"
                             )
-                        }
-                    }
+                        },
+                        colors = TextFieldDefaults.colors(
+                            focusedContainerColor = Color.White,
+                            unfocusedContainerColor = Color.White,
+                            focusedIndicatorColor = Color(0xFF00C3FF)
+                        ),
+                        singleLine = true,
+                        keyboardOptions = KeyboardOptions.Default.copy(
+                            keyboardType = KeyboardType.Email,
+                            imeAction = ImeAction.Next
+                        )
+                    )
 
                     // Password
-                    Box(
-                        modifier = Modifier
-                            .width(350.dp)
-                            .padding(vertical = 8.dp)
-                            .background(Color.White, shape = MaterialTheme.shapes.small)
-                            .border(1.dp, Color(0xFF085979), shape = MaterialTheme.shapes.small)
-                    ) {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            modifier = Modifier.fillMaxWidth()
-                        ) {
-                            BasicTextField(
-                                value = password,
-                                onValueChange = { password = it },
-                                modifier = Modifier
-                                    .weight(1f)
-                                    .padding(vertical = 8.dp)
-                                    .background(Color.White, shape = MaterialTheme.shapes.small)
-                                    .focusRequester(focusRequesterPassword)
-                                    .padding(8.dp),
-                                // Ẩn/hiện nội dung của Password
-                                visualTransformation = if (isPasswordVisible) VisualTransformation.None else PasswordVisualTransformation(),
-                                // khi người dùng chưa nhập thì hiện nội dung mặc định trong Text( cụ thể trong đây là Password )
-                                decorationBox = { innerTextField ->
-                                    if (password.isEmpty()) {
-                                        Text(text = "Password", color = Color.Gray)
-                                    }
-                                    innerTextField()
-                                },
-                                keyboardOptions = KeyboardOptions.Default.copy(
-                                    imeAction = ImeAction.Next
+                    TextField(
+                        value = password,
+                        onValueChange = {password = it},
+                        modifier = Modifier.width(350.dp).padding(4.dp),
+                        placeholder = { Text(text = "Password") },
+                        leadingIcon = {
+                            Icon(imageVector = Icons.Default.Lock,
+                                contentDescription = "Password"
+                            )
+                        },
+                        trailingIcon = {
+                            IconButton(onClick = { isPasswordVisible = !isPasswordVisible }) {
+                                Icon(imageVector = if (isPasswordVisible) Icons.Filled.Visibility else Icons.Filled.VisibilityOff,
+                                    contentDescription = if (isPasswordVisible) "Ẩn mật khẩu" else "Hiện mật khẩu"
                                 )
-                            )
-                            Image(
-                                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                                contentDescription = "",
-                                modifier = Modifier
-                                    .size(20.dp)
-                                    // Đổi trạng thái Password khi nhấn
-                                    .clickable{
-                                        isPasswordVisible=!isPasswordVisible
-                                    },
-                            )
-                        }
-                    }
+                            }
+                        },
+                        colors = TextFieldDefaults.colors(
+                            focusedContainerColor = Color.White,
+                            unfocusedContainerColor = Color.White,
+                            focusedIndicatorColor = Color(0xFF00C3FF)
+                        ),
+                        singleLine = true,
+                        visualTransformation = if (isPasswordVisible) VisualTransformation.None else PasswordVisualTransformation(),
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password,
+                            imeAction = ImeAction.Next
+                        )
+                    )
 
                     // Comfirm Password
-                    Box(
-                        modifier = Modifier
-                            .width(350.dp)
-                            .padding(vertical = 8.dp)
-                            .background(Color.White, shape = MaterialTheme.shapes.small)
-                            .focusRequester(focusRequesterComfirmPassword)
-                            .border(1.dp, Color(0xFF085979), shape = MaterialTheme.shapes.small)
-                    ) {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            modifier = Modifier.fillMaxWidth()
-                        ) {
-                            BasicTextField(
-                                value = comfirmPassword,
-                                onValueChange = { comfirmPassword = it },
-                                modifier = Modifier
-                                    .weight(1f)
-                                    .padding(vertical = 8.dp)
-                                    .background(Color.White, shape = MaterialTheme.shapes.small)
-                                    .padding(8.dp),
-                                // Ẩn/hiện nội dung của Comfirm Password
-                                visualTransformation = if (isComfirmPasswordVisible) VisualTransformation.None else PasswordVisualTransformation(),
-                                // khi người dùng chưa nhập thì hiện nội dung mặc định trong Text( cụ thể trong đây là Comfirm Password )
-                                decorationBox = { innerTextField ->
-                                    if (comfirmPassword.isEmpty()) {
-                                        Text(text = "Comfirm Password", color = Color.Gray)
-                                    }
-                                    innerTextField()
-                                },
-                                keyboardOptions = KeyboardOptions.Default.copy(
-                                    imeAction = ImeAction.Done
+                    TextField(
+                        value = comfirmPassword,
+                        onValueChange = {comfirmPassword = it},
+                        modifier = Modifier.width(350.dp).padding(4.dp),
+                        placeholder = { Text(text = "Comfirm Password") },
+                        leadingIcon = {
+                            Icon(imageVector = Icons.Default.Lock,
+                                contentDescription = "Comfirm Password"
+                            )
+                        },
+                        trailingIcon = {
+                            IconButton(onClick = { isComfirmPasswordVisible = !isComfirmPasswordVisible }) {
+                                Icon(imageVector = if (isComfirmPasswordVisible) Icons.Filled.Visibility else Icons.Filled.VisibilityOff,
+                                    contentDescription = if (isComfirmPasswordVisible) "Ẩn mật khẩu" else "Hiện mật khẩu"
                                 )
-                            )
-                            Image(
-                                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                                contentDescription ="",
-                                modifier = Modifier
-                                    .size(20.dp)
-                                    // Đổi trang thái Comfirm Password khi nhấn
-                                    .clickable{
-                                      isComfirmPasswordVisible=!isComfirmPasswordVisible
-                                    },
-                            )
-                        }
-                    }
-
+                            }
+                        },
+                        colors = TextFieldDefaults.colors(
+                            focusedContainerColor = Color.White,
+                            unfocusedContainerColor = Color.White,
+                            focusedIndicatorColor = Color(0xFF00C3FF)
+                        ),
+                        singleLine = true,
+                        visualTransformation = if (isComfirmPasswordVisible) VisualTransformation.None else PasswordVisualTransformation(),
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password,
+                            imeAction = ImeAction.Done
+                        )
+                    )
 
                     Spacer(modifier = Modifier.height(16.dp))
                     Row() {
                         Text(
                             text = "Bạn đã có tài khoản? ",
-                            fontSize = 14.sp,
+                            fontSize = 15.sp,
                             color = Color.Black,
                             textAlign = TextAlign.Center, fontWeight = FontWeight.Bold
                         )
                         Text(
                             text = "Đăng nhập",
-                            fontSize = 14.sp,
+                            fontSize = 15.sp,
                             color = Color.Red,
                             textAlign = TextAlign.Center, fontWeight = FontWeight.Bold,
                             modifier = Modifier.clickable { /* Chuyển sang màn hình đăng nhập(LoginScreen) */
@@ -393,16 +319,14 @@ fun RegisterScreen(navController: NavController) {
                             navController.navigate(Screen.LoginScreen.route)
                         },
                         modifier = Modifier
-                            .width(370.dp)
+                            .width(350.dp)
                             .padding(bottom = 10.dp)
-                            .height(50.dp),
+                            .height(45.dp),
                         shape = MaterialTheme.shapes.small,
                         colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF00C3FF))
                     ) {
-                        Text(text = "ĐĂNG KÝ", fontSize = 30.sp, fontWeight = FontWeight.Bold)
+                        Text(text = "ĐĂNG KÝ", fontSize = 23.sp, fontWeight = FontWeight.Bold)
                     }
-
-
                 }
             }
         }

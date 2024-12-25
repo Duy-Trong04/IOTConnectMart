@@ -75,7 +75,8 @@ fun AddAddressScreen(navController: NavController){
         topBar = {
             TopAppBar(
                 title = { Text("Thêm địa chỉ", textAlign = TextAlign.Center,
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier.fillMaxWidth(),
+                    fontWeight = FontWeight.Bold
                 )},
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = Color(0xFF5D9EFF),
@@ -123,7 +124,7 @@ fun AddAddressScreen(navController: NavController){
                             checked = isDefaultAddress,
                             onCheckedChange = { isDefaultAddress = it },
                             colors = SwitchDefaults.colors(
-                                checkedThumbColor = Color(0xFF00C3FF),// Màu khi bật
+                                checkedThumbColor = Color.White,// Màu khi bật
                                 uncheckedThumbColor = Color.Gray, // Màu khi tắt
                                 checkedTrackColor = Color(0xFF5D9EFF)// Màu đường chạy khi bật
                             ),

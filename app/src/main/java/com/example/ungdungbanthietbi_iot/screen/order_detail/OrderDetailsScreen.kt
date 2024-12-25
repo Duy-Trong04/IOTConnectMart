@@ -1,6 +1,7 @@
 package com.example.ungdungbanthietbi_iot.screen.order_detail
 
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -24,7 +25,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
@@ -41,7 +41,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
-import com.example.ungdungbanthietbi_iot.ProductState
+import com.example.ungdungbanthietbi_iot.data.Product
+import com.example.ungdungbanthietbi_iot.navigation.Screen
 
 /** Giao diện màn hình chi tiết đơn hàng (OrderDetailsScreen)
  * -------------------------------------------
@@ -75,9 +76,9 @@ fun OrderDetailsScreen(navController: NavController) {
     // Lưu trạng thái các sản phẩm trong đơn hàng
     var products by remember {
         mutableStateOf(listOf(
-            ProductState(1, "Sản phẩm 1", 10000.0, 1, "placeholder", false),
-            ProductState(2, "Sản phẩm 2", 20000.0, 2, "placeholder", false),
-            ProductState(3, "Sản phẩm 3", 30000.0, 1, "placeholder", false),
+            Product(1, "Sản phẩm 1", 10000.0, 1, "placeholder", false),
+            Product(2, "Sản phẩm 2", 20000.0, 2, "placeholder", false),
+            Product(3, "Sản phẩm 3", 30000.0, 1, "placeholder", false),
         ))
     }
     // Tính tổng tiền của các sản phẩm trong đơn hàng
@@ -91,7 +92,8 @@ fun OrderDetailsScreen(navController: NavController) {
                     Text(
                         "Thông tin đơn hàng",
                         textAlign = TextAlign.Center,
-                        modifier = Modifier.fillMaxWidth()
+                        modifier = Modifier.fillMaxWidth(),
+                        fontWeight = FontWeight.Bold
                     )
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -205,12 +207,13 @@ fun OrderDetailsScreen(navController: NavController) {
                         fontSize = 16.sp,
                         modifier = Modifier.padding(bottom = 8.dp)
                     )
-                    TextButton(onClick = {} ){
-                        Text(text = "Sửa", fontSize = 16.sp,
-                            color = Color(0xFF5D9EFF),
-                            modifier = Modifier.padding(bottom = 8.dp)
-                        )
-                    }
+                    Text(text = "Sửa", fontSize = 16.sp,
+                        color = Color(0xFF5D9EFF),
+                        modifier = Modifier.padding(bottom = 8.dp)
+                            .clickable {
+                                navController.navigate(Screen.Address_Selection.route)
+                            }
+                    )
                 }
                 Card(
                     shape = RoundedCornerShape(8.dp),

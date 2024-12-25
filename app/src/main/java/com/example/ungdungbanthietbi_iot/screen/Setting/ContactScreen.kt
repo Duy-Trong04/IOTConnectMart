@@ -95,7 +95,7 @@ fun ContactScreen(onBack: () -> Unit = {}) {
                     OutlinedTextField(
                         value = "",
                         onValueChange = {},
-                        label = { Text("Nội dung: ") },
+                        label = { Text("Nội dung") },
                         modifier = Modifier.fillMaxWidth().height(250.dp)
                     )
                 }

@@ -51,7 +51,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
-import com.example.ungdungbanthietbi_iot.ProductState
+import com.example.ungdungbanthietbi_iot.data.Product
 import com.example.ungdungbanthietbi_iot.navigation.Screen
 
 /** Giao diện màn hình tìm kiếm (SearchScreen)
@@ -83,23 +83,22 @@ fun SearchScreen(navController: NavController){
 
     // Kết quả tìm kiếm (fake)
     val searchResults = listOf(
-        ProductState(1, "Sản phẩm A", 100000.0, 1, "placeholder",true),
-        ProductState(2, "Sản phẩm B", 1500000.0, 1, "placeholder", true),
-        ProductState(3, "Sản phẩm C", 500000.0, 1, "placeholder", true)
+        Product(1, "Sản phẩm A", 100000.0, 1, "placeholder",true),
+        Product(2, "Sản phẩm B", 1500000.0, 1, "placeholder", true),
+        Product(3, "Sản phẩm C", 500000.0, 1, "placeholder", true)
     )
 
     // Danh sách các sản phẩm (giả lập)
     var products by remember {
         mutableStateOf(listOf(
-            ProductState(1, "Product 1", 10000.0, 1, "placeholder", false),
-            ProductState(2, "Product 2", 20000.0, 2, "placeholder", false),
-            ProductState(3, "Product 3", 15000.0, 1, "placeholder", false),
-            ProductState(4, "Product 4", 10000.0, 1, "placeholder", false),
-            ProductState(5, "Product 5", 20000.0, 2, "placeholder", false),
-            ProductState(6, "Product 6", 15000.0, 1, "placeholder", false),
-            ProductState(7, "Product 7", 10000.0, 1, "placeholder", false),
-            ProductState(8, "Product 8", 20000.0, 2, "placeholder", false),
-            ProductState(9, "Product 9", 15000.0, 1, "placeholder", false)
+            Product(1, "Product 1", 10000.0, 1, "placeholder", false),
+            Product(2, "Product 2", 20000.0, 2, "placeholder", false),
+            Product(3, "Product 3", 15000.0, 1, "placeholder", false),
+            Product(4, "Product 4", 10000.0, 1, "placeholder", false),
+            Product(5, "Product 5", 20000.0, 2, "placeholder", false),
+            Product(6, "Product 6", 15000.0, 1, "placeholder", false),
+            Product(7, "Product 7", 10000.0, 1, "placeholder", false),
+            Product(8, "Product 8", 20000.0, 2, "placeholder", false),
         ))
     }
 
@@ -231,7 +230,7 @@ fun SearchScreen(navController: NavController){
                 )
                 LazyColumn(modifier = Modifier.fillMaxSize()) {
                     items(searchResults) { product ->
-                        ProductItem(product)
+                        ProductItem(product, navController)
                     }
                 }
             }
@@ -257,11 +256,13 @@ fun SearchScreen(navController: NavController){
  *
  */
 @Composable
-fun ProductItem(product: ProductState) {
+fun ProductItem(product: Product, navController: NavController) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable { /* Mở chi tiết sản phẩm */ }
+            .clickable {
+                navController.navigate(Screen.ProductDetailsScreen.route)
+            }
             .padding(16.dp)
     ) {
         Column(modifier = Modifier.weight(1f)) {
@@ -289,7 +290,7 @@ fun ProductItem(product: ProductState) {
  *
  */
 @Composable
-fun SearchSuggestion(product: ProductState) {
+fun SearchSuggestion(product: Product) {
     Box(
         modifier = Modifier
             .fillMaxWidth()

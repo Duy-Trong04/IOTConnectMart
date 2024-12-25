@@ -43,8 +43,9 @@ fun AccountSettingsScreen(navController: NavHostController, onBack: () -> Unit =
             TopAppBar(
                 title = {
                     Text("Thiết lập tài khoản",
-                        fontSize = 20.sp,
-                        fontWeight = FontWeight.Bold
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier.fillMaxWidth(),
+                        textAlign = TextAlign.Center
                     ) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
@@ -66,7 +67,9 @@ fun AccountSettingsScreen(navController: NavHostController, onBack: () -> Unit =
             ) {
                 item{ Text(text = "Tài khoản", fontWeight = FontWeight.Bold,fontSize = 16.sp) }
                 item { SettingItem(title = "Đổi mật khẩu", onClick = { /* Thêm chức năng đổi mật khẩu */navController.navigate(Screen.ChangePassword.route) }) }
-                item { SettingItem(title = "Địa chỉ", onClick = { /* Thêm chức năng cho địa chỉ */ }) }
+                item { SettingItem(title = "Địa chỉ", onClick = {
+                        navController.navigate(Screen.Address_Selection.route) })
+                }
                 item { SettingItem(title = "Tài khoản / Thẻ ngân hàng", onClick = { /* Thêm chức năng cho tài khoản / thẻ ngân hàng */ }) }
 
                 item{ Text(text = "Cài đặt", fontWeight = FontWeight.Bold,fontSize = 16.sp) }
@@ -141,6 +144,12 @@ fun SettingItem(title: String, onClick: () -> Unit) {
             .padding(8.dp),
         contentAlignment = Alignment.CenterStart
     ) {
-        Text(text = title, fontSize = 16.sp)
+        Column (
+            modifier = Modifier.fillMaxWidth()
+        ){
+            Text(text = title, fontSize = 16.sp)
+            Spacer(modifier = Modifier.height(5.dp))
+            Divider()
+        }
     }
 }

@@ -46,7 +46,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
-import com.example.ungdungbanthietbi_iot.ProductState
+import com.example.ungdungbanthietbi_iot.data.Product
 import com.example.ungdungbanthietbi_iot.navigation.Screen
 
 
@@ -72,12 +72,12 @@ fun CheckoutScreen(navController:NavController) {
     // Danh sách sản phẩm (fake)
     val products = remember {
         mutableStateListOf(
-            ProductState(1, "Sản phẩm 1", 100000.0, 1, "placeholder", true),
-            ProductState(2, "Sản phẩm 2", 150000.0, 2, "placeholder", true),
-            ProductState(3, "Sản phẩm 1", 100000.0, 1, "placeholder", true),
-            ProductState(4, "Sản phẩm 2", 150000.0, 2, "placeholder", true),
-            ProductState(5, "Sản phẩm 1", 100000.0, 1, "placeholder", true),
-            ProductState(6, "Sản phẩm 2", 150000.0, 2, "placeholder", true)
+            Product(1, "Sản phẩm 1", 100000.0, 1, "placeholder", true),
+            Product(2, "Sản phẩm 2", 150000.0, 2, "placeholder", true),
+            Product(3, "Sản phẩm 1", 100000.0, 1, "placeholder", true),
+            Product(4, "Sản phẩm 2", 150000.0, 2, "placeholder", true),
+            Product(5, "Sản phẩm 1", 100000.0, 1, "placeholder", true),
+            Product(6, "Sản phẩm 2", 150000.0, 2, "placeholder", true)
         )
     }
 
@@ -98,7 +98,8 @@ fun CheckoutScreen(navController:NavController) {
         topBar = {
             TopAppBar(
                 title = { Text("Thanh toán", modifier = Modifier.fillMaxWidth(),
-                    textAlign = TextAlign.Center
+                    textAlign = TextAlign.Center,
+                    fontWeight = FontWeight.Bold
                 ) },
                 navigationIcon = {
                     IconButton(onClick = {
@@ -251,7 +252,7 @@ fun CheckoutScreen(navController:NavController) {
  */
 @Composable
 fun CheckoutItem(
-    product: ProductState,
+    product: Product,
 ) {
     Row(
         modifier = Modifier

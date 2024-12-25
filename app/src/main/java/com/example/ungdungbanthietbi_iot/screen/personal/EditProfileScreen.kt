@@ -11,6 +11,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.ArrowForwardIos
 import androidx.compose.material.icons.filled.Done
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -128,8 +129,7 @@ fun EditProfileScreen(navController: NavHostController) {
                     }
                 }
                 item {
-                    BoxEditProfile(label = "Tên người dùng", value = userName, onClick = { /*Chuyển trang đổi user name*/navController.navigate(
-                        Screen.EditUsernamScreen.route) })
+                    BoxEditProfile(label = "Tên người dùng", value = userName, onClick = { /*Chuyển trang đổi user name*/navController.navigate(Screen.EditUsernamScreen.route) })
                 }
                 item {
                     BoxEditProfile(label = "Giới tính", value = gender, onClick = { /*Chuyển trang đổi giới tính*/ showGenderDialog=true})
@@ -189,7 +189,16 @@ fun BoxEditProfile(label: String, value: String, onClick: () -> Unit) {
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
             Text(label, fontWeight = FontWeight.Bold)
-            Text(value, color = if (value.isEmpty()) Color.Gray else Color.Black)
+            Row (
+                verticalAlignment = Alignment.CenterVertically
+            ){
+                Text(value, color = if (value.isEmpty()) Color.Gray else Color.Black)
+                Icon(imageVector = Icons.Filled.ArrowForwardIos,
+                    contentDescription = "",
+                    modifier = Modifier.size(20.dp).padding(start = 10.dp)
+                )
+            }
         }
     }
+    Divider()
 }

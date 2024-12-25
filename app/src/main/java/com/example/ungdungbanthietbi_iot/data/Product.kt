@@ -1,8 +1,10 @@
 package com.example.ungdungbanthietbi_iot.data
 
 data class Product(
-    val Id: Int,
-    val NameProduct: String,
-    val Price: Int,
-    val ImageUrl: String
+    val id: Int,
+    val name: String,
+    val price: Double,
+    var quantity: Int,
+    val imageUrl: String,
+    var isSelected: Boolean
 )

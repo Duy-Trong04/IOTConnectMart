@@ -23,7 +23,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
-import com.example.ungdungbanthietbi_iot.ProductState
+import com.example.ungdungbanthietbi_iot.data.Product
 import com.example.ungdungbanthietbi_iot.navigation.Screen
 
 
@@ -50,9 +50,9 @@ fun CartScreen(navController: NavController) {
     var products by remember {
         mutableStateOf(
             listOf(
-                ProductState(1, "Product 1", 10000.0, 1, "placeholder", false),
-                ProductState(2, "Product 2", 20000.0, 2, "placeholder", false),
-                ProductState(3, "Product 3", 15000.0, 1, "placeholder", false)
+                Product(1, "Product 1", 10000.0, 1, "placeholder", false),
+                Product(2, "Product 2", 20000.0, 2, "placeholder", false),
+                Product(3, "Product 3", 15000.0, 1, "placeholder", false)
             )
         )
     }
@@ -85,7 +85,8 @@ fun CartScreen(navController: NavController) {
             TopAppBar(
                 modifier = Modifier.fillMaxWidth(),
                 title = { Text("Giỏ hàng", textAlign = TextAlign.Center,
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier.fillMaxWidth(),
+                    fontWeight = FontWeight.Bold
                 )},
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = Color(0xFF5D9EFF),
@@ -144,7 +145,7 @@ fun CartScreen(navController: NavController) {
                                     uncheckedColor = Color.Gray
                                 )
                             )
-                            Text("Tất cả")
+                            Text(text = "Tất cả")
                         }
                         // Hiển thị tổng giá thanh toán
                         Text(
@@ -223,7 +224,7 @@ fun CartScreen(navController: NavController) {
  */
 @Composable
 fun CartItem(
-    product: ProductState,
+    product: Product,
     onRemove: () -> Unit,
     onQuantityChange: (Int) -> Unit,
     onSelectChange: (Boolean) -> Unit

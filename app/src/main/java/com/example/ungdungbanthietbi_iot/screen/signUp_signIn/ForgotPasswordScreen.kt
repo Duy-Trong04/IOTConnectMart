@@ -15,12 +15,17 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Email
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextField
+import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -34,6 +39,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
@@ -50,11 +56,11 @@ import com.example.ungdungbanthietbi_iot.navigation.Screen
  *
  * Output: Chứa các thành phần giao diện của màn hình lấy lại mật khẩu
  * ---------------------------------------------------------------------
- * Người cập nhật:
+ * Người cập nhật:Duy Trọng
  * --------------------------------------------------------------------
- * Ngày cập nhật:
+ * Ngày cập nhật:21/12/2024
  * ----------------------------------------------------------------------
- * Nội dung cập nhật:
+ * Nội dung cập nhật:Chỉnh sửa lại TextField, layout
  *
  */
 
@@ -77,7 +83,7 @@ fun ForgotPasswordScreen(navController: NavController) {
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
                 item {
-                    Spacer(modifier = Modifier.height(70.dp))
+                    Spacer(modifier = Modifier.height(50.dp))
 
                     Text(
                         text = "KHÔI PHỤC MẬT KHẨU",
@@ -91,12 +97,11 @@ fun ForgotPasswordScreen(navController: NavController) {
                         // Thay "logo" bằng tên file ảnh
                         painter = painterResource(id = R.drawable.logo),
                         contentDescription = "Logo",
-                        modifier = Modifier.size(320.dp)
+                        modifier = Modifier.size(300.dp)
                     )
 
-                    Spacer(modifier = Modifier.height(8.dp))
                     Text(
-                        text = "IOT Connect Smart",
+                        text = "IOT Connect Mart",
                         fontSize = 27.sp,
                         color = Color(0xFF085979),
                         fontWeight = FontWeight.Bold
@@ -104,39 +109,27 @@ fun ForgotPasswordScreen(navController: NavController) {
 
                     Spacer(modifier = Modifier.height(16.dp))
                     //email
-                    Box(
-                        modifier = Modifier
-                            .width(350.dp)
-                            .padding(vertical = 8.dp)
-                            .background(Color.White, shape = MaterialTheme.shapes.small)
-                            .border(1.dp, Color(0xFF085979), shape = MaterialTheme.shapes.small)
-                    ) {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            modifier = Modifier.fillMaxWidth()
-                        ) {
-                            BasicTextField(
-                                value = email,
-                                onValueChange = { email = it },
-                                modifier = Modifier
-                                    .weight(1f)
-                                    .padding(vertical = 8.dp)
-                                    .background(Color.White, shape = MaterialTheme.shapes.small)
-                                    .focusRequester(focusRequesterEmail)
-                                    .padding(8.dp),
-                                // khi người dùng chưa nhập thì hiện nội dung mặc định trong Text( cụ thể trong đây là Email )
-                                decorationBox = { innerTextField ->
-                                    if (email.isEmpty()) {
-                                        Text(text = "Email", color = Color.Gray)
-                                    }
-                                    innerTextField()
-                                },
-                                keyboardOptions = KeyboardOptions.Default.copy(
-                                    imeAction = ImeAction.Done
-                                )
+                    TextField(
+                        value = email,
+                        onValueChange = {email = it},
+                        modifier = Modifier.width(350.dp).padding(4.dp),
+                        placeholder = { Text(text = "Email") },
+                        leadingIcon = {
+                            Icon(imageVector = Icons.Default.Email,
+                                contentDescription = "Email"
                             )
-                        }
-                    }
+                        },
+                        colors = TextFieldDefaults.colors(
+                            focusedContainerColor = Color.White,
+                            unfocusedContainerColor = Color.White,
+                            focusedIndicatorColor = Color(0xFF00C3FF)
+                        ),
+                        singleLine = true,
+                        keyboardOptions = KeyboardOptions.Default.copy(
+                            keyboardType = KeyboardType.Email,
+                            imeAction = ImeAction.Done
+                        )
+                    )
 
                     //Button
                     Spacer(modifier = Modifier.height(16.dp))
@@ -145,13 +138,13 @@ fun ForgotPasswordScreen(navController: NavController) {
                             navController.navigate(Screen.VerifyOTPScreen.route)
                         },
                         modifier = Modifier
-                            .width(370.dp)
+                            .width(350.dp)
                             .padding(horizontal = 10.dp)
-                            .height(50.dp),
+                            .height(45.dp),
                         shape = MaterialTheme.shapes.small,
                         colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF00C3FF))
                     ) {
-                        Text(text = "GỬI YÊU CẦU", fontSize = 30.sp, fontWeight = FontWeight.Bold)
+                        Text(text = "GỬI YÊU CẦU", fontSize = 23.sp, fontWeight = FontWeight.Bold)
                     }
 
                 }
