@@ -73,4 +73,8 @@ dependencies {
     implementation("androidx.compose.foundation:foundation:1.7.6")
     implementation("androidx.compose.animation:animation:1.7.6")
     implementation ("androidx.compose.material:material-icons-extended:1.5.1")
+
+    implementation("com.squareup.retrofit2:retrofit:2.9.0")
+    implementation("com.squareup.retrofit2:converter-gson:2.9.0")
+    //implementation("com.google.code.gson:gson:2.10.1")
 }

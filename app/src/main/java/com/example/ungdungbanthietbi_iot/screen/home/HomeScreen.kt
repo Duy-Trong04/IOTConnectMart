@@ -19,6 +19,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -35,6 +36,8 @@ import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.ShoppingCart
 import androidx.compose.material.icons.filled.Upload
 import androidx.compose.material3.BottomAppBar
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FabPosition
@@ -43,6 +46,7 @@ import androidx.compose.material3.FloatingActionButtonDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalDrawerSheet
 import androidx.compose.material3.ModalNavigationDrawer
 import androidx.compose.material3.NavigationBar
@@ -68,15 +72,22 @@ import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
+import coil.compose.AsyncImage
+import coil.request.ImageRequest
 import com.example.ungdungbanthietbi_iot.R
+import com.example.ungdungbanthietbi_iot.data.device.Device
+import com.example.ungdungbanthietbi_iot.data.device.DeviceViewModel
 import com.example.ungdungbanthietbi_iot.navigation.Screen
 import kotlinx.coroutines.launch
+import java.text.DecimalFormat
 
 /** Giao diện màn hình Trang chủ (HomeScreen)
  * -------------------------------------------
@@ -98,7 +109,9 @@ import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun HomeScreen(navController: NavController) {
+fun HomeScreen(navController: NavController, deviceViewModel: DeviceViewModel) {
+    deviceViewModel.getAllDevice()
+    var listDevice : List<Device> = deviceViewModel.listDevice
     val navdrawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     val scope = rememberCoroutineScope() //xử lý suspending fun (mở và đóng drawer)
     val countries = listOf(
@@ -107,6 +120,7 @@ fun HomeScreen(navController: NavController) {
         "Thiết bị cảm biến",
         "Xả kho",
     )
+
     // Tạo LazyListState để quản lý trạng thái cuộn
     val listState = rememberLazyListState()
     // Coroutine để thực hiện cuộn
@@ -452,126 +466,28 @@ fun HomeScreen(navController: NavController) {
                                 .padding(4.dp)
                         )
                     }
-
+                }
+                item {
                     // Sản phẩm nổi bật
                     Text("Sản phẩm nổi bật", modifier = Modifier.padding(20.dp),
                         color = Color(0xFF085979),
                         fontWeight = FontWeight.Bold
                     )
-                    LazyRow(modifier = Modifier.fillMaxWidth().padding(10.dp)
-                        .clickable{
-                            // Chuyển sang màn hình chi tiết sản phẩm(ProductDetailsScreen)
-                            navController.navigate(Screen.ProductDetailsScreen.route)
-                        },
+                    LazyRow(
+                        modifier = Modifier.fillMaxWidth().padding(10.dp),
                         horizontalArrangement = Arrangement.Start
-                        ) {
-                        item {
-                            Box(
-                                modifier = Modifier.fillMaxWidth()
-                            ) {
-                                Column(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    horizontalAlignment = Alignment.CenterHorizontally
-                                ) {
-                                    Image(
-                                        painter = painterResource(R.drawable.den1),
-                                        contentDescription = "sp nổi bật",
-                                        modifier = Modifier
-                                            .width(150.dp)
-                                            .height(100.dp)
-                                    )
-                                    Text("Tên sản phầm")
-                                    Text(
-                                        "Giá sản phẩm", color = Color.Red,
-                                        modifier = Modifier.fillMaxWidth(),
-                                        textAlign = TextAlign.Center
-                                    )
-                                }
-                                IconButton(onClick = {
-                                    isFavorite = !isFavorite
-                                    //Thêm vào danh sách yêu thích or xóa khỏi danh sách
+                    ) {
+                        items(listDevice){
+                            CardDeviceFeatured(device = it,
+                                onClick = {
+                                    navController.navigate(Screen.ProductDetailsScreen.route+"?id=${it.idDevice}")
                                 },
-                                    modifier = Modifier.size(20.dp).align(Alignment.TopEnd)
-                                ) {
-                                    Icon(imageVector = if(isFavorite) Icons.Filled.Favorite else Icons.Filled.FavoriteBorder,
-                                        contentDescription = "",
-                                        tint = Color.Red
-                                    )
-                                }
-                            }
-                        }
-                        item {
-                            Box(
-                                modifier = Modifier.fillMaxWidth()
-                            ) {
-                                Column(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    horizontalAlignment = Alignment.CenterHorizontally
-                                ) {
-                                    Image(
-                                        painter = painterResource(R.drawable.den2),
-                                        contentDescription = "sp nổi bật",
-                                        modifier = Modifier
-                                            .width(150.dp)
-                                            .height(100.dp)
-                                    )
-                                    Text("Tên sản phầm")
-                                    Text(
-                                        "Giá sản phẩm", color = Color.Red,
-                                        modifier = Modifier.fillMaxWidth(),
-                                        textAlign = TextAlign.Center
-                                    )
-                                }
-                                IconButton(onClick = {
-                                    isFavorite = !isFavorite
-                                    //Thêm vào danh sách yêu thích or xóa khỏi danh sách
-                                },
-                                    modifier = Modifier.size(20.dp).align(Alignment.TopEnd)
-                                ) {
-                                    Icon(imageVector = if(isFavorite) Icons.Filled.Favorite else Icons.Filled.FavoriteBorder,
-                                        contentDescription = "",
-                                        tint = Color.Red
-                                    )
-                                }
-                            }
-                        }
-                        item{
-                            Box(
-                                modifier = Modifier.fillMaxWidth()
-                            ) {
-                                Column(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    horizontalAlignment = Alignment.CenterHorizontally
-                                ) {
-                                    Image(
-                                        painter = painterResource(R.drawable.den3),
-                                        contentDescription = "sp nổi bật",
-                                        modifier = Modifier
-                                            .width(150.dp)
-                                            .height(100.dp)
-                                    )
-                                    Text("Tên sản phầm")
-                                    Text(
-                                        "Giá sản phẩm", color = Color.Red,
-                                        modifier = Modifier.fillMaxWidth(),
-                                        textAlign = TextAlign.Center
-                                    )
-                                }
-                                IconButton(onClick = {
-                                    isFavorite = !isFavorite
-                                    //Thêm vào danh sách yêu thích or xóa khỏi danh sách
-                                },
-                                    modifier = Modifier.size(20.dp).align(Alignment.TopEnd)
-                                ) {
-                                    Icon(imageVector = if(isFavorite) Icons.Filled.Favorite else Icons.Filled.FavoriteBorder,
-                                        contentDescription = "",
-                                        tint = Color.Red
-                                    )
-                                }
-                            }
+                                isFavorite = isFavorite
+                            )
                         }
                     }
-
+                }
+                item {
                     // Sản phầm yêu thích
                     Row(
                         modifier = Modifier.fillMaxWidth(),
@@ -685,7 +601,8 @@ fun HomeScreen(navController: NavController) {
                             }
                         }
                     }
-
+                }
+                item {
                     // Gợi ý sản phẩm
                     Text("Gợi ý sản phẩm", modifier = Modifier.padding(20.dp),
                         color = Color(0xFF085979),
@@ -788,5 +705,80 @@ fun HomeScreen(navController: NavController) {
                 }
             }
         }
+    }
+}
+
+@Composable
+fun CardDeviceFeatured(device: Device, onClick: () -> Unit, isFavorite:Boolean){
+    var currentFavorite by remember { mutableStateOf(isFavorite) } // Quản lý trạng thái yêu thích
+    //format giá sản phẩm
+    val formatter = DecimalFormat("#,###,###")
+    val formattedPrice = formatter.format(device.sellingPrice)
+    Card(
+        modifier = Modifier.width(200.dp)// Đặt chiều rộng cố định cho Card
+            .height(230.dp)
+            .padding(8.dp),
+        onClick = onClick,
+        colors = CardDefaults.cardColors(
+            containerColor = Color.White
+        ),
+    ) {
+        Box(modifier = Modifier.fillMaxWidth()){
+            Column(
+                modifier = Modifier.fillMaxWidth().padding(8.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                //load hình ảnh từ API
+//                AsyncImage(
+//                    model = ImageRequest.Builder(LocalContext.current)
+//                        .data(device.image)
+//                        .crossfade(true)
+//                        .build(),
+//                    contentDescription = "sp nổi bật",
+//                    modifier = Modifier
+//                        .width(150.dp)
+//                        .height(100.dp)
+//                )
+                Image(
+                    painter = painterResource(R.drawable.den1),
+                    contentDescription = "sp nổi bật",
+                    modifier = Modifier
+                        .width(190.dp)
+                        .height(100.dp)
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    text = device.name,
+                    modifier = Modifier.fillMaxWidth(),
+                    textAlign = TextAlign.Center,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 16.sp
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    text = "${formattedPrice} VNĐ",
+                    color = Color.Red,
+                    modifier = Modifier.fillMaxWidth(),
+                    textAlign = TextAlign.Center,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 16.sp
+                )
+            }
+            IconButton(onClick = {
+                currentFavorite = !currentFavorite
+                //Thêm vào danh sách yêu thích or xóa khỏi danh sách
+            },
+                modifier = Modifier
+                    .size(24.dp)
+                    .align(Alignment.TopEnd)
+            ) {
+                Icon(
+                    imageVector = if (currentFavorite) Icons.Filled.Favorite else Icons.Filled.FavoriteBorder,
+                    contentDescription = if (currentFavorite) "Yêu thích" else "Chưa yêu thích",
+                    tint = Color.Red
+                )
+            }
+        }
+
     }
 }

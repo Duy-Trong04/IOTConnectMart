@@ -24,6 +24,7 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.AccountBox
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.AddShoppingCart
+import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.Remove
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.ShoppingCart
@@ -57,7 +58,10 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.navigation.NavController
 import com.example.ungdungbanthietbi_iot.R
+import com.example.ungdungbanthietbi_iot.data.device.Device
+import com.example.ungdungbanthietbi_iot.data.device.DeviceViewModel
 import com.example.ungdungbanthietbi_iot.navigation.Screen
+import java.text.DecimalFormat
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -78,7 +82,16 @@ import com.example.ungdungbanthietbi_iot.navigation.Screen
          * Nội dung cập nhật:
          *
          */
-fun ProductDetailsScreen(navController: NavController) {
+fun ProductDetailsScreen(navController: NavController, id:String, deviceViewModel: DeviceViewModel) {
+    var device:Device by remember {
+        mutableStateOf(Device (0, "", "", "","", "", 0.0, 0, "", "", 0,0))
+    }
+    deviceViewModel.getDeviceByID(id)
+    device = deviceViewModel.device
+    //format giá sản phẩm
+    val formatter = DecimalFormat("#,###,###")
+    val formattedPrice = formatter.format(device.sellingPrice)
+
     // Biến lưu trữ giá trị đánh giá
     var rating by remember { mutableStateOf(1) }
     // Biến lưu trữ giá trị check
@@ -347,7 +360,8 @@ fun ProductDetailsScreen(navController: NavController) {
                             .padding(4.dp)
                     )
                 }
-
+            }
+            item {
                 // Chi tiết sản phẩm
                 Column(modifier = Modifier.fillMaxWidth().padding(20.dp)) {
                     Row(
@@ -355,49 +369,50 @@ fun ProductDetailsScreen(navController: NavController) {
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
                         Text(
-                            text = "Giá: xxxxx",
+                            text = "Giá ${formattedPrice} VNĐ",
                             color = Color.Red,
                             fontWeight = FontWeight.Bold,
-                            fontSize = 16.sp
+                            fontSize = 18.sp
                         )
                         Text(
                             "Đã bán 1k",
                             color = Color.Black,
                             fontWeight = FontWeight.Bold,
-                            fontSize = 11.sp
+                            fontSize = 14.sp
                         )
                     }
+                    Spacer(modifier = Modifier.height(10.dp))
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween
                     )
                     {
                         Text(
-                            "Tên sản phẩm ",
+                            text = device.name,
                             color = Color.Black,
-                            fontWeight = FontWeight.Bold
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 20.sp
                         )
-                        Image(
-                            painter = painterResource(R.drawable.tim),
+                        Icon(imageVector = Icons.Filled.Favorite,
                             contentDescription = "",
-                            modifier = Modifier.size(20.dp)
+                            tint = Color.Red,
+                            modifier = Modifier.size(22.dp)
                         )
                     }
+                    Spacer(modifier = Modifier.height(12.dp))
                     Text(
                         "Mô tả sản phẩm",
                         color = Color(0xFF5D9EFF),
                         fontWeight = FontWeight.Bold
                     )
+                    Spacer(modifier = Modifier.height(8.dp))
                     Text(
-                        "- Đây là một thiết bị, giống như tivi, " +
-                                "camera an ninh hoặc thiết bị tập thể dục đã được trao cho khả năng điện toán. " +
-                                "Thiết bị này thu thập dữ liệu từ môi trường xung quanh, " +
-                                "thao tác nhập liệu của người dùng hoặc mô thức sử dụng " +
-                                "và truyền cũng như nhận dữ liệu qua Internet từ ứng dụng IoT của nó.",
+                        text = device.descriptionNormal,
                         color = Color.Black,
                     )
                 }
-
+            }
+            item{
                 Column(
                     modifier = Modifier.fillMaxWidth()
                         .padding(start = 20.dp, end = 20.dp)

@@ -4,6 +4,8 @@ import androidx.compose.runtime.Composable
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import androidx.navigation.navArgument
+import com.example.ungdungbanthietbi_iot.data.device.DeviceViewModel
 import com.example.ungdungbanthietbi_iot.screen.address.AddAddressScreen
 import com.example.ungdungbanthietbi_iot.screen.address.AddressSelectionScreen
 import com.example.ungdungbanthietbi_iot.screen.cart.CartScreen
@@ -50,7 +52,7 @@ import com.example.ungdungbanthietbi_iot.screen.rating.RatingHistoryScreen
  */
 
 @Composable
-fun NavGraph(navController:NavHostController){
+fun NavGraph(navController:NavHostController, deviceViewModel: DeviceViewModel){
     NavHost(
         navController = navController,
         // Màn hình đầu tiên hiển thị
@@ -68,7 +70,7 @@ fun NavGraph(navController:NavHostController){
             })
         }
         composable(route = Screen.HomeScreen.route){
-            HomeScreen(navController)
+            HomeScreen(navController, deviceViewModel)
         }
         composable(route = Screen.LoginScreen.route){
             LoginScreen(navController)
@@ -100,8 +102,14 @@ fun NavGraph(navController:NavHostController){
         composable(route = Screen.ForgotPasswordScreen.route) {
             ForgotPasswordScreen(navController)
         }
-        composable(route = Screen.ProductDetailsScreen.route) {
-            ProductDetailsScreen(navController)
+        composable(
+            route = Screen.ProductDetailsScreen.route + "?id={idDevice}",
+            arguments = listOf(navArgument("idDevice"){nullable = true})
+        ) {
+            var idDevice = it.arguments?.getString("idDevice")
+            if(idDevice != null){
+                ProductDetailsScreen(navController, idDevice, deviceViewModel)
+            }
         }
         //Màn hình thanh toán
         composable(route = Screen.Cart_Screen.route) {
