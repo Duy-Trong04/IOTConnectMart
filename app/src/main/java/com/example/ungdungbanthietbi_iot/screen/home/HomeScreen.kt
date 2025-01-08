@@ -24,6 +24,7 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowUpward
 import androidx.compose.material.icons.filled.Category
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Favorite
@@ -398,7 +399,7 @@ fun HomeScreen(navController: NavController, deviceViewModel: DeviceViewModel) {
                     containerColor = Color(0xFF5D9EFF).copy(alpha = if (isScrolling) 0.2f else 0.8f)
                 ) {
                     Icon(
-                        imageVector = Icons.Default.Upload,
+                        imageVector = Icons.Default.ArrowUpward,
                         contentDescription = "Nút lên",
                         modifier = Modifier.size(25.dp)
                     )

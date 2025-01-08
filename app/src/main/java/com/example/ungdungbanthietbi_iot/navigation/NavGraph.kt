@@ -133,7 +133,7 @@ fun NavGraph(navController:NavHostController, deviceViewModel: DeviceViewModel){
         composable(
             route = Screen.Search_Screen.route
         ){
-            SearchScreen(navController)
+            SearchScreen(navController, deviceViewModel)
         }
         //Màn hình kết quả tìm kiếm
         composable(

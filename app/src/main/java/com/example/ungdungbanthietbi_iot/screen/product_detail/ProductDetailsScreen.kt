@@ -116,8 +116,8 @@ fun ProductDetailsScreen(navController: NavController, id:String, deviceViewMode
                 navigationIcon = {
                     IconButton(
                         onClick = {
-                            // Quay về màn hình danh sách sản phẩm
-                            navController.navigate(Screen.HomeScreen.route) },
+                            navController.popBackStack()
+                        }
                     ) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Default.ArrowBack,

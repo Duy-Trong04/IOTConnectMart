@@ -1,6 +1,7 @@
 package com.example.ungdungbanthietbi_iot.screen.search
 
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -16,9 +17,13 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.DeleteForever
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Card
@@ -27,6 +32,7 @@ import androidx.compose.material3.Divider
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -39,6 +45,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -51,57 +58,45 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
+import com.example.ungdungbanthietbi_iot.R
 import com.example.ungdungbanthietbi_iot.data.Product
+import com.example.ungdungbanthietbi_iot.data.device.Device
+import com.example.ungdungbanthietbi_iot.data.device.DeviceViewModel
 import com.example.ungdungbanthietbi_iot.navigation.Screen
+import kotlinx.coroutines.launch
+import java.text.DecimalFormat
 
 /** Giao diện màn hình tìm kiếm (SearchScreen)
  * -------------------------------------------
  * Người code: Duy Trọng
  * Ngày viết: 07/12/2024
- * Lần cập nhật cuối cùng: 13/12/2024
+ * Lần cập nhật cuối cùng: 08/01/2025
  * -------------------------------------------
  * Input:
+ *  deviceViewModel: ViewModel quản lý dữ liệu về thiết bị, bao gồm kết quả tìm kiếm và lịch sử tìm kiếm.
  *
- * Output: Hiển từ khóa trùng với từ khóa mà người dùng vừa nhập,
- * hiển thị giao diện tìm kiếm sản phẩm, quản lý lịch sử tìm kiếm,
- * gợi ý từ khóa, và hiển thị kết quả tìm kiếm dựa trên từ khóa nhập vào
+ * Output: Hiển thị giao diện tìm kiếm sản phẩm với các tính năng:
+ * - Tìm kiếm theo từ khóa.
+ * - Quản lý lịch sử tìm kiếm.
+ * - Gợi ý từ khóa.
+ * - Hiển thị kết quả tìm kiếm dựa trên từ khóa nhập vào.
  * ------------------------------------------------------------
- * Người cập nhật:
- * Ngày cập nhật:
+ * Người cập nhật: Duy Trọng
+ * Ngày cập nhật: 08/01/2025
  * ------------------------------------------------------------
- * Nội dung cập nhật:
+ * Nội dung cập nhật:  Cập nhật UI cho màn hình tìm kiếm, xử lý logic tìm kiếm và hiển thị kết quả.
  *
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun SearchScreen(navController: NavController){
+fun SearchScreen(navController: NavController, deviceViewModel: DeviceViewModel){
+    // Lấy danh sách thiết bị tìm được và lịch sử tìm kiếm từ ViewModel
+    val devices = deviceViewModel.searchResult
+    val history = deviceViewModel.searchHistory
+
     // Biến lưu giá trị từ ô tìm kiếm
-    var searchQuery by remember { mutableStateOf("") }
-
-    // Lịch sử tìm kiếm được lưu trữ trong danh sách
-    val searchHistory = remember { mutableStateListOf("Sản phẩm A", "Sản phẩm B", "Sản phẩm C") }
-
-    // Kết quả tìm kiếm (fake)
-    val searchResults = listOf(
-        Product(1, "Sản phẩm A", 100000.0, 1, "placeholder",true),
-        Product(2, "Sản phẩm B", 1500000.0, 1, "placeholder", true),
-        Product(3, "Sản phẩm C", 500000.0, 1, "placeholder", true)
-    )
-
-    // Danh sách các sản phẩm (giả lập)
-    var products by remember {
-        mutableStateOf(listOf(
-            Product(1, "Product 1", 10000.0, 1, "placeholder", false),
-            Product(2, "Product 2", 20000.0, 2, "placeholder", false),
-            Product(3, "Product 3", 15000.0, 1, "placeholder", false),
-            Product(4, "Product 4", 10000.0, 1, "placeholder", false),
-            Product(5, "Product 5", 20000.0, 2, "placeholder", false),
-            Product(6, "Product 6", 15000.0, 1, "placeholder", false),
-            Product(7, "Product 7", 10000.0, 1, "placeholder", false),
-            Product(8, "Product 8", 20000.0, 2, "placeholder", false),
-        ))
-    }
-
+    var coroutineScope = rememberCoroutineScope()
+    // Scaffold để chứa nội dung màn hình
     Scaffold (
         topBar = {
             TopAppBar(
@@ -113,8 +108,8 @@ fun SearchScreen(navController: NavController){
                     ){
                         // Ô nhập liệu tìm kiếm
                         OutlinedTextField(
-                            value = searchQuery,
-                            onValueChange = {searchQuery = it},
+                            value = deviceViewModel.searchQuery,
+                            onValueChange = {deviceViewModel.searchQuery = it},
                             modifier = Modifier.weight(1f).height(50.dp),
                             colors = TextFieldDefaults.colors(
                                 unfocusedContainerColor = Color.White,
@@ -122,7 +117,27 @@ fun SearchScreen(navController: NavController){
                                 focusedTextColor = Color.Black,
                                 unfocusedTextColor = Color.Black
                             ),
-                            placeholder = { Text(text = "Tìm kiếm", color = Color.LightGray) },
+                            trailingIcon = {
+                                // Dấu X để xóa từ khóa tìm kiếm
+                                IconButton(
+                                    onClick = {deviceViewModel.searchQuery = ""}
+                                ) {
+                                    Box(
+                                        modifier = Modifier
+                                            .size(12.dp) // Kích thước của hình tròn
+                                            .background(Color.Red, shape = CircleShape) // Hình tròn với màu đỏ
+                                            .padding(3.dp) // Khoảng cách giữa biểu tượng và viền của hình tròn
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Filled.Close,
+                                            contentDescription = "Close",
+                                            tint = Color.White, // Màu của dấu X
+                                            modifier = Modifier.size(20.dp) // Kích thước của dấu X
+                                        )
+                                    }
+                                }
+                            },
+                            placeholder = { Text(text = "Tìm kiếm ...", color = Color.LightGray) },
                             textStyle = TextStyle(
                                 fontSize = 16.sp, // Kích thước chữ phù hợp
                                 textAlign = TextAlign.Start // Canh chữ bắt đầu từ bên trái
@@ -132,7 +147,9 @@ fun SearchScreen(navController: NavController){
                         )
                         // Icon tìm kiếm
                         IconButton(onClick = {
-                            navController.navigate(Screen.Search_Results.route)
+                            coroutineScope.launch {
+                                deviceViewModel.searchDevice(deviceViewModel.searchQuery)
+                            }
                         }) {
                             Icon(imageVector = Icons.Filled.Search, contentDescription = "",
                                 tint = Color.White,
@@ -159,7 +176,7 @@ fun SearchScreen(navController: NavController){
         // Nội dung màn hình chính
         Column(modifier = Modifier.padding(it).fillMaxSize()) {
             // Nếu không có từ khóa tìm kiếm, hiển thị gợi ý
-            if (searchQuery.isEmpty()) {
+            if (deviceViewModel.searchQuery.isEmpty()) {
                 LazyColumn(modifier = Modifier.fillMaxSize()) {
                     // Lịch sử tìm kiếm
                     item {
@@ -174,8 +191,10 @@ fun SearchScreen(navController: NavController){
                                 fontSize = 16.sp,
                                 modifier = Modifier.padding(16.dp)
                             )
+                            // Xóa toàn bộ lịch sử
                             TextButton(
-                                onClick = { searchHistory.clear() }, // Xóa toàn bộ lịch sử
+                                onClick = {
+                                    deviceViewModel.clearSearchHistory() },
                                 content = {
                                     Text(
                                         text = "Xóa lịch sử tìm kiếm",
@@ -188,192 +207,152 @@ fun SearchScreen(navController: NavController){
                         }
                     }
                     // Hiển thị từng mục trong lịch sử tìm kiếm
-                    items(searchHistory) { item ->
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .clickable { searchQuery = item }
-                                .padding(16.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Icon(
-                                imageVector = Icons.Filled.History,
-                                contentDescription = "History",
-                                modifier = Modifier.size(20.dp),
-                                tint = Color.Gray
-                            )
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Text(item, fontSize = 14.sp)
-                        }
-                    }
-                    item {
-                        Divider(modifier = Modifier.weight(10f))
-                        Text(
-                            "Gợi ý tìm kiếm",
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 16.sp,
-                            modifier = Modifier.padding(16.dp)
-                        )
-                    }
-                    // Gợi ý sản phẩm
-                    items(products) { products ->
-                        SearchSuggestion(products)
+                    items(history) { keyword ->
+                        Divider()
+                        HistorySearchItem(keyword, deviceViewModel)
                     }
                 }
             } else {
                 // Kết quả tìm kiếm
-                Text(
-                    "Kết quả cho \"$searchQuery\"",
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 16.sp,
-                    modifier = Modifier.padding(16.dp)
-                )
-                LazyColumn(modifier = Modifier.fillMaxSize()) {
-                    items(searchResults) { product ->
-                        ProductItem(product, navController)
+                LazyColumn() {
+                    items(devices) { device ->
+                        CardDeviceSearch(device = device,
+                            onClick = {
+                                //Chuyển đến màn hình chi tiết sản phẩm
+                                navController.navigate(Screen.ProductDetailsScreen.route+"?id=${device.idDevice}")
+                            }
+                        )
                     }
                 }
             }
         }
     }
 }
-
-/** Card chứa thông tin sản phẩm của giao diện tìm kiếm (ProductItem)
+/** Hiển thị lịch sử tìm kiếm (HistorySearchItem)
  * -------------------------------------------
  * Người code: Duy Trọng
  * Ngày viết: 07/12/2024
- * Lần cập nhật cuối cùng: 13/12/2024
+ * Lần cập nhật cuối cùng: 08/01/2025
  * -------------------------------------------
- * Input: product: ProductState
+ * Input: keyword: String, viewModel: DeviceViewModel
  *
- * Output: Hiển thị một mục sản phẩm trong danh sách, bao gồm tên sản phẩm và một đường kẻ phân cách.
- * Mục này có thể được nhấn để mở chi tiết sản phẩm (hiện chưa triển khai).
+ * Output: hiện thị lịch sử tìm kiếm của người dùng
  * ------------------------------------------------------------
- * Người cập nhật:
- * Ngày cập nhật:
+ * Người cập nhật: Duy Trọng
+ * Ngày cập nhật: 08/01/2025
  * ------------------------------------------------------------
  * Nội dung cập nhật:
- *
+ * Cập nhật UI, xử lý logic khi ấn vào lịch sử sẽ hiện thị kết quả
  */
 @Composable
-fun ProductItem(product: Product, navController: NavController) {
+fun HistorySearchItem(keyword: String, viewModel: DeviceViewModel) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable {
-                navController.navigate(Screen.ProductDetailsScreen.route)
+            .clickable { viewModel.searchQuery = keyword
+                viewModel.searchDevice(keyword)
             }
-            .padding(16.dp)
+            .padding(8.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.SpaceBetween
     ) {
-        Column(modifier = Modifier.weight(1f)) {
-            Text(product.name, fontWeight = FontWeight.Bold, fontSize = 16.sp)
-            Spacer(modifier = Modifier.height(8.dp))
-            Divider()
+        Row (
+            verticalAlignment = Alignment.CenterVertically
+        ){
+            Icon(
+                imageVector = Icons.Filled.History,
+                contentDescription = "History",
+                modifier = Modifier.size(20.dp),
+                tint = Color.Gray
+            )
+            Spacer(modifier = Modifier.width(8.dp))
+            Text(text = keyword)
+        }
+        IconButton(onClick = { viewModel.removeSearchHistory(keyword) }) {
+            Icon(imageVector = Icons.Default.Close,
+                contentDescription = "Xóa lịch sử",
+                modifier = Modifier.size(20.dp),
+                tint = Color.Gray
+            )
         }
     }
 }
-
-/** Giao diện màn hình gợi ý tìm kiếm (SearchSuggestion)
+/** Card chứa thông tin của 1 sản phẩm (CardDeviceSearch)
  * -------------------------------------------
  * Người code: Duy Trọng
  * Ngày viết: 07/12/2024
- * Lần cập nhật cuối cùng: 13/12/2024
+ * Lần cập nhật cuối cùng: 08/01/2025
  * -------------------------------------------
- * Input: product: ProductState
+ * Input: device: Device, onClick: () -> Unit
  *
- * Output: Các gợi ý này có thể được nhấn để thực hiện tìm kiếm chi tiết hơn
+ * Output: Card chứa kết quả khi người dùng thực hiện tìm kiếm
  * ------------------------------------------------------------
- * Người cập nhật:
- * Ngày cập nhật:
+ * Người cập nhật: Duy Trọng
+ * Ngày cập nhật: 08/01/2025
  * ------------------------------------------------------------
  * Nội dung cập nhật:
- *
+ * Cập nhật UI cho Card, xử lý logic chuyển màn hình chi tiết.
  */
 @Composable
-fun SearchSuggestion(product: Product) {
-    Box(
+fun CardDeviceSearch(device: Device, onClick: () -> Unit) {
+    //format giá sản phẩm
+    val formatter = DecimalFormat("#,###,###")
+    val formattedPrice = formatter.format(device.sellingPrice)
+    Card(
+        shape = RoundedCornerShape(8.dp),
         modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 8.dp)
+            .padding(8.dp) // Giảm padding để Card nhỏ hơn
+            .fillMaxWidth(), // Giảm chiều rộng của Card để làm nó nhỏ lại
+        colors = CardDefaults.cardColors(
+            containerColor = Color.White
+        ),
+        onClick = onClick
     ) {
         Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(16.dp)
+            modifier = Modifier.padding(8.dp) // Giảm padding bên trong Row
         ) {
-            Card(
+            // Load hình ảnh từ API
+//                AsyncImage(
+//                    model = ImageRequest.Builder(LocalContext.current)
+//                        .data(device.image)
+//                        .crossfade(true)
+//                        .build(),
+//                    contentDescription = "sp nổi bật",
+//                    modifier = Modifier
+//                        .width(150.dp)
+//                        .height(100.dp)
+//                )
+            Image(
+                painter = painterResource(R.drawable.den1),
+                contentDescription = "sp nổi bật",
                 modifier = Modifier
-                    .weight(1f)
-                    .aspectRatio(1f),
-                colors = CardDefaults.cardColors(
-                    containerColor = Color.White
-                ),
-                elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
-                shape = RoundedCornerShape(8.dp)
+                    .width(200.dp) // Giảm kích thước hình ảnh
+                    .height(120.dp) // Giảm chiều cao hình ảnh
+            )
+            Column(
+                modifier = Modifier.padding(start = 8.dp)
             ) {
-                Box(
-                    contentAlignment = Alignment.Center,
-                    modifier = Modifier.fillMaxSize()
+                Row(
+                    modifier = Modifier.fillMaxWidth().padding(bottom = 4.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween
                 ) {
-                    Column(
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.Center,
-                        modifier = Modifier.fillMaxSize()
-                    ) {
-                        Image(
-                            painter = painterResource(id = android.R.drawable.ic_menu_gallery),
-                            contentDescription = "Product Image",
-                            modifier = Modifier
-                                .fillMaxWidth(0.7f)
-                                .aspectRatio(1f),
-                            contentScale = ContentScale.Fit
-                        )
-                        Spacer(modifier = Modifier.height(8.dp))
-                        Text(
-                            text = product.name,
-                            fontSize = 14.sp,
-                            textAlign = TextAlign.Center,
-                            modifier = Modifier.padding(horizontal = 8.dp)
-                        )
-                    }
+                    Text(
+                        text = device.name,
+                        fontSize = 18.sp, // Giảm kích thước chữ
+                        fontWeight = FontWeight.Bold
+                    )
                 }
-            }
-
-            Card(
-                modifier = Modifier
-                    .weight(1f)
-                    .aspectRatio(1f),
-                colors = CardDefaults.cardColors(
-                    containerColor = Color.White
-                ),
-                elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
-                shape = RoundedCornerShape(8.dp)
-            ) {
-                Box(
-                    contentAlignment = Alignment.Center,
-                    modifier = Modifier.fillMaxSize()
-                ) {
-                    Column(
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.Center,
-                        modifier = Modifier.fillMaxSize()
-                    ) {
-                        Image(
-                            painter = painterResource(id = android.R.drawable.ic_menu_gallery),
-                            contentDescription = "Product Image",
-                            modifier = Modifier
-                                .fillMaxWidth(0.7f)
-                                .aspectRatio(1f),
-                            contentScale = ContentScale.Fit
-                        )
-                        Spacer(modifier = Modifier.height(8.dp))
-                        Text(
-                            text = product.name,
-                            fontSize = 14.sp,
-                            textAlign = TextAlign.Center,
-                            modifier = Modifier.padding(horizontal = 8.dp)
-                        )
-                    }
-                }
+                Text(
+                    text = "${formattedPrice} VNĐ",
+                    color = Color.Red,
+                    fontSize = 16.sp, // Giảm kích thước chữ
+                    modifier = Modifier.padding(bottom = 4.dp)
+                )
+                Text(
+                    text = device.descriptionNormal,
+                    fontSize = 14.sp, // Giảm kích thước chữ
+                    modifier = Modifier.align(Alignment.Start)
+                )
             }
         }
     }
