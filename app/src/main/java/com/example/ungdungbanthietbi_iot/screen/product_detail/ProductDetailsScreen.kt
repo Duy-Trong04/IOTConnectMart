@@ -86,8 +86,8 @@ fun ProductDetailsScreen(navController: NavController, id:String, deviceViewMode
     var device:Device by remember {
         mutableStateOf(Device (0, "", "", "","", "", 0.0, 0, "", "", 0,0))
     }
-    deviceViewModel.getDeviceByID(id)
-    device = deviceViewModel.device
+    //deviceViewModel.getDeviceByID(id)
+    //device = deviceViewModel.device
     //format giá sản phẩm
     val formatter = DecimalFormat("#,###,###")
     val formattedPrice = formatter.format(device.sellingPrice)

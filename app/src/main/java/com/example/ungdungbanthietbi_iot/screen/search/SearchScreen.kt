@@ -19,11 +19,13 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.DeleteForever
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.FilterAlt
 import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Card
@@ -41,7 +43,9 @@ import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -54,6 +58,8 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -91,9 +97,11 @@ import java.text.DecimalFormat
 @Composable
 fun SearchScreen(navController: NavController, deviceViewModel: DeviceViewModel){
     // Lấy danh sách thiết bị tìm được và lịch sử tìm kiếm từ ViewModel
-    val devices = deviceViewModel.searchResult
+    val devices by deviceViewModel.searchResult.observeAsState(emptyList())
     val history = deviceViewModel.searchHistory
-
+    LaunchedEffect(Unit) {
+        deviceViewModel.getAllDevice()
+    }
     // Biến lưu giá trị từ ô tìm kiếm
     var coroutineScope = rememberCoroutineScope()
     // Scaffold để chứa nội dung màn hình
@@ -109,7 +117,7 @@ fun SearchScreen(navController: NavController, deviceViewModel: DeviceViewModel)
                         // Ô nhập liệu tìm kiếm
                         OutlinedTextField(
                             value = deviceViewModel.searchQuery,
-                            onValueChange = {deviceViewModel.searchQuery = it},
+                            onValueChange = { deviceViewModel.searchQuery = it},
                             modifier = Modifier.weight(1f).height(50.dp),
                             colors = TextFieldDefaults.colors(
                                 unfocusedContainerColor = Color.White,
@@ -143,8 +151,21 @@ fun SearchScreen(navController: NavController, deviceViewModel: DeviceViewModel)
                                 textAlign = TextAlign.Start // Canh chữ bắt đầu từ bên trái
                             ),
                             shape = RoundedCornerShape(20.dp),
-                            singleLine = true
+                            singleLine = true,
+//                            keyboardOptions = KeyboardOptions.Default.copy(
+//                                keyboardType = KeyboardType.Text,
+//                                imeAction = ImeAction.Done
+//                            )
                         )
+
+                    }
+
+                },
+                actions = {
+                    Row (
+                        //modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ){
                         // Icon tìm kiếm
                         IconButton(onClick = {
                             coroutineScope.launch {
@@ -155,8 +176,16 @@ fun SearchScreen(navController: NavController, deviceViewModel: DeviceViewModel)
                                 tint = Color.White,
                             )
                         }
+                        if(deviceViewModel.searchQuery.isNotEmpty()){
+                            IconButton(onClick = {
+                                //lọc giá sản phẩm
+                            }) {
+                                Icon(imageVector = Icons.Filled.FilterAlt, contentDescription = "FilterAlt",
+                                    tint = Color.White,
+                                )
+                            }
+                        }
                     }
-
                 },
                 navigationIcon = {
                     IconButton(onClick = {

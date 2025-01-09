@@ -62,6 +62,7 @@ import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -111,8 +112,9 @@ import java.text.DecimalFormat
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(navController: NavController, deviceViewModel: DeviceViewModel) {
-    deviceViewModel.getAllDevice()
-    var listDevice : List<Device> = deviceViewModel.listDevice
+    //deviceViewModel.getAllDevice()
+    //var listDevice : List<Device> = deviceViewModel.listDevice
+    val listDevice by deviceViewModel.devices.observeAsState(emptyList())
     val navdrawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     val scope = rememberCoroutineScope() //xử lý suspending fun (mở và đóng drawer)
     val countries = listOf(

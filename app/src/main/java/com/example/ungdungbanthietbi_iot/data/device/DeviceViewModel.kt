@@ -5,52 +5,65 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import androidx.lifecycle.LiveData
+import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
 class DeviceViewModel:ViewModel() {
+    private val _devices = MutableLiveData<List<Device>>()
+    val devices: LiveData<List<Device>> get() = _devices
     var listDevice: List<Device> by mutableStateOf(emptyList())
-    var device:Device by mutableStateOf(Device (0, "", "", "","", "", 0.0, 0, "", "", 0,0))
-    var searchResult: List<Device> by mutableStateOf(emptyList())
+    private val _searchResult = MutableLiveData<List<Device>>()
+    val searchResult: LiveData<List<Device>> get() = _searchResult
     var searchQuery: String by mutableStateOf("")
-    var searchHistory: MutableList<String> = mutableStateListOf()  // Sử dụng MutableList để có thể thay đổi
+    var searchHistory: MutableList<String> = mutableListOf()
+
+    init {
+        getAllDevice()
+    }
+
     fun getAllDevice(){
-        viewModelScope.launch(Dispatchers.IO){
+        viewModelScope.launch {
             try {
-                listDevice = DeviceRetrofitClient.deviceAPIService.getAllDevice()
-            }
-            catch (e:Exception){
-                Log.e("DeviceViewModel", "Error getting device", e)
+                val response = DeviceRetrofitClient.api.getAllDevice()
+                _devices.postValue(response.results)
+                _searchResult.postValue(response.results)  // Đưa dữ liệu vào _searchResult
+            } catch (e: Exception) {
+                e.printStackTrace() // Xử lý lỗi
             }
         }
     }
 
-    fun getDeviceByID(idDevice:String){
-        viewModelScope.launch (Dispatchers.IO){
-            try {
-                device = DeviceRetrofitClient.deviceAPIService.getDeviceByID(idDevice)
-                searchResult = listDevice // Hiển thị toàn bộ danh sách ban đầu
-            }
-            catch (e:Exception){
-                Log.e("DeviceViewModel", "Error getting device", e)
-            }
-        }
-    }
+//    fun getDeviceByID(idDevice:String){
+//        viewModelScope.launch (Dispatchers.IO){
+//            try {
+//                device = DeviceRetrofitClient.deviceAPIService.getDeviceByID(idDevice)
+//                searchResult = listDevice // Hiển thị toàn bộ danh sách ban đầu
+//            }
+//            catch (e:Exception){
+//                Log.e("DeviceViewModel", "Error getting device", e)
+//            }
+//        }
+//    }
     // Tìm kiếm thiết bị và lưu vào lịch sử khi nhấn nút tìm kiếm
     fun searchDevice(query: String) {
         searchQuery = query
         if (query.isNotEmpty()) {
-            // Thực hiện tìm kiếm thiết bị
-            searchResult = listDevice.filter { it.name.contains(query.trim(), ignoreCase = true) }
+            val filteredDevices = _devices.value?.filter {
+                it.name.contains(query.trim(), ignoreCase = true)
+            } ?: emptyList()
+            _searchResult.postValue(filteredDevices)
 
-            // Thêm từ khóa vào lịch sử chỉ khi tìm kiếm
+            // Thêm từ khóa vào lịch sử tìm kiếm nếu chưa có
             if (!searchHistory.contains(query)) {
                 searchHistory.add(query)
             }
         } else {
-            searchResult = listDevice // Hiển thị tất cả thiết bị khi không có từ khóa tìm kiếm
+            // Khi không có từ khóa tìm kiếm, hiển thị tất cả thiết bị
+            _searchResult.postValue(_devices.value)
         }
     }
 

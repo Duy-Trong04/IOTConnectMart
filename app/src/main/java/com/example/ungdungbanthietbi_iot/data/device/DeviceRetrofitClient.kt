@@ -6,15 +6,24 @@ import retrofit2.converter.gson.GsonConverterFactory
 
 
 object Constant{
-    const val BASE_URL = "http://10.0.2.2/IOT_ConnectMart_API/api/"
+    const val BASE_URL = "http://10.0.2.2:3000/api/"
 }
 
 object DeviceRetrofitClient {
-    val deviceAPIService:DeviceAPIService by lazy {
+    private const val BASE_URL = "http://10.0.2.2:3000/api/"
+
+    val api: DeviceAPIService by lazy {
         Retrofit.Builder()
-            .baseUrl(Constant.BASE_URL)
-            .addConverterFactory(GsonConverterFactory.create(GsonBuilder().create()))
+            .baseUrl(BASE_URL)
+            .addConverterFactory(GsonConverterFactory.create())
             .build()
             .create(DeviceAPIService::class.java)
     }
+//    val deviceAPIService:DeviceAPIService by lazy {
+//        Retrofit.Builder()
+//            .baseUrl(Constant.BASE_URL)
+//            .addConverterFactory(GsonConverterFactory.create(GsonBuilder().create()))
+//            .build()
+//            .create(DeviceAPIService::class.java)
+//    }
 }
