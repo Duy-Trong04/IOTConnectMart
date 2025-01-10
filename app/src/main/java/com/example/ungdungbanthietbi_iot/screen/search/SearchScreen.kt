@@ -64,6 +64,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
+import coil.compose.AsyncImage
 import com.example.ungdungbanthietbi_iot.R
 import com.example.ungdungbanthietbi_iot.data.Product
 import com.example.ungdungbanthietbi_iot.data.device.Device
@@ -97,7 +98,7 @@ import java.text.DecimalFormat
 @Composable
 fun SearchScreen(navController: NavController, deviceViewModel: DeviceViewModel){
     // Lấy danh sách thiết bị tìm được và lịch sử tìm kiếm từ ViewModel
-    val devices by deviceViewModel.searchResult.observeAsState(emptyList())
+    val devices = deviceViewModel.searchResult
     val history = deviceViewModel.searchHistory
     LaunchedEffect(Unit) {
         deviceViewModel.getAllDevice()
@@ -152,10 +153,6 @@ fun SearchScreen(navController: NavController, deviceViewModel: DeviceViewModel)
                             ),
                             shape = RoundedCornerShape(20.dp),
                             singleLine = true,
-//                            keyboardOptions = KeyboardOptions.Default.copy(
-//                                keyboardType = KeyboardType.Text,
-//                                imeAction = ImeAction.Done
-//                            )
                         )
 
                     }
@@ -248,7 +245,7 @@ fun SearchScreen(navController: NavController, deviceViewModel: DeviceViewModel)
                         CardDeviceSearch(device = device,
                             onClick = {
                                 //Chuyển đến màn hình chi tiết sản phẩm
-                                navController.navigate(Screen.ProductDetailsScreen.route+"?id=${device.idDevice}")
+                                navController.navigate(Screen.ProductDetailsScreen.route+"?slug=${device.slug}")
                             }
                         )
                     }
@@ -341,22 +338,11 @@ fun CardDeviceSearch(device: Device, onClick: () -> Unit) {
             modifier = Modifier.padding(8.dp) // Giảm padding bên trong Row
         ) {
             // Load hình ảnh từ API
-//                AsyncImage(
-//                    model = ImageRequest.Builder(LocalContext.current)
-//                        .data(device.image)
-//                        .crossfade(true)
-//                        .build(),
-//                    contentDescription = "sp nổi bật",
-//                    modifier = Modifier
-//                        .width(150.dp)
-//                        .height(100.dp)
-//                )
-            Image(
-                painter = painterResource(R.drawable.den1),
-                contentDescription = "sp nổi bật",
+            AsyncImage(
+                model = device.image,
+                contentDescription = null,
                 modifier = Modifier
-                    .width(200.dp) // Giảm kích thước hình ảnh
-                    .height(120.dp) // Giảm chiều cao hình ảnh
+                    .width(150.dp).height(100.dp)
             )
             Column(
                 modifier = Modifier.padding(start = 8.dp)

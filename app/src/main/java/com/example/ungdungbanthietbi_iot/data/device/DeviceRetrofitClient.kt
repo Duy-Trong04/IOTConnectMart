@@ -10,20 +10,11 @@ object Constant{
 }
 
 object DeviceRetrofitClient {
-    private const val BASE_URL = "http://10.0.2.2:3000/api/"
-
-    val api: DeviceAPIService by lazy {
+    val deviceAPIService:DeviceAPIService by lazy {
         Retrofit.Builder()
-            .baseUrl(BASE_URL)
-            .addConverterFactory(GsonConverterFactory.create())
+            .baseUrl(Constant.BASE_URL)
+            .addConverterFactory(GsonConverterFactory.create(GsonBuilder().create()))
             .build()
             .create(DeviceAPIService::class.java)
     }
-//    val deviceAPIService:DeviceAPIService by lazy {
-//        Retrofit.Builder()
-//            .baseUrl(Constant.BASE_URL)
-//            .addConverterFactory(GsonConverterFactory.create(GsonBuilder().create()))
-//            .build()
-//            .create(DeviceAPIService::class.java)
-//    }
 }

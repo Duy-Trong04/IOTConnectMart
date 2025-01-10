@@ -82,12 +82,12 @@ import java.text.DecimalFormat
          * Nội dung cập nhật:
          *
          */
-fun ProductDetailsScreen(navController: NavController, id:String, deviceViewModel: DeviceViewModel) {
+fun ProductDetailsScreen(navController: NavController, slug:String, deviceViewModel: DeviceViewModel) {
     var device:Device by remember {
         mutableStateOf(Device (0, "", "", "","", "", 0.0, 0, "", "", 0,0))
     }
-    //deviceViewModel.getDeviceByID(id)
-    //device = deviceViewModel.device
+    deviceViewModel.getDeviceBySlug(slug)
+    device = deviceViewModel.device
     //format giá sản phẩm
     val formatter = DecimalFormat("#,###,###")
     val formattedPrice = formatter.format(device.sellingPrice)

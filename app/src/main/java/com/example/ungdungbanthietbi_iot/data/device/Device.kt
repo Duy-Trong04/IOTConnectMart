@@ -17,3 +17,8 @@ data class Device(
 data class DeviceResponse(
     val results: List<Device>
 )
+
+data class CategoryDevice(
+    val id: Int,
+    val nameCategory: String
+)

@@ -103,12 +103,12 @@ fun NavGraph(navController:NavHostController, deviceViewModel: DeviceViewModel){
             ForgotPasswordScreen(navController)
         }
         composable(
-            route = Screen.ProductDetailsScreen.route + "?id={idDevice}",
-            arguments = listOf(navArgument("idDevice"){nullable = true})
+            route = Screen.ProductDetailsScreen.route + "?slug={slug}",
+            arguments = listOf(navArgument("slug"){nullable = true})
         ) {
-            var idDevice = it.arguments?.getString("idDevice")
-            if(idDevice != null){
-                ProductDetailsScreen(navController, idDevice, deviceViewModel)
+            var slug = it.arguments?.getString("slug")
+            if(slug != null){
+                ProductDetailsScreen(navController, slug, deviceViewModel)
             }
         }
         //Màn hình thanh toán
