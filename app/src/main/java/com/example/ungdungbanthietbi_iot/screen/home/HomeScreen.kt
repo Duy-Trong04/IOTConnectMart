@@ -1,10 +1,16 @@
 package com.example.ungdungbanthietbi_iot.screen.home
 
 import android.annotation.SuppressLint
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.ExperimentalAnimationApi
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.with
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -73,7 +79,10 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
@@ -83,11 +92,15 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import coil.compose.AsyncImage
+import coil.compose.rememberImagePainter
 import coil.request.ImageRequest
 import com.example.ungdungbanthietbi_iot.R
 import com.example.ungdungbanthietbi_iot.data.device.Device
 import com.example.ungdungbanthietbi_iot.data.device.DeviceViewModel
+import com.example.ungdungbanthietbi_iot.data.slideshow.SlideShow
+import com.example.ungdungbanthietbi_iot.data.slideshow.SlideShowViewModel
 import com.example.ungdungbanthietbi_iot.navigation.Screen
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.text.DecimalFormat
 
@@ -111,11 +124,30 @@ import java.text.DecimalFormat
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun HomeScreen(navController: NavController, deviceViewModel: DeviceViewModel) {
+fun HomeScreen(navController: NavController, deviceViewModel: DeviceViewModel, slideShowViewModel: SlideShowViewModel) {
     deviceViewModel.getAllDevice()
     deviceViewModel.getDeviceFeatured()
     var listAllDevice : List<Device> = deviceViewModel.listAllDevice
     var listDeviceFeatured :List<Device> = deviceViewModel.listDeviceFeatured
+
+
+    //slideShowViewModel.getAllSlideShow()
+    var listSlideShow = slideShowViewModel.listSlideShow
+
+    var currentIndex by remember { mutableStateOf(0) }
+    LaunchedEffect(Unit) {
+        slideShowViewModel.getAllSlideShow()
+    }
+
+    // Tự động chuyển hình sau mỗi 3 giây
+    LaunchedEffect(key1 = currentIndex, key2 = listSlideShow.size) {
+        if (listSlideShow.isNotEmpty()) {
+            delay(3000)
+            currentIndex = (currentIndex + 1) % listSlideShow.size
+        }
+    }
+
+
     val navdrawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     val scope = rememberCoroutineScope() //xử lý suspending fun (mở và đóng drawer)
     val countries = listOf(
@@ -419,15 +451,27 @@ fun HomeScreen(navController: NavController, deviceViewModel: DeviceViewModel) {
             )
             {
                 item {
-                    Image(
-                        painter = painterResource(R.drawable.den2),
-                        contentDescription = "event nổi bật",
+                    Box(
                         modifier = Modifier
-                            .fillMaxWidth()
-                            .size(200.dp),
-                        alignment = Alignment.Center
-                    )
-
+                            .fillMaxSize()
+                            .pointerInput(Unit) {
+                                detectHorizontalDragGestures { change, dragAmount ->
+                                    change.consume() // Tiêu thụ sự kiện kéo
+                                    if (dragAmount > 0 && listSlideShow.isNotEmpty()) { // Trượt sang phải
+                                        currentIndex = if (currentIndex == 0) listSlideShow.size - 1 else currentIndex - 1
+                                    } else if (listSlideShow.isNotEmpty()) { // Trượt sang trái
+                                        currentIndex = (currentIndex + 1) % listSlideShow.size
+                                    }
+                                }
+                            },
+                        contentAlignment = Alignment.Center
+                    ) {
+                        if (listSlideShow.isNotEmpty()) {
+                            SlideImage(painter = rememberImagePainter(data = listSlideShow[currentIndex].image))
+                        } else {
+                            Text(text = "No slides available", fontSize = 16.sp, modifier = Modifier.padding(16.dp))
+                        }
+                    }
                     Spacer(modifier = Modifier.height(10.dp))
                     Row(
                         modifier = Modifier.fillMaxWidth().size(8.dp),
@@ -473,7 +517,7 @@ fun HomeScreen(navController: NavController, deviceViewModel: DeviceViewModel) {
                 }
                 item {
                     // Sản phẩm nổi bật
-                    Text("Sản phẩm nổi bật", modifier = Modifier.padding(20.dp),
+                    Text("Sản phẩm nổi bật", modifier = Modifier.padding(12.dp),
                         color = Color(0xFF085979),
                         fontWeight = FontWeight.Bold
                     )
@@ -755,5 +799,24 @@ fun CardAllDevice(device: Device, onClick: () -> Unit, isFavorite:Boolean){
             }
         }
 
+    }
+}
+
+@OptIn(ExperimentalAnimationApi::class)
+@Composable
+fun SlideImage(painter: Painter) {
+    AnimatedContent(
+        targetState = painter,
+        modifier = Modifier.fillMaxSize(),
+        transitionSpec = { fadeIn() with fadeOut() }
+    ) { targetPainter ->
+        Image(
+            painter = targetPainter,
+            contentDescription = null,
+            modifier = Modifier
+                .size(300.dp)
+                .padding(8.dp),
+            contentScale = ContentScale.Crop
+        )
     }
 }

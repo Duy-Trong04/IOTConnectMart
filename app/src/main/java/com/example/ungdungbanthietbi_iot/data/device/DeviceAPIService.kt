@@ -12,11 +12,6 @@ interface DeviceAPIService {
     @GET ("device/")
     suspend fun getDeviceFeatured(): List<Device>
 
-//    @GET ("device/show.php")
-//    suspend fun getDeviceByID(
-//        @Query("id") deviceID:String,
-//    ):Device
-
     @GET("device/detail/{slug}")
     suspend fun getDeviceBySlug(@Path("slug") slug: String): Device
 }

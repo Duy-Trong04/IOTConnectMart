@@ -8,11 +8,13 @@ import androidx.activity.viewModels
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
 import com.example.ungdungbanthietbi_iot.data.device.DeviceViewModel
+import com.example.ungdungbanthietbi_iot.data.slideshow.SlideShowViewModel
 import com.example.ungdungbanthietbi_iot.navigation.NavGraph
 import com.example.ungdungbanthietbi_iot.ui.theme.UngDungBanThietBi_IOTTheme
 
 class MainActivity : ComponentActivity() {
     private val deviceViewModel by viewModels<DeviceViewModel>()
+    private val slideShowViewModel by viewModels<SlideShowViewModel>()
     lateinit var navController: NavHostController
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -20,7 +22,10 @@ class MainActivity : ComponentActivity() {
         setContent {
             UngDungBanThietBi_IOTTheme {
                 navController = rememberNavController()
-                NavGraph(navController = navController, deviceViewModel = deviceViewModel)
+                NavGraph(navController = navController,
+                    deviceViewModel = deviceViewModel,
+                    slideShowViewModel = slideShowViewModel
+                )
             }
         }
     }

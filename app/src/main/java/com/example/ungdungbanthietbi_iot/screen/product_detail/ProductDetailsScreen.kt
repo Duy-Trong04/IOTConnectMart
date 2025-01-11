@@ -1,9 +1,15 @@
 package com.example.ungdungbanthietbi_iot.screen.product_detail
 
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.ExperimentalAnimationApi
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.with
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -43,6 +49,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -50,6 +57,9 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.painter.Painter
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -57,10 +67,12 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.navigation.NavController
+import coil.compose.AsyncImage
 import com.example.ungdungbanthietbi_iot.R
 import com.example.ungdungbanthietbi_iot.data.device.Device
 import com.example.ungdungbanthietbi_iot.data.device.DeviceViewModel
 import com.example.ungdungbanthietbi_iot.navigation.Screen
+import kotlinx.coroutines.delay
 import java.text.DecimalFormat
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -92,6 +104,22 @@ fun ProductDetailsScreen(navController: NavController, slug:String, deviceViewMo
     val formatter = DecimalFormat("#,###,###")
     val formattedPrice = formatter.format(device.sellingPrice)
 
+
+
+    val images = listOf(
+        painterResource(id = R.drawable.den1),
+        painterResource(id = R.drawable.den2),
+        painterResource(id = R.drawable.den3)
+    )
+    var currentIndex by remember { mutableStateOf(0) }
+    // Tự động chuyển hình sau mỗi 3 giây
+    LaunchedEffect(key1 = currentIndex) {
+        delay(3000)
+        currentIndex = (currentIndex + 1) % images.size
+    }
+
+
+
     // Biến lưu trữ giá trị đánh giá
     var rating by remember { mutableStateOf(1) }
     // Biến lưu trữ giá trị check
@@ -110,7 +138,7 @@ fun ProductDetailsScreen(navController: NavController, slug:String, deviceViewMo
                             text = "Chi tiết sản phẩm",
                             fontWeight = FontWeight.Bold,
                             modifier = Modifier.fillMaxWidth(),
-                            textAlign = TextAlign.Center
+                            textAlign = TextAlign.Start
                         )
                 },
                 navigationIcon = {
@@ -308,15 +336,23 @@ fun ProductDetailsScreen(navController: NavController, slug:String, deviceViewMo
         )
         {
             item {
-                Image(
-                    painter = painterResource(R.drawable.den2),
-                    contentDescription = "ds ảnh sản phẩm",
+                Box(
                     modifier = Modifier
-                        .fillMaxWidth()
-                        .size(200.dp),
-                    alignment = Alignment.Center
-                )
-
+                        .fillMaxSize()
+                        .pointerInput(Unit) {
+                            detectHorizontalDragGestures { change, dragAmount ->
+                                change.consume() // Tiêu thụ sự kiện kéo
+                                if (dragAmount > 0) { // Trượt sang phải
+                                    currentIndex = if (currentIndex == 0) images.size - 1 else currentIndex - 1
+                                } else { // Trượt sang trái
+                                    currentIndex = (currentIndex + 1) % images.size
+                                }
+                            }
+                        },
+                    contentAlignment = Alignment.Center
+                ) {
+                    SlideImage(painter = images[currentIndex])
+                }
                 Spacer(modifier = Modifier.height(10.dp))
                 Row(
                     modifier = Modifier.fillMaxWidth().size(8.dp),
@@ -666,3 +702,21 @@ fun ProductDetailsScreen(navController: NavController, slug:String, deviceViewMo
     }
 }
 
+@OptIn(ExperimentalAnimationApi::class)
+@Composable
+fun SlideImage(painter: Painter) {
+    AnimatedContent(
+        targetState = painter,
+        modifier = Modifier.fillMaxSize(),
+        transitionSpec = { fadeIn() with fadeOut() }
+    ) { targetPainter ->
+        Image(
+            painter = targetPainter,
+            contentDescription = null,
+            modifier = Modifier
+                .size(300.dp)
+                .padding(8.dp),
+            contentScale = ContentScale.Crop
+        )
+    }
+}

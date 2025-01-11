@@ -6,6 +6,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
 import com.example.ungdungbanthietbi_iot.data.device.DeviceViewModel
+import com.example.ungdungbanthietbi_iot.data.slideshow.SlideShowViewModel
 import com.example.ungdungbanthietbi_iot.screen.address.AddAddressScreen
 import com.example.ungdungbanthietbi_iot.screen.address.AddressSelectionScreen
 import com.example.ungdungbanthietbi_iot.screen.cart.CartScreen
@@ -52,7 +53,10 @@ import com.example.ungdungbanthietbi_iot.screen.rating.RatingHistoryScreen
  */
 
 @Composable
-fun NavGraph(navController:NavHostController, deviceViewModel: DeviceViewModel){
+fun NavGraph(
+    navController:NavHostController,
+    deviceViewModel: DeviceViewModel,
+    slideShowViewModel: SlideShowViewModel){
     NavHost(
         navController = navController,
         // Màn hình đầu tiên hiển thị
@@ -70,7 +74,7 @@ fun NavGraph(navController:NavHostController, deviceViewModel: DeviceViewModel){
             })
         }
         composable(route = Screen.HomeScreen.route){
-            HomeScreen(navController, deviceViewModel)
+            HomeScreen(navController, deviceViewModel, slideShowViewModel)
         }
         composable(route = Screen.LoginScreen.route){
             LoginScreen(navController)

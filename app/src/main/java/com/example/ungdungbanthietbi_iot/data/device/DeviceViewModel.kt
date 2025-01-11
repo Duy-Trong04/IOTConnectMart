@@ -5,10 +5,9 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
-import androidx.lifecycle.LiveData
-import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.ungdungbanthietbi_iot.data.RetrofitClient
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
@@ -27,7 +26,7 @@ class DeviceViewModel:ViewModel() {
     fun getAllDevice(){
         viewModelScope.launch(Dispatchers.IO) {
             try {
-                listAllDevice = DeviceRetrofitClient.deviceAPIService.getAllDevice()
+                listAllDevice = RetrofitClient.deviceAPIService.getAllDevice()
             } catch (e: Exception) {
                 e.printStackTrace() // Xử lý lỗi
             }
@@ -37,7 +36,7 @@ class DeviceViewModel:ViewModel() {
     fun getDeviceFeatured(){
         viewModelScope.launch(Dispatchers.IO) {
             try {
-                listDeviceFeatured = DeviceRetrofitClient.deviceAPIService.getDeviceFeatured()
+                listDeviceFeatured = RetrofitClient.deviceAPIService.getDeviceFeatured()
             } catch (e: Exception) {
                 e.printStackTrace() // Xử lý lỗi
             }
@@ -47,7 +46,7 @@ class DeviceViewModel:ViewModel() {
     fun getDeviceBySlug(slug:String){
         viewModelScope.launch (Dispatchers.IO){
             try {
-                device = DeviceRetrofitClient.deviceAPIService.getDeviceBySlug(slug)
+                device = RetrofitClient.deviceAPIService.getDeviceBySlug(slug)
                 searchResult = listAllDevice // Hiển thị toàn bộ danh sách ban đầu
             }
             catch (e:Exception){
