@@ -1,6 +1,5 @@
 package com.example.ungdungbanthietbi_iot.screen.home
 
-import android.annotation.SuppressLint
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.animation.fadeIn
@@ -472,47 +471,25 @@ fun HomeScreen(navController: NavController, deviceViewModel: DeviceViewModel, s
                             Text(text = "No slides available", fontSize = 16.sp, modifier = Modifier.padding(16.dp))
                         }
                     }
-                    Spacer(modifier = Modifier.height(10.dp))
+                    Spacer(modifier = Modifier.height(8.dp))
+                    // Indicator (dấu chấm dưới)
                     Row(
-                        modifier = Modifier.fillMaxWidth().size(8.dp),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(8.dp),
                         horizontalArrangement = Arrangement.Center
                     ) {
-                        // Tròn đen
-                        Box(
-                            modifier = Modifier
-                                .background(Color.Black, shape = CircleShape)
-                                .padding(4.dp) // Padding để tạo không gian
-                        )
-
-                        Spacer(modifier = Modifier.width(8.dp)) // Khoảng cách giữa các nút
-
-                        // Tròn xám
-                        Box(
-                            modifier = Modifier
-                                //.size(12.dp)
-                                .background(Color.DarkGray, shape = CircleShape)
-                                .padding(4.dp)
-                        )
-
-                        Spacer(modifier = Modifier.width(8.dp)) // Khoảng cách giữa các nút
-
-                        // Tròn xám nhạt
-                        Box(
-                            modifier = Modifier
-                                //.size(12.dp)
-                                .background(Color.Gray, shape = CircleShape)
-                                .padding(4.dp)
-                        )
-
-                        Spacer(modifier = Modifier.width(8.dp)) // Khoảng cách giữa các nút
-
-                        // Tròn xám rất nhạt
-                        Box(
-                            modifier = Modifier
-                                //.size(12.dp)
-                                .background(Color.LightGray, shape = CircleShape)
-                                .padding(4.dp)
-                        )
+                        listSlideShow.forEachIndexed { index, _ ->
+                            Box(
+                                modifier = Modifier
+                                    .size(17.dp) // Tăng kích thước của các chấm tròn
+                                    .padding(4.dp)
+                                    .background(
+                                        color = if (index == currentIndex) Color(0xFF5D9EFF) else Color.LightGray,
+                                        shape = CircleShape
+                                    )
+                            )
+                        }
                     }
                 }
                 item {
@@ -814,8 +791,7 @@ fun SlideImage(painter: Painter) {
             painter = targetPainter,
             contentDescription = null,
             modifier = Modifier
-                .size(300.dp)
-                .padding(8.dp),
+                .size(360.dp),
             contentScale = ContentScale.Crop
         )
     }

@@ -7,6 +7,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
 import com.example.ungdungbanthietbi_iot.data.device.DeviceViewModel
 import com.example.ungdungbanthietbi_iot.data.image_device.ImageViewModel
+import com.example.ungdungbanthietbi_iot.data.review_device.ReviewViewModel
 import com.example.ungdungbanthietbi_iot.data.slideshow.SlideShowViewModel
 import com.example.ungdungbanthietbi_iot.screen.address.AddAddressScreen
 import com.example.ungdungbanthietbi_iot.screen.address.AddressSelectionScreen
@@ -58,7 +59,8 @@ fun NavGraph(
     navController:NavHostController,
     deviceViewModel: DeviceViewModel,
     slideShowViewModel: SlideShowViewModel,
-    imageViewModel: ImageViewModel){
+    imageViewModel: ImageViewModel,
+    reviewViewModel: ReviewViewModel){
     NavHost(
         navController = navController,
         // Màn hình đầu tiên hiển thị
@@ -114,7 +116,13 @@ fun NavGraph(
         ) {
             var idDevice = it.arguments?.getString("idDevice")
             if(idDevice != null){
-                ProductDetailsScreen(navController, idDevice, deviceViewModel, imageViewModel)
+                ProductDetailsScreen(
+                    navController,
+                    idDevice,
+                    deviceViewModel,
+                    imageViewModel,
+                    reviewViewModel
+                )
             }
         }
         //Màn hình thanh toán
@@ -122,8 +130,13 @@ fun NavGraph(
             CartScreen(navController)
         }
         //Màn hình tất cả đánh giá, bình luận
-        composable(route = Screen.Product_Reviews.route) {
-            ProductReviewsScreen(navController)
+        composable(route = Screen.Product_Reviews.route+ "?idDevice={idDevice}",
+            arguments = listOf(navArgument("idDevice"){nullable = true})
+        ) {
+            var idDevice = it.arguments?.getString("idDevice")
+            if(idDevice != null){
+                ProductReviewsScreen(navController, idDevice, reviewViewModel)
+            }
         }
         //Màn hình lịch sử đánh giá, bình luận
         composable(route = Screen.Rating_History.route) {

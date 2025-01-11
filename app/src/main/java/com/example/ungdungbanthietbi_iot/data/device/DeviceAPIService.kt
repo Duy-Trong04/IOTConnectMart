@@ -9,7 +9,7 @@ interface DeviceAPIService {
     @GET ("device/read.php")
     suspend fun getAllDevice(): List<Device>
 
-    @GET ("device/")
+    @GET ("device/getDevicePriceThan5M.php")
     suspend fun getDeviceFeatured(): List<Device>
 
     @GET("device/show.php")

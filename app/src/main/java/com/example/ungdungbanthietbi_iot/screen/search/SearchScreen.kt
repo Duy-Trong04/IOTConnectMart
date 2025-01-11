@@ -129,7 +129,9 @@ fun SearchScreen(navController: NavController, deviceViewModel: DeviceViewModel)
                             trailingIcon = {
                                 // Dấu X để xóa từ khóa tìm kiếm
                                 IconButton(
-                                    onClick = {deviceViewModel.searchQuery = ""}
+                                    onClick = {deviceViewModel.searchQuery = ""
+                                    deviceViewModel.searchResult = emptyList()
+                                    }
                                 ) {
                                     Box(
                                         modifier = Modifier
@@ -245,7 +247,7 @@ fun SearchScreen(navController: NavController, deviceViewModel: DeviceViewModel)
                         CardDeviceSearch(device = device,
                             onClick = {
                                 //Chuyển đến màn hình chi tiết sản phẩm
-                                navController.navigate(Screen.ProductDetailsScreen.route+"?slug=${device.slug}")
+                                navController.navigate(Screen.ProductDetailsScreen.route+"?id=${device.idDevice}")
                             }
                         )
                     }

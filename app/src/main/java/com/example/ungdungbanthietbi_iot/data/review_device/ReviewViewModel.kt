@@ -1,4 +1,4 @@
-package com.example.ungdungbanthietbi_iot.data.image_device
+package com.example.ungdungbanthietbi_iot.data.review_device
 
 import android.util.Log
 import androidx.compose.runtime.getValue
@@ -10,13 +10,13 @@ import com.example.ungdungbanthietbi_iot.data.RetrofitClient
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
-class ImageViewModel:ViewModel() {
-    var listImage: List<Image> by mutableStateOf(emptyList())
+class ReviewViewModel:ViewModel() {
+    var listReview: List<Review> by mutableStateOf(emptyList())
 
-    fun getImageByIdDevice(idDevice:String){
+    fun getReviewByIdDevice(idDevice:String){
         viewModelScope.launch(Dispatchers.IO){
             try{
-                listImage = RetrofitClient.imageAPIService.getImageByIdDevice(idDevice)
+                listReview = RetrofitClient.reviewAPIService.getReviewByIdDevice(idDevice)
             }
             catch (e:Exception){
                 Log.e("DeviceViewModel", "Error getting image", e)

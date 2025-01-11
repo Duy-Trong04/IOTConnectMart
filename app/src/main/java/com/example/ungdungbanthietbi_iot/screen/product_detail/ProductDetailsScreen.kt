@@ -23,6 +23,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -31,6 +32,7 @@ import androidx.compose.material.icons.filled.AccountBox
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.AddShoppingCart
 import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material.icons.filled.Remove
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.ShoppingCart
@@ -40,6 +42,9 @@ import androidx.compose.material.icons.filled.ThumbUp
 import androidx.compose.material3.BottomAppBar
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Divider
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -73,6 +78,8 @@ import com.example.ungdungbanthietbi_iot.R
 import com.example.ungdungbanthietbi_iot.data.device.Device
 import com.example.ungdungbanthietbi_iot.data.device.DeviceViewModel
 import com.example.ungdungbanthietbi_iot.data.image_device.ImageViewModel
+import com.example.ungdungbanthietbi_iot.data.review_device.Review
+import com.example.ungdungbanthietbi_iot.data.review_device.ReviewViewModel
 import com.example.ungdungbanthietbi_iot.navigation.Screen
 import kotlinx.coroutines.delay
 import java.text.DecimalFormat
@@ -100,19 +107,27 @@ fun ProductDetailsScreen(
     navController: NavController,
     id:String,
     deviceViewModel: DeviceViewModel,
-    imageViewModel: ImageViewModel
+    imageViewModel: ImageViewModel,
+    reviewViewModel: ReviewViewModel
 ) {
     var device:Device by remember {
         mutableStateOf(Device (0, "", "", "","", "", 0.0, 0, "", "", 0,0))
     }
     deviceViewModel.getDeviceBySlug(id)
+    deviceViewModel.getAllDevice()
+    var listAllDevice : List<Device> = deviceViewModel.listAllDevice
     device = deviceViewModel.device
 
-    //imageViewModel.getImageByIdDevice(id)
     val listImage = imageViewModel.listImage
     LaunchedEffect(id) {
         imageViewModel.getImageByIdDevice(id)
     }
+
+    val listReview = reviewViewModel.listReview
+    LaunchedEffect(id) {
+        reviewViewModel.getReviewByIdDevice(id)
+    }
+
     //format giá sản phẩm
     val formatter = DecimalFormat("#,###,###")
     val formattedPrice = formatter.format(device.sellingPrice)
@@ -127,12 +142,16 @@ fun ProductDetailsScreen(
     }
 
 
-
+    // Biến trạng thái để sản phẩm yêu thích không
+    var isFavorite by remember { mutableStateOf(false) }
     // Biến lưu trữ giá trị đánh giá
-    var rating by remember { mutableStateOf(1) }
-    // Biến lưu trữ giá trị check
-    var isChecked2 by remember { mutableStateOf(false) }
-    var isChecked1 by remember { mutableStateOf(true) }
+    var averageRating = if (listReview.isNotEmpty()) {
+        listReview.map { it.rating }.average() // Tính trung bình cộng
+    } else {
+        0.0 // Giá trị mặc định nếu danh sách rỗng
+    }
+    // Biến lưu trữ giá trị checked
+    var isChecked by remember { mutableStateOf(false) }
     // Biến lưu trữ trạng thái hiển thị dialog
     var showDialog by remember { mutableStateOf(false) }
     // Biến lưu trữ số lượng sản phẩm
@@ -365,48 +384,25 @@ fun ProductDetailsScreen(
                         Text(text = "No slides available", fontSize = 16.sp, modifier = Modifier.padding(16.dp))
                     }
                 }
-                Spacer(modifier = Modifier.height(10.dp))
+                Spacer(modifier = Modifier.height(8.dp))
+                // Indicator (dấu chấm dưới)
                 Row(
-                    modifier = Modifier.fillMaxWidth().size(8.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(8.dp),
                     horizontalArrangement = Arrangement.Center
                 ) {
-                    // Tròn đen
-                    Box(
-                        modifier = Modifier
-                            //.size(12.dp)
-                            .background(Color.Black, shape = CircleShape)
-                            .padding(4.dp) // Padding để tạo không gian
-                    )
-
-                    Spacer(modifier = Modifier.width(8.dp)) // Khoảng cách giữa các nút
-
-                    // Tròn xám
-                    Box(
-                        modifier = Modifier
-                            //.size(12.dp)
-                            .background(Color.DarkGray, shape = CircleShape)
-                            .padding(4.dp)
-                    )
-
-                    Spacer(modifier = Modifier.width(8.dp)) // Khoảng cách giữa các nút
-
-                    // Tròn xám nhạt
-                    Box(
-                        modifier = Modifier
-                            //.size(12.dp)
-                            .background(Color.Gray, shape = CircleShape)
-                            .padding(4.dp)
-                    )
-
-                    Spacer(modifier = Modifier.width(8.dp)) // Khoảng cách giữa các nút
-
-                    // Tròn xám rất nhạt
-                    Box(
-                        modifier = Modifier
-                            //.size(12.dp)
-                            .background(Color.LightGray, shape = CircleShape)
-                            .padding(4.dp)
-                    )
+                    listImage.forEachIndexed { index, _ ->
+                        Box(
+                            modifier = Modifier
+                                .size(17.dp) // Tăng kích thước của các chấm tròn
+                                .padding(4.dp)
+                                .background(
+                                    color = if (index == currentIndex) Color(0xFF5D9EFF) else Color.LightGray,
+                                    shape = CircleShape
+                                )
+                        )
+                    }
                 }
             }
             item {
@@ -421,12 +417,6 @@ fun ProductDetailsScreen(
                             color = Color.Red,
                             fontWeight = FontWeight.Bold,
                             fontSize = 18.sp
-                        )
-                        Text(
-                            "Đã bán 1k",
-                            color = Color.Black,
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 14.sp
                         )
                     }
                     Spacer(modifier = Modifier.height(10.dp))
@@ -489,228 +479,202 @@ fun ProductDetailsScreen(
                     }
                     Row(
                         modifier = Modifier.padding(5.dp)
-                    )
-                    {
-                        // 5 sao vàng
-                        repeat(5) {
-                            Icon(
-                                imageVector = Icons.Filled.Star,
-                                contentDescription = "Sao",
-                                modifier = Modifier.size(20.dp),
-                                tint = Color(0xFFFBC02D) // Màu vàng
+                    ){
+                        for (i in 1..5) {
+                            Text(
+                                text = if (i <= averageRating) "★" else "☆",
+                                fontSize = 20.sp,
+                                color = if (i <= averageRating) Color(0xFFFBC02D) else Color(0xFFFBC02D)
                             )
                         }
                         Text(
-                            "5/5 (x đánh giá)",
+                            text = "${averageRating}/5 (${listReview.size} đánh giá)",
                             modifier = Modifier.padding(start = 8.dp),
                             color = Color.Gray,
-                            fontSize = 10.sp,
+                            fontSize = 15.sp,
                             textAlign = TextAlign.Center
                         )
                     }
-
-                    Column(
-                        modifier = Modifier.fillMaxWidth().border(1.dp, Color.LightGray),
-                    )
-                    {
-                        Row(modifier = Modifier.fillMaxWidth().padding(start = 5.dp)) {
-                            Image(
-                                painter = painterResource(R.drawable.logo),
-                                contentDescription = "avt",
-                                modifier = Modifier.size(30.dp)
-                            )
-                            Column() {
-                                Text("Văn Nam Cao")
-                                Row(modifier = Modifier.padding(start = 5.dp))
-                                {
-                                    repeat(5) {
-                                        Icon(
-                                            imageVector = Icons.Filled.Star,
-                                            contentDescription = "Sao",
-                                            modifier = Modifier.size(10.dp),
-                                            tint = Color(0xFFFBC02D) // Màu vàng
-                                        )
-                                    }
-                                }
-                            }
-
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.End,
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                IconButton(onClick = {
-                                    isChecked1 = !isChecked1
-                                }) {
-                                    Icon(imageVector = Icons.Filled.ThumbUp,
-                                        contentDescription = "Like",
-                                        tint = if(isChecked1) Color(0xFFFBC02D) else Color.Gray
-                                    )
-                                }
-                                Text("Hữu ích", modifier = Modifier.padding(end = 5.dp))
-                            }
-                        }
-                        Text(
-                            "Sản phẩm này tốt lắm tôi rất thích",
-                            modifier = Modifier.padding(bottom = 10.dp, start = 15.dp, end = 5.dp)
+//                    Row(
+//                        modifier = Modifier.padding(5.dp)
+//                    )
+//                    {
+//                        // 5 sao vàng
+//                        repeat(5) {
+//                            Icon(
+//                                imageVector = Icons.Filled.Star,
+//                                contentDescription = "Sao",
+//                                modifier = Modifier.size(20.dp),
+//                                tint = Color(0xFFFBC02D) // Màu vàng
+//                            )
+//                        }
+//                        Text(
+//                            "5/5 (x đánh giá)",
+//                            modifier = Modifier.padding(start = 8.dp),
+//                            color = Color.Gray,
+//                            fontSize = 15.sp,
+//                            textAlign = TextAlign.Center
+//                        )
+//                    }
+                }
+            }
+            items(listReview.take(2)){
+                CardReview(review = it, isChecked = isChecked, onlick = {
+                    navController.navigate(Screen.Product_Reviews.route + "?idDevice=${it.idDevice}")
+                })
+            }
+            item {
+                Spacer(modifier = Modifier.height(10.dp))
+                // Gợi ý sản phẩm
+                Text(
+                    "Gợi ý sản phẩm",
+                    color = Color(0xFF085979),
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 20.sp,
+                    modifier = Modifier.padding(start = 20.dp, end = 20.dp)
+                )
+                LazyRow(
+                    modifier = Modifier.fillMaxWidth().padding(10.dp),
+                    horizontalArrangement = Arrangement.Start
+                ) {
+                    items(listAllDevice){
+                        CardDevice(
+                            device = it,
+                            onClick = {navController.navigate(Screen.ProductDetailsScreen.route+"?id=${it.idDevice}")},
+                            isFavorite = isFavorite
                         )
-                    }
-                    Spacer(modifier = Modifier.height(10.dp))
-
-                    Column(
-                        modifier = Modifier.fillMaxWidth().border(1.dp, Color.LightGray),
-                    )
-                    {
-                        Row(modifier = Modifier.fillMaxWidth().padding(start = 5.dp)) {
-                            Image(
-                                painter = painterResource(R.drawable.logo),
-                                contentDescription = "avt",
-                                modifier = Modifier.size(30.dp)
-                            )
-                            Column() {
-                                Text("Nguyễn Văn A")
-                                Row(modifier = Modifier.padding(start = 5.dp))
-                                {
-                                    repeat(5) {
-                                        Icon(
-                                            imageVector = Icons.Filled.Star,
-                                            contentDescription = "Sao",
-                                            modifier = Modifier.size(10.dp),
-                                            tint = Color(0xFFFBC02D) // Màu vàng
-                                        )
-                                    }
-                                }
-                            }
-
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.End,
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                IconButton(onClick = {
-                                    isChecked2 = !isChecked2
-                                }) {
-                                    Icon(imageVector = Icons.Filled.ThumbUp,
-                                        contentDescription = "Like",
-                                        tint = if(isChecked2) Color(0xFFFBC02D) else Color.Gray
-                                    )
-                                }
-                                Text("Hữu ích", modifier = Modifier.padding(end = 5.dp))
-                            }
-                        }
-                        Text(
-                            "Sản phẩm này tốt lắm tôi rất thích",
-                            modifier = Modifier.padding(bottom = 10.dp, start = 15.dp, end = 5.dp)
-                        )
-                    }
-                    Spacer(modifier = Modifier.height(10.dp))
-
-
-                    // Gợi ý sản phẩm
-                    Text(
-                        "Gợi ý sản phẩm",
-                        color = Color(0xFF085979),
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 20.sp
-                    )
-                    LazyRow(
-                        modifier = Modifier.fillMaxWidth().padding(10.dp)
-                            .clickable{
-                                navController.navigate(Screen.ProductDetailsScreen.route)
-                            },
-                        horizontalArrangement = Arrangement.Start
-                    ) {
-                        item {
-                            Box(
-                                modifier = Modifier.fillMaxWidth()
-                            ) {
-                                Column(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    horizontalAlignment = Alignment.CenterHorizontally
-                                ) {
-                                    Image(
-                                        painter = painterResource(R.drawable.den2),
-                                        contentDescription = "sp gợi ý",
-                                        modifier = Modifier
-                                            .width(150.dp)
-                                            .height(100.dp)
-                                    )
-                                    Text("Tên sản phầm")
-                                    Text(
-                                        "Giá sản phẩm", color = Color.Red,
-                                        modifier = Modifier.fillMaxWidth(),
-                                        textAlign = TextAlign.Center
-                                    )
-                                }
-                                Image(
-                                    painter = painterResource(R.drawable.timtrang),
-                                    contentDescription = "sp gợi ý",
-                                    modifier = Modifier.size(20.dp).align(Alignment.TopEnd)
-                                )
-                            }
-                        }
-                        item {
-                            Box(
-                                modifier = Modifier.fillMaxWidth()
-                            ) {
-                                Column(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    horizontalAlignment = Alignment.CenterHorizontally
-                                ) {
-                                    Image(
-                                        painter = painterResource(R.drawable.den1),
-                                        contentDescription = "sp gợi ý",
-                                        modifier = Modifier
-                                            .width(150.dp)
-                                            .height(100.dp)
-                                    )
-                                    Text("Tên sản phầm")
-                                    Text(
-                                        "Giá sản phẩm", color = Color.Red,
-                                        modifier = Modifier.fillMaxWidth(),
-                                        textAlign = TextAlign.Center
-                                    )
-                                }
-                                Image(
-                                    painter = painterResource(R.drawable.timtrang),
-                                    contentDescription = "sp gợi ý",
-                                    modifier = Modifier.size(20.dp).align(Alignment.TopEnd)
-                                )
-                            }
-                        }
-                        item {
-                            Box(
-                                modifier = Modifier.fillMaxWidth()
-                            ) {
-                                Column(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    horizontalAlignment = Alignment.CenterHorizontally
-                                ) {
-                                    Image(
-                                        painter = painterResource(R.drawable.den3),
-                                        contentDescription = "sp gợi ý",
-                                        modifier = Modifier
-                                            .width(150.dp)
-                                            .height(100.dp)
-                                    )
-                                    Text("Tên sản phầm")
-                                    Text(
-                                        "Giá sản phẩm", color = Color.Red,
-                                        modifier = Modifier.fillMaxWidth(),
-                                        textAlign = TextAlign.Center
-                                    )
-                                }
-                                Image(
-                                    painter = painterResource(R.drawable.timtrang),
-                                    contentDescription = "sp gợi ý",
-                                    modifier = Modifier.size(20.dp).align(Alignment.TopEnd)
-                                )
-                            }
-                        }
                     }
                 }
             }
         }
+    }
+}
+
+@Composable
+fun CardReview(review: Review, isChecked:Boolean, onlick:() -> Unit){
+    var currentChecked by remember { mutableStateOf(isChecked) }
+    Card(
+        modifier = Modifier.fillMaxWidth()
+            .padding(start = 20.dp, end = 20.dp, top = 10.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = Color.White
+        ),
+        onClick = onlick
+    )
+    {
+        Divider()
+        Row(modifier = Modifier.fillMaxWidth().padding(start = 5.dp, top = 5.dp)) {
+            Image(
+                painter = painterResource(R.drawable.logo),
+                contentDescription = "avt",
+                modifier = Modifier.size(30.dp)
+            )
+            Column() {
+                Text(text = review.idCustomer)
+                Row(modifier = Modifier.padding(start = 5.dp))
+                {
+                    repeat(review.rating) {
+                        Icon(
+                            imageVector = Icons.Filled.Star,
+                            contentDescription = "Sao",
+                            modifier = Modifier.size(13.dp),
+                            tint = Color(0xFFFBC02D) // Màu vàng
+                        )
+                    }
+                }
+            }
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.End,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                IconButton(onClick = {
+                    currentChecked = !currentChecked
+                },
+                    modifier = Modifier
+                        .size(24.dp)
+//                        .align(Alignment.TopEnd)
+                ) {
+                    Icon(
+                        imageVector = Icons.Filled.ThumbUp,
+                        contentDescription = if (currentChecked) "check" else "not check",
+                        tint = if(currentChecked) Color(0xFFFBC02D) else Color.Gray
+                    )
+                }
+                Text("Hữu ích", modifier = Modifier.padding(end = 5.dp, start = 5.dp))
+            }
+        }
+        Text(
+            text = review.comment,
+            modifier = Modifier.padding(bottom = 10.dp, start = 15.dp, end = 5.dp)
+        )
+    }
+}
+
+
+@Composable
+fun CardDevice(device: Device, onClick: () -> Unit, isFavorite:Boolean){
+    var currentFavorite by remember { mutableStateOf(isFavorite) } // Quản lý trạng thái yêu thích
+    //format giá sản phẩm
+    val formatter = DecimalFormat("#,###,###")
+    val formattedPrice = formatter.format(device.sellingPrice)
+    Card(
+        modifier = Modifier.width(200.dp)// Đặt chiều rộng cố định cho Card
+            .height(250.dp)
+            .padding(8.dp),
+        onClick = onClick,
+        colors = CardDefaults.cardColors(
+            containerColor = Color.White
+        ),
+    ) {
+        Box(modifier = Modifier.fillMaxWidth()){
+            Column(
+                modifier = Modifier.fillMaxWidth().padding(8.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                //load hình ảnh từ API
+                AsyncImage(
+                    model = device.image,
+                    contentDescription = null,
+                    modifier = Modifier
+                        .width(190.dp)
+                        .height(100.dp)
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    text = device.name,
+                    modifier = Modifier.fillMaxWidth(),
+                    textAlign = TextAlign.Center,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 16.sp
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    text = "${formattedPrice} VNĐ",
+                    color = Color.Red,
+                    modifier = Modifier.fillMaxWidth(),
+                    textAlign = TextAlign.Center,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 16.sp
+                )
+            }
+            IconButton(onClick = {
+                currentFavorite = !currentFavorite
+                //Thêm vào danh sách yêu thích or xóa khỏi danh sách
+            },
+                modifier = Modifier
+                    .size(24.dp)
+                    .align(Alignment.TopEnd)
+            ) {
+                Icon(
+                    imageVector = if (currentFavorite) Icons.Filled.Favorite else Icons.Filled.FavoriteBorder,
+                    contentDescription = if (currentFavorite) "Yêu thích" else "Chưa yêu thích",
+                    tint = Color.Red
+                )
+            }
+        }
+
     }
 }
 
@@ -726,8 +690,7 @@ fun SlideImage(painter: Painter) {
             painter = targetPainter,
             contentDescription = null,
             modifier = Modifier
-                .size(300.dp)
-                .padding(8.dp),
+                .size(360.dp),
             contentScale = ContentScale.Crop
         )
     }

@@ -4,6 +4,7 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
@@ -21,6 +22,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -36,16 +38,8 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
-
-// Định nghĩa dữ liệu cho một bài đánh giá của người dùng (fake)
-data class UserReview(
-    val userName: String,
-    val userAvatarUrl: String,
-    val rating: Int,
-    val comment: String,
-    val date: String,
-    var usefulCount: Int = 0 // Đếm số lượng hữu ích
-)
+import com.example.ungdungbanthietbi_iot.data.review_device.ReviewViewModel
+import com.example.ungdungbanthietbi_iot.data.review_device.Review
 
 /** Giao diện màn hình danh sách đánh giá của sản phẩm (ProductReviewsScreen)
  * -------------------------------------------
@@ -64,36 +58,19 @@ data class UserReview(
  *
  */
 @Composable
-fun ProductReviewsScreen(navController: NavController) {
-    // Danh sách các bài đánh giá mẫu
-    val sampleReviews = listOf(
-        UserReview(
-            userName = "Nguyen Van A",
-            userAvatarUrl = "https://example.com/user1.jpg",
-            rating = 4,
-            comment = "Sản phẩm rất tốt, chất lượng vượt mong đợi!",
-            date = "2024-12-18",
-            usefulCount = 8
-        ),
-        UserReview(
-            userName = "Le Thi B",
-            userAvatarUrl = "https://example.com/user2.jpg",
-            rating = 3,
-            comment = "Sản phẩm ổn, giao hàng hơi chậm.",
-            date = "2024-12-17",
-            usefulCount = 5
-        ),
-        UserReview(
-            userName = "Le Thi C",
-            userAvatarUrl = "https://example.com/user2.jpg",
-            rating = 1,
-            comment = "Sản phẩm ổn, giao hàng hơi chậm.",
-            date = "2024-12-17",
-            usefulCount = 2
-        )
-    )
+fun ProductReviewsScreen(
+    navController: NavController,
+    id:String,
+    reviewViewModel: ReviewViewModel
+) {
+    val listReview = reviewViewModel.listReview
+    LaunchedEffect(id) {
+        reviewViewModel.getReviewByIdDevice(id)
+    }
+    // Biến trạng thái để sản phẩm yêu thích không
+    var isUseful by remember { mutableStateOf(false) }
     // Hiển thị màn hình danh sách đánh giá với các đánh giá mẫu
-    ReviewListScreen(reviews = sampleReviews, navController = navController)
+    ReviewListScreen(reviews = listReview, navController = navController, isUseful = isUseful)
 }
 
 /** Giao diện màn hình danh sách đánh giá của sản phẩm (ReviewListScreen)
@@ -114,7 +91,7 @@ fun ProductReviewsScreen(navController: NavController) {
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ReviewListScreen(reviews: List<UserReview>, navController: NavController) {
+fun ReviewListScreen(reviews: List<Review>, navController: NavController, isUseful: Boolean) {
     Scaffold(
         topBar = {
             TopAppBar(
@@ -145,8 +122,8 @@ fun ReviewListScreen(reviews: List<UserReview>, navController: NavController) {
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            items(reviews.size) { index ->
-                ReviewCard(review = reviews[index])// Hiển thị từng bài đánh giá
+            items(reviews) { index ->
+                ReviewCard(review = index, isUseful = isUseful)// Hiển thị từng bài đánh giá
             }
         }
     }
@@ -169,8 +146,8 @@ fun ReviewListScreen(reviews: List<UserReview>, navController: NavController) {
  *
  */
 @Composable
-fun ReviewCard(review: UserReview) {
-    var isUseful by remember { mutableStateOf(false) } // Trạng thái đánh dấu hữu ích
+fun ReviewCard(review: Review, isUseful:Boolean) {
+    var currentisUseful by remember { mutableStateOf(isUseful) } // Trạng thái đánh dấu hữu ích
     Card(
         shape = RoundedCornerShape(8.dp),
         elevation = CardDefaults.cardElevation(4.dp),
@@ -194,7 +171,7 @@ fun ReviewCard(review: UserReview) {
                 )
                 // Tên người dùng
                 Text(
-                    text = review.userName,
+                    text = review.idCustomer,
                     fontWeight = FontWeight.Bold,
                     fontSize = 16.sp
                 )
@@ -204,15 +181,14 @@ fun ReviewCard(review: UserReview) {
                 verticalAlignment = Alignment.CenterVertically
             ){
                 IconButton(onClick = {
-                    isUseful = !isUseful
-                    if (isUseful) review.usefulCount++ else review.usefulCount--
+                    currentisUseful = !currentisUseful
                 }) {
                     Icon(imageVector = Icons.Filled.ThumbUp,
                         contentDescription = "Like",
                         tint = if(isUseful) Color(0xFFFBC02D) else Color.Gray
                     )
                 }
-                Text("Hữu ích (${review.usefulCount})", modifier = Modifier.padding(end = 5.dp))
+                Text("Hữu ích", modifier = Modifier.padding(end = 5.dp))
             }
         }
         // Thanh đánh giá sao
@@ -234,8 +210,8 @@ fun ReviewCard(review: UserReview) {
         )
         // Ngày đánh giá
         Text(
-            text = review.date,
-            fontSize = 12.sp,
+            text = review.created_at,
+            fontSize = 13.sp,
             color = Color.Gray
         )
     }

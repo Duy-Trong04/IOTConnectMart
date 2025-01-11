@@ -2,6 +2,7 @@ package com.example.ungdungbanthietbi_iot.data
 
 import com.example.ungdungbanthietbi_iot.data.device.DeviceAPIService
 import com.example.ungdungbanthietbi_iot.data.image_device.ImageAPIService
+import com.example.ungdungbanthietbi_iot.data.review_device.ReviewAPIService
 import com.example.ungdungbanthietbi_iot.data.slideshow.SlideShowAPIService
 import com.google.gson.GsonBuilder
 import retrofit2.Retrofit
@@ -34,5 +35,12 @@ object RetrofitClient {
             .addConverterFactory(GsonConverterFactory.create(GsonBuilder().create()))
             .build()
             .create(ImageAPIService::class.java)
+    }
+    val reviewAPIService:ReviewAPIService by lazy {
+        Retrofit.Builder()
+            .baseUrl(Constant.BASE_URL)
+            .addConverterFactory(GsonConverterFactory.create(GsonBuilder().create()))
+            .build()
+            .create(ReviewAPIService::class.java)
     }
 }
