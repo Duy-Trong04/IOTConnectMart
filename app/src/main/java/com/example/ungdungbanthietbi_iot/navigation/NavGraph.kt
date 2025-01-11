@@ -2,6 +2,7 @@ package com.example.ungdungbanthietbi_iot.navigation
 
 import androidx.compose.runtime.Composable
 import androidx.navigation.NavHostController
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
@@ -61,7 +62,7 @@ fun NavGraph(navController:NavHostController, deviceViewModel: DeviceViewModel){
         // Màn hình IntroScreen sau khoảng thời gian quy định thì chuyển sang màn hình trang chủ HomeScreen
         composable(route = Screen.IntroScreen.route){
             IntroScreen(onTimeout = {
-                navController.navigate("HomeScreen"){
+                navController.navigate(Screen.HomeScreen.route){
                     // Xóa màn hình IntroScreen khỏi ngăn xếp
                     popUpTo(Screen.IntroScreen.route){
                         inclusive = true
@@ -69,9 +70,20 @@ fun NavGraph(navController:NavHostController, deviceViewModel: DeviceViewModel){
                 }
             })
         }
+        // HomeScreen không có tham số (Chưa đăng nhập)
         composable(route = Screen.HomeScreen.route){
-            HomeScreen(navController, deviceViewModel)
+            HomeScreen(navController, deviceViewModel,null)
         }
+        composable(
+            route = Screen.HomeScreen.route + "?username={username}",
+            arguments = listOf(
+                navArgument("username") { type = NavType.StringType },
+            )
+        ) {
+            val tentaikhoan = it.arguments?.getString("username")
+            HomeScreen(navController, deviceViewModel, tentaikhoan)
+        }
+
         composable(route = Screen.LoginScreen.route){
             LoginScreen(navController)
         }
@@ -185,10 +197,19 @@ fun NavGraph(navController:NavHostController, deviceViewModel: DeviceViewModel){
         composable(Screen.ChangePassword.route) {
             ChangePassword(onBack = { navController.popBackStack() })
         }
+//        composable(
+//            Screen.PersonalScreen.route
+//        ) {
+//            PersonalScreen(navController)
+//        }
+        // Màn hình tài khoản
         composable(
-            Screen.PersonalScreen.route
-        ) {
-            PersonalScreen(navController)
+            route = "${Screen.PersonalScreen.route}?username={username}",
+            arguments = listOf(navArgument("username") { type = NavType.StringType })
+        ) { backStackEntry ->
+            val username = backStackEntry.arguments?.getString("username") ?: ""
+            PersonalScreen(navController,username)
         }
+
     }
 }

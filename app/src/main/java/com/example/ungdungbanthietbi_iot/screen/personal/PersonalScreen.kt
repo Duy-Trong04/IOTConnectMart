@@ -24,6 +24,7 @@ import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.VerifiedUser
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
@@ -40,11 +41,14 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import androidx.navigation.NavHostController
 import coil.compose.AsyncImage
 import com.example.ungdungbanthietbi_iot.R
 import com.example.ungdungbanthietbi_iot.data.Product
+import com.example.ungdungbanthietbi_iot.data.account.GetTaiKhoan
+import com.example.ungdungbanthietbi_iot.data.account.LoginViewModel
 import com.example.ungdungbanthietbi_iot.navigation.Screen
 import com.google.accompanist.flowlayout.FlowRow
 import com.google.accompanist.flowlayout.MainAxisAlignment
@@ -61,8 +65,19 @@ import kotlinx.coroutines.launch
 //@Preview(showBackground = true)
 @Composable
 fun PersonalScreen(
-    navController: NavController
+    navController: NavController,
+    username: String
 ) {
+
+    var taiKhoanviewModel: GetTaiKhoan = viewModel()
+    var taiKhoan = taiKhoanviewModel.taiKhoan1
+    LaunchedEffect(username){
+        if(username.isNotEmpty()){
+            taiKhoanviewModel.getTaiKhoanByTentaikhoan(username)
+        }
+    }
+
+
     //Dữ liệu mẫu
     val products = remember {
         listOf(
