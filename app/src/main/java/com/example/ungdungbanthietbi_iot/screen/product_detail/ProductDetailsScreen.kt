@@ -68,9 +68,11 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.navigation.NavController
 import coil.compose.AsyncImage
+import coil.compose.rememberImagePainter
 import com.example.ungdungbanthietbi_iot.R
 import com.example.ungdungbanthietbi_iot.data.device.Device
 import com.example.ungdungbanthietbi_iot.data.device.DeviceViewModel
+import com.example.ungdungbanthietbi_iot.data.image_device.ImageViewModel
 import com.example.ungdungbanthietbi_iot.navigation.Screen
 import kotlinx.coroutines.delay
 import java.text.DecimalFormat
@@ -94,28 +96,34 @@ import java.text.DecimalFormat
          * Nội dung cập nhật:
          *
          */
-fun ProductDetailsScreen(navController: NavController, slug:String, deviceViewModel: DeviceViewModel) {
+fun ProductDetailsScreen(
+    navController: NavController,
+    id:String,
+    deviceViewModel: DeviceViewModel,
+    imageViewModel: ImageViewModel
+) {
     var device:Device by remember {
         mutableStateOf(Device (0, "", "", "","", "", 0.0, 0, "", "", 0,0))
     }
-    deviceViewModel.getDeviceBySlug(slug)
+    deviceViewModel.getDeviceBySlug(id)
     device = deviceViewModel.device
+
+    //imageViewModel.getImageByIdDevice(id)
+    val listImage = imageViewModel.listImage
+    LaunchedEffect(id) {
+        imageViewModel.getImageByIdDevice(id)
+    }
     //format giá sản phẩm
     val formatter = DecimalFormat("#,###,###")
     val formattedPrice = formatter.format(device.sellingPrice)
 
-
-
-    val images = listOf(
-        painterResource(id = R.drawable.den1),
-        painterResource(id = R.drawable.den2),
-        painterResource(id = R.drawable.den3)
-    )
     var currentIndex by remember { mutableStateOf(0) }
     // Tự động chuyển hình sau mỗi 3 giây
-    LaunchedEffect(key1 = currentIndex) {
-        delay(3000)
-        currentIndex = (currentIndex + 1) % images.size
+    LaunchedEffect(key1 = currentIndex, key2 = listImage.size) {
+        if (listImage.isNotEmpty()) {
+            delay(3000)
+            currentIndex = (currentIndex + 1) % listImage.size
+        }
     }
 
 
@@ -342,16 +350,20 @@ fun ProductDetailsScreen(navController: NavController, slug:String, deviceViewMo
                         .pointerInput(Unit) {
                             detectHorizontalDragGestures { change, dragAmount ->
                                 change.consume() // Tiêu thụ sự kiện kéo
-                                if (dragAmount > 0) { // Trượt sang phải
-                                    currentIndex = if (currentIndex == 0) images.size - 1 else currentIndex - 1
-                                } else { // Trượt sang trái
-                                    currentIndex = (currentIndex + 1) % images.size
+                                if (dragAmount > 0 && listImage.isNotEmpty()) { // Trượt sang phải
+                                    currentIndex = if (currentIndex == 0) listImage.size - 1 else currentIndex - 1
+                                } else if (listImage.isNotEmpty()) { // Trượt sang trái
+                                    currentIndex = (currentIndex + 1) % listImage.size
                                 }
                             }
                         },
                     contentAlignment = Alignment.Center
                 ) {
-                    SlideImage(painter = images[currentIndex])
+                    if (listImage.isNotEmpty()) {
+                        SlideImage(painter = rememberImagePainter(data = listImage[currentIndex].image))
+                    } else {
+                        Text(text = "No slides available", fontSize = 16.sp, modifier = Modifier.padding(16.dp))
+                    }
                 }
                 Spacer(modifier = Modifier.height(10.dp))
                 Row(

@@ -6,12 +6,12 @@ import retrofit2.http.Path
 import retrofit2.http.Query
 
 interface DeviceAPIService {
-    @GET ("device/admin")
+    @GET ("device/read.php")
     suspend fun getAllDevice(): List<Device>
 
     @GET ("device/")
     suspend fun getDeviceFeatured(): List<Device>
 
-    @GET("device/detail/{slug}")
-    suspend fun getDeviceBySlug(@Path("slug") slug: String): Device
+    @GET("device/show.php")
+    suspend fun getDeviceById(@Query("id") id: String): Device
 }

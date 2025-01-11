@@ -43,10 +43,10 @@ class DeviceViewModel:ViewModel() {
         }
     }
 
-    fun getDeviceBySlug(slug:String){
+    fun getDeviceBySlug(id:String){
         viewModelScope.launch (Dispatchers.IO){
             try {
-                device = RetrofitClient.deviceAPIService.getDeviceBySlug(slug)
+                device = RetrofitClient.deviceAPIService.getDeviceById(id)
                 searchResult = listAllDevice // Hiển thị toàn bộ danh sách ban đầu
             }
             catch (e:Exception){

@@ -528,7 +528,7 @@ fun HomeScreen(navController: NavController, deviceViewModel: DeviceViewModel, s
                         items(listDeviceFeatured){
                             CardDeviceFeatured(device = it,
                                 onClick = {
-                                    navController.navigate(Screen.ProductDetailsScreen.route+"?slug=${it.slug}")
+                                    navController.navigate(Screen.ProductDetailsScreen.route+"?id=${it.idDevice}")
                                 },
                                 isFavorite = isFavorite
                             )
@@ -660,7 +660,7 @@ fun HomeScreen(navController: NavController, deviceViewModel: DeviceViewModel, s
                         horizontalArrangement = Arrangement.Start) {
                         items(listAllDevice){
                             CardAllDevice(device = it, onClick = {
-                                navController.navigate(Screen.ProductDetailsScreen.route+"?slug=${it.slug}")
+                                navController.navigate(Screen.ProductDetailsScreen.route+"?id=${it.idDevice}")
                             },
                                 isFavorite = isFavorite
                             )

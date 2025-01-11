@@ -4,6 +4,6 @@ import retrofit2.http.GET
 
 
 interface SlideShowAPIService {
-    @GET("slideshow/")
+    @GET("slideshow/read.php")
     suspend fun getAllSlideShow():List<SlideShow>
 }
