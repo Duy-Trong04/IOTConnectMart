@@ -1,6 +1,7 @@
 package com.example.ungdungbanthietbi_iot.screen.home
 
-import android.annotation.SuppressLint
+
+import androidx.annotation.ContentView
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -38,6 +39,7 @@ import androidx.compose.material.icons.filled.Upload
 import androidx.compose.material3.BottomAppBar
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FabPosition
@@ -79,15 +81,17 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
-import coil.compose.AsyncImage
-import coil.request.ImageRequest
 import com.example.ungdungbanthietbi_iot.R
+import com.example.ungdungbanthietbi_iot.data.account.LoginViewModel
 import com.example.ungdungbanthietbi_iot.data.device.Device
 import com.example.ungdungbanthietbi_iot.data.device.DeviceViewModel
 import com.example.ungdungbanthietbi_iot.navigation.Screen
 import kotlinx.coroutines.launch
 import java.text.DecimalFormat
+import androidx.compose.runtime.livedata.observeAsState
+import com.example.ungdungbanthietbi_iot.data.account.Account
 
 /** Giao diện màn hình Trang chủ (HomeScreen)
  * -------------------------------------------
@@ -107,9 +111,14 @@ import java.text.DecimalFormat
  *
  */
 
+
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun HomeScreen(navController: NavController, deviceViewModel: DeviceViewModel) {
+fun HomeScreen(navController: NavController,
+               deviceViewModel: DeviceViewModel,
+               username: String?
+               ) {
     deviceViewModel.getAllDevice()
     var listDevice : List<Device> = deviceViewModel.listDevice
     val navdrawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
@@ -120,6 +129,12 @@ fun HomeScreen(navController: NavController, deviceViewModel: DeviceViewModel) {
         "Thiết bị cảm biến",
         "Xả kho",
     )
+
+    val taiKhoanViewModel:LoginViewModel= viewModel()
+    val taiKhoan=taiKhoanViewModel.taiKhoan
+    if(username!=null) {
+        taiKhoanViewModel.getTaiKhoanByTentaikhoan(username)
+    }
 
     // Tạo LazyListState để quản lý trạng thái cuộn
     val listState = rememberLazyListState()
@@ -248,8 +263,13 @@ fun HomeScreen(navController: NavController, deviceViewModel: DeviceViewModel) {
                     actions = {
                         IconButton(onClick = {
                             // vào màn hình giỏ hàng nếu chưa đăng nhập thì vào màn hình đăng nhập(LoginScreen)
-                            navController.navigate(Screen.LoginScreen.route)
-                        }
+                            //navController.navigate(Screen.LoginScreen.route)
+                                if (taiKhoan==null) {
+                                    navController.navigate(Screen.LoginScreen.route)
+                                } else {
+                                    navController.navigate(Screen.Cart_Screen.route)
+                                }
+                            }
                         ) {
                             Icon(
                                 imageVector = Icons.Default.ShoppingCart, contentDescription = "Giỏ hàng",
@@ -362,8 +382,15 @@ fun HomeScreen(navController: NavController, deviceViewModel: DeviceViewModel) {
                             Box (
                                 modifier = Modifier.size(50.dp)
                                     .clip(CircleShape)
+//                                    .clickable {
+//                                        navController.navigate(Screen.PersonalScreen.route)
+//                                    },
                                     .clickable {
-                                        navController.navigate(Screen.PersonalScreen.route)
+                                        if (true) {
+                                            navController.navigate(Screen.LoginScreen.route)
+                                        } else {
+                                            navController.navigate("${Screen.PersonalScreen.route}?username=")
+                                        }
                                     },
                                 contentAlignment = Alignment.Center,
                             ){
