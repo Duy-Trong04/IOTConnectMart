@@ -13,7 +13,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Category
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Home
-import androidx.compose.material.icons.filled.List
 import androidx.compose.material.icons.filled.LocalShipping
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Person
@@ -24,7 +23,13 @@ import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.VerifiedUser
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -40,11 +45,14 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import androidx.navigation.NavHostController
 import coil.compose.AsyncImage
 import com.example.ungdungbanthietbi_iot.R
 import com.example.ungdungbanthietbi_iot.data.Product
+import com.example.ungdungbanthietbi_iot.data.account.AccountViewModel
+import com.example.ungdungbanthietbi_iot.data.customer.CustomerViewModel
 import com.example.ungdungbanthietbi_iot.navigation.Screen
 import com.google.accompanist.flowlayout.FlowRow
 import com.google.accompanist.flowlayout.MainAxisAlignment
@@ -61,7 +69,8 @@ import kotlinx.coroutines.launch
 //@Preview(showBackground = true)
 @Composable
 fun PersonalScreen(
-    navController: NavController
+    navController: NavController,
+    username:String
 ) {
     //Dữ liệu mẫu
     val products = remember {
@@ -82,6 +91,30 @@ fun PersonalScreen(
         "Thiết bị cảm biến",
         "Xả kho",
     )
+
+    // Lấy ViewModel
+    val accountViewModel:AccountViewModel = viewModel()
+    val customerViewModel:CustomerViewModel = viewModel()
+
+    // Lấy thông tin tài khoản từ ViewModel
+    val account = accountViewModel.account
+    val customer = customerViewModel.customer
+
+    // Gọi API nếu taikhoan chưa được lấy
+    LaunchedEffect(username) {
+        if (username.isNotEmpty()) {
+            accountViewModel.getUserByUsername(username)
+        }
+    }
+
+    if(account == null){
+        Text(text = "Đang tải thông tin tài khoản...")
+        return
+    }
+    if (account != null) {
+        customerViewModel.getCustomerById(account.idPerson.toString())
+    }
+
 
     // Danh mục
     ModalNavigationDrawer(
@@ -219,7 +252,7 @@ fun PersonalScreen(
                             Box (
                                 modifier = Modifier.size(50.dp)
                                     .clip(CircleShape)
-                                    .clickable { navController.navigate(Screen.HomeScreen.route) },
+                                    .clickable { navController.navigate(Screen.HomeScreen.route + "?username=${username}") },
                                 contentAlignment = Alignment.Center,
 
                                 ){
@@ -302,7 +335,8 @@ fun PersonalScreen(
                                 modifier = Modifier.size(50.dp)
                                     .clip(CircleShape)
                                     .clickable {
-                                        navController.navigate(Screen.PersonalScreen.route)
+                                        //navController.popBackStack()
+                                        navController.navigate(Screen.PersonalScreen.route+ "?username=${accountViewModel.username}")
                                     }
                                     .background(Color(0xFF5D9EFF), RoundedCornerShape(5.dp)),
                                 contentAlignment = Alignment.Center,
@@ -332,58 +366,61 @@ fun PersonalScreen(
                         .padding(16.dp),
                     verticalArrangement = Arrangement.Center
                 ) {
-                    item {
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(150.dp)
-                                .clickable {
-                                    //Chuyển màn hình chỉnh sửa hồ sơ
-                                    navController.navigate(Screen.EditProfileScreen.route)
-                                },
-                            contentAlignment = Alignment.CenterStart
-                        ) {
-                            Row(
-                                horizontalArrangement = Arrangement.Center,
-                                verticalAlignment = Alignment.CenterVertically
+                    if (customer != null) {
+                        item {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(150.dp)
+                                    .clickable {
+                                        //Chuyển màn hình chỉnh sửa hồ sơ
+                                        navController.navigate(Screen.EditProfileScreen.route + "?username=${accountViewModel.username}")
+                                    },
+                                contentAlignment = Alignment.CenterStart
                             ) {
-                                Image(
-                                    painter = painterResource(id = R.drawable.avatar),
-                                    contentDescription = null,
-                                    modifier = Modifier
-                                        .size(100.dp)
-                                        .clip(CircleShape),
-                                    contentScale = ContentScale.Crop
-                                )
-                                Column(
-                                    modifier = Modifier.fillMaxWidth()
+                                Row(
+                                    horizontalArrangement = Arrangement.Center,
+                                    verticalAlignment = Alignment.CenterVertically
                                 ) {
-                                    Text(
-                                        text = "Nguyễn Văn A",
-                                        modifier = Modifier.padding(start = 16.dp),
-                                        fontSize = 20.sp,
-                                        fontWeight = FontWeight.Bold
+                                    Image(
+                                        painter = painterResource(id = R.drawable.avatar),
+                                        contentDescription = null,
+                                        modifier = Modifier
+                                            .size(100.dp)
+                                            .clip(CircleShape),
+                                        contentScale = ContentScale.Crop
                                     )
-                                    Spacer(modifier = Modifier.height(3.dp))
-                                    Text(
-                                        text = "abc@gmail.com",
-                                        modifier = Modifier.padding(start = 16.dp),
-                                        fontSize = 20.sp,
-                                        fontWeight = FontWeight.W300
-                                    )
-                                    Spacer(modifier = Modifier.height(3.dp))
-                                    Text(
-                                        text = "0123456789",
-                                        modifier = Modifier.padding(start = 16.dp),
-                                        fontSize = 20.sp,
-                                        fontWeight = FontWeight.W300
-                                    )
+                                    Column(
+                                        modifier = Modifier.fillMaxWidth()
+                                    ) {
+                                        Text(
+                                            text = "${customer.surname} ${customer.lastName}",
+                                            modifier = Modifier.padding(start = 16.dp),
+                                            fontSize = 20.sp,
+                                            fontWeight = FontWeight.Bold
+                                        )
+                                        Spacer(modifier = Modifier.height(3.dp))
+                                        Text(
+                                            text = customer.email,
+                                            modifier = Modifier.padding(start = 16.dp),
+                                            fontSize = 20.sp,
+                                            fontWeight = FontWeight.W300
+                                        )
+                                        Spacer(modifier = Modifier.height(3.dp))
+                                        Text(
+                                            text = customer.phone,
+                                            modifier = Modifier.padding(start = 16.dp),
+                                            fontSize = 20.sp,
+                                            fontWeight = FontWeight.W300
+                                        )
+                                    }
                                 }
                             }
                         }
                     }
 
                     item {
+                        Divider()
                         Spacer(modifier = Modifier.height(16.dp))
                         Row(
                             modifier = Modifier.fillMaxWidth(),

@@ -89,11 +89,13 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import coil.compose.AsyncImage
 import coil.compose.rememberImagePainter
 import coil.request.ImageRequest
 import com.example.ungdungbanthietbi_iot.R
+import com.example.ungdungbanthietbi_iot.data.account.AccountViewModel
 import com.example.ungdungbanthietbi_iot.data.device.Device
 import com.example.ungdungbanthietbi_iot.data.device.DeviceViewModel
 import com.example.ungdungbanthietbi_iot.data.slideshow.SlideShow
@@ -123,12 +125,17 @@ import java.text.DecimalFormat
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun HomeScreen(navController: NavController, deviceViewModel: DeviceViewModel, slideShowViewModel: SlideShowViewModel) {
+fun HomeScreen(
+    navController: NavController,
+    deviceViewModel: DeviceViewModel,
+    slideShowViewModel: SlideShowViewModel,
+    username:String?,
+) {
+
     deviceViewModel.getAllDevice()
     deviceViewModel.getDeviceFeatured()
     var listAllDevice : List<Device> = deviceViewModel.listAllDevice
     var listDeviceFeatured :List<Device> = deviceViewModel.listDeviceFeatured
-
 
     //slideShowViewModel.getAllSlideShow()
     var listSlideShow = slideShowViewModel.listSlideShow
@@ -146,7 +153,12 @@ fun HomeScreen(navController: NavController, deviceViewModel: DeviceViewModel, s
         }
     }
 
+    val accountViewModel:AccountViewModel = viewModel()
+    val account = accountViewModel.account
 
+    if(username != null){
+        accountViewModel.getUserByUsername(username)
+    }
     val navdrawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     val scope = rememberCoroutineScope() //xử lý suspending fun (mở và đóng drawer)
     val countries = listOf(
@@ -283,7 +295,12 @@ fun HomeScreen(navController: NavController, deviceViewModel: DeviceViewModel, s
                     actions = {
                         IconButton(onClick = {
                             // vào màn hình giỏ hàng nếu chưa đăng nhập thì vào màn hình đăng nhập(LoginScreen)
-                            navController.navigate(Screen.LoginScreen.route)
+                            if(account == null){
+                                navController.navigate(Screen.LoginScreen.route)
+                            }
+                            else{
+                                navController.navigate(Screen.Cart_Screen.route +"?idPerson=${account.idPerson}&?username=${account.username}")
+                            }
                         }
                         ) {
                             Icon(
@@ -314,7 +331,7 @@ fun HomeScreen(navController: NavController, deviceViewModel: DeviceViewModel, s
                             Box (
                                 modifier = Modifier.size(50.dp)
                                     .clip(CircleShape)
-                                    .clickable { navController.navigate(Screen.HomeScreen.route) }
+                                    .clickable { navController.navigate(Screen.HomeScreen.route + "?username=${username}") }
                                     .background(Color(0xFF5D9EFF), RoundedCornerShape(5.dp)),
                                 contentAlignment = Alignment.Center,
 
@@ -398,7 +415,12 @@ fun HomeScreen(navController: NavController, deviceViewModel: DeviceViewModel, s
                                 modifier = Modifier.size(50.dp)
                                     .clip(CircleShape)
                                     .clickable {
-                                        navController.navigate(Screen.PersonalScreen.route)
+                                        if(username != null){
+                                            navController.navigate(Screen.PersonalScreen.route + "?username=${accountViewModel.username}")
+                                        }
+                                        else{
+                                            navController.navigate(Screen.LoginScreen.route)
+                                        }
                                     },
                                 contentAlignment = Alignment.Center,
                             ){

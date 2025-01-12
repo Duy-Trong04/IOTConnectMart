@@ -1,5 +1,7 @@
 package com.example.ungdungbanthietbi_iot.data
 
+import com.example.ungdungbanthietbi_iot.data.account.AccuntAPIService
+import com.example.ungdungbanthietbi_iot.data.customer.CustomerAPIService
 import com.example.ungdungbanthietbi_iot.data.device.DeviceAPIService
 import com.example.ungdungbanthietbi_iot.data.image_device.ImageAPIService
 import com.example.ungdungbanthietbi_iot.data.review_device.ReviewAPIService
@@ -42,5 +44,19 @@ object RetrofitClient {
             .addConverterFactory(GsonConverterFactory.create(GsonBuilder().create()))
             .build()
             .create(ReviewAPIService::class.java)
+    }
+    val accountAPIService: AccuntAPIService by lazy {
+        Retrofit.Builder()
+            .baseUrl(Constant.BASE_URL)
+            .addConverterFactory(GsonConverterFactory.create(GsonBuilder().create()))
+            .build()
+            .create(AccuntAPIService::class.java)
+    }
+    val customerAPIService: CustomerAPIService by lazy {
+        Retrofit.Builder()
+            .baseUrl(Constant.BASE_URL)
+            .addConverterFactory(GsonConverterFactory.create(GsonBuilder().create()))
+            .build()
+            .create(CustomerAPIService::class.java)
     }
 }

@@ -26,9 +26,12 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import coil.compose.rememberImagePainter
 import coil.annotation.ExperimentalCoilApi
+import com.example.ungdungbanthietbi_iot.data.account.AccountViewModel
+import com.example.ungdungbanthietbi_iot.data.customer.CustomerViewModel
 import com.example.ungdungbanthietbi_iot.navigation.Screen
 import java.time.format.DateTimeFormatter
 
@@ -43,8 +46,23 @@ import java.time.format.DateTimeFormatter
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalCoilApi::class)
 //@Preview(showBackground = true)
 @Composable
-fun EditProfileScreen(navController: NavHostController) {
-    var userName by remember { mutableStateOf("Nguyen Van A") }
+fun EditProfileScreen(navController: NavHostController, username:String) {
+
+    val customerViewModel:CustomerViewModel = viewModel()
+    val accountViewModel:AccountViewModel = viewModel()
+    val account = accountViewModel.account
+    val customer = customerViewModel.customer
+    LaunchedEffect(username) {
+        if (username.isNotEmpty()) {
+            accountViewModel.getUserByUsername(username)
+        }
+    }
+
+    if (account != null) {
+        customerViewModel.getCustomerById(account.idPerson.toString())
+    }
+
+    var userName = remember { mutableStateOf("ABC") }
     var gender by remember { mutableStateOf("Nam") }
     var birthDate by remember { mutableStateOf("01/01/1990") }
     var phoneNumber by remember { mutableStateOf("0123456789") }
@@ -129,19 +147,19 @@ fun EditProfileScreen(navController: NavHostController) {
                     }
                 }
                 item {
-                    BoxEditProfile(label = "Tên người dùng", value = userName, onClick = { /*Chuyển trang đổi user name*/navController.navigate(Screen.EditUsernamScreen.route) })
+                    BoxEditProfile(label = "Tên người dùng", value = "${customer?.surname} ${customer?.lastName}", onClick = { /*Chuyển trang đổi user name*/navController.navigate(Screen.EditUsernamScreen.route) })
                 }
                 item {
-                    BoxEditProfile(label = "Giới tính", value = gender, onClick = { /*Chuyển trang đổi giới tính*/ showGenderDialog=true})
+                    BoxEditProfile(label = "Giới tính", value = if(customer?.gender == 0) "Nam" else "Nữ", onClick = { /*Chuyển trang đổi giới tính*/ showGenderDialog=true})
                 }
                 item {
-                    BoxEditProfile(label = "Ngày sinh", value = birthDate, onClick = { /*Chuyển trang đổi ngày sinh*/ showCalendarDialog = true})
+                    BoxEditProfile(label = "Ngày sinh", value = customer?.birthdate.toString(), onClick = { /*Chuyển trang đổi ngày sinh*/ showCalendarDialog = true})
                 }
                 item {
-                    BoxEditProfile(label = "Số điện thoại", value = phoneNumber, onClick = { /*Chuyển trang đổi số điện thoại*/navController.navigate(Screen.EditPhoneScreen.route) })
+                    BoxEditProfile(label = "Số điện thoại", value = customer?.phone.toString(), onClick = { /*Chuyển trang đổi số điện thoại*/navController.navigate(Screen.EditPhoneScreen.route) })
                 }
                 item {
-                    BoxEditProfile(label = "Email", value = email, onClick = { /*Chuyển trang đổi email*/navController.navigate(Screen.EditEmailScreen.route) })
+                    BoxEditProfile(label = "Email", value = customer?.email.toString(), onClick = { /*Chuyển trang đổi email*/navController.navigate(Screen.EditEmailScreen.route) })
                 }
             }
             // Hiển thị dialog chọn giới tính nếu trạng thái showGenderDialog là true

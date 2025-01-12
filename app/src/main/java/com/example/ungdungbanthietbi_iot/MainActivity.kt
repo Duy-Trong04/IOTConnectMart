@@ -7,6 +7,7 @@ import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
+import com.example.ungdungbanthietbi_iot.data.account.AccountViewModel
 import com.example.ungdungbanthietbi_iot.data.device.DeviceViewModel
 import com.example.ungdungbanthietbi_iot.data.image_device.ImageViewModel
 import com.example.ungdungbanthietbi_iot.data.review_device.ReviewViewModel
@@ -19,6 +20,7 @@ class MainActivity : ComponentActivity() {
     private val slideShowViewModel by viewModels<SlideShowViewModel>()
     private val imageViewModel by viewModels<ImageViewModel>()
     private val reviewViewModel by viewModels<ReviewViewModel>()
+    private val accountViewModel by viewModels<AccountViewModel>()
     lateinit var navController: NavHostController
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -30,7 +32,8 @@ class MainActivity : ComponentActivity() {
                     deviceViewModel = deviceViewModel,
                     slideShowViewModel = slideShowViewModel,
                     imageViewModel = imageViewModel,
-                    reviewViewModel = reviewViewModel
+                    reviewViewModel = reviewViewModel,
+                    accountViewModel = accountViewModel
                 )
             }
         }

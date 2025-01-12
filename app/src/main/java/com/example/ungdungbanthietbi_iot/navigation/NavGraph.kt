@@ -2,9 +2,11 @@ package com.example.ungdungbanthietbi_iot.navigation
 
 import androidx.compose.runtime.Composable
 import androidx.navigation.NavHostController
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
+import com.example.ungdungbanthietbi_iot.data.account.AccountViewModel
 import com.example.ungdungbanthietbi_iot.data.device.DeviceViewModel
 import com.example.ungdungbanthietbi_iot.data.image_device.ImageViewModel
 import com.example.ungdungbanthietbi_iot.data.review_device.ReviewViewModel
@@ -60,7 +62,8 @@ fun NavGraph(
     deviceViewModel: DeviceViewModel,
     slideShowViewModel: SlideShowViewModel,
     imageViewModel: ImageViewModel,
-    reviewViewModel: ReviewViewModel){
+    reviewViewModel: ReviewViewModel,
+    accountViewModel: AccountViewModel){
     NavHost(
         navController = navController,
         // Màn hình đầu tiên hiển thị
@@ -77,11 +80,23 @@ fun NavGraph(
                 }
             })
         }
+
+        //Home chưa đăng nhập
         composable(route = Screen.HomeScreen.route){
-            HomeScreen(navController, deviceViewModel, slideShowViewModel)
+            HomeScreen(navController, deviceViewModel, slideShowViewModel, null)
+        }
+
+        //Home đã có tài khoản đăng nhập
+        composable(route = Screen.HomeScreen.route + "?username={username}",
+            arguments = listOf(
+                navArgument("username"){type = NavType.StringType }
+            )
+        ){
+            val username = it.arguments?.getString("username")
+            HomeScreen(navController, deviceViewModel, slideShowViewModel, username)
         }
         composable(route = Screen.LoginScreen.route){
-            LoginScreen(navController)
+            LoginScreen(navController, accountViewModel)
         }
         composable(
             route = Screen.Check_Out.route
@@ -126,7 +141,14 @@ fun NavGraph(
             }
         }
         //Màn hình thanh toán
-        composable(route = Screen.Cart_Screen.route) {
+        composable(route = Screen.Cart_Screen.route + "?idPerson={idPerson}&username={username}",
+            arguments = listOf(
+                navArgument("idPerson"){type = NavType.StringType },
+                navArgument("username") {type = NavType.StringType }
+            )
+        ) {
+            val idPerson = it.arguments?.getString("idPerson") ?: ""
+            val username = it.arguments?.getString("username") ?: ""
             CartScreen(navController)
         }
         //Màn hình tất cả đánh giá, bình luận
@@ -167,8 +189,13 @@ fun NavGraph(
             FavoritesScreen(navController)
         }
         //Đến màn Chỉnh sửa thông tin cá nhân
-        composable(Screen.EditProfileScreen.route) {
-            EditProfileScreen(navController)
+        composable(Screen.EditProfileScreen.route + "?username={username}",
+            arguments = listOf(
+                navArgument("username") {type = NavType.StringType}
+            )
+        ) {
+            val username = it.arguments?.getString("username") ?: ""
+            EditProfileScreen(navController, username)
         }
         composable(Screen.OrderListScreen.route) {
             OrderListScreen(onBack = { navController.popBackStack() })
@@ -205,9 +232,13 @@ fun NavGraph(
             ChangePassword(onBack = { navController.popBackStack() })
         }
         composable(
-            Screen.PersonalScreen.route
+            Screen.PersonalScreen.route + "?username={username}",
+            arguments = listOf(
+                navArgument("username") {type = NavType.StringType }
+            )
         ) {
-            PersonalScreen(navController)
+            val username = it.arguments?.getString("username") ?: ""
+            PersonalScreen(navController, username)
         }
     }
 }
