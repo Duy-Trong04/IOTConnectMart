@@ -334,7 +334,8 @@ fun CardDeviceSearch(device: Device, onClick: () -> Unit) {
         colors = CardDefaults.cardColors(
             containerColor = Color.White
         ),
-        onClick = onClick
+        onClick = onClick,
+        elevation = CardDefaults.cardElevation(4.dp)
     ) {
         Row(
             modifier = Modifier.padding(8.dp) // Giảm padding bên trong Row

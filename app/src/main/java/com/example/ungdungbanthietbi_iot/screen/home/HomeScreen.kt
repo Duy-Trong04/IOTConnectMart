@@ -663,6 +663,7 @@ fun CardDeviceFeatured(device: Device, onClick: () -> Unit, isFavorite:Boolean){
         colors = CardDefaults.cardColors(
             containerColor = Color.White
         ),
+        elevation = CardDefaults.cardElevation(4.dp)
     ) {
         Box(modifier = Modifier.fillMaxWidth()){
             Column(
@@ -728,6 +729,7 @@ fun CardAllDevice(device: Device, onClick: () -> Unit, isFavorite:Boolean){
         colors = CardDefaults.cardColors(
             containerColor = Color.White
         ),
+        elevation = CardDefaults.cardElevation(4.dp)
     ) {
         Box(modifier = Modifier.fillMaxWidth()){
             Column(

@@ -83,6 +83,7 @@ import com.example.ungdungbanthietbi_iot.data.review_device.ReviewViewModel
 import com.example.ungdungbanthietbi_iot.navigation.Screen
 import kotlinx.coroutines.delay
 import java.text.DecimalFormat
+import kotlin.math.roundToInt
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -146,7 +147,9 @@ fun ProductDetailsScreen(
     var isFavorite by remember { mutableStateOf(false) }
     // Biến lưu trữ giá trị đánh giá
     var averageRating = if (listReview.isNotEmpty()) {
-        listReview.map { it.rating }.average() // Tính trung bình cộng
+        val avg = listReview.map { it.rating }.average() // Tính trung bình cộng
+        // Làm tròn tới 1 chữ số thập phân
+        (avg * 10.0).roundToInt() / 10.0
     } else {
         0.0 // Giá trị mặc định nếu danh sách rỗng
     }
@@ -495,27 +498,6 @@ fun ProductDetailsScreen(
                             textAlign = TextAlign.Center
                         )
                     }
-//                    Row(
-//                        modifier = Modifier.padding(5.dp)
-//                    )
-//                    {
-//                        // 5 sao vàng
-//                        repeat(5) {
-//                            Icon(
-//                                imageVector = Icons.Filled.Star,
-//                                contentDescription = "Sao",
-//                                modifier = Modifier.size(20.dp),
-//                                tint = Color(0xFFFBC02D) // Màu vàng
-//                            )
-//                        }
-//                        Text(
-//                            "5/5 (x đánh giá)",
-//                            modifier = Modifier.padding(start = 8.dp),
-//                            color = Color.Gray,
-//                            fontSize = 15.sp,
-//                            textAlign = TextAlign.Center
-//                        )
-//                    }
                 }
             }
             items(listReview.take(2)){
@@ -627,6 +609,7 @@ fun CardDevice(device: Device, onClick: () -> Unit, isFavorite:Boolean){
         colors = CardDefaults.cardColors(
             containerColor = Color.White
         ),
+        elevation = CardDefaults.cardElevation(4.dp)
     ) {
         Box(modifier = Modifier.fillMaxWidth()){
             Column(
