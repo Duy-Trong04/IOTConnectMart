@@ -10,19 +10,37 @@ import androidx.lifecycle.viewModelScope
 import com.example.ungdungbanthietbi_iot.data.RetrofitClient
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 class DeviceViewModel:ViewModel() {
 
     var listAllDevice: List<Device> by mutableStateOf(emptyList())
+
     var listDeviceFeatured: List<Device> by mutableStateOf(emptyList())
+
     var device:Device by mutableStateOf(Device (0, "", "", "","", "", 0.0, 0, "", "", 0,0))
 
+    var listDeviceOfCustomer by mutableStateOf<List<Device>>(emptyList())
+        private set
 
     // Dữ liệu tìm kiếm
     var searchQuery: String by mutableStateOf("")
     var searchHistory: MutableList<String> by mutableStateOf(mutableStateListOf())
     var searchResult: List<Device> by mutableStateOf(emptyList())
 
+
+    fun getDeviceByCart(idCustomer: String) {
+        viewModelScope.launch {
+            try {
+                val response = withContext(Dispatchers.IO) {
+                    RetrofitClient.deviceAPIService.getDeviceByCart(idCustomer)
+                }
+                listDeviceOfCustomer = response.device
+            } catch (e: Exception) {
+                Log.e("Device Error", "Lỗi khi lấy sản phẩm: ${e.message}")
+            }
+        }
+    }
     fun getAllDevice(){
         viewModelScope.launch(Dispatchers.IO) {
             try {

@@ -91,6 +91,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+import androidx.navigation.NavHostController
 import coil.compose.AsyncImage
 import coil.compose.rememberImagePainter
 import coil.request.ImageRequest
@@ -224,9 +225,11 @@ fun HomeScreen(
                 HorizontalDivider()
                 Text(
                     text = "T R A N G  C H Ủ",
-                    modifier = Modifier.padding(12.dp).clickable {
-                        navController.navigate(Screen.HomeScreen.route)
-                    },
+                    modifier = Modifier
+                        .padding(12.dp)
+                        .clickable {
+                            navController.navigate(Screen.HomeScreen.route)
+                        },
                     color = Color(0xFF5D9EFF),
                     fontWeight = FontWeight.Bold,
                     fontSize = 18.sp
@@ -299,7 +302,7 @@ fun HomeScreen(
                                 navController.navigate(Screen.LoginScreen.route)
                             }
                             else{
-                                navController.navigate(Screen.Cart_Screen.route +"?idPerson=${account.idPerson}&?username=${account.username}")
+                                navController.navigate(Screen.Cart_Screen.route +"?idCustomer=${account.idPerson}&username=${account.username}")
                             }
                         }
                         ) {
@@ -319,7 +322,8 @@ fun HomeScreen(
                         .fillMaxWidth()
                         //.border(1.dp, Color.Black)
                 ){
-                    Row(modifier = Modifier.fillMaxWidth()
+                    Row(modifier = Modifier
+                        .fillMaxWidth()
                         .padding(start = 25.dp, end = 25.dp),
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
@@ -329,7 +333,8 @@ fun HomeScreen(
                             modifier = Modifier.size(70.dp)
                         ) {
                             Box (
-                                modifier = Modifier.size(50.dp)
+                                modifier = Modifier
+                                    .size(50.dp)
                                     .clip(CircleShape)
                                     .clickable { navController.navigate(Screen.HomeScreen.route + "?username=${username}") }
                                     .background(Color(0xFF5D9EFF), RoundedCornerShape(5.dp)),
@@ -355,7 +360,8 @@ fun HomeScreen(
                             modifier = Modifier.size(70.dp)
                         ) {
                             Box (
-                                modifier = Modifier.size(50.dp)
+                                modifier = Modifier
+                                    .size(50.dp)
                                     .clip(CircleShape)
                                     .clickable {
                                         scope.launch {
@@ -386,10 +392,11 @@ fun HomeScreen(
                             modifier = Modifier.size(70.dp)
                         ) {
                             Box (
-                                modifier = Modifier.size(50.dp)
+                                modifier = Modifier
+                                    .size(50.dp)
                                     .clip(CircleShape)
                                     .clickable {
-                                        navController.navigate(Screen.Search_Screen.route)
+                                        navController.navigate(Screen.Search_Screen.route + "?username=${accountViewModel.username}")
                                     },
                                 contentAlignment = Alignment.Center,
                             ){
@@ -412,13 +419,13 @@ fun HomeScreen(
                             modifier = Modifier.size(70.dp)
                         ) {
                             Box (
-                                modifier = Modifier.size(50.dp)
+                                modifier = Modifier
+                                    .size(50.dp)
                                     .clip(CircleShape)
                                     .clickable {
-                                        if(username != null){
+                                        if (username != null) {
                                             navController.navigate(Screen.PersonalScreen.route + "?username=${accountViewModel.username}")
-                                        }
-                                        else{
+                                        } else {
                                             navController.navigate(Screen.LoginScreen.route)
                                         }
                                     },
@@ -447,7 +454,9 @@ fun HomeScreen(
                         listState.animateScrollToItem(0) // Cuộn đến mục đầu tiên
                     }
                 },
-                    modifier = Modifier.size(50.dp).clip(CircleShape),
+                    modifier = Modifier
+                        .size(50.dp)
+                        .clip(CircleShape),
                     contentColor = Color.White,
                     elevation = FloatingActionButtonDefaults.elevation(
                         defaultElevation = if (isScrolling) 0.dp else 6.dp // Không đổ bóng khi trong suốt
@@ -479,7 +488,8 @@ fun HomeScreen(
                                 detectHorizontalDragGestures { change, dragAmount ->
                                     change.consume() // Tiêu thụ sự kiện kéo
                                     if (dragAmount > 0 && listSlideShow.isNotEmpty()) { // Trượt sang phải
-                                        currentIndex = if (currentIndex == 0) listSlideShow.size - 1 else currentIndex - 1
+                                        currentIndex =
+                                            if (currentIndex == 0) listSlideShow.size - 1 else currentIndex - 1
                                     } else if (listSlideShow.isNotEmpty()) { // Trượt sang trái
                                         currentIndex = (currentIndex + 1) % listSlideShow.size
                                     }
@@ -521,16 +531,30 @@ fun HomeScreen(
                         fontWeight = FontWeight.Bold
                     )
                     LazyRow(
-                        modifier = Modifier.fillMaxWidth().padding(10.dp),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(10.dp),
                         horizontalArrangement = Arrangement.Start
                     ) {
                         items(listDeviceFeatured){
-                            CardDeviceFeatured(device = it,
-                                onClick = {
-                                    navController.navigate(Screen.ProductDetailsScreen.route+"?id=${it.idDevice}")
-                                },
-                                isFavorite = isFavorite
-                            )
+                            if(account != null){
+                                CardDeviceFeatured(device = it,
+                                    isFavorite = isFavorite,
+                                    account.idPerson,
+                                    account.username,
+                                    navController
+                                )
+                            }
+                            else{
+                                CardDeviceFeatured(
+                                    device = it,
+                                    isFavorite = isFavorite,
+                                    null,
+                                    username,
+                                    navController
+                                )
+                            }
+
                         }
                     }
                 }
@@ -547,15 +571,19 @@ fun HomeScreen(
                             fontWeight = FontWeight.Bold
                         )
                         Text(text = "Xem tất cả",
-                            modifier = Modifier.padding(20.dp).clickable {
-                            navController.navigate(Screen.Favorites_Screen.route)
-                        },
+                            modifier = Modifier
+                                .padding(20.dp)
+                                .clickable {
+                                    navController.navigate(Screen.Favorites_Screen.route)
+                                },
                             color = Color.Gray,
                             fontWeight = FontWeight.Bold
                         )
                     }
-                    LazyRow(modifier = Modifier.fillMaxWidth().padding(10.dp)
-                        .clickable{
+                    LazyRow(modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(10.dp)
+                        .clickable {
                             // Chuyển sang màn hình chi tiết sản phẩm(ProductDetailsScreen)
                             navController.navigate(Screen.ProductDetailsScreen.route)
                         },
@@ -585,7 +613,9 @@ fun HomeScreen(
                                 Image(
                                     painter = painterResource(R.drawable.tim),
                                     contentDescription = "sp yêu thích",
-                                    modifier = Modifier.size(20.dp).align(Alignment.TopEnd)
+                                    modifier = Modifier
+                                        .size(20.dp)
+                                        .align(Alignment.TopEnd)
                                 )
                             }
                         }
@@ -614,7 +644,9 @@ fun HomeScreen(
                                  Image(
                                      painter = painterResource(R.drawable.tim),
                                      contentDescription = "sp yêu thích",
-                                     modifier = Modifier.size(20.dp).align(Alignment.TopEnd)
+                                     modifier = Modifier
+                                         .size(20.dp)
+                                         .align(Alignment.TopEnd)
                                  )
                              }
                          }
@@ -643,7 +675,9 @@ fun HomeScreen(
                                 Image(
                                     painter = painterResource(R.drawable.tim),
                                     contentDescription = "sp yêu thích",
-                                    modifier = Modifier.size(20.dp).align(Alignment.TopEnd)
+                                    modifier = Modifier
+                                        .size(20.dp)
+                                        .align(Alignment.TopEnd)
                                 )
                             }
                         }
@@ -655,14 +689,28 @@ fun HomeScreen(
                         color = Color(0xFF085979),
                         fontWeight = FontWeight.Bold
                         )
-                    LazyRow(modifier = Modifier.fillMaxWidth().padding(10.dp),
+                    LazyRow(modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(10.dp),
                         horizontalArrangement = Arrangement.Start) {
                         items(listAllDevice){
-                            CardAllDevice(device = it, onClick = {
-                                navController.navigate(Screen.ProductDetailsScreen.route+"?id=${it.idDevice}")
-                            },
-                                isFavorite = isFavorite
-                            )
+                            if(account != null){
+                                CardAllDevice(device = it,
+                                    isFavorite = isFavorite,
+                                    account.idPerson,
+                                    account.username,
+                                    navController
+                                )
+                            }
+                            else{
+                                CardAllDevice(device = it,
+                                    isFavorite = isFavorite,
+                                    null,
+                                    username,
+                                    navController
+                                )
+                            }
+
                         }
                     }
                 }
@@ -672,16 +720,24 @@ fun HomeScreen(
 }
 
 @Composable
-fun CardDeviceFeatured(device: Device, onClick: () -> Unit, isFavorite:Boolean){
+fun CardDeviceFeatured(device: Device, isFavorite:Boolean, idCustomer:String?, username: String?, navController: NavController){
     var currentFavorite by remember { mutableStateOf(isFavorite) } // Quản lý trạng thái yêu thích
     //format giá sản phẩm
     val formatter = DecimalFormat("#,###,###")
     val formattedPrice = formatter.format(device.sellingPrice)
     Card(
-        modifier = Modifier.width(200.dp)// Đặt chiều rộng cố định cho Card
+        modifier = Modifier
+            .width(200.dp)// Đặt chiều rộng cố định cho Card
             .height(250.dp)
             .padding(8.dp),
-        onClick = onClick,
+        onClick = {
+            if (username != null){
+                navController.navigate(Screen.ProductDetailsScreen.route + "?id=${device.idDevice}&idCustomer=${idCustomer}&username=${username}")
+            }
+            else{
+                navController.navigate(Screen.ProductDetailsScreen.route + "?id=${device.idDevice}&idCustomer=${idCustomer}")
+            }
+        },
         colors = CardDefaults.cardColors(
             containerColor = Color.White
         ),
@@ -689,7 +745,9 @@ fun CardDeviceFeatured(device: Device, onClick: () -> Unit, isFavorite:Boolean){
     ) {
         Box(modifier = Modifier.fillMaxWidth()){
             Column(
-                modifier = Modifier.fillMaxWidth().padding(8.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(8.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 //load hình ảnh từ API
@@ -738,16 +796,24 @@ fun CardDeviceFeatured(device: Device, onClick: () -> Unit, isFavorite:Boolean){
 
 
 @Composable
-fun CardAllDevice(device: Device, onClick: () -> Unit, isFavorite:Boolean){
+fun CardAllDevice(device: Device, isFavorite:Boolean, idCustomer:String?, username: String?, navController: NavController){
     var currentFavorite by remember { mutableStateOf(isFavorite) } // Quản lý trạng thái yêu thích
     //format giá sản phẩm
     val formatter = DecimalFormat("#,###,###")
     val formattedPrice = formatter.format(device.sellingPrice)
     Card(
-        modifier = Modifier.width(200.dp)// Đặt chiều rộng cố định cho Card
+        modifier = Modifier
+            .width(200.dp)// Đặt chiều rộng cố định cho Card
             .height(250.dp)
             .padding(8.dp),
-        onClick = onClick,
+        onClick = {
+            if (username != null){
+                navController.navigate(Screen.ProductDetailsScreen.route + "?id=${device.idDevice}&idCustomer=${idCustomer}&username=${username}")
+            }
+            else{
+                navController.navigate(Screen.ProductDetailsScreen.route + "?id=${device.idDevice}&idCustomer=${idCustomer}")
+            }
+        },
         colors = CardDefaults.cardColors(
             containerColor = Color.White
         ),
@@ -755,7 +821,9 @@ fun CardAllDevice(device: Device, onClick: () -> Unit, isFavorite:Boolean){
     ) {
         Box(modifier = Modifier.fillMaxWidth()){
             Column(
-                modifier = Modifier.fillMaxWidth().padding(8.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(8.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 //load hình ảnh từ API

@@ -71,10 +71,14 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import coil.compose.AsyncImage
 import coil.compose.rememberImagePainter
 import com.example.ungdungbanthietbi_iot.R
+import com.example.ungdungbanthietbi_iot.data.account.AccountViewModel
+import com.example.ungdungbanthietbi_iot.data.cart.Cart
+import com.example.ungdungbanthietbi_iot.data.cart.CartViewModel
 import com.example.ungdungbanthietbi_iot.data.device.Device
 import com.example.ungdungbanthietbi_iot.data.device.DeviceViewModel
 import com.example.ungdungbanthietbi_iot.data.image_device.ImageViewModel
@@ -107,6 +111,8 @@ import kotlin.math.roundToInt
 fun ProductDetailsScreen(
     navController: NavController,
     id:String,
+    idCustomer:String?,
+    username:String?,
     deviceViewModel: DeviceViewModel,
     imageViewModel: ImageViewModel,
     reviewViewModel: ReviewViewModel
@@ -129,6 +135,12 @@ fun ProductDetailsScreen(
         reviewViewModel.getReviewByIdDevice(id)
     }
 
+    val accountViewModel: AccountViewModel = viewModel()
+    val account = accountViewModel.account
+
+    if(username != null){
+        accountViewModel.getUserByUsername(username)
+    }
     //format giá sản phẩm
     val formatter = DecimalFormat("#,###,###")
     val formattedPrice = formatter.format(device.sellingPrice)
@@ -142,6 +154,13 @@ fun ProductDetailsScreen(
         }
     }
 
+    val cartViewModel:CartViewModel = viewModel()
+    val listCart = cartViewModel.listCart
+    LaunchedEffect(idCustomer) {
+        if(idCustomer!=null){
+            cartViewModel.getCartByIdCustomer(idCustomer)
+        }
+    }
 
     // Biến trạng thái để sản phẩm yêu thích không
     var isFavorite by remember { mutableStateOf(false) }
@@ -206,8 +225,13 @@ fun ProductDetailsScreen(
 
                         // Icon Giỏ hàng
                         IconButton(onClick = {
-                            // vào màn hình giỏ hàng
-                            navController.navigate(Screen.Cart_Screen.route)
+                            if(idCustomer == null && username == null){
+                                navController.navigate(Screen.LoginScreen.route)
+                            }
+                            else{
+                                // vào màn hình giỏ hàng
+                                navController.navigate(Screen.Cart_Screen.route +"?idCustomer=${idCustomer}&username=${username}")
+                            }
                         }) {
                             Icon(
                                 imageVector = Icons.Default.ShoppingCart,
@@ -240,7 +264,37 @@ fun ProductDetailsScreen(
                         )
                     }
                     IconButton(onClick = {
-                        showDialog = true
+//                        if(idCustomer != null){
+//                            showDialog = true
+//                        }
+//                        else{
+//                            navController.navigate(Screen.LoginScreen.route)
+//                        }
+                        if(idCustomer == null){
+                            navController.navigate(Screen.LoginScreen.route)
+                        }
+                        else{
+                            var cartNew: Cart? = null
+                            var isProductFound = false
+
+                            for(cart in listCart){
+                                if(device.idDevice == cart.idDevice){
+                                    cart.stock += 1
+                                    cartViewModel.updateCart(cart)
+                                    isProductFound = true
+                                    break
+                                }
+                            }
+
+                            // Nếu sản phẩm không tìm thấy trong giỏ hàng thì thêm mới
+                            if(!isProductFound){
+                                cartNew = Cart(0, idCustomer, device.idDevice,  1)
+                                cartViewModel.addToCart(cartNew)
+                            }
+
+                            // Làm mới danh sách giỏ hàng
+                            cartViewModel.getCartByIdCustomer(idCustomer)
+                        }
                     }) {
                         Icon(
                             imageVector = Icons.Default.AddShoppingCart,
@@ -261,20 +315,20 @@ fun ProductDetailsScreen(
                                     modifier = Modifier.fillMaxWidth(),
                                 ) {
                                     Row() {
-                                        Image(
-                                            painter = painterResource(R.drawable.den2),
-                                            contentDescription = "Logo",
+                                        AsyncImage(
+                                            model = device.image,
+                                            contentDescription = null,
                                             modifier = Modifier.size(100.dp)
                                         )
                                         Column(){
                                             Text(
-                                                text = "Giá: xxxxx",
+                                                text = "${formattedPrice} VNĐ",
                                                 modifier = Modifier.padding(start = 16.dp),
                                                 color = Color.Red
                                             )
                                             Spacer(modifier = Modifier.height(8.dp))
                                             Text(
-                                                text = "Kho: xxxxx",
+                                                text = "Kho: 88",
                                                 modifier = Modifier.padding(start = 16.dp)
                                             )
                                         }
@@ -520,11 +574,25 @@ fun ProductDetailsScreen(
                     horizontalArrangement = Arrangement.Start
                 ) {
                     items(listAllDevice){
-                        CardDevice(
-                            device = it,
-                            onClick = {navController.navigate(Screen.ProductDetailsScreen.route+"?id=${it.idDevice}")},
-                            isFavorite = isFavorite
-                        )
+                        if(account != null){
+                            CardDevice(
+                                device = it,
+                                isFavorite = isFavorite,
+                                account.idPerson,
+                                account.username,
+                                navController
+                            )
+                        }
+                        else{
+                            CardDevice(
+                                device = it,
+                                isFavorite = isFavorite,
+                                null,
+                                username,
+                                navController
+                            )
+                        }
+
                     }
                 }
             }
@@ -596,7 +664,7 @@ fun CardReview(review: Review, isChecked:Boolean, onlick:() -> Unit){
 
 
 @Composable
-fun CardDevice(device: Device, onClick: () -> Unit, isFavorite:Boolean){
+fun CardDevice(device: Device, isFavorite:Boolean, idCustomer:String?, username: String?, navController: NavController){
     var currentFavorite by remember { mutableStateOf(isFavorite) } // Quản lý trạng thái yêu thích
     //format giá sản phẩm
     val formatter = DecimalFormat("#,###,###")
@@ -605,7 +673,14 @@ fun CardDevice(device: Device, onClick: () -> Unit, isFavorite:Boolean){
         modifier = Modifier.width(200.dp)// Đặt chiều rộng cố định cho Card
             .height(250.dp)
             .padding(8.dp),
-        onClick = onClick,
+        onClick = {
+            if (username != null){
+                navController.navigate(Screen.ProductDetailsScreen.route + "?id=${device.idDevice}&idCustomer=${idCustomer}&username=${username}")
+            }
+            else{
+                navController.navigate(Screen.ProductDetailsScreen.route + "?id=${device.idDevice}&idCustomer=${idCustomer}")
+            }
+        },
         colors = CardDefaults.cardColors(
             containerColor = Color.White
         ),

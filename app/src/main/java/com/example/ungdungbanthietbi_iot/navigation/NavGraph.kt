@@ -95,61 +95,77 @@ fun NavGraph(
             val username = it.arguments?.getString("username")
             HomeScreen(navController, deviceViewModel, slideShowViewModel, username)
         }
+
+        //Màn hình đăng nhập
         composable(route = Screen.LoginScreen.route){
             LoginScreen(navController, accountViewModel)
         }
+        //Màn hình thanh toán
         composable(
             route = Screen.Check_Out.route
         ){
             CheckoutScreen(navController)
         }
+        //Màn hình đăng ký
         composable(route = Screen.RegisterScreen.route){
             RegisterScreen(navController)
         }
+        //Màn hình thêm địa chỉ
         composable(
             route = Screen.Add_Address.route
         ){
             AddAddressScreen(navController)
         }
+        //Màn hình Reset Pass
         composable(route = Screen.ResetPasswordScreen.route) {
             ResetPasswordScreen(navController)
         }
+        //Màn hình chọn địa chỉ
         composable(
             route = Screen.Address_Selection.route
         ){
             AddressSelectionScreen(navController)
         }
+        //Màn hình Xác nhận OTP
         composable(route = Screen.VerifyOTPScreen.route) {
             VerifyOTPScreen(navController)
         }
+        //Màn hình quên mật khẩu
         composable(route = Screen.ForgotPasswordScreen.route) {
             ForgotPasswordScreen(navController)
         }
+        //Màn hình chi tiêt sản phẩm
         composable(
-            route = Screen.ProductDetailsScreen.route + "?id={idDevice}",
-            arguments = listOf(navArgument("idDevice"){nullable = true})
+            route = Screen.ProductDetailsScreen.route + "?id={idDevice}&idCustomer={idCustomer}",
+            arguments = listOf(
+                navArgument("idDevice"){nullable = true},
+                navArgument("idCustomer"){nullable = true}
+            )
         ) {
-            var idDevice = it.arguments?.getString("idDevice")
+            val idDevice = it.arguments?.getString("idDevice")
+            val idCustomer = it.arguments?.getString("idCustomer")
             if(idDevice != null){
                 ProductDetailsScreen(
                     navController,
                     idDevice,
+                    idCustomer,
+                    null,
                     deviceViewModel,
                     imageViewModel,
                     reviewViewModel
                 )
             }
         }
-        //Màn hình thanh toán
-        composable(route = Screen.Cart_Screen.route + "?idPerson={idPerson}&username={username}",
+        //Màn hình giỏ hàng
+        composable(route = Screen.Cart_Screen.route + "?idCustomer={idCustomer}&username={username}",
             arguments = listOf(
-                navArgument("idPerson"){type = NavType.StringType },
+                navArgument("idCustomer"){type = NavType.StringType },
                 navArgument("username") {type = NavType.StringType }
             )
         ) {
-            val idPerson = it.arguments?.getString("idPerson") ?: ""
+            val idCustomer = it.arguments?.getString("idCustomer") ?: ""
             val username = it.arguments?.getString("username") ?: ""
-            CartScreen(navController)
+            CartScreen(navController, idCustomer, username)
         }
         //Màn hình tất cả đánh giá, bình luận
         composable(route = Screen.Product_Reviews.route+ "?idDevice={idDevice}",
@@ -172,9 +188,13 @@ fun NavGraph(
         }
         //Màn hinh tìm kiếm
         composable(
-            route = Screen.Search_Screen.route
+            route = Screen.Search_Screen.route +"?username={username}",
+            arguments = listOf(
+                navArgument("username") {type = NavType.StringType }
+            )
         ){
-            SearchScreen(navController, deviceViewModel)
+            val username = it.arguments?.getString("username") ?: ""
+            SearchScreen(navController, deviceViewModel, username)
         }
         //Màn hình kết quả tìm kiếm
         composable(

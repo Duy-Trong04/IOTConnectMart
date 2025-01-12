@@ -219,7 +219,7 @@ fun PersonalScreen(
                         }
                         IconButton(
                             onClick = {
-                                navController.navigate(Screen.Cart_Screen.route)
+                                navController.navigate(Screen.Cart_Screen.route +"?idCustomer=${account.idPerson}&username=${account.username}")
                             }) {
                             Icon(Icons.Filled.ShoppingCart, contentDescription = "Gio hang")
                         }

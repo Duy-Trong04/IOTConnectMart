@@ -14,9 +14,7 @@ data class Device(
     val isHide: Int, // Kiểu Int (0 hoặc 1) biểu thị trạng thái ẩn/hiện
     val status: Int // Kiểu Int (0 hoặc 1) biểu thị trạng thái hoạt động
 )
-data class DeviceResponse(
-    val results: List<Device>
-)
+
 
 data class CategoryDevice(
     val id: Int,

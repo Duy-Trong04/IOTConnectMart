@@ -5,6 +5,10 @@ import retrofit2.http.Part
 import retrofit2.http.Path
 import retrofit2.http.Query
 
+data class DeviceResponse(
+    val device: List<Device>
+)
+
 interface DeviceAPIService {
     @GET ("device/read.php")
     suspend fun getAllDevice(): List<Device>
@@ -14,4 +18,9 @@ interface DeviceAPIService {
 
     @GET("device/show.php")
     suspend fun getDeviceById(@Query("id") id: String): Device
+
+    @GET("device/getDeviceByCart.php")
+    suspend fun getDeviceByCart(
+        @Query("idCustomer") idCustomer: String
+    ): DeviceResponse
 }
