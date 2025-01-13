@@ -136,20 +136,22 @@ fun NavGraph(
         }
         //Màn hình chi tiêt sản phẩm
         composable(
-            route = Screen.ProductDetailsScreen.route + "?id={idDevice}&idCustomer={idCustomer}",
+            route = Screen.ProductDetailsScreen.route + "?id={idDevice}&idCustomer={idCustomer}&username={username}",
             arguments = listOf(
                 navArgument("idDevice"){nullable = true},
-                navArgument("idCustomer"){nullable = true}
+                navArgument("idCustomer"){nullable = true},
+                navArgument("username"){nullable = true}
             )
         ) {
             val idDevice = it.arguments?.getString("idDevice")
             val idCustomer = it.arguments?.getString("idCustomer")
+            val username = it.arguments?.getString("username")
             if(idDevice != null){
                 ProductDetailsScreen(
                     navController,
                     idDevice,
                     idCustomer,
-                    null,
+                    username,
                     deviceViewModel,
                     imageViewModel,
                     reviewViewModel
@@ -258,7 +260,7 @@ fun NavGraph(
             )
         ) {
             val username = it.arguments?.getString("username") ?: ""
-            PersonalScreen(navController, username)
+            PersonalScreen(navController, username, deviceViewModel)
         }
     }
 }

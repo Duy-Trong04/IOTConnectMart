@@ -6,12 +6,15 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Category
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.LocalShipping
 import androidx.compose.material.icons.filled.Menu
@@ -53,11 +56,14 @@ import com.example.ungdungbanthietbi_iot.R
 import com.example.ungdungbanthietbi_iot.data.Product
 import com.example.ungdungbanthietbi_iot.data.account.AccountViewModel
 import com.example.ungdungbanthietbi_iot.data.customer.CustomerViewModel
+import com.example.ungdungbanthietbi_iot.data.device.Device
+import com.example.ungdungbanthietbi_iot.data.device.DeviceViewModel
 import com.example.ungdungbanthietbi_iot.navigation.Screen
 import com.google.accompanist.flowlayout.FlowRow
 import com.google.accompanist.flowlayout.MainAxisAlignment
 import kotlinx.coroutines.launch
-
+import java.text.DecimalFormat
+import com.example.ungdungbanthietbi_iot.screen.home.CardAllDevice
 
 /*Người thực hiện: Nguyễn Mạnh Cường
  Ngày viết: 12/12/2024
@@ -70,19 +76,13 @@ import kotlinx.coroutines.launch
 @Composable
 fun PersonalScreen(
     navController: NavController,
-    username:String
+    username:String,
+    deviceViewModel: DeviceViewModel,
 ) {
-    //Dữ liệu mẫu
-    val products = remember {
-        listOf(
-            Product(1, "Sản phẩm 1", 100000.0, 1, "https://via.placeholder.com/150", false),
-            Product(2, "Sản phẩm 2", 150000.0, 22,"https://via.placeholder.com/150", false),
-            Product(3, "Sản phẩm 3", 200000.0, 10,"https://via.placeholder.com/150", false),
-            Product(4, "Sản phẩm 4", 200000.0, 2,"https://via.placeholder.com/150", false),
-            Product(5, "Sản phẩm 5", 200000.0, 6,"https://via.placeholder.com/150", false),
-            Product(6, "Sản phẩm 6", 200000.0, 5, "https://via.placeholder.com/150", false)
-        )
-    }
+
+    deviceViewModel.getAllDevice()
+    var listAllDevice : List<Device> = deviceViewModel.listAllDevice
+
     val navdrawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     val scope = rememberCoroutineScope() //xử lý suspending fun (mở và đóng drawer)
     val countries = listOf(
@@ -115,7 +115,8 @@ fun PersonalScreen(
         customerViewModel.getCustomerById(account.idPerson.toString())
     }
 
-
+    // Biến trạng thái để sản phẩm yêu thích không
+    var isFavorite by remember { mutableStateOf(false) }
     // Danh mục
     ModalNavigationDrawer(
         drawerState = navdrawerState,
@@ -500,64 +501,34 @@ fun PersonalScreen(
                     }
 
                     item {
-                        Box(
-                            modifier = Modifier.fillMaxWidth(),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            FlowRow(
-                                mainAxisSpacing = 16.dp,
-                                crossAxisSpacing = 16.dp,
-                                modifier = Modifier.fillMaxWidth(),
-                                mainAxisAlignment = MainAxisAlignment.Center
-                            ) {
-                                products.forEach { product ->
-                                    ProductCard(product)
+                        LazyRow(modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(10.dp),
+                            horizontalArrangement = Arrangement.Start) {
+                            items(listAllDevice){
+                                if(account != null){
+                                    CardAllDevice(device = it,
+                                        isFavorite = isFavorite,
+                                        account.idPerson,
+                                        account.username,
+                                        navController
+                                    )
                                 }
+                                else{
+                                    CardAllDevice(device = it,
+                                        isFavorite = isFavorite,
+                                        null,
+                                        username,
+                                        navController
+                                    )
+                                }
+
                             }
                         }
                     }
                 }
             }
         )
-    }
-}
-
-@Composable
-fun ProductCard(product: Product) {
-    Card(
-        modifier = Modifier
-            .width(150.dp)
-            .padding(8.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = Color.White,
-            contentColor = Color.Black
-        )
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            AsyncImage(
-                model = product.imageUrl,
-                contentDescription = null,
-                modifier = Modifier
-                    .size(100.dp)
-                    .clip(CircleShape),
-                contentScale = ContentScale.Crop
-            )
-            Text(
-                text = product.name,
-                fontSize = 14.sp,
-                modifier = Modifier.padding(top = 8.dp)
-            )
-            Text(
-                text = "Giá: ${product.price}",
-                fontSize = 14.sp,
-                color = Color.Red
-            )
-        }
     }
 }
 

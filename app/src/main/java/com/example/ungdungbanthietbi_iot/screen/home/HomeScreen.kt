@@ -396,7 +396,12 @@ fun HomeScreen(
                                     .size(50.dp)
                                     .clip(CircleShape)
                                     .clickable {
-                                        navController.navigate(Screen.Search_Screen.route + "?username=${accountViewModel.username}")
+                                        if(username != null){
+                                            navController.navigate(Screen.Search_Screen.route + "?username=${accountViewModel.username}")
+                                        }
+                                        else{
+                                            navController.navigate(Screen.Search_Screen.route)
+                                        }
                                     },
                                 contentAlignment = Alignment.Center,
                             ){
@@ -688,7 +693,7 @@ fun HomeScreen(
                     Text("Tất cả sản phẩm", modifier = Modifier.padding(20.dp),
                         color = Color(0xFF085979),
                         fontWeight = FontWeight.Bold
-                        )
+                    )
                     LazyRow(modifier = Modifier
                         .fillMaxWidth()
                         .padding(10.dp),

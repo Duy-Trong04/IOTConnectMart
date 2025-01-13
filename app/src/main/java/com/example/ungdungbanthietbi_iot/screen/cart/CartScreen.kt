@@ -2,6 +2,7 @@ package com.example.ungdungbanthietbi_iot.screen.cart
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -88,7 +89,7 @@ fun CartScreen(
     //Hàm format tiền
     fun formatGiaTien(gia: Double): String {
         val formatter = DecimalFormat("#,###,###")
-        return "${formatter.format(gia)} VNĐ"
+        return "${formatter.format(gia)}đ"
     }
     // Lấy dữ liệu và tính tổng tiền ban đầu
     LaunchedEffect(idCustomer) {
@@ -102,31 +103,11 @@ fun CartScreen(
         calculateTotalPrice() // Tính tổng tiền khi dữ liệu thay đổi
     }
 
-
-
-    // Danh sách sản phẩm trong giỏ hàng (dữ liệu giả)
-    var products by remember {
-        mutableStateOf(
-            listOf(
-                Product(1, "Product 1", 10000.0, 1, "placeholder", false),
-                Product(2, "Product 2", 20000.0, 2, "placeholder", false),
-                Product(3, "Product 3", 15000.0, 1, "placeholder", false)
-            )
-        )
-    }
-
-    // Trạng thái chọn tất cả sản phẩm - tự động cập nhật
-    val isAllSelected by remember(products) {
-        derivedStateOf {
-            products.isNotEmpty() && products.all { it.isSelected }
-        }
-    }
-
     Scaffold(
         topBar = {
             TopAppBar(
                 modifier = Modifier.fillMaxWidth(),
-                title = { Text("Giỏ hàng", textAlign = TextAlign.Center,
+                title = { Text("Giỏ hàng(${listCart.size})", textAlign = TextAlign.Start,
                     modifier = Modifier.fillMaxWidth(),
                     fontWeight = FontWeight.Bold
                 )},
@@ -135,16 +116,6 @@ fun CartScreen(
                     titleContentColor = Color.White,
                     navigationIconContentColor = Color.White
                 ),
-                actions = {
-                    // Nút xóa các sản phẩm được chọn
-                    TextButton(
-                        onClick = {
-                            products = products.filterNot { it.isSelected }
-                        }
-                    ) {
-                        Text("Xóa", color = Color.White, fontSize = 16.sp)
-                    }
-                },
                 navigationIcon = {
                     // Nút quay lại
                     IconButton(onClick = {
@@ -162,40 +133,20 @@ fun CartScreen(
         bottomBar = {
             BottomAppBar (
                 containerColor = Color.Transparent,
-                modifier = Modifier.fillMaxWidth().height(165.dp)
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(165.dp)
             ){
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(10.dp)
                 ) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            // Checkbox chọn tất cả
-                            Checkbox(
-                                checked = isAllSelected,
-                                onCheckedChange = { selected ->
-                                    products = products.map { it.copy(isSelected = selected) }.toMutableList()
-                                },
-                                colors = CheckboxDefaults.colors(
-                                    checkedColor = Color(0xFF5D9EFF),
-                                    uncheckedColor = Color.Gray
-                                )
-                            )
-                            Text(text = "Tất cả")
-                        }
-                        // Hiển thị tổng giá thanh toán
-                        Text(
-                            "Tổng thanh toán: ${formatGiaTien(totalPrice)}",
-                            style = TextStyle(color = Color.Black, fontSize = 16.sp)
-                        )
-                    }
+                    // Hiển thị tổng giá thanh toán
+                    Text(
+                        "Tổng thanh toán: ${formatGiaTien(totalPrice)}",
+                        style = TextStyle(color = Color.Red, fontSize = 18.sp)
+                    )
                     val selectedProductsString = selectedProducts.joinToString(",") { "${it.first}:${it.second}:${it.third}" }
 
                     Spacer(modifier = Modifier.height(8.dp))
@@ -216,7 +167,9 @@ fun CartScreen(
                             containerColor = Color(0xFF5D9EFF)
                         )
                     ) {
-                        Text("MUA HÀNG ($selectedProducts)")
+                        Text("MUA HÀNG",
+                            fontSize = 22.sp
+                        )
                     }
                 }
             }
@@ -244,8 +197,6 @@ fun CartScreen(
                 val sanPham = deviceViewModel.listDeviceOfCustomer.find { it.idDevice == cart.idDevice }
 
                 var chieucaocard by remember { mutableStateOf(190) }
-
-
                 if(sanPham != null){
                     Card(
                         modifier = Modifier
@@ -260,17 +211,19 @@ fun CartScreen(
                     ) {
                         Row (
                             modifier = Modifier
-                                .padding(5.dp)
-                                .fillMaxSize(),
+                                .fillMaxSize()
+                                .background(Color.White, shape = RoundedCornerShape(8.dp))
+                                .padding(8.dp),
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.Start
                         ){
-                            // Thêm checkbox
+                            // Checkbox chọn sản phẩm
                             Checkbox(
                                 checked = selectedItems[cart.id] == true,
                                 colors = CheckboxDefaults.colors(
-                                    checkedColor = Color.Red,
-                                    uncheckedColor = Color.Red
+                                    checkedColor = Color(0xFF5D9EFF),
+                                    uncheckedColor = Color.Gray,
+                                    checkmarkColor = Color.Green
                                 ),
                                 onCheckedChange = { isChecked ->
                                     selectedItems[cart.id] = isChecked
@@ -286,229 +239,181 @@ fun CartScreen(
                                     calculateTotalPrice()
                                 },
                             )
+                            // Hình ảnh sản phẩm (chỉ là giả)
                             AsyncImage(
                                 model = sanPham.image,
                                 contentDescription = null,
                                 modifier = Modifier
-                                    .size(120.dp),
+                                    .size(150.dp),
                                 contentScale = ContentScale.Fit
                             )
-                            Column(
-                                horizontalAlignment = Alignment.Start,
-                                verticalArrangement = Arrangement.Center
-                            ) {
-                                Text(
-                                    sanPham.name,
-                                    fontWeight = FontWeight.Bold,
-                                    lineHeight = 25.sp,
-                                )
-                                Row (
-                                    modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.SpaceBetween,
-                                    verticalAlignment = Alignment.CenterVertically
-                                ){
-                                    Text(
-                                        "${formatGiaTien(sanPham.sellingPrice)}",
-                                        color = Color.Red,
-                                        fontSize = 17.sp
-                                    )
+                            Column(modifier = Modifier.weight(1f)) {
+                                // Tên sản phẩm
+                                Text(text = sanPham.name, fontWeight = FontWeight.Bold, fontSize = 20.sp)
+                                Spacer(modifier = Modifier.height(8.dp))
+                                // Giá sản phẩm
+                                Text(text = "Giá: ${formatGiaTien(sanPham.sellingPrice)}", color = Color.Red)
+                                Spacer(modifier = Modifier.height(8.dp))
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    // Nút giảm số lượng
+                                    IconButton(onClick = {
+                                        if (soLuong > 1) {
+                                            soLuong-- // Giảm số lượng
+                                            cart.stock = soLuong
+                                            cartViewModel.updateAllCart()
 
-                                    Row (
-                                        verticalAlignment = Alignment.CenterVertically,
-                                        horizontalArrangement = Arrangement.Start
-                                    ){
-                                        IconButton(onClick = {
-                                            if (soLuong > 1) {
-                                                soLuong-- // Giảm số lượng
-                                                cart.stock = soLuong
 
-                                                // Cập nhật lại số lượng trong selectedProducts
-                                                val index = selectedProducts.indexOfFirst { it.first == cart.idDevice }
-                                                if (index != -1) {
-                                                    selectedProducts[index] = Triple(cart.idDevice, soLuong, cart.id)
-                                                }
-
-                                                calculateTotalPrice() // Tính lại tổng tiền
+                                            // Cập nhật lại số lượng trong selectedProducts
+                                            val index = selectedProducts.indexOfFirst { it.first == cart.idDevice }
+                                            if (index != -1) {
+                                                selectedProducts[index] = Triple(cart.idDevice, soLuong, cart.id)
                                             }
-                                        }) {
-                                            Icon(Icons.Filled.RemoveCircleOutline, contentDescription = null)
-                                        }
-                                        Text(soLuong.toString())
-                                        IconButton(
-                                            onClick = {
-                                                if (soLuong < 500 /* 500 là số lượng tồn kho*/) {
-                                                    soLuong++ // Tăng số lượng
-                                                    cart.stock = soLuong
 
-                                                    // Cập nhật lại số lượng trong selectedProducts
-                                                    val index = selectedProducts.indexOfFirst { it.first == cart.idDevice }
-                                                    if (index != -1) {
-                                                        selectedProducts[index] = Triple(cart.idDevice, soLuong, cart.id)
-                                                    }
-
-                                                    calculateTotalPrice() // Tính lại tổng tiền
-                                                }
-                                            }
-                                        ) {
-                                            Icon(Icons.Filled.AddCircleOutline, contentDescription = null)
+                                            calculateTotalPrice() // Tính lại tổng tiền
                                         }
-                                    }
-                                }
-                                Row (
-                                    modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.SpaceBetween,
-                                    verticalAlignment = Alignment.CenterVertically
-                                ){
-                                    Button(
-                                        onClick = {
-                                            cartViewModel.deleteCart(cart.id)
-                                            cartViewModel.listCart = cartViewModel.listCart.filter { it.id != cart.id }
-                                            calculateTotalPrice()
-                                        },
-                                        modifier = Modifier
-                                            .padding(11.dp)
-                                            .width(65.dp)
-                                            .height(35.dp),
-                                        colors = ButtonDefaults.buttonColors(Color.Red),
-                                        shape = RoundedCornerShape(12.dp)
-                                    ) {
+                                    }) {
                                         Icon(
-                                            imageVector = Icons.Filled.Delete,
-                                            contentDescription = "",
-                                            tint = Color.White,
+                                            imageVector = Icons.Filled.Remove,
+                                            contentDescription = "Decrease Quantity"
+                                        )
+                                    }
+                                    // Hiển thị số lượng
+                                    Text(
+                                        text = soLuong.toString(),
+                                        modifier = Modifier.padding(horizontal = 8.dp),
+                                        fontSize = 16.sp
+                                    )
+                                    // Nút tăng số lượng
+                                    IconButton(onClick = {
+                                        if (soLuong < 500 /* 500 là số lượng tồn kho*/) {
+                                            soLuong++ // Tăng số lượng
+                                            cart.stock = soLuong
+                                            cartViewModel.updateAllCart()
+
+                                            // Cập nhật lại số lượng trong selectedProducts
+                                            val index = selectedProducts.indexOfFirst { it.first == cart.idDevice }
+                                            if (index != -1) {
+                                                selectedProducts[index] = Triple(cart.idDevice, soLuong, cart.id)
+                                            }
+
+                                            calculateTotalPrice() // Tính lại tổng tiền
+                                        }
+                                    }) {
+                                        Icon(
+                                            imageVector = Icons.Filled.Add,
+                                            contentDescription = "Increase Quantity"
                                         )
                                     }
                                 }
                             }
+                            // Nút xóa sản phẩm
+                            IconButton(onClick = {
+                                cartViewModel.deleteCart(cart.id)
+                                cartViewModel.listCart = cartViewModel.listCart.filter { it.id != cart.id }
+                                calculateTotalPrice()
+                            }) {
+                                Icon(
+                                    imageVector = Icons.Default.Delete,
+                                    contentDescription = "Remove Item"
+                                )
+                            }
                         }
                     }
                 }
-//                CartItem(
-//                    product = product,
-//                    onRemove = {
-//                        products = products.filter { it.id != product.id }.toMutableList()
-//                    },
-//                    onQuantityChange = { newQuantity ->
-//                        products = products.map {
-//                            if (it.id == product.id) it.copy(quantity = newQuantity.coerceAtLeast(1))
-//                            else it
-//                        }.toMutableList()
-//                    },
-//                    onSelectChange = { selected ->
-//                        products = products.map {
-//                            if (it.id == product.id) it.copy(isSelected = selected)
-//                            else it
-//                        }.toMutableList()
+
+//                if(sanPham != null){
+//                    Card(
+//                        modifier = Modifier
+//                            .fillMaxWidth()
+//                            .padding(8.dp)
+//                            .height(chieucaocard.dp),
+//                        elevation = CardDefaults.cardElevation(4.dp),
+//                        colors = CardDefaults.cardColors(containerColor = Color.White),
+//                        onClick = {
+//                            navController.navigate(Screen.ProductDetailsScreen.route + "?id=${sanPham.idDevice}")
+//                        }
+//                    ) {
+//                        Row (
+//                            modifier = Modifier
+//                                .padding(5.dp)
+//                                .fillMaxSize(),
+//                            verticalAlignment = Alignment.CenterVertically,
+//                            horizontalArrangement = Arrangement.Start
+//                        ){
+//                            // Thêm checkbox
+//                            Checkbox(
+//
+//                            )
+//
+//                            Column(
+//                                horizontalAlignment = Alignment.Start,
+//                                verticalArrangement = Arrangement.Center
+//                            ) {
+//                                Text(
+//                                    sanPham.name,
+//                                    fontWeight = FontWeight.Bold,
+//                                    lineHeight = 25.sp,
+//                                )
+//                                Row (
+//                                    modifier = Modifier.fillMaxWidth(),
+//                                    horizontalArrangement = Arrangement.SpaceBetween,
+//                                    verticalAlignment = Alignment.CenterVertically
+//                                ){
+//                                    Text(
+//                                        "${formatGiaTien(sanPham.sellingPrice)}",
+//                                        color = Color.Red,
+//                                        fontSize = 17.sp
+//                                    )
+//
+//                                    Row (
+//                                        verticalAlignment = Alignment.CenterVertically,
+//                                        horizontalArrangement = Arrangement.Start
+//                                    ){
+//                                        IconButton(onClick = {
+//
+//                                        }) {
+//                                            Icon(Icons.Filled.RemoveCircleOutline, contentDescription = null)
+//                                        }
+//                                        Text(soLuong.toString())
+//                                        IconButton(
+//                                            onClick = {
+//
+//                                            }
+//                                        ) {
+//                                            Icon(Icons.Filled.AddCircleOutline, contentDescription = null)
+//                                        }
+//                                    }
+//                                }
+//                                Row (
+//                                    modifier = Modifier.fillMaxWidth(),
+//                                    horizontalArrangement = Arrangement.SpaceBetween,
+//                                    verticalAlignment = Alignment.CenterVertically
+//                                ){
+//                                    Button(
+//                                        onClick = {
+//                                            cartViewModel.deleteCart(cart.id)
+//                                            cartViewModel.listCart = cartViewModel.listCart.filter { it.id != cart.id }
+//                                            calculateTotalPrice()
+//                                        },
+//                                        modifier = Modifier
+//                                            .padding(11.dp)
+//                                            .width(65.dp)
+//                                            .height(35.dp),
+//                                        colors = ButtonDefaults.buttonColors(Color.Red),
+//                                        shape = RoundedCornerShape(12.dp)
+//                                    ) {
+//                                        Icon(
+//                                            imageVector = Icons.Filled.Delete,
+//                                            contentDescription = "",
+//                                            tint = Color.White,
+//                                        )
+//                                    }
+//                                }
+//                            }
+//                        }
 //                    }
-//                )
-//                Spacer(modifier = Modifier.height(2.dp))
+//                }
             }
         }
     }
 }
-
-/** Card chứa thông tin từng của sản phẩm trong giỏ hàng (CartItem)
- * -------------------------------------------
- * Người code: Duy Trọng
- * Ngày viết: 05/12/2024
- * Lần cập nhật cuối cùng: 13/12/2024
- * -------------------------------------------
- * Input:
- *  product: ProductState,
- *  onRemove: () -> Unit,
- *  onQuantityChange: (Int) -> Unit,
- *  onSelectChange: (Boolean) -> Unit
- *
- * Output: Hiển thị danh sách sản phẩm có trong giỏ hàng gồm tên sản phẩm, giá, số lượng, hình ảnh,
- * icon Delete và 1 ô checkbox để người dùng có thể mua nhiều hoặc xóa nhiều sản phẩm cùng 1 lúc.
- * ------------------------------------------------------------
- * Người cập nhật:
- * Ngày cập nhật:
- * ------------------------------------------------------------
- * Nội dung cập nhật:
- *
- */
-@Composable
-fun CartItem(
-    product: Product,
-    onRemove: () -> Unit,
-    onQuantityChange: (Int) -> Unit,
-    onSelectChange: (Boolean) -> Unit
-) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(8.dp)
-            .background(Color.White, shape = RoundedCornerShape(8.dp))
-            .padding(8.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        // Checkbox chọn sản phẩm
-        Checkbox(
-            checked = product.isSelected,
-            onCheckedChange = { selected ->
-                onSelectChange(selected)
-            },
-            colors = CheckboxDefaults.colors(
-                checkedColor = Color(0xFF5D9EFF),
-                uncheckedColor = Color.Gray
-            )
-        )
-        // Hình ảnh sản phẩm (chỉ là giả)
-        Image(
-            painter = painterResource(id = android.R.drawable.ic_menu_gallery),
-            contentDescription = "Product Image",
-            modifier = Modifier.size(80.dp)
-        )
-        Column(modifier = Modifier.weight(1f)) {
-            // Tên sản phẩm
-            Text(text = product.name, fontWeight = FontWeight.Bold, fontSize = 16.sp)
-            Spacer(modifier = Modifier.height(4.dp))
-            // Giá sản phẩm
-            Text(text = "Giá: ${product.price} VNĐ", color = Color.Gray)
-            Spacer(modifier = Modifier.height(4.dp))
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                // Nút giảm số lượng
-                IconButton(onClick = {
-                    if (product.quantity > 1)
-                        onQuantityChange(product.quantity - 1)
-                }) {
-                    Icon(
-                        imageVector = Icons.Filled.Remove,
-                        contentDescription = "Decrease Quantity"
-                    )
-                }
-                // Hiển thị số lượng
-                Text(
-                    text = product.quantity.toString(),
-                    modifier = Modifier.padding(horizontal = 8.dp),
-                    fontSize = 16.sp
-                )
-                // Nút tăng số lượng
-                IconButton(onClick = {
-                    onQuantityChange(product.quantity + 1)
-                }) {
-                    Icon(
-                        imageVector = Icons.Filled.Add,
-                        contentDescription = "Increase Quantity"
-                    )
-                }
-            }
-        }
-        // Nút xóa sản phẩm
-        IconButton(onClick = onRemove) {
-            Icon(
-                imageVector = Icons.Default.Delete,
-                contentDescription = "Remove Item"
-            )
-        }
-    }
-}
-
-//@Preview(showBackground = true)
-//@Composable
-//fun CartScreenPreview1() {
-//    UngDungBanThietBi_IOTTheme {
-//        CartScreen()
-//    }
-//}

@@ -50,7 +50,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
@@ -85,6 +84,7 @@ import com.example.ungdungbanthietbi_iot.data.image_device.ImageViewModel
 import com.example.ungdungbanthietbi_iot.data.review_device.Review
 import com.example.ungdungbanthietbi_iot.data.review_device.ReviewViewModel
 import com.example.ungdungbanthietbi_iot.navigation.Screen
+import com.example.ungdungbanthietbi_iot.screen.home.CardAllDevice
 import kotlinx.coroutines.delay
 import java.text.DecimalFormat
 import kotlin.math.roundToInt
@@ -214,7 +214,12 @@ fun ProductDetailsScreen(
                     {
                         // Icon Tìm kiếm
                         IconButton(onClick = {
-                            navController.navigate(Screen.Search_Screen.route)
+                            if(username != null){
+                                navController.navigate(Screen.Search_Screen.route + "?username=${accountViewModel.username}")
+                            }
+                            else{
+                                navController.navigate(Screen.Search_Screen.route)
+                            }
                         }) {
                             Icon(
                                 imageVector = Icons.Default.Search,
@@ -225,12 +230,11 @@ fun ProductDetailsScreen(
 
                         // Icon Giỏ hàng
                         IconButton(onClick = {
-                            if(idCustomer == null && username == null){
+                            if(account == null){
                                 navController.navigate(Screen.LoginScreen.route)
                             }
                             else{
-                                // vào màn hình giỏ hàng
-                                navController.navigate(Screen.Cart_Screen.route +"?idCustomer=${idCustomer}&username=${username}")
+                                navController.navigate(Screen.Cart_Screen.route +"?idCustomer=${account.idPerson}&username=${account.username}")
                             }
                         }) {
                             Icon(
@@ -470,7 +474,7 @@ fun ProductDetailsScreen(
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
                         Text(
-                            text = "Giá ${formattedPrice} VNĐ",
+                            text = "Giá ${formattedPrice}đ",
                             color = Color.Red,
                             fontWeight = FontWeight.Bold,
                             fontSize = 18.sp
@@ -575,8 +579,7 @@ fun ProductDetailsScreen(
                 ) {
                     items(listAllDevice){
                         if(account != null){
-                            CardDevice(
-                                device = it,
+                            CardAllDevice(device = it,
                                 isFavorite = isFavorite,
                                 account.idPerson,
                                 account.username,
@@ -584,15 +587,13 @@ fun ProductDetailsScreen(
                             )
                         }
                         else{
-                            CardDevice(
-                                device = it,
+                            CardAllDevice(device = it,
                                 isFavorite = isFavorite,
                                 null,
                                 username,
                                 navController
                             )
                         }
-
                     }
                 }
             }
@@ -709,7 +710,7 @@ fun CardDevice(device: Device, isFavorite:Boolean, idCustomer:String?, username:
                 )
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(
-                    text = "${formattedPrice} VNĐ",
+                    text = "${formattedPrice}đ",
                     color = Color.Red,
                     modifier = Modifier.fillMaxWidth(),
                     textAlign = TextAlign.Center,
