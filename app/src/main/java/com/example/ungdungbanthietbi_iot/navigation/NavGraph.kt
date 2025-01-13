@@ -7,6 +7,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
 import com.example.ungdungbanthietbi_iot.data.account.AccountViewModel
+import com.example.ungdungbanthietbi_iot.data.customer.CustomerViewModel
 import com.example.ungdungbanthietbi_iot.data.device.DeviceViewModel
 import com.example.ungdungbanthietbi_iot.data.image_device.ImageViewModel
 import com.example.ungdungbanthietbi_iot.data.review_device.ReviewViewModel
@@ -63,7 +64,9 @@ fun NavGraph(
     slideShowViewModel: SlideShowViewModel,
     imageViewModel: ImageViewModel,
     reviewViewModel: ReviewViewModel,
-    accountViewModel: AccountViewModel){
+    accountViewModel: AccountViewModel,
+    customerViewModel: CustomerViewModel
+){
     NavHost(
         navController = navController,
         // Màn hình đầu tiên hiển thị
@@ -108,7 +111,7 @@ fun NavGraph(
         }
         //Màn hình đăng ký
         composable(route = Screen.RegisterScreen.route){
-            RegisterScreen(navController)
+            RegisterScreen(navController, accountViewModel, customerViewModel)
         }
         //Màn hình thêm địa chỉ
         composable(

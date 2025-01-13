@@ -3,11 +3,21 @@ package com.example.ungdungbanthietbi_iot.data.customer
 import retrofit2.Call
 import retrofit2.http.Body
 import retrofit2.http.GET
+import retrofit2.http.POST
 import retrofit2.http.PUT
 import retrofit2.http.Query
 
 data class CustomerResponse(
     val customer: List<Customer>
+)
+
+data class CheckCustomer(
+    val result: Boolean,
+)
+
+data class AddCustomerResponse(
+    val success: Boolean,
+    val message: String
 )
 
 interface CustomerAPIService {
@@ -20,8 +30,14 @@ interface CustomerAPIService {
         @Query("id") id: String
     ): Customer
 
-//    @PUT("KhachHang/update.php")
-//    suspend fun updateKhachHang(
-//        @Body customer: Customer
-//    ): UpdateResponse
+    @POST("customer/check_Dk.php")
+    suspend fun check_Dk(
+        @Body customer: AddCustomer
+    ): CheckCustomer
+
+    @POST("customer/create.php")
+    suspend fun addCustomer(
+        @Body customer: AddCustomer
+    ): AddCustomerResponse
+
 }

@@ -216,7 +216,8 @@ fun CartScreen(
                             containerColor = Color(0xFF5D9EFF)
                         )
                     ) {
-                        Text("MUA HÀNG ($selectedProducts)")
+                        //Text("MUA HÀNG ($selectedProducts)")
+                        Text("MUA HÀNG ")
                     }
                 }
             }
