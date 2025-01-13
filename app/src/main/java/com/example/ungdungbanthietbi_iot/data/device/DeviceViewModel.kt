@@ -9,6 +9,9 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.ungdungbanthietbi_iot.data.RetrofitClient
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
@@ -22,6 +25,11 @@ class DeviceViewModel:ViewModel() {
 
     var listDeviceOfCustomer by mutableStateOf<List<Device>>(emptyList())
         private set
+
+
+    private val _listDevce = MutableStateFlow<List<Device>>(emptyList())
+    val listDevice: StateFlow<List<Device>> get() = _listDevce
+
 
     // Dữ liệu tìm kiếm
     var searchQuery: String by mutableStateOf("")
@@ -99,5 +107,16 @@ class DeviceViewModel:ViewModel() {
     // Xóa toàn bộ lịch sử tìm kiếm
     fun clearSearchHistory() {
         searchHistory.clear()
+    }
+
+    fun getdeviceById2(id: String) {
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                val device = RetrofitClient.deviceAPIService.getDeviceById(id)
+                _listDevce.update { currentList -> currentList + device }
+            } catch (e: Exception) {
+                Log.e("DeviceViewModel", "Error getting Device", e)
+            }
+        }
     }
 }

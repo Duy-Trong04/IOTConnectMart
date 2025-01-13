@@ -38,6 +38,7 @@ import com.example.ungdungbanthietbi_iot.screen.personal.OrderListScreen
 import com.example.ungdungbanthietbi_iot.screen.personal.PersonalScreen
 import com.example.ungdungbanthietbi_iot.screen.rating.ProductReviewsScreen
 import com.example.ungdungbanthietbi_iot.screen.rating.RatingHistoryScreen
+import com.example.ungdungbanthietbi_iot.ui.theme.parseSelectedProducts
 
 /** Chuyển hướng (NavGraph)
  * -------------------------------------------
@@ -100,11 +101,27 @@ fun NavGraph(
         composable(route = Screen.LoginScreen.route){
             LoginScreen(navController, accountViewModel)
         }
+
         //Màn hình thanh toán
         composable(
-            route = Screen.Check_Out.route
-        ){
-            CheckoutScreen(navController)
+            route = Screen.Check_Out.route + "?selectedProducts={selectedProducts}&tongtien={tongtien}&username={username}",
+            arguments = listOf(
+                navArgument("selectedProducts") {type = NavType.StringType },
+                navArgument("tongtien") { type = NavType.StringType},
+                navArgument("username") {type = NavType.StringType }
+            )
+        ){ backStackEntry ->
+            // Lấy chuỗi selectedProducts từ tham số điều hướng
+            val selectedProductsString = backStackEntry.arguments?.getString("selectedProducts")
+
+            // Gọi hàm parseSelectedProducts để chuyển chuỗi thành danh sách Triple<Int, Int, Int>
+            val selectedProducts = selectedProductsString?.let { parseSelectedProducts(it) } ?: emptyList()
+
+            // Chuyển đổi tongtien từ String sang Int, nếu không có giá trị thì mặc định là 0
+            val tongtien = backStackEntry.arguments?.getString("tongtien")?.toDoubleOrNull() ?: 0.0
+            val username = backStackEntry.arguments?.getString("username") ?: ""
+
+            CheckoutScreen(navController, selectedProducts, tongtien = tongtien, username = username)
         }
         //Màn hình đăng ký
         composable(route = Screen.RegisterScreen.route){
@@ -188,15 +205,21 @@ fun NavGraph(
         ){
             OrderDetailsScreen(navController)
         }
-        //Màn hinh tìm kiếm
+        //Màn hinh tìm kiếm đã đăng nhập
         composable(
-            route = Screen.Search_Screen.route +"?username={username}",
+            route = Screen.Search_Screen.route + "?username={username}",
             arguments = listOf(
                 navArgument("username") {type = NavType.StringType }
             )
         ){
             val username = it.arguments?.getString("username") ?: ""
             SearchScreen(navController, deviceViewModel, username)
+        }
+        //Màn hình tìm kiếm chưa có tài khoản
+        composable(
+            route = Screen.Search_Screen.route
+        ){
+            SearchScreen(navController, deviceViewModel, null)
         }
         //Màn hình kết quả tìm kiếm
         composable(

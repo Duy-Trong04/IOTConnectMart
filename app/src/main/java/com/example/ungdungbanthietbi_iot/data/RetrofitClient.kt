@@ -5,6 +5,7 @@ import com.example.ungdungbanthietbi_iot.data.cart.CartAPIService
 import com.example.ungdungbanthietbi_iot.data.customer.CustomerAPIService
 import com.example.ungdungbanthietbi_iot.data.device.DeviceAPIService
 import com.example.ungdungbanthietbi_iot.data.image_device.ImageAPIService
+import com.example.ungdungbanthietbi_iot.data.order.OrderAPIService
 import com.example.ungdungbanthietbi_iot.data.review_device.ReviewAPIService
 import com.example.ungdungbanthietbi_iot.data.slideshow.SlideShowAPIService
 import com.google.gson.GsonBuilder
@@ -66,5 +67,12 @@ object RetrofitClient {
             .addConverterFactory(GsonConverterFactory.create(GsonBuilder().create()))
             .build()
             .create(CartAPIService::class.java)
+    }
+    val orderAPIService: OrderAPIService by lazy {
+        Retrofit.Builder()
+            .baseUrl(Constant.BASE_URL)
+            .addConverterFactory(GsonConverterFactory.create(GsonBuilder().create()))
+            .build()
+            .create(OrderAPIService::class.java)
     }
 }

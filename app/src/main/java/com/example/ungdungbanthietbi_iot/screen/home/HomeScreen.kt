@@ -336,7 +336,14 @@ fun HomeScreen(
                                 modifier = Modifier
                                     .size(50.dp)
                                     .clip(CircleShape)
-                                    .clickable { navController.navigate(Screen.HomeScreen.route + "?username=${username}") }
+                                    .clickable {
+                                        if(username == null){
+                                            navController.navigate(Screen.HomeScreen.route)
+                                        }
+                                        else{
+                                            navController.navigate(Screen.HomeScreen.route + "?username=${username}")
+                                        }
+                                    }
                                     .background(Color(0xFF5D9EFF), RoundedCornerShape(5.dp)),
                                 contentAlignment = Alignment.Center,
 

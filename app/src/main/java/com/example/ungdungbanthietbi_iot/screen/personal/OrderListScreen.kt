@@ -53,7 +53,7 @@ fun OrderListScreen(onBack: () -> Unit = {},initialPage: Int = 0) {
                 title = {
                     Text("Lịch sử mua hàng", fontWeight = FontWeight.Bold,
                         modifier = Modifier.fillMaxWidth(),
-                        textAlign = TextAlign.Center
+                        textAlign = TextAlign.Start
                     )
                 },
                 navigationIcon = {

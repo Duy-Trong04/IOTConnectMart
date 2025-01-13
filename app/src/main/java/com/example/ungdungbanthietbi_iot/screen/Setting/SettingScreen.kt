@@ -90,7 +90,12 @@ fun AccountSettingsScreen(navController: NavHostController, onBack: () -> Unit =
                         contentAlignment = Alignment.Center
                     ){
                         Button(
-                            onClick = { /* Thêm chức năng đăng xuất */ },
+                            onClick = {
+                                /* Thêm chức năng đăng xuất */
+                                navController.navigate(Screen.LoginScreen.route){
+                                    popUpTo(0) {inclusive = true} //Xóa màn hình trước
+                                }
+                            },
                             colors = ButtonDefaults.buttonColors(containerColor = Color.White),
                             shape = RoundedCornerShape(50),
                             modifier = Modifier

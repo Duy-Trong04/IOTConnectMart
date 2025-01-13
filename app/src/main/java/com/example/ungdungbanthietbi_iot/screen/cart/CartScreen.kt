@@ -29,7 +29,6 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import coil.compose.AsyncImage
-import com.example.ungdungbanthietbi_iot.data.Product
 import com.example.ungdungbanthietbi_iot.data.cart.CartViewModel
 import com.example.ungdungbanthietbi_iot.data.device.DeviceViewModel
 import com.example.ungdungbanthietbi_iot.navigation.Screen
@@ -71,8 +70,9 @@ fun CartScreen(
 
     // Biến lưu trạng thái checkbox của từng sản phẩm
     val selectedItems = remember { mutableStateMapOf<Int, Boolean>() }
-
+    //Lưu thông tin sản phẩm để truyền qua màn hình thanh toán
     val selectedProducts = remember { mutableListOf<Triple<Int, Int, Int>>() }
+
     var showDialog by remember { mutableStateOf(false) }
     // Hàm tính tổng tiền
     fun calculateTotalPrice() {
@@ -223,7 +223,6 @@ fun CartScreen(
                                 colors = CheckboxDefaults.colors(
                                     checkedColor = Color(0xFF5D9EFF),
                                     uncheckedColor = Color.Gray,
-                                    checkmarkColor = Color.Green
                                 ),
                                 onCheckedChange = { isChecked ->
                                     selectedItems[cart.id] = isChecked
