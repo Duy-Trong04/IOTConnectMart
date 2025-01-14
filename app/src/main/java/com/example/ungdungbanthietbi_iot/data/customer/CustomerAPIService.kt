@@ -40,4 +40,29 @@ interface CustomerAPIService {
         @Body customer: AddCustomer
     ): AddCustomerResponse
 
+    @PUT("customer/updateUsername.php")
+    suspend fun updateUsername(
+        @Body customer: Username
+    ): Boolean
+
+    @PUT("customer/updateEmail.php")
+    suspend fun updateEmail(
+        @Body customer: Email
+    ): Boolean
+
+    @PUT("customer/updatePhone.php")
+    suspend fun updatePhone(
+        @Body customer: Phone
+    ): Boolean
+
+    @PUT("customer/updateBirthdate.php")
+    suspend fun updateBirthdate(
+        @Body customer: Birthdate
+    ): Boolean
+
+    @PUT("customer/updateGender.php")
+    suspend fun updateGender(
+        @Body customer: Gender
+    ): Boolean
+
 }

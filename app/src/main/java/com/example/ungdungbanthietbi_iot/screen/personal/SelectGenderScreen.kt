@@ -17,7 +17,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
-
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.ungdungbanthietbi_iot.data.customer.CustomerViewModel
+import com.example.ungdungbanthietbi_iot.data.customer.Gender
 
 
 /*Người thực hiện: Nguyễn Mạnh Cường
@@ -32,10 +34,12 @@ import androidx.compose.ui.tooling.preview.Preview
 */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun GenderSelectionDialog(onDismiss: () -> Unit, onGenderSelected: (String) -> Unit) {
+fun GenderSelectionDialog(customerId:String,onDismiss: () -> Unit, onGenderSelected: (String) -> Unit) {
     var selectedGender by remember { mutableStateOf("Nam") }
-
+    var gender by remember { mutableStateOf(1) }
     val configuration = LocalConfiguration.current
+
+    var genderModel:CustomerViewModel = viewModel()
 
     // Kiểm tra xem thiết bị có phải là máy tính bảng hay không
     val isTablet = configuration.screenLayout and Configuration.SCREENLAYOUT_SIZE_MASK >= Configuration.SCREENLAYOUT_SIZE_LARGE
@@ -48,7 +52,23 @@ fun GenderSelectionDialog(onDismiss: () -> Unit, onGenderSelected: (String) -> U
     AlertDialog(
         onDismissRequest = onDismiss,
         confirmButton = {
-            Button(onClick = { onGenderSelected(selectedGender) }) {
+            Button(
+                onClick = {
+                    onGenderSelected(selectedGender)
+                    if(selectedGender == "Nam"){
+                        gender = 0
+                    }else if(selectedGender == "Nữ"){
+                        gender = 1
+                    }else{
+                        gender = 2
+                    }
+                    val g: Gender
+                    g = Gender(customerId,gender)
+                    genderModel.updateGender(g)
+                    onDismiss()
+                }
+            )
+            {
                 Text("Xác nhận", color = Color.White)
             }
         },

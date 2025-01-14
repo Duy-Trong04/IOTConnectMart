@@ -32,9 +32,13 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.annotation.ExperimentalCoilApi
 import coil.compose.rememberImagePainter
-
+import com.example.ungdungbanthietbi_iot.data.account.AccountViewModel
+import com.example.ungdungbanthietbi_iot.data.cart.CartViewModel
+import com.example.ungdungbanthietbi_iot.data.customer.CustomerViewModel
+import com.example.ungdungbanthietbi_iot.data.customer.Username
 
 
 /*Người thực hiện: Nguyễn Mạnh Cường
@@ -45,10 +49,15 @@ import coil.compose.rememberImagePainter
 */
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalCoilApi::class)
-@Preview(showBackground = true)
+//@Preview(showBackground = true)
 @Composable
-fun EditUsername(onBack: () -> Unit = {}) {
-    var userName by remember { mutableStateOf("Nguyen Van A") }
+fun EditUsername(onBack: () -> Unit = {},  id:String, username:String) {
+    //var userName by remember { mutableStateOf("Nguyen Van A") }
+    var userName by remember { mutableStateOf(username) }
+    val parts = userName.trim().split(" ")
+    val surname = parts.firstOrNull() ?: ""
+    val lastName = if (parts.size > 1) parts.subList(1, parts.size).joinToString(" ") else ""
+    val userViewModel: CustomerViewModel = viewModel()
     Scaffold(
         topBar = {
             TopAppBar(
@@ -69,7 +78,13 @@ fun EditUsername(onBack: () -> Unit = {}) {
                     }
                 },
                 actions = {
-                    IconButton(onClick = { /* Chức năng lưu lại thông tin đã sửa */ }) {
+                    IconButton(onClick = {
+                    /* Chức năng lưu lại thông tin đã sửa */
+                        val userName: Username
+                        userName = Username(id,surname,lastName)
+                        userViewModel.updateUsername(userName)
+                        onBack()
+                    }) {
                         Icon(
                             imageVector = Icons.Default.Done,
                             contentDescription = "Save",

@@ -18,6 +18,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.ungdungbanthietbi_iot.data.customer.Birthdate
+import com.example.ungdungbanthietbi_iot.data.customer.CheckCustomer
+import com.example.ungdungbanthietbi_iot.data.customer.CustomerViewModel
 import java.time.LocalDate
 import java.time.YearMonth
 import java.time.format.DateTimeFormatter
@@ -25,10 +29,11 @@ import java.util.*
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun CalendarDialog(onDismiss: () -> Unit, onDateSelected: (LocalDate) -> Unit) {
+fun CalendarDialog(customerID: String?, onDismiss: () -> Unit, onDateSelected: (LocalDate) -> Unit) {
     var selectedDate by remember { mutableStateOf(LocalDate.now().dayOfMonth) }
     var selectedMonth by remember { mutableStateOf(LocalDate.now().monthValue) }
     var selectedYear by remember { mutableStateOf(LocalDate.now().year) }
+    var birthdateModel: CustomerViewModel= viewModel()
 
     val currentMonthYear = YearMonth.of(selectedYear, selectedMonth)
     val daysInMonth = (1..currentMonthYear.lengthOfMonth()).toList()
@@ -46,7 +51,13 @@ fun CalendarDialog(onDismiss: () -> Unit, onDateSelected: (LocalDate) -> Unit) {
         confirmButton = {
             Button(onClick = {
                 onDateSelected(LocalDate.of(selectedYear, selectedMonth, selectedDate))
-            }) {
+                val birthdate = LocalDate.of(selectedYear, selectedMonth, selectedDate)
+                val b:Birthdate
+                b = Birthdate(customerID.toString(),birthdate.toString())
+                birthdateModel.updateBirthdate(b)
+                onDismiss()
+            }
+            ) {
                 Text("Xác nhận", color = Color.White)
             }
         },

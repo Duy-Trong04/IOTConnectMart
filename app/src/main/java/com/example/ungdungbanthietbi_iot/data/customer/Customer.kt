@@ -21,3 +21,29 @@ data class AddCustomer(
     @SerializedName("lastName") val lastName:String,
     @SerializedName("phone") val phone:String,
 )
+
+data class Username(
+    @SerializedName("id") val id:String,
+    @SerializedName("surname") val surname:String,
+    @SerializedName("lastName") val lastName:String,
+)
+
+data class Email(
+    @SerializedName("id") val id:String,
+    @SerializedName("email") val email:String,
+)
+
+data class Phone(
+    @SerializedName("id") val id:String,
+    @SerializedName("phone") val phone:String,
+)
+
+data class Birthdate(
+    @SerializedName("id") val id:String,
+    @SerializedName("birthdate") val birthdate:String,
+)
+
+data class Gender(
+    @SerializedName("id") val id:String,
+    @SerializedName("gender") val gender:Int,
+)

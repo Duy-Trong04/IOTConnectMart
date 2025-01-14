@@ -231,16 +231,25 @@ fun NavGraph(
         }
         //Cac man hinh thay doi thong tin ca nhan
         //Dẫn đến màn chọn(chỉnh sửa) Username
-        composable(Screen.EditUsernamScreen.route) {
-            EditUsername(onBack = { navController.popBackStack() })
+        composable(Screen.EditUsernamScreen.route + "/{id}/{username}") {
+            backStackEntry ->
+            val username = backStackEntry.arguments?.getString("username") ?: ""
+            val id = backStackEntry.arguments?.getString("id") ?: ""
+            EditUsername(onBack = { navController.popBackStack()},id,username)
         }
         //Dẫn đến màn chọn(chỉnh sửa) SỐ ĐIỆN THOẠI
-        composable(Screen.EditPhoneScreen.route) {
-            EditPhoneScreen(onBack = { navController.popBackStack() })
+        composable(Screen.EditPhoneScreen.route + "/{id}/{phoneNumber}") {
+            backStackEntry ->
+            val id = backStackEntry.arguments?.getString("id") ?: ""
+            val phoneNumber = backStackEntry.arguments?.getString("phoneNumber") ?: ""
+            EditPhoneScreen(id,onBack = { navController.popBackStack()}, phoneNumber)
         }
         //Dẫn đến màn chọn(chỉnh sửa) Email cá nhân
-        composable(Screen.EditEmailScreen.route) {
-            EditEmailScreen(onBack = { navController.popBackStack() })
+        composable(Screen.EditEmailScreen.route + "/{id}/{email}",) {
+            backStackEntry ->
+            val id = backStackEntry.arguments?.getString("id") ?: ""
+            val email = backStackEntry.arguments?.getString("email") ?: ""
+            EditEmailScreen(id,onBack = { navController.popBackStack()},email)
         }
         //Dẫn đến Man hinh Setting
         composable(Screen.SettingScreen.route) {
