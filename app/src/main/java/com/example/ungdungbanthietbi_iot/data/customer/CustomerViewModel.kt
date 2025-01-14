@@ -79,4 +79,74 @@ class CustomerViewModel:ViewModel() {
             }
         }
     }
+
+    fun updateUsername(customer: Username) {
+        viewModelScope.launch {
+            try {
+                val response = RetrofitClient.customerAPIService.updateUsername(customer)
+                // Giả sử response.success là một Boolean xác nhận xem khách hàng có hợp lệ không
+                //_customerCheckResult.value = response
+                Log.d("AccountViewModel", "check_Dkc: ${response}")
+            } catch (e: Exception) {
+                Log.e("AccountViewModel", "Lỗi kết nối: ${e.message}")
+                //_customerCheckResult.value = false
+            }
+        }
+    }
+
+    fun updateEmail(email: Email) {
+        viewModelScope.launch {
+            try {
+                val response = RetrofitClient.customerAPIService.updateEmail(email)
+                // Giả sử response.success là một Boolean xác nhận xem khách hàng có hợp lệ không
+                //_customerCheckResult.value = response
+                Log.d("AccountViewModel", "check_Dkc: ${response}")
+            } catch (e: Exception) {
+                Log.e("AccountViewModel", "Lỗi kết nối: ${e.message}")
+                //_customerCheckResult.value = false
+            }
+        }
+    }
+
+    fun updatePhone(phone: Phone) {
+        viewModelScope.launch {
+            try {
+                val response = RetrofitClient.customerAPIService.updatePhone(phone)
+                // Giả sử response.success là một Boolean xác nhận xem khách hàng có hợp lệ không
+                //_customerCheckResult.value = response
+                Log.d("AccountViewModel", "check_Dkc: ${response}")
+            } catch (e: Exception) {
+                Log.e("AccountViewModel", "Lỗi kết nối: ${e.message}")
+                //_customerCheckResult.value = false
+            }
+        }
+    }
+
+    fun updateGender(gender: Gender) {
+        viewModelScope.launch {
+            try {
+                val response = RetrofitClient.customerAPIService.updateGender(gender)
+                // Giả sử response.success là một Boolean xác nhận xem khách hàng có hợp lệ không
+                //_customerCheckResult.value = response
+                Log.d("AccountViewModel", "check_Dkc: ${response}")
+            } catch (e: Exception) {
+                Log.e("AccountViewModel", "Lỗi kết nối: ${e.message}")
+                //_customerCheckResult.value = false
+            }
+        }
+    }
+
+    fun updateBirthdate(birthdate: Birthdate) {
+        viewModelScope.launch {
+            try {
+                val response = RetrofitClient.customerAPIService.updateBirthdate(birthdate)
+                // Giả sử response.success là một Boolean xác nhận xem khách hàng có hợp lệ không
+                //_customerCheckResult.value = response
+                Log.d("AccountViewModel", "check_Dkc: ${response}")
+            } catch (e: Exception) {
+                Log.e("AccountViewModel", "Lỗi kết nối: ${e.message}")
+                //_customerCheckResult.value = false
+            }
+        }
+    }
 }

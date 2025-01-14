@@ -47,7 +47,7 @@ import java.time.format.DateTimeFormatter
 //@Preview(showBackground = true)
 @Composable
 fun EditProfileScreen(navController: NavHostController, username:String) {
-
+    var openDialog by remember { mutableStateOf(false) }
     val customerViewModel:CustomerViewModel = viewModel()
     val accountViewModel:AccountViewModel = viewModel()
     val account = accountViewModel.account
@@ -96,7 +96,11 @@ fun EditProfileScreen(navController: NavHostController, username:String) {
                     }
                 },
                 actions = {
-                    IconButton(onClick = { /* Chức năng lưu lại thông tin đã sửa */ }) {
+                    IconButton(onClick = {
+                        //navController.popBackStack()
+                        openDialog=true
+                    /* Chức năng lưu lại thông tin đã sửa */
+                    }) {
                         Icon(
                             imageVector = Icons.Default.Done,
                             contentDescription = "Save",
@@ -147,33 +151,38 @@ fun EditProfileScreen(navController: NavHostController, username:String) {
                     }
                 }
                 item {
-                    BoxEditProfile(label = "Tên người dùng", value = "${customer?.surname} ${customer?.lastName}", onClick = { /*Chuyển trang đổi user name*/navController.navigate(Screen.EditUsernamScreen.route) })
+                    var name = "${customer?.surname} ${customer?.lastName}"
+                    BoxEditProfile(label = "Tên người dùng", value = name, onClick = { /*Chuyển trang đổi user name*/navController.navigate(Screen.EditUsernamScreen.route+"/${customer?.id}/${name}") })
                 }
                 item {
-                    BoxEditProfile(label = "Giới tính", value = if(customer?.gender == 0) "Nam" else "Nữ", onClick = { /*Chuyển trang đổi giới tính*/ showGenderDialog=true})
+                    BoxEditProfile(label = "Giới tính", value = if (customer?.gender == 0) "Nam" else "Nữ", onClick = { /*Chuyển trang đổi giới tính*/ showGenderDialog=true})
                 }
                 item {
                     BoxEditProfile(label = "Ngày sinh", value = customer?.birthdate.toString(), onClick = { /*Chuyển trang đổi ngày sinh*/ showCalendarDialog = true})
                 }
                 item {
-                    BoxEditProfile(label = "Số điện thoại", value = customer?.phone.toString(), onClick = { /*Chuyển trang đổi số điện thoại*/navController.navigate(Screen.EditPhoneScreen.route) })
+                    BoxEditProfile(label = "Số điện thoại", value = customer?.phone.toString(), onClick = { /*Chuyển trang đổi số điện thoại*/navController.navigate(Screen.EditPhoneScreen.route + "/${customer?.id}/${customer?.phone}") })
                 }
                 item {
-                    BoxEditProfile(label = "Email", value = customer?.email.toString(), onClick = { /*Chuyển trang đổi email*/navController.navigate(Screen.EditEmailScreen.route) })
+                    BoxEditProfile(label = "Email", value = customer?.email.toString(), onClick = { /*Chuyển trang đổi email*/navController.navigate(Screen.EditEmailScreen.route+"/${customer?.id}/${customer?.email}") })
                 }
             }
             // Hiển thị dialog chọn giới tính nếu trạng thái showGenderDialog là true
             if (showGenderDialog) {
+                val customerId = customer?.id
+                var gender1=customer?.gender.toString()
                 GenderSelectionDialog(
+                    customerId=customerId.toString(),
                     onDismiss = { showGenderDialog = false },
                     onGenderSelected = { selectedGender ->
-                        gender = selectedGender
+                        gender1 = selectedGender
                         showGenderDialog = false
-                    }
+                    },
                 )
             }
             if (showCalendarDialog) {
                 CalendarDialog(
+                    customerID = customer?.id,
                     onDismiss = { showCalendarDialog = false },
                     onDateSelected = { selectedDate ->
                 birthDate = selectedDate.format(DateTimeFormatter.ofPattern("dd/MM/yyyy"))
@@ -184,6 +193,26 @@ fun EditProfileScreen(navController: NavHostController, username:String) {
 
         }
     )
+    if (openDialog == true) {
+        AlertDialog(
+            onDismissRequest = { openDialog = false }, // Đóng khi nhấn ngoài dialog
+            text = {
+                Text("Đã lưu thông tin")
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        navController.popBackStack()
+                    },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color(0xFF00C3FF)
+                    )
+                ) {
+                    Text("OK")
+                }
+            },
+        )
+    }
 }
 
 

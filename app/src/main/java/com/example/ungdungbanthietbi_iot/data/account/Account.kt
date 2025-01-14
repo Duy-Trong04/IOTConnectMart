@@ -17,3 +17,8 @@ data class AddAccount(
     @SerializedName("username") var username:String,
     @SerializedName("password") var password:String,
 )
+
+data class UpdatePassword(
+    @SerializedName("idPerson") var idPerson:String?,
+    @SerializedName("password") var password:String,
+)

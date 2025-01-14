@@ -21,12 +21,14 @@ data class AddAccountResponse(
     val message: String
 )
 
+
 interface AccuntAPIService {
     @GET("account/check_account.php")
     suspend fun check_Login(
         @Query("username") username: String,
         @Query("password") password: String
     ): CheckLoginResponse
+    
 
     @POST("account/check_Dk.php")
     suspend fun checkAccount_Dk(
@@ -42,5 +44,11 @@ interface AccuntAPIService {
     suspend fun addAccount(
         @Body account: AddAccount
     ): AddAccountResponse
+
+    @PUT("account/updatePassword.php")
+    suspend fun updatePassword(
+        @Body account: UpdatePassword
+    ): Boolean
+
 
 }
