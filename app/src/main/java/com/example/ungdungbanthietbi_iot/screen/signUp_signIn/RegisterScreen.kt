@@ -97,8 +97,14 @@ import kotlinx.coroutines.coroutineScope
 fun RegisterScreen(
     navController: NavController,
     accountViewModel: AccountViewModel,
-    cutomerViewModel: CustomerViewModel
+    customerViewModel: CustomerViewModel
 ) {
+
+    val accountCheckResult by accountViewModel.accountCheckResult
+    val customerCheckResult by customerViewModel.customerCheckResult
+    Log.d("AccountViewModel", "accountCheckResult: $accountCheckResult")
+    Log.d("AccountViewModel", "customerCheckResult: $customerCheckResult")
+
     // Biến nhận dữ liệu họ từ người dùng
     var ho by remember { mutableStateOf("") }
     // Biến nhận dữ liệu tên từ người dùng
@@ -117,6 +123,7 @@ fun RegisterScreen(
     var isComfirmPasswordVisible by remember { mutableStateOf(false) }
     // Biến kiểm tra kết quả đăng nhập
     var openDialog by remember { mutableStateOf(false) }
+    var openDialog_Dk by remember { mutableStateOf(false) }
     // Khởi tạo FocusRequester cho các trường nhập liệu
     val focusRequesterHo = remember { FocusRequester() }
     val focusRequesterTen = remember { FocusRequester() }
@@ -125,7 +132,35 @@ fun RegisterScreen(
     val focusRequesterPassword = remember { FocusRequester() }
     val focusRequesterComfirmPassword = remember { FocusRequester() }
     // Sử dụng coroutineScope thông qua rememberCoroutineScope
-    val coroutineScope = rememberCoroutineScope()
+    // Gửi dữ liệu lên server
+    val accountNew = AddAccount(username, username, password)
+    val customerNew = AddCustomer(username, ho, ten, sdt)
+    LaunchedEffect(accountCheckResult, customerCheckResult) {
+        if(accountCheckResult == false || customerCheckResult == false) {
+            // Kiểm tra điều kiện hợp lệ trước khi gửi lên server
+            if (username.isNotEmpty() && password.isNotEmpty() && comfirmPassword.isNotEmpty() && sdt.isNotEmpty() && ho.isNotEmpty() && ten.isNotEmpty()) {
+                if (password == comfirmPassword) {
+                    // Thực hiện gọi API hoặc gửi dữ liệu tới server
+                    accountViewModel.addToAccount(accountNew)
+                    // Ví dụ gọi ViewModel để gửi dữ liệu
+                    customerViewModel.addToCustomer(customerNew)
+                    // Điều hướng đến màn hình đăng nhập sau khi thành công
+                    openDialog_Dk=true
+
+                } else {
+                    openDialog =
+                        true  // Nếu mật khẩu không khớp, hiển thị thông báo lỗi
+                }
+            } else {
+                openDialog =
+                    true  // Nếu thiếu thông tin, hiển thị thông báo lỗi
+            }
+            Log.d("AccountViewModel", "Đăng ký thành công\n")
+        } else if (accountCheckResult == true) {
+            openDialog = true
+            Log.d("AccountViewModel", "Đăng ký thất bại\n")
+        }
+    }
     Scaffold(
         modifier = Modifier.fillMaxWidth(),
         topBar = {
@@ -348,51 +383,8 @@ fun RegisterScreen(
                     Spacer(modifier = Modifier.height(16.dp))
                     Button(
                         onClick = {
-
-                            // Gửi dữ liệu lên server
-                            val accountNew = AddAccount(username, username, password)
-                            val customerNew = AddCustomer(username, ho, ten, sdt)
-                            // Sử dụng coroutineScope để gọi các phương thức kiểm tra một cách đồng thời
-                            coroutineScope.launch {
-                                // Kiểm tra tài khoản và khách hàng đồng thời
-                                val accountCheckResult =
-                                    async { accountViewModel.check_Dk(accountNew) }
-                                val customerCheckResult =
-                                    async { cutomerViewModel.check_Dk(customerNew) }
-
-                                // Đợi kết quả từ các check
-                                accountCheckResult.await()
-                                customerCheckResult.await()
-//                                accountViewModel.check_Dk(accountNew)
-//                                cutomerViewModel.check_Dk(customerNew)
-                                Log.d(
-                                    "AccountViewModel",
-                                    "check_Dk acc: ${accountViewModel.accountCheckResult.value}"
-                                )
-                                Log.d(
-                                    "AccountViewModel",
-                                    "check_Dk cus: ${cutomerViewModel.customerCheckResult.value}"
-                                )
-                                if (accountViewModel.accountCheckResult.value == false || cutomerViewModel.customerCheckResult.value == false) {
-                                    // Kiểm tra điều kiện hợp lệ trước khi gửi lên server
-                                    if (username.isNotEmpty() && password.isNotEmpty() && comfirmPassword.isNotEmpty() && sdt.isNotEmpty() && ho.isNotEmpty() && ten.isNotEmpty()) {
-                                        if (password == comfirmPassword) {
-                                            // Thực hiện gọi API hoặc gửi dữ liệu tới server
-                                            accountViewModel.addToAccount(accountNew)
-                                            // Ví dụ gọi ViewModel để gửi dữ liệu
-                                            cutomerViewModel.addToCustomer(customerNew)
-                                            // Điều hướng đến màn hình đăng nhập sau khi thành công
-                                            navController.navigate(Screen.LoginScreen.route)
-                                        } else {
-                                            openDialog =
-                                                true  // Nếu mật khẩu không khớp, hiển thị thông báo lỗi
-                                        }
-                                    } else {
-                                        openDialog =
-                                            true  // Nếu thiếu thông tin, hiển thị thông báo lỗi
-                                    }
-                                }
-                            }
+                            accountViewModel.check_Dk(accountNew)
+                            customerViewModel.check_Dk(customerNew)
                         },
                         modifier = Modifier
                             .width(350.dp)
@@ -404,35 +396,55 @@ fun RegisterScreen(
                         Text(text = "ĐĂNG KÝ", fontSize = 23.sp, fontWeight = FontWeight.Bold)
                     }
 
-                    if (openDialog == true) {
-                        AlertDialog(
-                            onDismissRequest = { openDialog = false }, // Đóng khi nhấn ngoài dialog
-                            text = {
-                                if (username == "" || password == "" || comfirmPassword == "" || sdt == "" || ho == "" || ten == "") {
-                                    Text("Vui lòng nhập đầy đủ thông tin")
-                                } else if (password != comfirmPassword) {
-                                    Text("Password và Comfirm Password không khớp")
-                                } else {
-                                    Text("Username đã tồn tại")
-                                }
-                            },
-                            confirmButton = {
-                                Button(
-                                    onClick = {
-                                        openDialog = false
-                                    },
-                                    colors = ButtonDefaults.buttonColors(
-                                        containerColor = Color(0xFF00C3FF)
-                                    )
-                                ) {
-                                    Text("OK")
-                                }
-                            },
-                        )
-                    }
                 }
             }
         }
     )
-
+    if (openDialog == true) {
+        AlertDialog(
+            onDismissRequest = { openDialog = false }, // Đóng khi nhấn ngoài dialog
+            text = {
+                if (username == "" || password == "" || comfirmPassword == "" || sdt == "" || ho == "" || ten == "") {
+                    Text("Vui lòng nhập đầy đủ thông tin")
+                } else if (password != comfirmPassword) {
+                    Text("Password và Comfirm Password không khớp")
+                } else {
+                    Text("Username đã tồn tại")
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        openDialog = false
+                    },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color(0xFF00C3FF)
+                    )
+                ) {
+                    Text("OK")
+                }
+            },
+        )
+    }
+    if (openDialog_Dk == true) {
+        AlertDialog(
+            onDismissRequest = { openDialog_Dk = false }, // Đóng khi nhấn ngoài dialog
+            text = {
+                Text("Đăng ký thành công")
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        openDialog_Dk = false
+                        navController.navigate(Screen.LoginScreen.route)
+                    },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color(0xFF00C3FF)
+                    )
+                ) {
+                    Text("OK")
+                }
+            },
+        )
+    }
 }

@@ -23,8 +23,8 @@ class CustomerViewModel:ViewModel() {
 
     var customerAddResult by mutableStateOf("")
 
-    private val _customerCheckResult = mutableStateOf(true)
-    val customerCheckResult: State<Boolean> = _customerCheckResult
+    private val _customerCheckResult = mutableStateOf<Boolean?>(null)
+    val customerCheckResult: State<Boolean?> = _customerCheckResult
 
     val allKhachHang = liveData(Dispatchers.IO) {
         try {
@@ -71,10 +71,8 @@ class CustomerViewModel:ViewModel() {
             try {
                 val response = RetrofitClient.customerAPIService.check_Dk(customer)
                 // Giả sử response.success là một Boolean xác nhận xem khách hàng có hợp lệ không
-                withContext(Dispatchers.Main) {
-                    _customerCheckResult.value = response.result
-                }
-                Log.d("AccountViewModel", "check_Dkc: ${response.result}")
+                    _customerCheckResult.value = response
+                Log.d("AccountViewModel", "check_Dkc: ${response}")
             } catch (e: Exception) {
                 Log.e("AccountViewModel", "Lỗi kết nối: ${e.message}")
                 _customerCheckResult.value = false

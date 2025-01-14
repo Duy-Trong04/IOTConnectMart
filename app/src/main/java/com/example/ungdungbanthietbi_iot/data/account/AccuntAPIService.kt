@@ -31,7 +31,7 @@ interface AccuntAPIService {
     @POST("account/check_Dk.php")
     suspend fun checkAccount_Dk(
         @Body account: AddAccount
-    ): CheckAccount
+    ): Boolean
 
     @GET("account/show.php")
     suspend fun getAccountByUsername(

@@ -33,7 +33,7 @@ interface CustomerAPIService {
     @POST("customer/check_Dk.php")
     suspend fun check_Dk(
         @Body customer: AddCustomer
-    ): CheckCustomer
+    ): Boolean
 
     @POST("customer/create.php")
     suspend fun addCustomer(

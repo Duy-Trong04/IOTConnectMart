@@ -27,8 +27,8 @@ class AccountViewModel:ViewModel() {
 
     var username: String? = null
 
-    private val _accountCheckResult = mutableStateOf(true)
-    val accountCheckResult: State<Boolean> = _accountCheckResult
+    private val _accountCheckResult = mutableStateOf<Boolean?>(null)
+    val accountCheckResult: State<Boolean?> = _accountCheckResult
 
 
     fun CheckLogin(username: String, password: String) {
@@ -81,13 +81,11 @@ class AccountViewModel:ViewModel() {
             try {
                 val response = RetrofitClient.accountAPIService.checkAccount_Dk(account)
                 // Giả sử response.success là một Boolean xác nhận xem khách hàng có hợp lệ không
-                withContext(Dispatchers.Main) {
-                    _accountCheckResult.value = response.result
-                }
-                Log.d("AccountViewModel", "check_Dka: ${response.result}")
+                    _accountCheckResult.value= response
+                Log.d("AccountViewModel", "check_Dka: ${response}")
             } catch (e: Exception) {
                 Log.e("AccountViewModel", "Lỗi kết nối: ${e.message}")
-                _accountCheckResult.value = false
+                _accountCheckResult.value= false
             }
         }
     }
