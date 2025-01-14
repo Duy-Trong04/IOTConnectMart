@@ -1,11 +1,13 @@
 package com.example.ungdungbanthietbi_iot.data
 
 import com.example.ungdungbanthietbi_iot.data.account.AccuntAPIService
+import com.example.ungdungbanthietbi_iot.data.address_book.AddressAPIService
 import com.example.ungdungbanthietbi_iot.data.cart.CartAPIService
 import com.example.ungdungbanthietbi_iot.data.customer.CustomerAPIService
 import com.example.ungdungbanthietbi_iot.data.device.DeviceAPIService
 import com.example.ungdungbanthietbi_iot.data.image_device.ImageAPIService
 import com.example.ungdungbanthietbi_iot.data.order.OrderAPIService
+import com.example.ungdungbanthietbi_iot.data.order_detail.OrderDetailAPIService
 import com.example.ungdungbanthietbi_iot.data.review_device.ReviewAPIService
 import com.example.ungdungbanthietbi_iot.data.slideshow.SlideShowAPIService
 import com.google.gson.GsonBuilder
@@ -74,5 +76,20 @@ object RetrofitClient {
             .addConverterFactory(GsonConverterFactory.create(GsonBuilder().create()))
             .build()
             .create(OrderAPIService::class.java)
+    }
+    val orderDetailAPIService: OrderDetailAPIService by lazy {
+        Retrofit.Builder()
+            .baseUrl(Constant.BASE_URL)
+            .addConverterFactory(GsonConverterFactory.create(GsonBuilder().create()))
+            .build()
+            .create(OrderDetailAPIService::class.java)
+    }
+
+    val addressAPIService: AddressAPIService by lazy {
+        Retrofit.Builder()
+            .baseUrl(Constant.BASE_URL)
+            .addConverterFactory(GsonConverterFactory.create(GsonBuilder().create()))
+            .build()
+            .create(AddressAPIService::class.java)
     }
 }

@@ -49,7 +49,10 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Snackbar
+import androidx.compose.material3.SnackbarDefaults
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
@@ -172,12 +175,21 @@ fun ProductDetailsScreen(
     } else {
         0.0 // Giá trị mặc định nếu danh sách rỗng
     }
+
+    //Lưu thông tin sản phẩm để truyền qua màn hình thanh toán
+    val selectedProducts = remember { mutableListOf<Triple<Int, Int, Int>>() }
+
     // Biến lưu trữ giá trị checked
     var isChecked by remember { mutableStateOf(false) }
     // Biến lưu trữ trạng thái hiển thị dialog
     var showDialog by remember { mutableStateOf(false) }
     // Biến lưu trữ số lượng sản phẩm
     var quantity by remember { mutableStateOf(1) }
+
+    val showSnackbar = remember { mutableStateOf(false) }
+    val snackbarMessage = remember { mutableStateOf("") }
+
+
     // Màn hình chính
     Scaffold(
         topBar = {
@@ -259,7 +271,7 @@ fun ProductDetailsScreen(
                     horizontalArrangement = Arrangement.SpaceAround,
                     verticalAlignment = Alignment.CenterVertically) {
                     IconButton(onClick = {
-                        navController.navigate(Screen.ContactScreen.route)
+                        //navController.navigate(Screen.ContactScreen.route)
                     }) {
                         Icon(
                             imageVector = Icons.Default.SupportAgent,
@@ -268,37 +280,13 @@ fun ProductDetailsScreen(
                         )
                     }
                     IconButton(onClick = {
-//                        if(idCustomer != null){
-//                            showDialog = true
-//                        }
-//                        else{
-//                            navController.navigate(Screen.LoginScreen.route)
-//                        }
-                        if(idCustomer == null){
-                            navController.navigate(Screen.LoginScreen.route)
+                        if(idCustomer != null){
+                            showDialog = true
                         }
                         else{
-                            var cartNew: Cart? = null
-                            var isProductFound = false
-
-                            for(cart in listCart){
-                                if(device.idDevice == cart.idDevice){
-                                    cart.stock += 1
-                                    cartViewModel.updateCart(cart)
-                                    isProductFound = true
-                                    break
-                                }
-                            }
-
-                            // Nếu sản phẩm không tìm thấy trong giỏ hàng thì thêm mới
-                            if(!isProductFound){
-                                cartNew = Cart(0, idCustomer, device.idDevice,  1)
-                                cartViewModel.addToCart(cartNew)
-                            }
-
-                            // Làm mới danh sách giỏ hàng
-                            cartViewModel.getCartByIdCustomer(idCustomer)
+                            navController.navigate(Screen.LoginScreen.route)
                         }
+
                     }) {
                         Icon(
                             imageVector = Icons.Default.AddShoppingCart,
@@ -373,9 +361,34 @@ fun ProductDetailsScreen(
                                     // Nút xác nhận
                                     Button(
                                         onClick = {
-                                            // Xử lý thêm vào giỏ hàng
-                                            println("Thêm $quantity sản phẩm vào giỏ hàng")
+                                            if(idCustomer == null){
+                                                navController.navigate(Screen.LoginScreen.route)
+                                            }
+                                            else{
+                                                var cartNew: Cart? = null
+                                                var isProductFound = false
+
+                                                for(cart in listCart){
+                                                    if(device.idDevice == cart.idDevice){
+                                                        cart.stock += quantity
+                                                        cartViewModel.updateCart(cart)
+                                                        isProductFound = true
+                                                        break
+                                                    }
+                                                }
+
+                                                // Nếu sản phẩm không tìm thấy trong giỏ hàng thì thêm mới
+                                                if(!isProductFound){
+                                                    cartNew = Cart(0, idCustomer, device.idDevice,  quantity)
+                                                    cartViewModel.addToCart(cartNew)
+                                                }
+
+                                                // Làm mới danh sách giỏ hàng
+                                                cartViewModel.getCartByIdCustomer(idCustomer)
+                                            }
                                             showDialog = false
+                                            snackbarMessage.value = "Thêm vào giỏ hàng thành công!"
+                                            showSnackbar.value = true
                                         },
                                         colors = ButtonDefaults.buttonColors(
                                             containerColor = Color(0xFF5D9EFF),
@@ -395,9 +408,26 @@ fun ProductDetailsScreen(
                             }
                         }
                     }
+                    if (showSnackbar.value) {
+                        LaunchedEffect(Unit) {
+                            delay(3000) // Chờ 3000ms (3 giây)
+                            showSnackbar.value = false // Đặt giá trị để tắt Snackbar
+                        }
+                        Snackbar(
+                            modifier = Modifier.padding(16.dp),
+                            containerColor = Color.LightGray,
+                            action = {
+                                TextButton(onClick = { showSnackbar.value = false }) {
+                                    Text(text = "Đóng", color = Color.White)
+                                }
+                            }
+                        ) {
+                            Text(snackbarMessage.value)
+                        }
+                    }
                     Button(
                         onClick = {
-                            navController.navigate(Screen.Check_Out.route)
+                            //navController.navigate(Screen.Check_Out.route)
                         },
                         modifier = Modifier.width(240.dp),
                         shape = RoundedCornerShape(5.dp),

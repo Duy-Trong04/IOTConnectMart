@@ -29,6 +29,7 @@ import com.example.ungdungbanthietbi_iot.screen.search.SearchScreen
 import com.example.ungdungbanthietbi_iot.screen.signUp_signIn.VerifyOTPScreen
 import com.example.ungdungbanthietbi_iot.screen.Setting.ChangePassword
 import com.example.ungdungbanthietbi_iot.screen.Setting.ContactScreen
+import com.example.ungdungbanthietbi_iot.screen.check_out.CheckOutSuccessScreen
 import com.example.ungdungbanthietbi_iot.screen.personal.AccountSettingsScreen
 import com.example.ungdungbanthietbi_iot.screen.personal.EditEmailScreen
 import com.example.ungdungbanthietbi_iot.screen.personal.EditPhoneScreen
@@ -194,6 +195,15 @@ fun NavGraph(
             if(idDevice != null){
                 ProductReviewsScreen(navController, idDevice, reviewViewModel)
             }
+        }
+        composable(
+            route = Screen.CheckOutSuccess.route  + "?username={username}",
+            arguments = listOf(
+                navArgument("username") {type = NavType.StringType}
+            )
+        ){
+            val username = it.arguments?.getString("username") ?: ""
+            CheckOutSuccessScreen(navController, username)
         }
         //Màn hình lịch sử đánh giá, bình luận
         composable(route = Screen.Rating_History.route) {
