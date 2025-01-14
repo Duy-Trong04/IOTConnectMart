@@ -1,16 +1,10 @@
-@file:OptIn(ExperimentalPagerApi::class)
-
 package com.example.ungdungbanthietbi_iot.screen.personal
 
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -18,11 +12,46 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.tooling.preview.Preview
-import coil.compose.rememberImagePainter
-import com.google.accompanist.pager.*
-import com.example.ungdungbanthietbi_iot.data.Order
-import kotlinx.coroutines.launch
+import com.example.ungdungbanthietbi_iot.data.order.Order
+import android.icu.text.SimpleDateFormat
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.ScrollableTabRow
+import androidx.compose.material3.TabRowDefaults
+import androidx.compose.material3.TabRowDefaults.tabIndicatorOffset
+import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.RectangleShape
+import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavController
+import com.example.ungdungbanthietbi_iot.data.order.OrderViewModel
+import com.example.ungdungbanthietbi_iot.navigation.Screen
+import java.text.DecimalFormat
+import java.util.Locale
 
 
 /*Người thực hiện: Nguyễn Mạnh Cường
@@ -31,167 +60,409 @@ import kotlinx.coroutines.launch
  Input: không
  Output: Hiện thị Màn hình Lịch sử mua hàng của người dùng
 */
-
 @OptIn(ExperimentalMaterial3Api::class)
-//@Preview(showBackground = true)
 @Composable
-fun OrderListScreen(onBack: () -> Unit = {},initialPage: Int = 0) {
-    //Mục đích: Khởi tạo trạng thái của Pager và thiết lập trang ban
-    // đầu dựa trên giá trị initialPage(vị trí tab)
-    //Chức năng: Ghi nhớ và quản lý trạng thái của Pager
-    // bao gồm trang hiện tại và hoạt động cuộn.
-    val tabTitles = listOf("CHỜ XÁC NHẬN", "CHỜ LẤY HÀNG", "CHỜ GIAO HÀNG", "ĐÃ GIAO", "ĐÃ HỦY")
-    val pagerState = rememberPagerState(initialPage)
-    val scope = rememberCoroutineScope()
-    //rememberCoroutineScope()
-    // Mục đích: Tạo và ghi nhớ một phạm vi coroutine.
-    //Chức năng: Cho phép khởi chạy và quản lý các coroutine trong phạm vi của composable
-    // ví dụ như khi cần chuyển trang trong Pager.
+fun OrderListScreen(navController: NavController, idCustomer: String?) {
+    var selectedTabIndexItem by remember { mutableStateOf(0) }
+    val tabs = listOf("Chờ xác nhận", "Chờ lấy hàng", "Chờ giao hàng", "Đã giao", "Đã hủy")
     Scaffold(
+        containerColor = Color.White,
         topBar = {
             TopAppBar(
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = Color(0xFF5D9EFF),
+                    navigationIconContentColor = Color.White,
+                    titleContentColor = Color.White
+                ),
                 title = {
-                    Text("Lịch sử mua hàng", fontWeight = FontWeight.Bold,
+                    Text(text = "Đơn đã mua",
+                        fontWeight = FontWeight.Bold,
                         modifier = Modifier.fillMaxWidth(),
                         textAlign = TextAlign.Start
                     )
                 },
                 navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(imageVector = Icons.Default.ArrowBack, contentDescription = "Back", tint = Color.White)
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = Color(0xFF5F9EFF),
-                    titleContentColor = Color.White
-                )
-            )
-        },
-        content = { paddingValues ->
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(paddingValues)
-            ) {
-                ScrollableTabRow(
-                    selectedTabIndex = pagerState.currentPage,
-                    edgePadding = 0.dp,
-                    modifier = Modifier.fillMaxWidth(),
-
-                ) {
-                    tabTitles.forEachIndexed { index, title ->
-                        Tab(
-                            selected = pagerState.currentPage == index,
-                            onClick = {
-                                scope.launch {
-                                    pagerState.animateScrollToPage(index)
-                                }
-                            },
-                            text = { Text(title) },
-                            selectedContentColor = Color(0xFF5F9EFF),
-                            unselectedContentColor = Color.Black,
-                        )
+                    IconButton(
+                        onClick = {
+                            navController.popBackStack()
+                        }
+                    ) {
+                        Icon(imageVector = Icons.Filled.ArrowBack, contentDescription = "")
                     }
                 }
-                Spacer(modifier = Modifier.height(16.dp))
-                HorizontalPager(
-                    state = pagerState,
-                    count = tabTitles.size,
-                    //modifier = Modifier
-                ) { page ->
-                    val orders = getOrdersForTab(tabTitles[page])
-                    LazyColumn(modifier = Modifier.padding(16.dp)) {
-                        items(orders) { order ->
-                            OrderItem(order)
+            )
+        }
+    ) {
+        Column(
+            modifier = Modifier
+                .padding(it)
+                .padding(3.dp),
+        ) {
+            ScrollableTabRow(
+                selectedTabIndex = selectedTabIndexItem,
+                edgePadding = 0.dp,
+                modifier = Modifier.fillMaxWidth(),
+                contentColor = Color(0xFF5D9EFF),
+                containerColor = Color.White,
+                indicator = { tabPositions ->
+                    TabRowDefaults.Indicator(
+                        modifier = Modifier
+                            .tabIndicatorOffset(tabPositions[selectedTabIndexItem]),
+                        color = Color(0xFF5D9EFF)
+                    )
+                }
+            ) {
+                tabs.forEachIndexed { index, title ->
+                    Box(
+                        contentAlignment = Alignment.Center,
+                        modifier = Modifier
+                            .padding(vertical = 8.dp, horizontal = 4.dp)
+                            .clip(shape = RectangleShape)
+                            .clickable { selectedTabIndexItem = index }
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier.padding(8.dp)
+                        ) {
+                            Text(
+                                text = title,
+                                fontSize = 18.sp,
+                                fontWeight = FontWeight.W600
+                            )
                         }
                     }
                 }
             }
-        }
-    )
-}
 
-@OptIn(ExperimentalLayoutApi::class)
-@Composable
-fun OrderItem(order: Order) {
-    Card(
-        shape = RoundedCornerShape(8.dp),
-        modifier = Modifier
-            .padding(vertical = 8.dp)
-            .fillMaxWidth(),
-        colors = CardDefaults.cardColors(
-            containerColor = Color(0xFFEDEFF0)
-        )
-    ) {
-        Column(
-            modifier = Modifier
-                .padding(16.dp)
-                .fillMaxSize()
-        ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Image(
-                    painter = rememberImagePainter(order.Image),
-                    contentDescription = "Product Image",
-                    modifier = Modifier.size(120.dp)
-                        .padding(16.dp)
-                )
-                Column {
-                    Text("Đơn hàng #${order.id}", fontWeight = FontWeight.Bold, fontSize = 18.sp)
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Text("Tên Sản phẩm: ${order.nameproduct}", fontSize = 16.sp)
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Text("Ngày: ${order.date}", fontSize = 16.sp)
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Text("Tổng tiền: ${order.total}VND", fontSize = 16.sp, color = Color.Red)
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Text("Trạng thái: ${order.status}", fontSize = 16.sp)
-                }
-            }
-            FlowRow(
+            // Content
+            Box(
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(8.dp),
-                horizontalArrangement = Arrangement.Absolute.Left
+                    .fillMaxSize()
             ) {
-                Button(
-                    modifier = Modifier.padding(8.dp),
-                    onClick = { /* Thực hiện chức năng Hoàn tiền/Trả hàng */ },
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = Color(0xFF5F9EFF),
-                        contentColor = Color.White
-                    )
-                ) {
-                    Text("Hoàn tiền/Trả hàng")
-                }
-                Button(
-                    modifier = Modifier.padding(8.dp),
-                    onClick = { /* Thực hiện chức năng Mua lại */ },
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = Color(0xFF5F9EFF),
-                        contentColor = Color.White
-                    )
-                ) {
-                    Text("Mua lại")
+                when (selectedTabIndexItem) {
+                    0 -> ChoXacNhanScreen(navController,idCustomer)
+                    1 -> ChoLayHangScreen(navController,idCustomer)
+                    4 -> HuyDonHangScreen(navController,idCustomer)
                 }
             }
         }
     }
 }
 
-fun getOrdersForTab(status: String): List<Order> {
-    return sampleOrders.filter { it.status.equals(status, ignoreCase = true) }
+
+@Composable
+fun HuyDonHangScreen(navController: NavController,idCustomer: String?) {
+    // Lấy ViewModel
+    val orderViewModel: OrderViewModel = viewModel()
+
+    // Quan sát danh sách hóa đơn thông qua StateFlow
+    val listOrder by orderViewModel.listOrderOfCustomer.collectAsState()
+
+    // Trạng thái đang tải
+    val isLoading = remember { mutableStateOf(false) }
+
+    // Trạng thái lỗi (nếu có)
+    val errorMessage = remember { mutableStateOf<String?>(null) }
+
+    // Hàm gọi API để lấy danh sách hóa đơn
+
+    if (idCustomer != null) {
+        isLoading.value = true // Bắt đầu tải dữ liệu
+        errorMessage.value = null
+        try {
+            orderViewModel.getOrderByCustomer(
+                idCustomer,
+                5
+            )
+        } catch (e: Exception) {
+            errorMessage.value = "Lỗi khi tải dữ liệu: ${e.message}"
+        } finally {
+            isLoading.value = false // Kết thúc tải dữ liệu
+        }
+    }
+
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(4.dp)
+    ) {
+        when {
+            isLoading.value -> {
+                CircularProgressIndicator(
+                    modifier = Modifier.align(Alignment.Center)
+                )
+            }
+
+            errorMessage.value != null -> {
+                Text(
+                    text = errorMessage.value ?: "Đã xảy ra lỗi",
+                    color = Color.Red,
+                    modifier = Modifier.align(Alignment.Center),
+                    textAlign = TextAlign.Center
+                )
+            }
+
+            listOrder.isEmpty() -> {
+                Text(
+                    text = "Không có hóa đơn nào đang chờ xác nhận.",
+                    modifier = Modifier.align(Alignment.Center),
+                    textAlign = TextAlign.Center,
+                )
+            }
+
+            else -> {
+                LazyColumn(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(4.dp)
+                ) {
+                    items(listOrder) { order ->
+                        OrderItem(order,navController, false)
+                    }
+                }
+            }
+        }
+    }
 }
 
-val sampleOrders = listOf(
-    Order(1, "Bóng đèn", "01/12/2024", 150000.0, "Đã giao","https://paragon.com.vn/wp-content/uploads/2022/04/Bong-den-led-bulb-11w-E27-PBCB1130E27L-1.jpeg"),
-    Order(2, "Cảm biến", "02/12/2024", 20000.0, "Chờ giao hàng","https://via.placeholder.com/150"),
-    Order(3, "Camera", "03/12/2024", 300000.0, "Đã hủy","https://camerawifi.com.vn/wp-content/uploads/2020/03/camera-ezviz-C6N-1.jpg"),
-    Order(4, "Đèn led", "04/12/2024", 450000.0, "Đã giao","https://via.placeholder.com/150"),
-    Order(5, "Cảm biến", "05/12/2024", 500000.0, "Chờ xác nhận","https://via.placeholder.com/150"),
-    Order(6, "Camera", "06/12/2024", 60000.0, "Chờ lấy hàng","https://via.placeholder.com/150"),
-    Order(7, "Đèn", "07/12/2024", 70000.0, "Chờ giao hàng","https://via.placeholder.com/150"),
-    Order(8, "Đèn LED", "08/12/2024", 80000.0, "Đã giao","https://via.placeholder.com/150")
-)
+
+@Composable
+fun ChoLayHangScreen(navController: NavController,idCustomer: String?) {
+    val orderViewModel: OrderViewModel = viewModel()
+
+    // Quan sát danh sách hóa đơn thông qua StateFlow
+    val listOrder by orderViewModel.listOrderOfCustomer.collectAsState()
+
+    // Trạng thái đang tải
+    val isLoading = remember { mutableStateOf(false) }
+
+    // Trạng thái lỗi (nếu có)
+    val errorMessage = remember { mutableStateOf<String?>(null) }
+
+    // Hàm gọi API để lấy danh sách hóa đơn
+    if (idCustomer != null) {
+        isLoading.value = true // Bắt đầu tải dữ liệu
+        errorMessage.value = null
+        try {
+            orderViewModel.getOrderByCustomer(
+                idCustomer,
+                2
+            )
+        } catch (e: Exception) {
+            errorMessage.value = "Lỗi khi tải dữ liệu: ${e.message}"
+        } finally {
+            isLoading.value = false // Kết thúc tải dữ liệu
+        }
+    }
+
+
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(4.dp)
+    ) {
+        when {
+            isLoading.value -> {
+                CircularProgressIndicator(
+                    modifier = Modifier.align(Alignment.Center)
+                )
+            }
+
+            errorMessage.value != null -> {
+                Text(
+                    text = errorMessage.value ?: "Đã xảy ra lỗi",
+                    color = Color.Red,
+                    modifier = Modifier.align(Alignment.Center),
+                    textAlign = TextAlign.Center
+                )
+            }
+
+            listOrder.isEmpty() -> {
+                Text(
+                    text = "Không có hóa đơn nào đang chờ xác nhận.",
+                    modifier = Modifier.align(Alignment.Center),
+                    textAlign = TextAlign.Center,
+                )
+            }
+
+            else -> {
+                LazyColumn(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(4.dp)
+                ) {
+                    items(listOrder) { order ->
+                        OrderItem(order,navController, false)
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun ChoXacNhanScreen(navController: NavController,idCustomer: String?) {
+    val orderViewModel: OrderViewModel = viewModel()
+
+    // Quan sát danh sách hóa đơn thông qua StateFlow
+    val listOrder by orderViewModel.listOrderOfCustomer.collectAsState()
+
+    // Trạng thái đang tải
+    val isLoading = remember { mutableStateOf(false) }
+
+    // Trạng thái lỗi (nếu có)
+    val errorMessage = remember { mutableStateOf<String?>(null) }
+
+    // Hàm gọi API để lấy danh sách hóa đơn
+
+    if (idCustomer != null) {
+        isLoading.value = true // Bắt đầu tải dữ liệu
+        errorMessage.value = null
+        try {
+            orderViewModel.getOrderByCustomer(
+                idCustomer,
+                1 // Trạng thái "Chờ xác nhận"
+            )
+        } catch (e: Exception) {
+            errorMessage.value = "Lỗi khi tải dữ liệu: ${e.message}"
+        } finally {
+            isLoading.value = false // Kết thúc tải dữ liệu
+        }
+    }
+
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(4.dp)
+    ) {
+        when {
+            isLoading.value -> {
+                CircularProgressIndicator(
+                    modifier = Modifier.align(Alignment.Center)
+                )
+            }
+
+            errorMessage.value != null -> {
+                Text(
+                    text = errorMessage.value ?: "Đã xảy ra lỗi",
+                    color = Color.Red,
+                    modifier = Modifier.align(Alignment.Center),
+                    textAlign = TextAlign.Center
+                )
+            }
+
+            listOrder.isEmpty() -> {
+                Text(
+                    text = "Không có hóa đơn nào đang chờ xác nhận.",
+                    modifier = Modifier.align(Alignment.Center),
+                    textAlign = TextAlign.Center,
+                )
+            }
+
+            else -> {
+                LazyColumn(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(4.dp)
+                ) {
+                    items(listOrder) { order ->
+                        OrderItem(order,navController, true)
+                    }
+                }
+            }
+        }
+    }
+}
+
+
+@Composable
+fun formatDate(inputDate: String): String {
+    return try {
+        val inputFormat = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()) // Định dạng từ API
+        val outputFormat = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()) // Định dạng đầu ra
+        val date = inputFormat.parse(inputDate)
+        date?.let { outputFormat.format(it) } ?: "Ngày không hợp lệ"
+    } catch (e: Exception) {
+        "Ngày không hợp lệ"
+    }
+}
+
+
+@Composable
+fun OrderItem(order: Order, navController: NavController, isCancel: Boolean) {
+
+    var orderViewModel:OrderViewModel = viewModel()
+
+    //format giá sản phẩm
+    val formatter = DecimalFormat("#,###,###")
+    val formattedPrice = formatter.format(order.totalAmount)
+    Card(
+        colors = CardDefaults.cardColors(
+            containerColor = Color.White
+        ),
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(5.dp),
+        elevation = CardDefaults.cardElevation(1.dp),
+        onClick = {
+            navController.navigate("${Screen.Order_Detail.route}?id=${order.id}")
+        }
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            // Cột chứa thông tin hóa đơn
+            Column(
+                modifier = Modifier.weight(1f) // Cột chiếm không gian linh hoạt
+            ) {
+                Text(
+                    text = "Mã đơn hàng: ${order.id}",
+                )
+                Text(text = "Ngày Đặt Hàng: ${formatDate(order.created_at)}")
+                Text(text = "Tổng Tiền: ${formattedPrice}đ")
+            }
+
+            // Nút Hủy
+            if (isCancel) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxHeight()
+                        .padding(start = 8.dp)
+                ) {
+                    Button(
+                        modifier = Modifier.fillMaxHeight(),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = Color(0xFF5D9EFF)
+                        ),
+                        shape = RoundedCornerShape(5.dp),
+                        onClick =  {
+                            var orderNew = Order(
+                                order.id,
+                                order.idCustomer,
+                                order.totalAmount,
+                                order.paymentMethod,
+                                order.address,
+                                order.accountNumber,
+                                order.phone,
+                                order.nameRecipient,
+                                order.note,
+                                order.platformOrder,
+                                order.created_at,
+                                order.updated_at,
+                                order.accept_at,
+                                order.idEmployee,
+                                5)
+                            orderViewModel.updateOrder(orderNew)
+                        }
+                    ) {
+                        Text("Hủy")
+                    }
+                }
+            }
+        }
+    }
+}

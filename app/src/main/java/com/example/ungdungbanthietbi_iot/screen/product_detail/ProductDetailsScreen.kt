@@ -81,6 +81,7 @@ import com.example.ungdungbanthietbi_iot.R
 import com.example.ungdungbanthietbi_iot.data.account.AccountViewModel
 import com.example.ungdungbanthietbi_iot.data.cart.Cart
 import com.example.ungdungbanthietbi_iot.data.cart.CartViewModel
+import com.example.ungdungbanthietbi_iot.data.customer.CustomerViewModel
 import com.example.ungdungbanthietbi_iot.data.device.Device
 import com.example.ungdungbanthietbi_iot.data.device.DeviceViewModel
 import com.example.ungdungbanthietbi_iot.data.image_device.ImageViewModel
@@ -127,6 +128,14 @@ fun ProductDetailsScreen(
     deviceViewModel.getAllDevice()
     var listAllDevice : List<Device> = deviceViewModel.listAllDevice
     device = deviceViewModel.device
+
+    val customerViewModel: CustomerViewModel = viewModel()
+    val customer = customerViewModel.customer
+    if(idCustomer != null){
+        LaunchedEffect (idCustomer){
+            customerViewModel.getCustomerById(idCustomer)
+        }
+    }
 
     val listImage = imageViewModel.listImage
     LaunchedEffect(id) {
@@ -320,7 +329,7 @@ fun ProductDetailsScreen(
                                             )
                                             Spacer(modifier = Modifier.height(8.dp))
                                             Text(
-                                                text = "Kho: 88",
+                                                text = "${100 - quantity}",
                                                 modifier = Modifier.padding(start = 16.dp)
                                             )
                                         }
@@ -387,7 +396,7 @@ fun ProductDetailsScreen(
                                                 cartViewModel.getCartByIdCustomer(idCustomer)
                                             }
                                             showDialog = false
-                                            snackbarMessage.value = "Thêm vào giỏ hàng thành công!"
+                                            snackbarMessage.value = "Thêm thành công!"
                                             showSnackbar.value = true
                                         },
                                         colors = ButtonDefaults.buttonColors(
@@ -415,7 +424,7 @@ fun ProductDetailsScreen(
                         }
                         Snackbar(
                             modifier = Modifier.padding(16.dp),
-                            containerColor = Color.LightGray,
+                            //containerColor = Color.LightGray,
                             action = {
                                 TextButton(onClick = { showSnackbar.value = false }) {
                                     Text(text = "Đóng", color = Color.White)

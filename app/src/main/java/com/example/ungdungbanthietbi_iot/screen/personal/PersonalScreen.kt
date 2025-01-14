@@ -423,7 +423,7 @@ fun PersonalScreen(
                                     // Chuyển màn hình Lịch sử mua hàng
                                     //Chuyển đến màn hình OrderListScreen(Lịch sử mua hàng)
                                     //ở tab có vị tris thứ 3
-                                    navController.navigate("OrderListScreen/3")
+                                    navController.navigate(Screen.OrderListScreen.route + "?idCustomer=${account.idPerson}")
                                 }
                             ) {
                                 Text(text = "Lịch sử mua hàng")

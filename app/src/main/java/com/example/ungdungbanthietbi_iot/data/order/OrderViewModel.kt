@@ -8,14 +8,20 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.ungdungbanthietbi_iot.data.RetrofitClient
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 class OrderViewModel:ViewModel() {
     var orderAddResult by mutableStateOf("")
 
-    var listOrderOfCustomer by mutableStateOf<List<Order>>(emptyList())
-        private set
+
+    private val _listOrderOfCustomer = MutableStateFlow<List<Order>>(emptyList())
+    val listOrderOfCustomer: StateFlow<List<Order>> = _listOrderOfCustomer
+
+
+    var id by mutableStateOf(0)
 
     fun getOrderByCustomer(idCustomer: String, status: Int) {
         viewModelScope.launch {
@@ -23,10 +29,10 @@ class OrderViewModel:ViewModel() {
                 val response = withContext(Dispatchers.IO) {
                     RetrofitClient.orderAPIService.getOrderByCustomer(idCustomer, status)
                 }
-                listOrderOfCustomer = response.order ?: emptyList() // Nếu response.order là null, gán danh sách rỗng
+                _listOrderOfCustomer.value = response.order ?: emptyList() // Cập nhật StateFlow
             } catch (e: Exception) {
-                Log.e("HoaDon Error", "Lỗi khi lấy hoadon: ${e.message}")
-                listOrderOfCustomer = emptyList() // Gán danh sách rỗng khi có lỗi
+                Log.e("Order Error", "Lỗi khi lấy order: ${e.message}")
+                _listOrderOfCustomer.value = emptyList() // Gán danh sách rỗng khi có lỗi
             }
         }
     }
@@ -37,12 +43,55 @@ class OrderViewModel:ViewModel() {
                 // Gọi API để thêm sản phẩm vào giỏ hàng trên server
                 val response = RetrofitClient.orderAPIService.addOrder(order)
                 orderAddResult = if (response.success) {
+                    "Thành công: ${response.message}"
+                } else {
+                    "Thất bại: ${response.message}"
+                }
+            } catch (e: Exception) {
+                Log.e("AddOrder", "Lỗi kết nối: ${e.message}")
+            }
+        }
+    }
+
+    // Xóa hóa đơn
+    fun deleteOrder(id: Int) {
+        viewModelScope.launch {
+            try {
+                val deleteRequest = orderDeleteRequest(id)
+                val response = RetrofitClient.orderAPIService.deleteOrder(deleteRequest)
+                if (response.isSuccessful) {
+                    val apiResponse = response.body()
+                    if (apiResponse?.message == "Order Deleted") {
+                        Log.d("OrderViewModel", "Order đã được xóa")
+                        // Cập nhật danh sách sau khi xóa
+                        _listOrderOfCustomer.value = _listOrderOfCustomer.value.filter { it.id != id }
+                    } else {
+                        Log.e("OrderViewModel", "Lỗi: ${apiResponse?.message}")
+                    }
+                } else {
+                    Log.e("OrderViewModel", "Error: ${response.message()}")
+                }
+            } catch (e: Exception) {
+                Log.e("OrderViewModel", "Exception: ${e.message}")
+            }
+        }
+    }
+
+    // Cập nhật hóa đơn
+    fun updateOrder(order: Order) {
+        viewModelScope.launch {
+            try {
+                val response = withContext(Dispatchers.IO) {
+                    RetrofitClient.orderAPIService.updateOrder(order)
+                }
+                orderAddResult = if (response.success) {
                     "Cập nhật thành công: ${response.message}"
                 } else {
                     "Cập nhật thất bại: ${response.message}"
                 }
             } catch (e: Exception) {
-                Log.e("AddToCart", "Lỗi kết nối: ${e.message}")
+                orderAddResult = "Lỗi khi cập nhật giỏ hàng: ${e.message}"
+                Log.e("Order Error", "Lỗi khi cập nhật order: ${e.message}")
             }
         }
     }

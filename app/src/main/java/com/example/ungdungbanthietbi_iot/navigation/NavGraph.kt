@@ -225,24 +225,28 @@ fun NavGraph(
             val username = it.arguments?.getString("username") ?: ""
             SearchScreen(navController, deviceViewModel, username)
         }
+
         //Màn hình tìm kiếm chưa có tài khoản
         composable(
             route = Screen.Search_Screen.route
         ){
             SearchScreen(navController, deviceViewModel, null)
         }
+
         //Màn hình kết quả tìm kiếm
         composable(
             route = Screen.Search_Results.route
         ){
             SearchResultsScreen(navController)
         }
+
         //Màn hình sản phẩm yêu thích
         composable(
             route = Screen.Favorites_Screen.route
         ){
             FavoritesScreen(navController)
         }
+
         //Đến màn Chỉnh sửa thông tin cá nhân
         composable(Screen.EditProfileScreen.route + "?username={username}",
             arguments = listOf(
@@ -252,15 +256,25 @@ fun NavGraph(
             val username = it.arguments?.getString("username") ?: ""
             EditProfileScreen(navController, username)
         }
-        composable(Screen.OrderListScreen.route) {
-            OrderListScreen(onBack = { navController.popBackStack() })
+
+        //Lịch sử mua hàng (quản lý đơn hàng)
+        composable(Screen.OrderListScreen.route +"?idCustomer={idCustomer}",
+            arguments = listOf(
+                navArgument("idCustomer") {type = NavType.StringType}
+            )
+        ) {
+            val idCustomer = it.arguments?.getString("idCustomer") ?: ""
+            OrderListScreen(navController, idCustomer)
         }
-        //Đường dẫn đến màn hình lịch sử sản phẩm và chỉ đến tab cần đến
-        //Ví dụ: ấn vào chờ xác nhận thì đến tab chờ xác nhận
-        composable(Screen.OrderListScreen.route + "/{initialPage}") { backStackEntry ->
-            val initialPage = backStackEntry.arguments?.getString("initialPage")?.toInt() ?: 0
-            OrderListScreen(onBack = { navController.popBackStack() }, initialPage)
-        }
+//        //Đường dẫn đến màn hình lịch sử sản phẩm và chỉ đến tab cần đến
+//        //Ví dụ: ấn vào chờ xác nhận thì đến tab chờ xác nhận
+//        composable(Screen.OrderListScreen.route + "/{initialPage}" + "?idCustomer={idCustomer}") { backStackEntry ->
+//            val initialPage = backStackEntry.arguments?.getString("initialPage")?.toInt() ?: 0
+//            val idCustomer = backStackEntry.arguments?.getString("idCustomer") ?: ""
+//            OrderListScreen(onBack = { navController.popBackStack() }, initialPage, idCustomer)
+//        }
+
+
         //Cac man hinh thay doi thong tin ca nhan
         //Dẫn đến màn chọn(chỉnh sửa) Username
         composable(Screen.EditUsernamScreen.route) {

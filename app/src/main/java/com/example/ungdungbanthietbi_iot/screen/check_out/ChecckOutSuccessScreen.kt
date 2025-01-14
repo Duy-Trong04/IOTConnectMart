@@ -62,7 +62,7 @@ fun CheckOutSuccessScreen(
             Image(
                 painter = painterResource(id = R.drawable.suscess),
                 contentDescription = "Suscess",
-                modifier = Modifier.size(100.dp),
+                modifier = Modifier.size(90.dp),
                 contentScale = ContentScale.Crop
             )
             Row(
@@ -95,7 +95,7 @@ fun CheckOutSuccessScreen(
                         imageVector = Icons.Filled.Home,
                         contentDescription = "Home",
                         tint = Color(0xFF5D9EFF),
-                        modifier = Modifier.size(20.dp)
+                        modifier = Modifier.size(22.dp)
                     )
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(
