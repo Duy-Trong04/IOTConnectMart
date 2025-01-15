@@ -1,5 +1,6 @@
 package com.example.ungdungbanthietbi_iot.screen.cart
 
+import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -29,6 +30,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import coil.compose.AsyncImage
+import com.example.ungdungbanthietbi_iot.data.address_book.AddressViewModel
 import com.example.ungdungbanthietbi_iot.data.cart.CartViewModel
 import com.example.ungdungbanthietbi_iot.data.device.DeviceViewModel
 import com.example.ungdungbanthietbi_iot.navigation.Screen
@@ -61,9 +63,11 @@ fun CartScreen(
 
     val cartViewModel:CartViewModel = viewModel()
     val deviceViewModel:DeviceViewModel = viewModel()
+    val addressViewModel:AddressViewModel = viewModel()
 
     // Lấy danh sách giỏ hàng và sản phẩm
     val listCart = cartViewModel.listCart
+    val listAddress = addressViewModel.listAddress
 
     // Biến lưu tổng tiền
     var totalPrice by remember { mutableStateOf(0.0) }
@@ -74,6 +78,8 @@ fun CartScreen(
     val selectedProducts = remember { mutableListOf<Triple<Int, Int, Int>>() }
 
     var showDialog by remember { mutableStateOf(false) }
+    var openDialog by remember { mutableStateOf(false) }
+
     // Hàm tính tổng tiền
     fun calculateTotalPrice() {
         if (listCart.isEmpty()) {
@@ -102,6 +108,12 @@ fun CartScreen(
     LaunchedEffect(listCart, deviceViewModel.listDeviceOfCustomer) {
         calculateTotalPrice() // Tính tổng tiền khi dữ liệu thay đổi
     }
+
+    LaunchedEffect(idCustomer) {
+        addressViewModel.getAddressByIdCustomer(idCustomer)
+    }
+
+    Log.d("",listAddress.toString())
 
     Scaffold(
         topBar = {
@@ -157,8 +169,12 @@ fun CartScreen(
                            if(selectedProducts.isEmpty()){
                                showDialog = true // Hiển thị dialog nếu không có sản phẩm nào được chọn
                            }
+                           else if(addressViewModel.listAddress.isEmpty()){ // Kiểm tra danh sách địa chỉ rỗng
+                               openDialog = true // Hiển thị dialog thông báo thêm địa chỉ
+                           }
                            else{
-                                navController.navigate(Screen.Check_Out.route + "?selectedProducts=${selectedProductsString}&tongtien=${totalPrice}&username=${username}")
+                               val selectedProductsString = selectedProducts.joinToString(",") { "${it.first}:${it.second}:${it.third}" }
+                               navController.navigate(Screen.Check_Out.route + "?selectedProducts=${selectedProductsString}&tongtien=${totalPrice}&username=${username}")
                            }
                         },
                         shape = RoundedCornerShape(5.dp),
@@ -171,6 +187,37 @@ fun CartScreen(
                             fontSize = 22.sp
                         )
                     }
+                    if (openDialog == true) {
+                        AlertDialog(
+                            onDismissRequest = { openDialog = false }, // Đóng khi nhấn ngoài dialog
+                            title = {
+                                Text(
+                                    text = "Thông báo"
+                                )
+                            },
+                            text = {
+                                Text(
+                                    text = "Bạn chưa có địa chỉ giao hàng." +
+                                            "Vui lòng thêm địa chỉ giao hàng!",
+                                )
+                            },
+                            confirmButton = {
+                                Button(
+                                    onClick = {
+                                        openDialog = false
+                                        navController.navigate("${Screen.Address_Selection.route}?idCustomer=${idCustomer}")
+                                    },
+                                    colors = ButtonDefaults.buttonColors(
+                                        containerColor = Color(0xFF5D9EFF)
+                                    )
+                                ) {
+                                    Text(text = "Thêm địa chỉ",
+                                        fontSize = 18.sp
+                                    )
+                                }
+                            },
+                        )
+                    }
                 }
             }
         }
@@ -178,8 +225,8 @@ fun CartScreen(
         if (showDialog) {
             AlertDialog(
                 onDismissRequest = { showDialog = false },
-                title = { Text("Thông báo") },
-                text = { Text("Vui lòng chọn sản phẩm để mua.") },
+                title = { Text(text = "Thông báo") },
+                text = { Text(text = "Vui lòng chọn sản phẩm để mua.") },
                 confirmButton = {
                     Button(onClick = { showDialog = false },
                         colors = ButtonDefaults.buttonColors(

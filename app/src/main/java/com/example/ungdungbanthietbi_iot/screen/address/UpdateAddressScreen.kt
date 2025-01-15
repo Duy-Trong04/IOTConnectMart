@@ -1,9 +1,9 @@
 package com.example.ungdungbanthietbi_iot.screen.address
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -12,6 +12,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.BottomAppBar
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -22,6 +23,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.TopAppBar
@@ -66,16 +68,18 @@ import com.example.ungdungbanthietbi_iot.data.customer.CustomerViewModel
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun AddAddressScreen(
+fun UpdateAddress(
     navController: NavController,
-    idCustomer:String
+    idCustomer:String?,
+    idAddress:Int
 ){
-
-
 
     val addressViewModel:AddressViewModel = viewModel()
     var listAddress = addressViewModel.listAddress
+    var address = addressViewModel.address
     addressViewModel.getAddressByIdCustomer(idCustomer)
+    addressViewModel.getAddressById(idAddress)
+
 
     val customerViewModel: CustomerViewModel = viewModel()
     val customer = customerViewModel.customer
@@ -92,10 +96,21 @@ fun AddAddressScreen(
     var ward by remember { mutableStateOf("") }// Phường/Xã
     var street by remember { mutableStateOf("") }// Địa chỉ chi tiết
     var isDefault by remember { mutableStateOf(false) } // Trạng thái của Switch đặt làm địa chỉ mặc định
+
+    var openDialog by remember { mutableStateOf(false) }
+    var stateSwitch by remember { mutableStateOf(true) }
+
+    if(address != null){
+        district = address.district
+        city = address.city
+        ward = address.ward
+        street = address.street
+        isDefault = if(address.isDefault == 1) true else false
+    }
     Scaffold (
         topBar = {
             TopAppBar(
-                title = { Text("Thêm địa chỉ", textAlign = TextAlign.Start,
+                title = { Text("Cập nhật địa chỉ", textAlign = TextAlign.Start,
                     modifier = Modifier.fillMaxWidth(),
                     fontWeight = FontWeight.Bold
                 )},
@@ -141,6 +156,14 @@ fun AddAddressScreen(
                             modifier = Modifier.weight(1f),
                             fontSize = 18.sp
                         )
+                        if(address != null){
+                            if(address.isDefault == 1){
+                                stateSwitch = false
+                            }
+                            else{
+                                stateSwitch = true
+                            }
+                        }
                         Switch(
                             checked = isDefault,
                             onCheckedChange = { isDefault = it },
@@ -149,51 +172,125 @@ fun AddAddressScreen(
                                 uncheckedThumbColor = Color.Gray, // Màu khi tắt
                                 checkedTrackColor = Color(0xFF5D9EFF)// Màu đường chạy khi bật
                             ),
+                            enabled = stateSwitch,
                             modifier = Modifier.scale(0.8f)// Thu nhỏ kích thước Switch
                         )
                     }
-                    // Nút thêm địa chỉ
-                    Button(
-                        modifier = Modifier.fillMaxWidth(),
-                        onClick = {
-                            /* Thêm logic thêm địa chỉ */
-                            if(isDefault){
-                                for(address in listAddress){
+                    Row (
+                        modifier = Modifier.padding(8.dp).fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ){
+                        Button(
+                            modifier = Modifier.padding(2.dp),
+                            onClick = {
+                                if(address != null){
                                     if(address.isDefault == 1){
-                                        var address = Address(
-                                            address.id,
-                                            address.idCustomer,
-                                            address.district,
-                                            address.city,
-                                            address.ward,
-                                            address.street,
-                                            0
-                                        )
-                                        addressViewModel.updateAddress(address)
+                                        openDialog = true
+                                    }
+                                    else{
+                                        openDialog = true
                                     }
                                 }
-                            }
-                            if(idCustomer != null){
-                                var address = Address(
-                                    0,
-                                    idCustomer,
-                                    district,
-                                    city,
-                                    ward,
-                                    street,
-                                    if(isDefault) 1 else 0
-                                )
-                                addressViewModel.addAddress(address)
-                            }
-                            navController.popBackStack()
-                        },
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = Color(0xFF5D9EFF)
-                        ),
-                        shape = RoundedCornerShape(5.dp),// Bo góc nút
-                        elevation = ButtonDefaults.buttonElevation(4.dp)// Tạo độ nổi
-                    ) {
-                        Text("Thêm địa chỉ", fontSize = 20.sp)
+                            },
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = Color(0xFF5D9EFF)
+                            ),
+                            shape = RoundedCornerShape(5.dp),// Bo góc nút
+                            elevation = ButtonDefaults.buttonElevation(4.dp)// Tạo độ nổi
+                        ) {
+                            Text(text = "Xóa địa chỉ", fontSize = 18.sp)
+                        }
+                        Button(
+                            modifier = Modifier.padding(2.dp),
+                            onClick = {
+                                if(isDefault){
+                                    for(address in listAddress){
+                                        if(address.isDefault == 1){
+                                            var address = Address(
+                                                address.id,
+                                                address.idCustomer,
+                                                address.district,
+                                                address.city,
+                                                address.ward,
+                                                address.street,
+                                                0
+                                            )
+                                            addressViewModel.updateAddress(address)
+                                        }
+                                    }
+                                }
+                                if(idCustomer != null){
+                                    var address = Address(
+                                        idAddress,
+                                        idCustomer,
+                                        district,
+                                        city,
+                                        ward,
+                                        street,
+                                        if(isDefault) 1 else 0
+                                    )
+                                    addressViewModel.updateAddress(address)
+                                }
+                                navController.popBackStack()
+                            },
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = Color(0xFF5D9EFF)
+                            ),
+                            shape = RoundedCornerShape(5.dp),// Bo góc nút
+                            elevation = ButtonDefaults.buttonElevation(4.dp)// Tạo độ nổi
+                        ) {
+                            Text(text = "Lưu địa chỉ", fontSize = 18.sp)
+                        }
+                    }
+                    if (openDialog) {
+                        AlertDialog(
+                            containerColor = Color.White,
+                            modifier = Modifier.padding(10.dp),
+                            onDismissRequest = { openDialog = false },
+                            text = {
+                                if (address != null) {
+                                    if (address.isDefault == 1) {
+                                        Text(
+                                            "Bạn không thể xóa địa chỉ mặc định!",
+                                            fontSize = 17.sp
+                                        )
+                                    }
+                                    else{
+                                        Text(
+                                            "Bạn muốn xóa địa chỉ?",
+                                            fontSize = 17.sp,
+                                        )
+                                    }
+                                }
+                            },
+                            title = {
+                                Text(text = "Thông Báo")
+                            },
+                            confirmButton = {
+                                Button(
+                                    onClick = {
+                                        if (address != null) {
+                                            if (address.isDefault == 1) {
+                                                openDialog = false
+                                            }
+                                            else{
+                                                openDialog = false
+                                                addressViewModel.deleteAddress(idAddress)
+                                                navController.popBackStack()
+                                            }
+                                        }
+                                    },
+                                    colors = ButtonDefaults.buttonColors(
+                                        containerColor = Color(0xFF5D9EFF)
+                                    )) {
+                                    Text(
+                                        text = "Xác nhận",
+                                        fontSize = 18.sp
+                                    )
+                                }
+                            },
+                        )
                     }
                 }
             }

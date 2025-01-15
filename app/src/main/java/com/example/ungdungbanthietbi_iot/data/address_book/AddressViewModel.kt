@@ -95,7 +95,7 @@ class AddressViewModel: ViewModel() {
         }
     }
 
-    fun updateAddressDefault(address: Address) {
+    fun updateAddress(address: Address) {
         viewModelScope.launch {
             try {
                 val response = withContext(Dispatchers.IO) {
@@ -107,8 +107,8 @@ class AddressViewModel: ViewModel() {
                     "Cập nhật thất bại: ${response.message}"
                 }
             } catch (e: Exception) {
-                addressUpdateResult = "Lỗi khi cập nhật giỏ hàng: ${e.message}"
-                Log.e("GioHang Error", "Lỗi khi cập nhật giỏ hàng: ${e.message}")
+                addressUpdateResult = "Lỗi khi cập nhật address: ${e.message}"
+                Log.e("Address Error", "Lỗi khi cập nhật address: ${e.message}")
             }
         }
     }
@@ -125,8 +125,8 @@ class AddressViewModel: ViewModel() {
                     "Cập nhật thất bại: ${response.message}"
                 }
             } catch (e: Exception) {
-                addressUpdateResult = "Lỗi khi cập nhật giỏ hàng: ${e.message}"
-                Log.e("GioHang Error", "Lỗi khi cập nhật giỏ hàng: ${e.message}")
+                addressUpdateResult = "Lỗi khi cập nhật Address: ${e.message}"
+                Log.e("Address Error", "Lỗi khi cập nhật Address: ${e.message}")
             }
         }
     }
@@ -137,7 +137,7 @@ class AddressViewModel: ViewModel() {
                 val response = RetrofitClient.addressAPIService.deleteAddress(deleteRequest)
                 if (response.isSuccessful) {
                     val apiResponse = response.body()
-                    if (apiResponse?.message == "Dia chi Deleted") {
+                    if (apiResponse?.message == "Address Deleted") {
                         // Cập nhật lại giỏ hàng trong ViewModel
                         listAddress = listAddress.filter { it.id != id }
                         Log.d("AddressViewModel", "Address đã được xóa")

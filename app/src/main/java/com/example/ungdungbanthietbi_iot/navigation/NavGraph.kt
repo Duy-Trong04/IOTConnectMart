@@ -29,6 +29,7 @@ import com.example.ungdungbanthietbi_iot.screen.search.SearchScreen
 import com.example.ungdungbanthietbi_iot.screen.signUp_signIn.VerifyOTPScreen
 import com.example.ungdungbanthietbi_iot.screen.Setting.ChangePassword
 import com.example.ungdungbanthietbi_iot.screen.Setting.ContactScreen
+import com.example.ungdungbanthietbi_iot.screen.address.UpdateAddress
 import com.example.ungdungbanthietbi_iot.screen.check_out.CheckOutSuccessScreen
 import com.example.ungdungbanthietbi_iot.screen.personal.AccountSettingsScreen
 import com.example.ungdungbanthietbi_iot.screen.personal.EditEmailScreen
@@ -130,19 +131,41 @@ fun NavGraph(
         }
         //Màn hình thêm địa chỉ
         composable(
-            route = Screen.Add_Address.route
+            route = Screen.Add_Address.route + "?idCustomer={idCustomer}",
+            arguments = listOf(
+                navArgument("idCustomer") {type = NavType.StringType }
+            )
         ){
-            AddAddressScreen(navController)
+            val idCustomer = it.arguments?.getString("idCustomer") ?: ""
+            AddAddressScreen(navController, idCustomer)
         }
+
+        //Màn hình update địa chỉ
+        composable(
+            route = Screen.Update_Address.route + "?idCustomer={idCustomer}&id={id}",
+            arguments = listOf(
+                navArgument("idCustomer") {type = NavType.StringType },
+                navArgument("id") {type = NavType.IntType }
+            )
+        ){
+            val idCustomer = it.arguments?.getString("idCustomer") ?: ""
+            val id = it.arguments?.getInt("id") ?: 0
+            UpdateAddress(navController, idCustomer, id)
+        }
+
         //Màn hình Reset Pass
         composable(route = Screen.ResetPasswordScreen.route) {
             ResetPasswordScreen(navController)
         }
         //Màn hình chọn địa chỉ
         composable(
-            route = Screen.Address_Selection.route
+            route = Screen.Address_Selection.route + "?idCustomer={idCustomer}",
+            arguments = listOf(
+                navArgument("idCustomer") {type = NavType.StringType }
+            )
         ){
-            AddressSelectionScreen(navController)
+            val idCustomer = it.arguments?.getString("idCustomer") ?: ""
+            AddressSelectionScreen(navController, idCustomer)
         }
         //Màn hình Xác nhận OTP
         composable(route = Screen.VerifyOTPScreen.route) {

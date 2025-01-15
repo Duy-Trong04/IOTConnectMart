@@ -294,7 +294,7 @@ fun CheckoutScreen(
                                         text = "Thay đổi",
                                         color = Color(0xFF5D9EFF),
                                         modifier = Modifier.clickable {
-
+                                            //Nav
                                         }
                                     )
                                 }
