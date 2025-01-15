@@ -49,6 +49,26 @@ class DeviceViewModel:ViewModel() {
             }
         }
     }
+    fun getDeviceByLiked(idCustomer: String) {
+        viewModelScope.launch {
+            try {
+                val response = withContext(Dispatchers.IO) {
+                    RetrofitClient.deviceAPIService.getDeviceByLiked(idCustomer)
+                }
+                // Kiểm tra dữ liệu trả về
+                if (response.device.isNotEmpty()) {
+                    listDeviceOfCustomer = response.device
+                    Log.d("Device Success", "Lấy sản phẩm thành công: ${listDeviceOfCustomer.size} sản phẩm")
+                } else {
+                    listDeviceOfCustomer = emptyList()
+                    Log.e("Device Error", "Không có sản phẩm trong danh sách yêu thích")
+                }
+            } catch (e: Exception) {
+                Log.e("Device Error", "Lỗi khi lấy sản phẩm: ${e.message}")
+                listDeviceOfCustomer = emptyList() // Đảm bảo danh sách không null
+            }
+        }
+    }
     fun getAllDevice(){
         viewModelScope.launch(Dispatchers.IO) {
             try {

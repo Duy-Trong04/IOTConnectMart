@@ -53,6 +53,7 @@ import com.example.ungdungbanthietbi_iot.navigation.Screen
 import kotlinx.coroutines.launch
 import java.text.DecimalFormat
 import com.example.ungdungbanthietbi_iot.screen.home.CardAllDevice
+import com.example.ungdungbanthietbi_iot.screen.home.CardFavorites
 
 /*Người thực hiện: Nguyễn Mạnh Cường
  Ngày viết: 12/12/2024
@@ -70,7 +71,8 @@ fun PersonalScreen(
 ) {
 
     deviceViewModel.getAllDevice()
-    var listAllDevice : List<Device> = deviceViewModel.listAllDevice
+    val listAllDevice : List<Device> = deviceViewModel.listAllDevice
+    val listDeviceLiked: List<Device> = deviceViewModel.listDeviceOfCustomer
 
     val navdrawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     val scope = rememberCoroutineScope() //xử lý suspending fun (mở và đóng drawer)
@@ -95,7 +97,9 @@ fun PersonalScreen(
             accountViewModel.getUserByUsername(username)
         }
     }
-
+    if(account != null){
+        deviceViewModel.getDeviceByLiked(account.idPerson.toString())
+    }
     if(account == null){
         Text(text = "Đang tải thông tin tài khoản...")
         return
@@ -482,7 +486,7 @@ fun PersonalScreen(
                         }
                         Spacer(modifier = Modifier.height(16.dp))
                         Text(
-                            text = "Sản phẩm đề cử",
+                            text = "Sản phẩm yêu thích",
                             fontSize = 20.sp,
                             fontWeight = FontWeight.Bold
                         )
@@ -490,28 +494,30 @@ fun PersonalScreen(
                     }
 
                     item {
-                        LazyRow(modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(10.dp),
-                            horizontalArrangement = Arrangement.Start) {
-                            items(listAllDevice){
-                                if(account != null){
-                                    CardAllDevice(device = it,
-                                        isFavorite = isFavorite,
-                                        account.idPerson,
-                                        account.username,
-                                        navController
-                                    )
+                        if(listDeviceLiked.isEmpty()){
+                            Text(
+                                text = "Không có sản phẩm nào trong danh sách yêu thích",
+                                color = Color.Gray,
+                                modifier = Modifier.padding(20.dp)
+                            )
+                        }
+                        else{
+                            LazyRow(modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(10.dp),
+                                horizontalArrangement = Arrangement.Start
+                            ) {
+                                items(listDeviceLiked){
+                                    if (account != null){
+                                        CardFavorites(
+                                            device = it,
+                                            isFavorite,
+                                            account.idPerson,
+                                            account.username,
+                                            navController
+                                        )
+                                    }
                                 }
-                                else{
-                                    CardAllDevice(device = it,
-                                        isFavorite = isFavorite,
-                                        null,
-                                        username,
-                                        navController
-                                    )
-                                }
-
                             }
                         }
                     }

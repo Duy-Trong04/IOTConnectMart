@@ -99,6 +99,8 @@ import com.example.ungdungbanthietbi_iot.R
 import com.example.ungdungbanthietbi_iot.data.account.AccountViewModel
 import com.example.ungdungbanthietbi_iot.data.device.Device
 import com.example.ungdungbanthietbi_iot.data.device.DeviceViewModel
+import com.example.ungdungbanthietbi_iot.data.liked.Liked
+import com.example.ungdungbanthietbi_iot.data.liked.LikedViewModel
 import com.example.ungdungbanthietbi_iot.data.slideshow.SlideShow
 import com.example.ungdungbanthietbi_iot.data.slideshow.SlideShowViewModel
 import com.example.ungdungbanthietbi_iot.navigation.Screen
@@ -137,8 +139,7 @@ fun HomeScreen(
     deviceViewModel.getDeviceFeatured()
     var listAllDevice : List<Device> = deviceViewModel.listAllDevice
     var listDeviceFeatured :List<Device> = deviceViewModel.listDeviceFeatured
-
-    //slideShowViewModel.getAllSlideShow()
+    val listDeviceLiked: List<Device> = deviceViewModel.listDeviceOfCustomer
     var listSlideShow = slideShowViewModel.listSlideShow
 
     var currentIndex by remember { mutableStateOf(0) }
@@ -160,6 +161,11 @@ fun HomeScreen(
     if(username != null){
         accountViewModel.getUserByUsername(username)
     }
+
+    if(account != null){
+        deviceViewModel.getDeviceByLiked(account.idPerson.toString())
+    }
+
     val navdrawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     val scope = rememberCoroutineScope() //xử lý suspending fun (mở và đóng drawer)
     val countries = listOf(
@@ -201,7 +207,7 @@ fun HomeScreen(
                         text = "IOT Connect Mart",
                         modifier = Modifier.padding(5.dp),
                         color = Color.White,
-                        fontSize = 20.sp,
+                        fontSize = 22.sp,
                         fontWeight = FontWeight.Bold
                     )
 
@@ -269,7 +275,7 @@ fun HomeScreen(
                         Text(
                             text = "IOT Connect Mart",
                             fontWeight = FontWeight.Bold,
-                            fontSize = 22.sp,
+                            fontSize = 24.sp,
                             modifier = Modifier.fillMaxWidth(),
                             textAlign = TextAlign.Center
                         )
@@ -586,111 +592,40 @@ fun HomeScreen(
                             modifier = Modifier
                                 .padding(20.dp)
                                 .clickable {
-                                    navController.navigate(Screen.Favorites_Screen.route)
+                                    if(account == null){
+                                        navController.navigate(Screen.LoginScreen.route)
+                                    }
+                                    else{
+                                        navController.navigate(Screen.Favorites_Screen.route +"?idCustomer=${account.idPerson}&username=${account.username}")
+                                    }
                                 },
                             color = Color.Gray,
                             fontWeight = FontWeight.Bold
                         )
                     }
-                    LazyRow(modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(10.dp)
-                        .clickable {
-                            // Chuyển sang màn hình chi tiết sản phẩm(ProductDetailsScreen)
-                            navController.navigate(Screen.ProductDetailsScreen.route)
-                        },
-                        horizontalArrangement = Arrangement.Start) {
-                        item {
-                            Box(
-                                modifier = Modifier.fillMaxWidth()
-                            ) {
-                                Column(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    horizontalAlignment = Alignment.CenterHorizontally
-                                ) {
-                                    Image(
-                                        painter = painterResource(R.drawable.den3),
-                                        contentDescription = "sp yêu thích",
-                                        modifier = Modifier
-                                            .width(150.dp)
-                                            .height(100.dp)
-                                    )
-                                    Text("Tên sản phầm")
-                                    Text(
-                                        "Giá sản phẩm", color = Color.Red,
-                                        modifier = Modifier.fillMaxWidth(),
-                                        textAlign = TextAlign.Center
+                    if(listDeviceLiked.isEmpty()){
+                        Text(
+                            text = "Không có sản phẩm nào trong danh sách yêu thích",
+                            color = Color.Gray,
+                            modifier = Modifier.padding(20.dp)
+                        )
+                    }
+                    else{
+                        LazyRow(modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(10.dp),
+                            horizontalArrangement = Arrangement.Start
+                        ) {
+                            items(listDeviceLiked){
+                                if (account != null){
+                                    CardFavorites(
+                                        device = it,
+                                        isFavorite,
+                                        account.idPerson,
+                                        account.username,
+                                        navController
                                     )
                                 }
-                                Image(
-                                    painter = painterResource(R.drawable.tim),
-                                    contentDescription = "sp yêu thích",
-                                    modifier = Modifier
-                                        .size(20.dp)
-                                        .align(Alignment.TopEnd)
-                                )
-                            }
-                        }
-                         item {
-                             Box(
-                                 modifier = Modifier.fillMaxWidth()
-                             ) {
-                                 Column(
-                                     modifier = Modifier.fillMaxWidth(),
-                                     horizontalAlignment = Alignment.CenterHorizontally
-                                 ) {
-                                     Image(
-                                         painter = painterResource(R.drawable.den2),
-                                         contentDescription = "sp yêu thích",
-                                         modifier = Modifier
-                                             .width(150.dp)
-                                             .height(100.dp)
-                                     )
-                                     Text("Tên sản phầm")
-                                     Text(
-                                         "Giá sản phẩm", color = Color.Red,
-                                         modifier = Modifier.fillMaxWidth(),
-                                         textAlign = TextAlign.Center
-                                     )
-                                 }
-                                 Image(
-                                     painter = painterResource(R.drawable.tim),
-                                     contentDescription = "sp yêu thích",
-                                     modifier = Modifier
-                                         .size(20.dp)
-                                         .align(Alignment.TopEnd)
-                                 )
-                             }
-                         }
-                        item{
-                            Box(
-                                modifier = Modifier.fillMaxWidth()
-                            ) {
-                                Column(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    horizontalAlignment = Alignment.CenterHorizontally
-                                ) {
-                                    Image(
-                                        painter = painterResource(R.drawable.den1),
-                                        contentDescription = "sp yêu thích",
-                                        modifier = Modifier
-                                            .width(150.dp)
-                                            .height(100.dp)
-                                    )
-                                    Text("Tên sản phầm")
-                                    Text(
-                                        "Giá sản phẩm", color = Color.Red,
-                                        modifier = Modifier.fillMaxWidth(),
-                                        textAlign = TextAlign.Center
-                                    )
-                                }
-                                Image(
-                                    painter = painterResource(R.drawable.tim),
-                                    contentDescription = "sp yêu thích",
-                                    modifier = Modifier
-                                        .size(20.dp)
-                                        .align(Alignment.TopEnd)
-                                )
                             }
                         }
                     }
@@ -722,7 +657,6 @@ fun HomeScreen(
                                     navController
                                 )
                             }
-
                         }
                     }
                 }
@@ -733,7 +667,17 @@ fun HomeScreen(
 
 @Composable
 fun CardDeviceFeatured(device: Device, isFavorite:Boolean, idCustomer:String?, username: String?, navController: NavController){
-    var currentFavorite by remember { mutableStateOf(isFavorite) } // Quản lý trạng thái yêu thích
+    var check  by remember { mutableStateOf(isFavorite) }
+    val likedViewModel: LikedViewModel = viewModel()
+    val listLiked = likedViewModel.listLiked
+    LaunchedEffect(idCustomer) {
+        if(idCustomer!=null){
+            likedViewModel.getLikedByIdCustomer(idCustomer)
+        }
+    }
+    LaunchedEffect(listLiked) {
+        check = listLiked.any { it.idDevice == device.idDevice }
+    }
     //format giá sản phẩm
     val formatter = DecimalFormat("#,###,###")
     val formattedPrice = formatter.format(device.sellingPrice)
@@ -753,7 +697,7 @@ fun CardDeviceFeatured(device: Device, isFavorite:Boolean, idCustomer:String?, u
         colors = CardDefaults.cardColors(
             containerColor = Color.White
         ),
-        elevation = CardDefaults.cardElevation(4.dp)
+        elevation = CardDefaults.cardElevation(2.dp)
     ) {
         Box(modifier = Modifier.fillMaxWidth()){
             Column(
@@ -789,16 +733,41 @@ fun CardDeviceFeatured(device: Device, isFavorite:Boolean, idCustomer:String?, u
                 )
             }
             IconButton(onClick = {
-                currentFavorite = !currentFavorite
-                //Thêm vào danh sách yêu thích or xóa khỏi danh sách
+                if(idCustomer == null){
+                    navController.navigate(Screen.LoginScreen.route)
+                }
+                else{
+                    var likedNew: Liked? = null
+                    var isProductFound = false
+                    for (liked in listLiked) {
+                        if (device.idDevice == liked.idDevice) {
+                            likedViewModel.updateLiked(liked)
+                            isProductFound = true
+                            break
+                        }
+                    }
+
+                    // Nếu sản phẩm không tìm thấy trong giỏ hàng thì thêm mới
+                    if(!isProductFound){
+                        likedNew = Liked(0, idCustomer, device.idDevice)
+                        likedViewModel.addLiked(likedNew)
+                        check = true
+                    }
+                    else{
+                        likedViewModel.deleteLikedByCustomer(idCustomer, device.idDevice)
+                        check = false
+                    }
+                    // Làm mới danh sách
+                    likedViewModel.getLikedByIdCustomer(idCustomer)
+                }
             },
                 modifier = Modifier
                     .size(24.dp)
                     .align(Alignment.TopEnd)
             ) {
                 Icon(
-                    imageVector = if (currentFavorite) Icons.Filled.Favorite else Icons.Filled.FavoriteBorder,
-                    contentDescription = if (currentFavorite) "Yêu thích" else "Chưa yêu thích",
+                    imageVector = if(check) Icons.Filled.Favorite else Icons.Filled.FavoriteBorder,
+                    contentDescription = "",
                     tint = Color.Red
                 )
             }
@@ -809,7 +778,17 @@ fun CardDeviceFeatured(device: Device, isFavorite:Boolean, idCustomer:String?, u
 
 @Composable
 fun CardAllDevice(device: Device, isFavorite:Boolean, idCustomer:String?, username: String?, navController: NavController){
-    var currentFavorite by remember { mutableStateOf(isFavorite) } // Quản lý trạng thái yêu thích
+    var check  by remember { mutableStateOf(isFavorite) }
+    val likedViewModel: LikedViewModel = viewModel()
+    val listLiked = likedViewModel.listLiked
+    LaunchedEffect(idCustomer) {
+        if(idCustomer!=null){
+            likedViewModel.getLikedByIdCustomer(idCustomer)
+        }
+    }
+    LaunchedEffect(listLiked) {
+        check = listLiked.any { it.idDevice == device.idDevice }
+    }
     //format giá sản phẩm
     val formatter = DecimalFormat("#,###,###")
     val formattedPrice = formatter.format(device.sellingPrice)
@@ -829,7 +808,7 @@ fun CardAllDevice(device: Device, isFavorite:Boolean, idCustomer:String?, userna
         colors = CardDefaults.cardColors(
             containerColor = Color.White
         ),
-        elevation = CardDefaults.cardElevation(4.dp)
+        elevation = CardDefaults.cardElevation(2.dp)
     ) {
         Box(modifier = Modifier.fillMaxWidth()){
             Column(
@@ -865,16 +844,152 @@ fun CardAllDevice(device: Device, isFavorite:Boolean, idCustomer:String?, userna
                 )
             }
             IconButton(onClick = {
-                currentFavorite = !currentFavorite
-                //Thêm vào danh sách yêu thích or xóa khỏi danh sách
+                if(idCustomer == null){
+                    navController.navigate(Screen.LoginScreen.route)
+                }
+                else{
+                    var likedNew: Liked? = null
+                    var isProductFound = false
+                    for (liked in listLiked) {
+                        if (device.idDevice == liked.idDevice) {
+                            likedViewModel.updateLiked(liked)
+                            isProductFound = true
+                            break
+                        }
+                    }
+
+                    // Nếu sản phẩm không tìm thấy trong giỏ hàng thì thêm mới
+                    if(!isProductFound){
+                        likedNew = Liked(0, idCustomer, device.idDevice)
+                        likedViewModel.addLiked(likedNew)
+                        check = true
+                    }
+                    else{
+                        likedViewModel.deleteLikedByCustomer(idCustomer, device.idDevice)
+                        check = false
+                    }
+                    // Làm mới danh sách
+                    likedViewModel.getLikedByIdCustomer(idCustomer)
+                }
             },
                 modifier = Modifier
                     .size(24.dp)
                     .align(Alignment.TopEnd)
             ) {
                 Icon(
-                    imageVector = if (currentFavorite) Icons.Filled.Favorite else Icons.Filled.FavoriteBorder,
-                    contentDescription = if (currentFavorite) "Yêu thích" else "Chưa yêu thích",
+                    imageVector = if(check) Icons.Filled.Favorite else Icons.Filled.FavoriteBorder,
+                    contentDescription = "",
+                    tint = Color.Red
+                )
+            }
+        }
+
+    }
+}
+
+@Composable
+fun CardFavorites(device: Device, isFavorite:Boolean, idCustomer:String?, username: String?, navController: NavController){
+    var check  by remember { mutableStateOf(isFavorite) }
+    val likedViewModel: LikedViewModel = viewModel()
+    val listLiked = likedViewModel.listLiked
+    LaunchedEffect(idCustomer) {
+        if(idCustomer!=null){
+            likedViewModel.getLikedByIdCustomer(idCustomer)
+        }
+    }
+    LaunchedEffect(listLiked) {
+        check = listLiked.any { it.idDevice == device.idDevice }
+    }
+    //format giá sản phẩm
+    val formatter = DecimalFormat("#,###,###")
+    val formattedPrice = formatter.format(device.sellingPrice)
+    Card(
+        modifier = Modifier
+            .width(200.dp)// Đặt chiều rộng cố định cho Card
+            .height(250.dp)
+            .padding(8.dp),
+        onClick = {
+            if (username != null){
+                navController.navigate(Screen.ProductDetailsScreen.route + "?id=${device.idDevice}&idCustomer=${idCustomer}&username=${username}")
+            }
+            else{
+                navController.navigate(Screen.ProductDetailsScreen.route + "?id=${device.idDevice}&idCustomer=${idCustomer}")
+            }
+        },
+        colors = CardDefaults.cardColors(
+            containerColor = Color.White
+        ),
+        elevation = CardDefaults.cardElevation(2.dp)
+    ) {
+        Box(modifier = Modifier.fillMaxWidth()){
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(8.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                //load hình ảnh từ API
+                AsyncImage(
+                    model = device.image,
+                    contentDescription = null,
+                    modifier = Modifier
+                        .width(190.dp)
+                        .height(100.dp)
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    text = device.name,
+                    modifier = Modifier.fillMaxWidth(),
+                    textAlign = TextAlign.Center,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 16.sp
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    text = "${formattedPrice} VNĐ",
+                    color = Color.Red,
+                    modifier = Modifier.fillMaxWidth(),
+                    textAlign = TextAlign.Center,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 16.sp
+                )
+            }
+            IconButton(onClick = {
+                if(idCustomer == null){
+                    navController.navigate(Screen.LoginScreen.route)
+                }
+                else{
+                    var likedNew: Liked? = null
+                    var isProductFound = false
+                    for (liked in listLiked) {
+                        if (device.idDevice == liked.idDevice) {
+                            likedViewModel.updateLiked(liked)
+                            isProductFound = true
+                            break
+                        }
+                    }
+
+                    // Nếu sản phẩm không tìm thấy thì thêm mới
+                    if(!isProductFound){
+                        likedNew = Liked(0, idCustomer, device.idDevice)
+                        likedViewModel.addLiked(likedNew)
+                        check = true
+                    }
+                    else{
+                        likedViewModel.deleteLikedByCustomer(idCustomer, device.idDevice)
+                        check = false
+                    }
+                    // Làm mới danh sách
+                    likedViewModel.getLikedByIdCustomer(idCustomer)
+                }
+            },
+                modifier = Modifier
+                    .size(24.dp)
+                    .align(Alignment.TopEnd)
+            ) {
+                Icon(
+                    imageVector = if(check) Icons.Filled.Favorite else Icons.Filled.FavoriteBorder,
+                    contentDescription = "",
                     tint = Color.Red
                 )
             }

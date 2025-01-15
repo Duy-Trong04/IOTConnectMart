@@ -85,6 +85,8 @@ import com.example.ungdungbanthietbi_iot.data.customer.CustomerViewModel
 import com.example.ungdungbanthietbi_iot.data.device.Device
 import com.example.ungdungbanthietbi_iot.data.device.DeviceViewModel
 import com.example.ungdungbanthietbi_iot.data.image_device.ImageViewModel
+import com.example.ungdungbanthietbi_iot.data.liked.Liked
+import com.example.ungdungbanthietbi_iot.data.liked.LikedViewModel
 import com.example.ungdungbanthietbi_iot.data.review_device.Review
 import com.example.ungdungbanthietbi_iot.data.review_device.ReviewViewModel
 import com.example.ungdungbanthietbi_iot.navigation.Screen
@@ -137,6 +139,9 @@ fun ProductDetailsScreen(
         }
     }
 
+    val likedViewModel:LikedViewModel = viewModel()
+    val listLiked = likedViewModel.listLiked
+
     val listImage = imageViewModel.listImage
     LaunchedEffect(id) {
         imageViewModel.getImageByIdDevice(id)
@@ -171,6 +176,7 @@ fun ProductDetailsScreen(
     LaunchedEffect(idCustomer) {
         if(idCustomer!=null){
             cartViewModel.getCartByIdCustomer(idCustomer)
+            likedViewModel.getLikedByIdCustomer(idCustomer)
         }
     }
 
@@ -198,7 +204,8 @@ fun ProductDetailsScreen(
     val showSnackbar = remember { mutableStateOf(false) }
     val snackbarMessage = remember { mutableStateOf("") }
 
-
+    val showSnackbarF = remember { mutableStateOf(false) }
+    val snackbarMessageF = remember { mutableStateOf("") }
     // Màn hình chính
     Scaffold(
         topBar = {
@@ -453,6 +460,7 @@ fun ProductDetailsScreen(
                         )
                     }
                 }
+
             }
         }
     ) { padding ->
@@ -470,7 +478,8 @@ fun ProductDetailsScreen(
                             detectHorizontalDragGestures { change, dragAmount ->
                                 change.consume() // Tiêu thụ sự kiện kéo
                                 if (dragAmount > 0 && listImage.isNotEmpty()) { // Trượt sang phải
-                                    currentIndex = if (currentIndex == 0) listImage.size - 1 else currentIndex - 1
+                                    currentIndex =
+                                        if (currentIndex == 0) listImage.size - 1 else currentIndex - 1
                                 } else if (listImage.isNotEmpty()) { // Trượt sang trái
                                     currentIndex = (currentIndex + 1) % listImage.size
                                 }
@@ -507,10 +516,13 @@ fun ProductDetailsScreen(
             }
             item {
                 // Chi tiết sản phẩm
-                Column(modifier = Modifier.fillMaxWidth().padding(20.dp)) {
+                Column(modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(20.dp)) {
                     Row(
                         modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
                         Text(
                             text = "Giá ${formattedPrice}đ",
@@ -518,24 +530,81 @@ fun ProductDetailsScreen(
                             fontWeight = FontWeight.Bold,
                             fontSize = 18.sp
                         )
+                        var check  by remember { mutableStateOf(false) }
+                        LaunchedEffect(listLiked) {
+                            check = listLiked.any { it.idDevice == device.idDevice }
+                        }
+                        IconButton(onClick = {
+                            if(idCustomer == null){
+                                navController.navigate(Screen.LoginScreen.route)
+                            }
+                            else{
+                                var likedNew:Liked? = null
+                                var isProductFound = false
+                                for (liked in listLiked) {
+                                    if (device.idDevice == liked.idDevice) {
+                                        likedViewModel.updateLiked(liked)
+                                        isProductFound = true
+                                        break
+                                    }
+                                }
+
+                                // Nếu sản phẩm không tìm thấy trong giỏ hàng thì thêm mới
+                                if(!isProductFound){
+                                    likedNew = Liked(0, idCustomer, device.idDevice)
+                                    likedViewModel.addLiked(likedNew)
+                                    check = true
+                                    showSnackbarF.value = true
+                                    snackbarMessageF.value = "Thêm vào yêu thích thành công!"
+                                }
+                                else{
+                                    likedViewModel.deleteLikedByCustomer(idCustomer, device.idDevice)
+                                    check = false
+                                    showSnackbarF.value = true
+                                    snackbarMessageF.value = "Xóa khỏi yêu thích!"
+                                }
+                                // Làm mới danh sách
+                                likedViewModel.getLikedByIdCustomer(idCustomer)
+                            }
+                        }) {
+                            Icon(imageVector = if(check) Icons.Filled.Favorite else Icons.Filled.FavoriteBorder,
+                                contentDescription = "",
+                                tint = Color.Red,
+                                modifier = Modifier.size(22.dp)
+                            )
+                        }
+                    }
+                    if (showSnackbarF.value) {
+                        LaunchedEffect(Unit) {
+                            delay(3000) // Chờ 3000ms (3 giây)
+                            showSnackbarF.value = false // Đặt giá trị để tắt Snackbar
+                        }
+                        Snackbar(
+                            modifier = Modifier.padding(16.dp),
+                            action = {
+                                TextButton(onClick = { showSnackbarF.value = false }) {
+                                    Text(text = "Đóng", color = Color.White)
+                                }
+                            }
+                        ) {
+                            Text(snackbarMessageF.value)
+                        }
                     }
                     Spacer(modifier = Modifier.height(10.dp))
                     Row(
                         modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
                     )
                     {
+
                         Text(
                             text = device.name,
                             color = Color.Black,
                             fontWeight = FontWeight.Bold,
                             fontSize = 20.sp
                         )
-                        Icon(imageVector = Icons.Filled.Favorite,
-                            contentDescription = "",
-                            tint = Color.Red,
-                            modifier = Modifier.size(22.dp)
-                        )
+
                     }
                     Spacer(modifier = Modifier.height(12.dp))
                     Text(
@@ -552,7 +621,8 @@ fun ProductDetailsScreen(
             }
             item{
                 Column(
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier
+                        .fillMaxWidth()
                         .padding(start = 20.dp, end = 20.dp)
                 )
                 {
@@ -613,7 +683,9 @@ fun ProductDetailsScreen(
                     modifier = Modifier.padding(start = 20.dp, end = 20.dp)
                 )
                 LazyRow(
-                    modifier = Modifier.fillMaxWidth().padding(10.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(10.dp),
                     horizontalArrangement = Arrangement.Start
                 ) {
                     items(listAllDevice){
@@ -644,7 +716,8 @@ fun ProductDetailsScreen(
 fun CardReview(review: Review, isChecked:Boolean, onlick:() -> Unit){
     var currentChecked by remember { mutableStateOf(isChecked) }
     Card(
-        modifier = Modifier.fillMaxWidth()
+        modifier = Modifier
+            .fillMaxWidth()
             .padding(start = 20.dp, end = 20.dp, top = 10.dp),
         colors = CardDefaults.cardColors(
             containerColor = Color.White
@@ -653,7 +726,9 @@ fun CardReview(review: Review, isChecked:Boolean, onlick:() -> Unit){
     )
     {
         Divider()
-        Row(modifier = Modifier.fillMaxWidth().padding(start = 5.dp, top = 5.dp)) {
+        Row(modifier = Modifier
+            .fillMaxWidth()
+            .padding(start = 5.dp, top = 5.dp)) {
             Image(
                 painter = painterResource(R.drawable.logo),
                 contentDescription = "avt",
@@ -710,7 +785,8 @@ fun CardDevice(device: Device, isFavorite:Boolean, idCustomer:String?, username:
     val formatter = DecimalFormat("#,###,###")
     val formattedPrice = formatter.format(device.sellingPrice)
     Card(
-        modifier = Modifier.width(200.dp)// Đặt chiều rộng cố định cho Card
+        modifier = Modifier
+            .width(200.dp)// Đặt chiều rộng cố định cho Card
             .height(250.dp)
             .padding(8.dp),
         onClick = {
@@ -728,7 +804,9 @@ fun CardDevice(device: Device, isFavorite:Boolean, idCustomer:String?, username:
     ) {
         Box(modifier = Modifier.fillMaxWidth()){
             Column(
-                modifier = Modifier.fillMaxWidth().padding(8.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(8.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 //load hình ảnh từ API

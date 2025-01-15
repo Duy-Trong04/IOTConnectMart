@@ -242,9 +242,15 @@ fun NavGraph(
 
         //Màn hình sản phẩm yêu thích
         composable(
-            route = Screen.Favorites_Screen.route
+            route = Screen.Favorites_Screen.route + "?idCustomer={idCustomer}&username={username}",
+            arguments = listOf(
+                navArgument("idCustomer"){type = NavType.StringType },
+                navArgument("username") {type = NavType.StringType }
+            )
         ){
-            FavoritesScreen(navController)
+            val idCustomer = it.arguments?.getString("idCustomer") ?: ""
+            val username = it.arguments?.getString("username") ?: ""
+            FavoritesScreen(navController, idCustomer, username)
         }
 
         //Đến màn Chỉnh sửa thông tin cá nhân
