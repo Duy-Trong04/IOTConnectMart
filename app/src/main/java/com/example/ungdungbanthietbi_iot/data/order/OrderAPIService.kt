@@ -49,4 +49,9 @@ interface OrderAPIService {
     suspend fun updateOrder(
         @Body order: Order
     ): addOrderResponse
+
+    @GET("order/show.php")
+    suspend fun getOrderById(
+        @Query("id") id: Int
+    ): Order
 }

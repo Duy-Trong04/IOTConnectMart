@@ -28,4 +28,9 @@ interface DeviceAPIService {
     suspend fun getDeviceByLiked(
         @Query("idCustomer") idCustomer: String
     ): DeviceResponse
+
+    @GET("device/getDeviceByIdOrder.php")
+    suspend fun getDeviceByIdOrder(
+        @Query("id") id: Int
+    ): DeviceResponse
 }

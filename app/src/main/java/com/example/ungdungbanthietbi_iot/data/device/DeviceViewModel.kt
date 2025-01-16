@@ -25,6 +25,7 @@ class DeviceViewModel:ViewModel() {
 
     var listDeviceOfCustomer by mutableStateOf<List<Device>>(emptyList())
         private set
+    var listDeviceByOrder by mutableStateOf<List<Device>>(emptyList())
 
 
     private val _listDevce = MutableStateFlow<List<Device>>(emptyList())
@@ -45,7 +46,19 @@ class DeviceViewModel:ViewModel() {
                 }
                 listDeviceOfCustomer = response.device
             } catch (e: Exception) {
-                Log.e("Device Error", "Lỗi khi lấy sản phẩm: ${e.message}")
+                Log.e("Device Error", "Lỗi khi lấy device: ${e.message}")
+            }
+        }
+    }
+    fun getDeviceByIdOrder(id: Int) {
+        viewModelScope.launch {
+            try {
+                val response = withContext(Dispatchers.IO) {
+                    RetrofitClient.deviceAPIService.getDeviceByIdOrder(id)
+                }
+                listDeviceByOrder = response.device
+            } catch (e: Exception) {
+                Log.e("Device Error", "Lỗi khi lấy Device")
             }
         }
     }

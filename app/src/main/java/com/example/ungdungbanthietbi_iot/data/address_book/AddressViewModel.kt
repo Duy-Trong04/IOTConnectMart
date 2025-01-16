@@ -7,6 +7,7 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.ungdungbanthietbi_iot.data.RetrofitClient
+import com.example.ungdungbanthietbi_iot.data.device.Device
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -31,6 +32,16 @@ class AddressViewModel: ViewModel() {
         viewModelScope.launch(Dispatchers.IO) {
             try {
                 address = RetrofitClient.addressAPIService.getAddressById(id)
+            } catch (e: Exception) {
+                Log.e("AddressViewModel", "Error getting Address", e)
+            }
+        }
+    }
+
+    fun getAddressByIdOrder(id: Int) {
+        viewModelScope.launch {
+            try {
+                address = RetrofitClient.addressAPIService.getAddressByIdOrder(id)
             } catch (e: Exception) {
                 Log.e("AddressViewModel", "Error getting Address", e)
             }

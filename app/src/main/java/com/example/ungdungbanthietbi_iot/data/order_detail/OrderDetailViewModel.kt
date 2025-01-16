@@ -42,7 +42,7 @@ class OrderDetailViewModel:ViewModel() {
                 listOrderDetail = response.order
             } catch (e: Exception) {
                 // Xử lý lỗi nếu có
-                Log.e("HinhAnhError", "Lỗi khi lấy hình ảnh: ${e.message}")
+                Log.e("Order Detail Error", "Lỗi khi lấy order detail: ${e.message}")
             }
         }
     }

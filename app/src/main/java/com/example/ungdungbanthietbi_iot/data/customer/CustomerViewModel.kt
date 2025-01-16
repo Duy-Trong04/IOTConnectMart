@@ -8,13 +8,15 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.liveData
 import androidx.lifecycle.viewModelScope
 import com.example.ungdungbanthietbi_iot.data.RetrofitClient
+import com.example.ungdungbanthietbi_iot.data.device.Device
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 class CustomerViewModel:ViewModel() {
     var customer by mutableStateOf<Customer?>(null)
         private set
-
+    var listCustomerByOrder by mutableStateOf<List<Customer>>(emptyList())
     var khachhangUpdateResult by mutableStateOf("")
         private set
 
@@ -35,6 +37,16 @@ class CustomerViewModel:ViewModel() {
         viewModelScope.launch(Dispatchers.IO) {
             try {
                 customer = RetrofitClient.customerAPIService.getCustomerById(id)
+            } catch (e: Exception) {
+                Log.e("CustomerViewModel", "Error getting customer", e)
+            }
+        }
+    }
+
+    fun getCustomerByIdOrder(id: Int) {
+        viewModelScope.launch {
+            try {
+                customer = RetrofitClient.customerAPIService.getCustomerByIdOrder(id)
             } catch (e: Exception) {
                 Log.e("CustomerViewModel", "Error getting customer", e)
             }

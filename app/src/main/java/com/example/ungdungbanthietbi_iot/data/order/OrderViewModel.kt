@@ -23,6 +23,19 @@ class OrderViewModel:ViewModel() {
 
     var id by mutableStateOf(0)
 
+    var order by mutableStateOf<Order?>(null)
+        private set
+
+    fun getOrderById(id: Int) {
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                order = RetrofitClient.orderAPIService.getOrderById(id)
+            } catch (e: Exception) {
+                Log.e("OrderViewModel", "Error getting Order", e)
+            }
+        }
+    }
+
     fun getOrderByCustomer(idCustomer: String, status: Int) {
         viewModelScope.launch {
             try {

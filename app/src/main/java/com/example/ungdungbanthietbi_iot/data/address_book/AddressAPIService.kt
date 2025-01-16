@@ -1,7 +1,6 @@
 package com.example.ungdungbanthietbi_iot.data.address_book
 
 import com.example.ungdungbanthietbi_iot.data.cart.ApiResponse
-import com.example.ungdungbanthietbi_iot.data.cart.Cart
 import retrofit2.Response
 import retrofit2.http.Body
 import retrofit2.http.GET
@@ -58,4 +57,9 @@ interface AddressAPIService {
     suspend fun deleteAddress(
         @Body id: deleteAddressRequest
     ): Response<ApiResponse>
+
+    @GET("address_book/getAddressByIdOrder.php")
+    suspend fun getAddressByIdOrder(
+        @Query("id") id: Int
+    ): Address
 }

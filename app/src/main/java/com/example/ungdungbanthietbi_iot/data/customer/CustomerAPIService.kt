@@ -20,8 +20,8 @@ interface CustomerAPIService {
         @Query("id") id: String
     ): Customer
 
-//    @PUT("KhachHang/update.php")
-//    suspend fun updateKhachHang(
-//        @Body customer: Customer
-//    ): UpdateResponse
+    @GET("customer/getCustomerByIdOrder.php")
+    suspend fun getCustomerByIdOrder(
+        @Query("id") id: Int
+    ): Customer
 }

@@ -405,7 +405,7 @@ fun OrderItem(order: Order, navController: NavController, isCancel: Boolean) {
             .padding(5.dp),
         elevation = CardDefaults.cardElevation(1.dp),
         onClick = {
-            navController.navigate("${Screen.Order_Detail.route}?id=${order.id}")
+            navController.navigate("${Screen.Order_Detail.route}?id=${order.id}&totalAmount=${order.totalAmount}")
         }
     ) {
         Row(
