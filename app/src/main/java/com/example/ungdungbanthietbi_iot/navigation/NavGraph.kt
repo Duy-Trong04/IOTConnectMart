@@ -352,7 +352,7 @@ fun NavGraph(
             val id = backStackEntry.arguments?.getString("id") ?: ""
             val password = backStackEntry.arguments?.getString("password") ?: ""
             AccountSettingsScreen(navController,onBack = { navController.popBackStack()},id,password)
-            ChangePassword(onBack = { navController.popBackStack()},id,password)
+            ChangePassword(onBack = { navController.navigate(Screen.LoginScreen.route)},id,password)
         }
         composable(
             Screen.PersonalScreen.route + "?username={username}",

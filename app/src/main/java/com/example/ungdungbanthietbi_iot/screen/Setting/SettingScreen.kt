@@ -50,7 +50,7 @@ fun AccountSettingsScreen(navController: NavHostController, onBack: () -> Unit =
                     Text("Thiết lập tài khoản",
                         fontWeight = FontWeight.Bold,
                         modifier = Modifier.fillMaxWidth(),
-                        textAlign = TextAlign.Center
+                        textAlign = TextAlign.Start
                     ) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
@@ -73,8 +73,8 @@ fun AccountSettingsScreen(navController: NavHostController, onBack: () -> Unit =
                 item{ Text(text = "Tài khoản", fontWeight = FontWeight.Bold,fontSize = 16.sp) }
                 item { SettingItem(title = "Đổi mật khẩu", onClick = { /* Thêm chức năng đổi mật khẩu */navController.navigate(Screen.ChangePassword.route+ "/${id}/$password")}) }
                 item { SettingItem(title = "Địa chỉ", onClick = {
-                        navController.navigate(Screen.Address_Selection.route) })
-                }
+                    navController.navigate("${Screen.Address_Selection.route}?idCustomer=${idCustomer}")
+                })}
                 item { SettingItem(title = "Tài khoản / Thẻ ngân hàng", onClick = { /* Thêm chức năng cho tài khoản / thẻ ngân hàng */ }) }
 
                 item{ Text(text = "Cài đặt", fontWeight = FontWeight.Bold,fontSize = 16.sp) }
@@ -82,8 +82,7 @@ fun AccountSettingsScreen(navController: NavHostController, onBack: () -> Unit =
                 item { SettingItem(title = "Cài đặt riêng tư", onClick = { /* Thêm chức năng cho cài đặt riêng tư */ }) }
 
                 item{ Text(text = "Hỗ trợ", fontWeight = FontWeight.Bold,fontSize = 16.sp) }
-                item { SettingItem(title = "Liên hệ", onClick = { /* Thêm chức năng cho liên hệ */navController.navigate(
-                    Screen.ContactScreen.route) }) }
+                item { SettingItem(title = "Liên hệ", onClick = { /* Thêm chức năng cho liên hệ */}) }
                 item { SettingItem(title = "Điều khoản IOT Connect Mart", onClick = { /* Thêm chức năng cho điều khoản IOT ConnectSmart */ }) }
                 item { SettingItem(title = "Giới thiệu về ứng dụng", onClick = { /* Thêm chức năng cho giới thiệu về ứng dụng */ }) }
 

@@ -204,7 +204,7 @@ fun HuyDonHangScreen(navController: NavController,idCustomer: String?) {
 
             listOrder.isEmpty() -> {
                 Text(
-                    text = "Không có hóa đơn nào đang chờ xác nhận.",
+                    text = "Không có hóa đơn đã hủy.",
                     modifier = Modifier.align(Alignment.Center),
                     textAlign = TextAlign.Center,
                 )
@@ -279,7 +279,7 @@ fun ChoLayHangScreen(navController: NavController,idCustomer: String?) {
 
             listOrder.isEmpty() -> {
                 Text(
-                    text = "Không có hóa đơn nào đang chờ xác nhận.",
+                    text = "Không có hóa đơn nào đang chờ lấy hàng.",
                     modifier = Modifier.align(Alignment.Center),
                     textAlign = TextAlign.Center,
                 )

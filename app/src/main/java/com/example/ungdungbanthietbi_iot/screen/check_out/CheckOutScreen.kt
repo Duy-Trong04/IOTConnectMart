@@ -283,20 +283,20 @@ fun CheckoutScreen(
                             Column {
                                 Row(
                                     modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    horizontalArrangement = Arrangement.Start,
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {
                                     Text(
                                         text = "${customer?.surname} ${customer?.lastName}",
                                         fontWeight = FontWeight.Bold
                                     )
-                                    Text(
-                                        text = "Thay đổi",
-                                        color = Color(0xFF5D9EFF),
-                                        modifier = Modifier.clickable {
-                                            //Nav
-                                        }
-                                    )
+//                                    Text(
+//                                        text = "Thay đổi",
+//                                        color = Color(0xFF5D9EFF),
+//                                        modifier = Modifier.clickable {
+//                                            //Nav
+//                                        }
+//                                    )
                                 }
 
                                 Text(

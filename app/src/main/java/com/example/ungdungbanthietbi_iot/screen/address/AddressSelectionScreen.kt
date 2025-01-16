@@ -99,15 +99,6 @@ fun AddressSelectionScreen(
     ){
         Column(modifier = Modifier.fillMaxWidth().background(Color(0xFFF6F6F6)).padding(it)) {
             LazyColumn(modifier = Modifier.weight(1f).padding(5.dp)) {
-//                // Tiêu đề danh sách
-//                item {
-//                    Text(
-//                        text = "Địa chỉ",
-//                        fontSize = 16.sp,
-//                        fontWeight = FontWeight.W400,
-//                        modifier = Modifier.padding(bottom = 8.dp)
-//                    )
-//                }
                 // Hiển thị các địa chỉ
                 items(listAddress) { address ->
                     AddressItem(
@@ -196,8 +187,8 @@ fun AddressItem(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    "Tên người nhận: ${customer?.surname} ${customer?.lastName}",
-                    fontSize = 20.sp,
+                    "Người nhận: ${customer?.surname} ${customer?.lastName}",
+                    fontSize = 18.sp,
                     fontWeight = FontWeight.Bold,
                 )
 
@@ -209,7 +200,7 @@ fun AddressItem(
                 ) {
                     Text(
                         "Chỉnh sửa",
-                        fontSize = 18.sp,
+                        fontSize = 16.sp,
                         fontWeight = FontWeight.W500,
                         color = Color(0xFF5D9EFF)
                     )
