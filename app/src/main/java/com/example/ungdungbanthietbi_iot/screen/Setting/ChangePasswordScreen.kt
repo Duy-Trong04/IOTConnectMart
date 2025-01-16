@@ -207,7 +207,7 @@ fun ChangePassword(onBack: () -> Unit = {}, id: String, password: String) {
                     else if (matkhaumoi.value != matkhaumoi2.value) {
                         Text("Mật khẩu mới và xác nhận mật khẩu không trùng khớp")
                     } else {
-                        Text("Đổi mật khẩu thành công. Vui lòng thực hiện đăng nhập lại!")
+                        Text("Đổi mật khẩu thành công.")
                         var account: UpdatePassword
                         account = UpdatePassword(id, matkhaumoi2.value)
                         updatePass.updatePassword(account)
@@ -220,7 +220,7 @@ fun ChangePassword(onBack: () -> Unit = {}, id: String, password: String) {
                 Button(
                     onClick = {
                         openDialog = false
-                        onBack() // chuyển về trang login
+                        //onBack() // chuyển về trang login
                     },
                     colors = ButtonDefaults.buttonColors(
                         containerColor = Color(0xFF00C3FF)
