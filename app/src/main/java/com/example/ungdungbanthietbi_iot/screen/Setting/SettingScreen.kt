@@ -1,6 +1,5 @@
 package com.example.ungdungbanthietbi_iot.screen.personal
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -11,6 +10,10 @@ import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.ExitToApp
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -34,10 +37,12 @@ import com.example.ungdungbanthietbi_iot.navigation.Screen
 @OptIn(ExperimentalMaterial3Api::class)
 //@Preview(showBackground = true)
 @Composable
-fun AccountSettingsScreen(navController: NavHostController, onBack: () -> Unit = {}) {
+fun AccountSettingsScreen(navController: NavHostController, onBack: () -> Unit = {},idCustomer:String,password:String) {
     //Bien lay kich thuoc man hinh hien tai
     val configuration = LocalConfiguration.current
     val screenWidth = configuration.screenWidthDp.dp
+    val id by remember { mutableStateOf(idCustomer) }
+    val password by remember { mutableStateOf(password) }
     Scaffold(
         topBar = {
             TopAppBar(
@@ -66,7 +71,7 @@ fun AccountSettingsScreen(navController: NavHostController, onBack: () -> Unit =
                     .padding(8.dp)
             ) {
                 item{ Text(text = "Tài khoản", fontWeight = FontWeight.Bold,fontSize = 16.sp) }
-                item { SettingItem(title = "Đổi mật khẩu", onClick = { /* Thêm chức năng đổi mật khẩu */navController.navigate(Screen.ChangePassword.route) }) }
+                item { SettingItem(title = "Đổi mật khẩu", onClick = { /* Thêm chức năng đổi mật khẩu */navController.navigate(Screen.ChangePassword.route+ "/${id}/$password")}) }
                 item { SettingItem(title = "Địa chỉ", onClick = {
                         navController.navigate(Screen.Address_Selection.route) })
                 }

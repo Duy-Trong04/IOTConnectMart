@@ -27,9 +27,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.annotation.ExperimentalCoilApi
-
-
+import com.example.ungdungbanthietbi_iot.data.customer.CustomerViewModel
+import com.example.ungdungbanthietbi_iot.data.customer.Email
 
 
 /*Người thực hiện: Nguyễn Mạnh Cường
@@ -40,10 +41,13 @@ import coil.annotation.ExperimentalCoilApi
 */
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalCoilApi::class)
-@Preview(showBackground = true)
+//@Preview(showBackground = true)
 @Composable
-fun EditEmailScreen(onBack: () -> Unit = {}) {
-    var email by remember { mutableStateOf("nmc@gmail.com") }
+fun EditEmailScreen(id: String,onBack: () -> Unit = {}, email: String) {
+    //var email by remember { mutableStateOf("nmc@gmail.com") }
+    var email1 by remember { mutableStateOf(email) }
+    var id by remember { mutableStateOf(id) }
+    var emailModel: CustomerViewModel= viewModel()
     Scaffold(
         topBar = {
             TopAppBar(
@@ -64,7 +68,13 @@ fun EditEmailScreen(onBack: () -> Unit = {}) {
                     }
                 },
                 actions = {
-                    IconButton(onClick = { /* Chức năng lưu lại thông tin đã sửa */ }) {
+                    IconButton(onClick = {
+                    /* Chức năng lưu lại thông tin đã sửa */
+                        val email: Email
+                        email = Email(id,email1)
+                        emailModel.updateEmail(email)
+                        onBack()
+                    }) {
                         Icon(
                             imageVector = Icons.Default.Done,
                             contentDescription = "Save",
@@ -88,8 +98,8 @@ fun EditEmailScreen(onBack: () -> Unit = {}) {
             ) {
                 item {
                     OutlinedTextField(
-                        value = email,
-                        onValueChange = { email = it },
+                        value = email1,
+                        onValueChange = { email1 = it },
                         label = { Text("Email") },
                         modifier = Modifier.fillMaxWidth()
                     )

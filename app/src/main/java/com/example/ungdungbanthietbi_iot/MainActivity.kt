@@ -12,6 +12,7 @@ import com.example.ungdungbanthietbi_iot.data.device.DeviceViewModel
 import com.example.ungdungbanthietbi_iot.data.image_device.ImageViewModel
 import com.example.ungdungbanthietbi_iot.data.review_device.ReviewViewModel
 import com.example.ungdungbanthietbi_iot.data.slideshow.SlideShowViewModel
+import com.example.ungdungbanthietbi_iot.data.customer.CustomerViewModel
 import com.example.ungdungbanthietbi_iot.navigation.NavGraph
 import com.example.ungdungbanthietbi_iot.ui.theme.UngDungBanThietBi_IOTTheme
 
@@ -21,6 +22,7 @@ class MainActivity : ComponentActivity() {
     private val imageViewModel by viewModels<ImageViewModel>()
     private val reviewViewModel by viewModels<ReviewViewModel>()
     private val accountViewModel by viewModels<AccountViewModel>()
+    private val customerViewModel by viewModels<CustomerViewModel>()
     lateinit var navController: NavHostController
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -33,7 +35,8 @@ class MainActivity : ComponentActivity() {
                     slideShowViewModel = slideShowViewModel,
                     imageViewModel = imageViewModel,
                     reviewViewModel = reviewViewModel,
-                    accountViewModel = accountViewModel
+                    accountViewModel = accountViewModel,
+                    customerViewModel = customerViewModel
                 )
             }
         }

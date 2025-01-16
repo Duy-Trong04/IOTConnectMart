@@ -11,3 +11,14 @@ data class Account(
     @SerializedName("isNew") var isNew:Int,
     @SerializedName("status") var status:Int
 )
+
+data class AddAccount(
+    @SerializedName("idPerson") var idPerson:String?,
+    @SerializedName("username") var username:String,
+    @SerializedName("password") var password:String,
+)
+
+data class UpdatePassword(
+    @SerializedName("idPerson") var idPerson:String?,
+    @SerializedName("password") var password:String,
+)

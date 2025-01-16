@@ -207,7 +207,7 @@ fun PersonalScreen(
                     actions = {
                         IconButton(
                             onClick = {
-                                navController.navigate(Screen.SettingScreen.route)
+                                navController.navigate(Screen.SettingScreen.route + "/${account.idPerson}/${account.password}")
                             }) {
                             Icon(Icons.Filled.Settings, contentDescription = "Setting")
                         }

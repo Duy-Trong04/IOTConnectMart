@@ -27,7 +27,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.annotation.ExperimentalCoilApi
+import com.example.ungdungbanthietbi_iot.data.customer.CustomerViewModel
+import com.example.ungdungbanthietbi_iot.data.customer.Phone
 
 
 /*Người thực hiện: Nguyễn Mạnh Cường
@@ -39,10 +42,13 @@ import coil.annotation.ExperimentalCoilApi
 
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalCoilApi::class)
-@Preview(showBackground = true)
+//@Preview(showBackground = true)
 @Composable
-fun EditPhoneScreen(onBack: () -> Unit = {}) {
-    var phone by remember { mutableStateOf("01234566677") }
+fun EditPhoneScreen(id: String,onBack: () -> Unit = {}, phoneNumber:String ) {
+    //var phone by remember { mutableStateOf("01234566677") }
+    var phone1 by remember { mutableStateOf(phoneNumber) }
+    var id by remember { mutableStateOf(id) }
+    var phoneModel: CustomerViewModel= viewModel()
     Scaffold(
         topBar = {
             TopAppBar(
@@ -63,7 +69,13 @@ fun EditPhoneScreen(onBack: () -> Unit = {}) {
                     }
                 },
                 actions = {
-                    IconButton(onClick = { /* Chức năng lưu lại thông tin đã sửa */ }) {
+                    IconButton(onClick = {
+                    /* Chức năng lưu lại thông tin đã sửa */
+                        val phone: Phone
+                        phone = Phone(id,phone1)
+                        phoneModel.updatePhone(phone)
+                        onBack()
+                    }) {
                         Icon(
                             imageVector = Icons.Default.Done,
                             contentDescription = "Save",
@@ -87,8 +99,8 @@ fun EditPhoneScreen(onBack: () -> Unit = {}) {
             ) {
                 item {
                     OutlinedTextField(
-                        value = phone,
-                        onValueChange = { phone = it },
+                        value = phone1,
+                        onValueChange = { phone1 = it },
                         label = { Text("Phone") },
                         modifier = Modifier.fillMaxWidth()
                     )

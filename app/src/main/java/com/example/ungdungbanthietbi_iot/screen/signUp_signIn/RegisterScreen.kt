@@ -3,6 +3,7 @@ package com.example.ungdungbanthietbi_iot.screen.signUp_signIn
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import android.util.Log
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
@@ -27,6 +28,7 @@ import androidx.compose.material.icons.filled.Person4
 import androidx.compose.material.icons.filled.Phone
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -42,6 +44,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
@@ -58,7 +61,17 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.example.ungdungbanthietbi_iot.R
+import com.example.ungdungbanthietbi_iot.data.account.AccountViewModel
+import com.example.ungdungbanthietbi_iot.data.account.AddAccount
+import com.example.ungdungbanthietbi_iot.data.customer.AddCustomer
+import com.example.ungdungbanthietbi_iot.data.customer.CustomerViewModel
 import com.example.ungdungbanthietbi_iot.navigation.Screen
+import kotlinx.coroutines.async
+import kotlinx.coroutines.launch
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.remember
+import kotlinx.coroutines.coroutineScope
+
 
 /** Giao diện màn hình đăng ký (RegisterScreen)
  * -------------------------------------------
@@ -81,7 +94,17 @@ import com.example.ungdungbanthietbi_iot.navigation.Screen
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 
-fun RegisterScreen(navController: NavController) {
+fun RegisterScreen(
+    navController: NavController,
+    accountViewModel: AccountViewModel,
+    customerViewModel: CustomerViewModel
+) {
+
+    val accountCheckResult by accountViewModel.accountCheckResult
+    val customerCheckResult by customerViewModel.customerCheckResult
+    Log.d("AccountViewModel", "accountCheckResult: $accountCheckResult")
+    Log.d("AccountViewModel", "customerCheckResult: $customerCheckResult")
+
     // Biến nhận dữ liệu họ từ người dùng
     var ho by remember { mutableStateOf("") }
     // Biến nhận dữ liệu tên từ người dùng
@@ -89,7 +112,7 @@ fun RegisterScreen(navController: NavController) {
     // Biến nhận dữ liệu sdt từ người dùng
     var sdt by remember { mutableStateOf("") }
     // Biến nhận dữ liệu email từ người dùng
-    var email by remember { mutableStateOf("") }
+    var username by remember { mutableStateOf("") }
     // Biến nhận dữ liệu password từ người dùng
     var password by remember { mutableStateOf("") }
     // Biến nhận dữ liệu comfirmPassword từ người dùng
@@ -98,6 +121,9 @@ fun RegisterScreen(navController: NavController) {
     var isPasswordVisible by remember { mutableStateOf(false) }
     // Biến kiểm tra trạng thái hiển thị comfirmPassword
     var isComfirmPasswordVisible by remember { mutableStateOf(false) }
+    // Biến kiểm tra kết quả đăng nhập
+    var openDialog by remember { mutableStateOf(false) }
+    var openDialog_Dk by remember { mutableStateOf(false) }
     // Khởi tạo FocusRequester cho các trường nhập liệu
     val focusRequesterHo = remember { FocusRequester() }
     val focusRequesterTen = remember { FocusRequester() }
@@ -105,6 +131,36 @@ fun RegisterScreen(navController: NavController) {
     val focusRequesterEmail = remember { FocusRequester() }
     val focusRequesterPassword = remember { FocusRequester() }
     val focusRequesterComfirmPassword = remember { FocusRequester() }
+    // Sử dụng coroutineScope thông qua rememberCoroutineScope
+    // Gửi dữ liệu lên server
+    val accountNew = AddAccount(username, username, password)
+    val customerNew = AddCustomer(username, ho, ten, sdt)
+    LaunchedEffect(accountCheckResult, customerCheckResult) {
+        if(accountCheckResult == false || customerCheckResult == false) {
+            // Kiểm tra điều kiện hợp lệ trước khi gửi lên server
+            if (username.isNotEmpty() && password.isNotEmpty() && comfirmPassword.isNotEmpty() && sdt.isNotEmpty() && ho.isNotEmpty() && ten.isNotEmpty()) {
+                if (password == comfirmPassword) {
+                    // Thực hiện gọi API hoặc gửi dữ liệu tới server
+                    accountViewModel.addToAccount(accountNew)
+                    // Ví dụ gọi ViewModel để gửi dữ liệu
+                    customerViewModel.addToCustomer(customerNew)
+                    // Điều hướng đến màn hình đăng nhập sau khi thành công
+                    openDialog_Dk=true
+
+                } else {
+                    openDialog =
+                        true  // Nếu mật khẩu không khớp, hiển thị thông báo lỗi
+                }
+            } else {
+                openDialog =
+                    true  // Nếu thiếu thông tin, hiển thị thông báo lỗi
+            }
+            Log.d("AccountViewModel", "Đăng ký thành công\n")
+        } else if (accountCheckResult == true) {
+            openDialog = true
+            Log.d("AccountViewModel", "Đăng ký thất bại\n")
+        }
+    }
     Scaffold(
         modifier = Modifier.fillMaxWidth(),
         topBar = {
@@ -145,11 +201,12 @@ fun RegisterScreen(navController: NavController) {
                     //Họ
                     TextField(
                         value = ho,
-                        onValueChange = {ho = it},
+                        onValueChange = { ho = it },
                         modifier = Modifier.width(350.dp).padding(4.dp),
                         placeholder = { Text(text = "Họ") },
                         leadingIcon = {
-                            Icon(imageVector = Icons.Default.AccountCircle,
+                            Icon(
+                                imageVector = Icons.Default.AccountCircle,
                                 contentDescription = "Họ"
                             )
                         },
@@ -167,11 +224,12 @@ fun RegisterScreen(navController: NavController) {
                     //Tên
                     TextField(
                         value = ten,
-                        onValueChange = {ten = it},
+                        onValueChange = { ten = it },
                         modifier = Modifier.width(350.dp).padding(4.dp),
                         placeholder = { Text(text = "Tên") },
                         leadingIcon = {
-                            Icon(imageVector = Icons.Default.AccountBox,
+                            Icon(
+                                imageVector = Icons.Default.AccountBox,
                                 contentDescription = "Tên"
                             )
                         },
@@ -190,11 +248,12 @@ fun RegisterScreen(navController: NavController) {
                     //SDT
                     TextField(
                         value = sdt,
-                        onValueChange = {sdt = it},
+                        onValueChange = { sdt = it },
                         modifier = Modifier.width(350.dp).padding(4.dp),
                         placeholder = { Text(text = "SĐT") },
                         leadingIcon = {
-                            Icon(imageVector = Icons.Default.Phone,
+                            Icon(
+                                imageVector = Icons.Default.Phone,
                                 contentDescription = "SĐT"
                             )
                         },
@@ -205,20 +264,20 @@ fun RegisterScreen(navController: NavController) {
                         ),
                         singleLine = true,
                         keyboardOptions = KeyboardOptions.Default.copy(
-                            keyboardType = KeyboardType.Phone
-                            , imeAction = ImeAction.Next
+                            keyboardType = KeyboardType.Phone, imeAction = ImeAction.Next
                         )
                     )
 
                     //email
                     TextField(
-                        value = email,
-                        onValueChange = {email = it},
+                        value = username,
+                        onValueChange = { username = it },
                         modifier = Modifier.width(350.dp).padding(4.dp),
-                        placeholder = { Text(text = "Email") },
+                        placeholder = { Text(text = "Username") },
                         leadingIcon = {
-                            Icon(imageVector = Icons.Default.Email,
-                                contentDescription = "Email"
+                            Icon(
+                                imageVector = Icons.Default.Email,
+                                contentDescription = "Username"
                             )
                         },
                         colors = TextFieldDefaults.colors(
@@ -236,17 +295,19 @@ fun RegisterScreen(navController: NavController) {
                     // Password
                     TextField(
                         value = password,
-                        onValueChange = {password = it},
+                        onValueChange = { password = it },
                         modifier = Modifier.width(350.dp).padding(4.dp),
                         placeholder = { Text(text = "Password") },
                         leadingIcon = {
-                            Icon(imageVector = Icons.Default.Lock,
+                            Icon(
+                                imageVector = Icons.Default.Lock,
                                 contentDescription = "Password"
                             )
                         },
                         trailingIcon = {
                             IconButton(onClick = { isPasswordVisible = !isPasswordVisible }) {
-                                Icon(imageVector = if (isPasswordVisible) Icons.Filled.Visibility else Icons.Filled.VisibilityOff,
+                                Icon(
+                                    imageVector = if (isPasswordVisible) Icons.Filled.Visibility else Icons.Filled.VisibilityOff,
                                     contentDescription = if (isPasswordVisible) "Ẩn mật khẩu" else "Hiện mật khẩu"
                                 )
                             }
@@ -258,7 +319,8 @@ fun RegisterScreen(navController: NavController) {
                         ),
                         singleLine = true,
                         visualTransformation = if (isPasswordVisible) VisualTransformation.None else PasswordVisualTransformation(),
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password,
+                        keyboardOptions = KeyboardOptions(
+                            keyboardType = KeyboardType.Password,
                             imeAction = ImeAction.Next
                         )
                     )
@@ -266,17 +328,21 @@ fun RegisterScreen(navController: NavController) {
                     // Comfirm Password
                     TextField(
                         value = comfirmPassword,
-                        onValueChange = {comfirmPassword = it},
+                        onValueChange = { comfirmPassword = it },
                         modifier = Modifier.width(350.dp).padding(4.dp),
                         placeholder = { Text(text = "Comfirm Password") },
                         leadingIcon = {
-                            Icon(imageVector = Icons.Default.Lock,
+                            Icon(
+                                imageVector = Icons.Default.Lock,
                                 contentDescription = "Comfirm Password"
                             )
                         },
                         trailingIcon = {
-                            IconButton(onClick = { isComfirmPasswordVisible = !isComfirmPasswordVisible }) {
-                                Icon(imageVector = if (isComfirmPasswordVisible) Icons.Filled.Visibility else Icons.Filled.VisibilityOff,
+                            IconButton(onClick = {
+                                isComfirmPasswordVisible = !isComfirmPasswordVisible
+                            }) {
+                                Icon(
+                                    imageVector = if (isComfirmPasswordVisible) Icons.Filled.Visibility else Icons.Filled.VisibilityOff,
                                     contentDescription = if (isComfirmPasswordVisible) "Ẩn mật khẩu" else "Hiện mật khẩu"
                                 )
                             }
@@ -288,7 +354,8 @@ fun RegisterScreen(navController: NavController) {
                         ),
                         singleLine = true,
                         visualTransformation = if (isComfirmPasswordVisible) VisualTransformation.None else PasswordVisualTransformation(),
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password,
+                        keyboardOptions = KeyboardOptions(
+                            keyboardType = KeyboardType.Password,
                             imeAction = ImeAction.Done
                         )
                     )
@@ -315,8 +382,9 @@ fun RegisterScreen(navController: NavController) {
                     //Button
                     Spacer(modifier = Modifier.height(16.dp))
                     Button(
-                        onClick = { /* Chuyển sang màn hình đăng nhập(LoginScreen) */
-                            navController.navigate(Screen.LoginScreen.route)
+                        onClick = {
+                            accountViewModel.check_Dk(accountNew)
+                            customerViewModel.check_Dk(customerNew)
                         },
                         modifier = Modifier
                             .width(350.dp)
@@ -327,9 +395,56 @@ fun RegisterScreen(navController: NavController) {
                     ) {
                         Text(text = "ĐĂNG KÝ", fontSize = 23.sp, fontWeight = FontWeight.Bold)
                     }
+
                 }
             }
         }
     )
-
+    if (openDialog == true) {
+        AlertDialog(
+            onDismissRequest = { openDialog = false }, // Đóng khi nhấn ngoài dialog
+            text = {
+                if (username == "" || password == "" || comfirmPassword == "" || sdt == "" || ho == "" || ten == "") {
+                    Text("Vui lòng nhập đầy đủ thông tin")
+                } else if (password != comfirmPassword) {
+                    Text("Password và Comfirm Password không khớp")
+                } else {
+                    Text("Username đã tồn tại")
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        openDialog = false
+                    },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color(0xFF00C3FF)
+                    )
+                ) {
+                    Text("OK")
+                }
+            },
+        )
+    }
+    if (openDialog_Dk == true) {
+        AlertDialog(
+            onDismissRequest = { openDialog_Dk = false }, // Đóng khi nhấn ngoài dialog
+            text = {
+                Text("Đăng ký thành công")
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        openDialog_Dk = false
+                        navController.navigate(Screen.LoginScreen.route)
+                    },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color(0xFF00C3FF)
+                    )
+                ) {
+                    Text("OK")
+                }
+            },
+        )
+    }
 }
