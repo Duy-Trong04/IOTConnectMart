@@ -39,6 +39,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -142,7 +143,148 @@ fun OrderListScreen(navController: NavController, idCustomer: String?) {
                 when (selectedTabIndexItem) {
                     0 -> ChoXacNhanScreen(navController,idCustomer)
                     1 -> ChoLayHangScreen(navController,idCustomer)
+                    2 -> ChoGiaoHangScreen(navController, idCustomer)
+                    3 -> DaGiaoHangScreen(navController, idCustomer)
                     4 -> HuyDonHangScreen(navController,idCustomer)
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun DaGiaoHangScreen(navController: NavController, idCustomer: String?){
+    val orderViewModel:OrderViewModel = viewModel()
+
+    val listOrder by orderViewModel.listOrderOfCustomer.collectAsState()
+
+    val isLoading =  remember { mutableStateOf(false) }
+
+    val errorMessage = remember { mutableStateOf<String?>(null) }
+
+
+    if (idCustomer != null) {
+        isLoading.value = true // Bắt đầu tải dữ liệu
+        errorMessage.value = null
+        try {
+            orderViewModel.getOrderByCustomer(
+                idCustomer,
+                4
+            )
+        } catch (e: Exception) {
+            errorMessage.value = "Lỗi khi tải dữ liệu: ${e.message}"
+        } finally {
+            isLoading.value = false // Kết thúc tải dữ liệu
+        }
+    }
+
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(4.dp)
+    ) {
+        when {
+            isLoading.value -> {
+                CircularProgressIndicator(
+                    modifier = Modifier.align(Alignment.Center)
+                )
+            }
+
+            errorMessage.value != null -> {
+                Text(
+                    text = errorMessage.value ?: "Đã xảy ra lỗi",
+                    color = Color.Red,
+                    modifier = Modifier.align(Alignment.Center),
+                    textAlign = TextAlign.Center
+                )
+            }
+
+            listOrder.isEmpty() -> {
+                Text(
+                    text = "Không có hóa đơn nào đã giao.",
+                    modifier = Modifier.align(Alignment.Center),
+                    textAlign = TextAlign.Center,
+                )
+            }
+
+            else -> {
+                LazyColumn(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(4.dp)
+                ) {
+                    items(listOrder) { order ->
+                        OrderItem(order,navController, false)
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun ChoGiaoHangScreen(navController: NavController, idCustomer: String?){
+    val orderViewModel:OrderViewModel = viewModel()
+
+    val listOrder by orderViewModel.listOrderOfCustomer.collectAsState()
+
+    val isLoading =  remember { mutableStateOf(false) }
+
+    val errorMessage = remember { mutableStateOf<String?>(null) }
+
+    if (idCustomer != null) {
+        isLoading.value = true // Bắt đầu tải dữ liệu
+        errorMessage.value = null
+        try {
+            orderViewModel.getOrderByCustomer(
+                idCustomer,
+                3
+            )
+        } catch (e: Exception) {
+            errorMessage.value = "Lỗi khi tải dữ liệu: ${e.message}"
+        } finally {
+            isLoading.value = false // Kết thúc tải dữ liệu
+        }
+    }
+
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(4.dp)
+    ) {
+        when {
+            isLoading.value -> {
+                CircularProgressIndicator(
+                    modifier = Modifier.align(Alignment.Center)
+                )
+            }
+
+            errorMessage.value != null -> {
+                Text(
+                    text = errorMessage.value ?: "Đã xảy ra lỗi",
+                    color = Color.Red,
+                    modifier = Modifier.align(Alignment.Center),
+                    textAlign = TextAlign.Center
+                )
+            }
+
+            listOrder.isEmpty() -> {
+                Text(
+                    text = "Không có hóa đơn nào đang chờ giao hàng.",
+                    modifier = Modifier.align(Alignment.Center),
+                    textAlign = TextAlign.Center,
+                )
+            }
+
+            else -> {
+                LazyColumn(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(4.dp)
+                ) {
+                    items(listOrder) { order ->
+                        OrderItem(order,navController, false)
+                    }
                 }
             }
         }
