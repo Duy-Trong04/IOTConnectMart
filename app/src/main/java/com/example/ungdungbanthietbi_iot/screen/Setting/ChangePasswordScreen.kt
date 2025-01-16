@@ -126,7 +126,7 @@ fun ChangePassword(onBack: () -> Unit = {}, id: String, password: String) {
                         label = { Text("Nhập mật khẩu cũ") },
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
                         visualTransformation = if (isPasswordVisible) VisualTransformation.None else PasswordVisualTransformation(),
-                        modifier = Modifier.fillMaxWidth()
+                        modifier = Modifier.fillMaxWidth(),
                     )
                 }
                 item {
@@ -198,10 +198,14 @@ fun ChangePassword(onBack: () -> Unit = {}, id: String, password: String) {
             onDismissRequest = { openDialog = false }, // Đóng khi nhấn ngoài dialog
             text = {
                 if (matkhau.value == password) {
-                    if (matkhaumoi.value == ""&& matkhaumoi2.value == "") {
+                    if (matkhaumoi.value == "" && matkhaumoi2.value == "" && password == "") {
                         Text("Vui lòng nhập đủ thông tin")
-                    } else if (matkhaumoi.value != matkhaumoi2.value) {
-                        Text("Mật khẩu mới với nhập lại mật khẩu không trùng khớp")
+                    }
+                    else if(matkhaumoi.value == password){
+                        Text("Mật khẩu mới không được trùng với mật khẩu cũ")
+                    }
+                    else if (matkhaumoi.value != matkhaumoi2.value) {
+                        Text("Mật khẩu mới và xác nhận mật khẩu không trùng khớp")
                     } else {
                         Text("Đổi mật khẩu thành công")
                         var account: UpdatePassword
