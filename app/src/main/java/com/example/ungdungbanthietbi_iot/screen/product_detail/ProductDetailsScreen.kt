@@ -643,7 +643,7 @@ fun ProductDetailsScreen(
                             fontWeight = FontWeight.Bold,
                             fontSize = 13.sp,
                             modifier = Modifier.clickable {
-                                navController.navigate(Screen.Product_Reviews.route)
+                                navController.navigate(Screen.Product_Reviews.route + "?idDevice=${id}")
                             }
                         )
                     }
@@ -658,7 +658,7 @@ fun ProductDetailsScreen(
                             )
                         }
                         Text(
-                            text = "${averageRating}/5 (${listReview.size} đánh giá)",
+                            text = "${averageRating}/5.0 (${listReview.size} đánh giá)",
                             modifier = Modifier.padding(start = 8.dp),
                             color = Color.Gray,
                             fontSize = 15.sp,
@@ -670,7 +670,9 @@ fun ProductDetailsScreen(
             items(listReview.take(2)){
                 CardReview(review = it, isChecked = isChecked, onlick = {
                     navController.navigate(Screen.Product_Reviews.route + "?idDevice=${it.idDevice}")
-                })
+                },
+                    id.toInt()
+                )
             }
             item {
                 Spacer(modifier = Modifier.height(10.dp))
@@ -713,8 +715,16 @@ fun ProductDetailsScreen(
 }
 
 @Composable
-fun CardReview(review: Review, isChecked:Boolean, onlick:() -> Unit){
+fun CardReview(review: Review, isChecked:Boolean, onlick:() -> Unit, id:Int){
     var currentChecked by remember { mutableStateOf(isChecked) }
+
+    val customerViewModel:CustomerViewModel = viewModel()
+    val listCustomer = customerViewModel.listCustomerReviewDevice
+
+    LaunchedEffect(id) {
+        customerViewModel.getCustomerReviewDeviceByIdDevice(id)
+    }
+
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -735,7 +745,11 @@ fun CardReview(review: Review, isChecked:Boolean, onlick:() -> Unit){
                 modifier = Modifier.size(30.dp)
             )
             Column() {
-                Text(text = review.idCustomer)
+                for (customer in listCustomer){
+                    if(customer.id == review.idCustomer){
+                        Text(text = "${customer.surname} ${customer.lastName}")
+                    }
+                }
                 Row(modifier = Modifier.padding(start = 5.dp))
                 {
                     repeat(review.rating) {
@@ -759,7 +773,6 @@ fun CardReview(review: Review, isChecked:Boolean, onlick:() -> Unit){
                 },
                     modifier = Modifier
                         .size(24.dp)
-//                        .align(Alignment.TopEnd)
                 ) {
                     Icon(
                         imageVector = Icons.Filled.ThumbUp,
@@ -774,83 +787,6 @@ fun CardReview(review: Review, isChecked:Boolean, onlick:() -> Unit){
             text = review.comment,
             modifier = Modifier.padding(bottom = 10.dp, start = 15.dp, end = 5.dp)
         )
-    }
-}
-
-
-@Composable
-fun CardDevice(device: Device, isFavorite:Boolean, idCustomer:String?, username: String?, navController: NavController){
-    var currentFavorite by remember { mutableStateOf(isFavorite) } // Quản lý trạng thái yêu thích
-    //format giá sản phẩm
-    val formatter = DecimalFormat("#,###,###")
-    val formattedPrice = formatter.format(device.sellingPrice)
-    Card(
-        modifier = Modifier
-            .width(200.dp)// Đặt chiều rộng cố định cho Card
-            .height(250.dp)
-            .padding(8.dp),
-        onClick = {
-            if (username != null){
-                navController.navigate(Screen.ProductDetailsScreen.route + "?id=${device.idDevice}&idCustomer=${idCustomer}&username=${username}")
-            }
-            else{
-                navController.navigate(Screen.ProductDetailsScreen.route + "?id=${device.idDevice}&idCustomer=${idCustomer}")
-            }
-        },
-        colors = CardDefaults.cardColors(
-            containerColor = Color.White
-        ),
-        elevation = CardDefaults.cardElevation(4.dp)
-    ) {
-        Box(modifier = Modifier.fillMaxWidth()){
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(8.dp),
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                //load hình ảnh từ API
-                AsyncImage(
-                    model = device.image,
-                    contentDescription = null,
-                    modifier = Modifier
-                        .width(190.dp)
-                        .height(100.dp)
-                )
-                Spacer(modifier = Modifier.height(8.dp))
-                Text(
-                    text = device.name,
-                    modifier = Modifier.fillMaxWidth(),
-                    textAlign = TextAlign.Center,
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 16.sp
-                )
-                Spacer(modifier = Modifier.height(8.dp))
-                Text(
-                    text = "${formattedPrice}đ",
-                    color = Color.Red,
-                    modifier = Modifier.fillMaxWidth(),
-                    textAlign = TextAlign.Center,
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 16.sp
-                )
-            }
-            IconButton(onClick = {
-                currentFavorite = !currentFavorite
-                //Thêm vào danh sách yêu thích or xóa khỏi danh sách
-            },
-                modifier = Modifier
-                    .size(24.dp)
-                    .align(Alignment.TopEnd)
-            ) {
-                Icon(
-                    imageVector = if (currentFavorite) Icons.Filled.Favorite else Icons.Filled.FavoriteBorder,
-                    contentDescription = if (currentFavorite) "Yêu thích" else "Chưa yêu thích",
-                    tint = Color.Red
-                )
-            }
-        }
-
     }
 }
 

@@ -169,10 +169,10 @@ fun HomeScreen(
     val navdrawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     val scope = rememberCoroutineScope() //xử lý suspending fun (mở và đóng drawer)
     val countries = listOf(
-        "Điện gia dụng",
-        "Điện chiếu sáng",
+        "Thiết bị chiếu sáng",
         "Thiết bị cảm biến",
-        "Xả kho",
+        "Thiết bị điện tử thông minh",
+        "Đồng hồ thông minh",
     )
 
     // Tạo LazyListState để quản lý trạng thái cuộn
@@ -234,7 +234,12 @@ fun HomeScreen(
                     modifier = Modifier
                         .padding(12.dp)
                         .clickable {
-                            navController.navigate(Screen.HomeScreen.route)
+                            if(username == null){
+                                navController.navigate(Screen.HomeScreen.route)
+                            }
+                            else{
+                                navController.navigate(Screen.HomeScreen.route + "?username=${username}")
+                            }
                         },
                     color = Color(0xFF5D9EFF),
                     fontWeight = FontWeight.Bold,

@@ -77,10 +77,10 @@ fun PersonalScreen(
     val navdrawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     val scope = rememberCoroutineScope() //xử lý suspending fun (mở và đóng drawer)
     val countries = listOf(
-        "Điện gia dụng",
-        "Điện chiếu sáng",
+        "Thiết bị chiếu sáng",
         "Thiết bị cảm biến",
-        "Xả kho",
+        "Thiết bị điện tử thông minh",
+        "Đồng hồ thông minh",
     )
 
     // Lấy ViewModel
@@ -152,7 +152,7 @@ fun PersonalScreen(
                 Text(
                     text = "T R A N G  C H Ủ",
                     modifier = Modifier.padding(12.dp).clickable {
-                        navController.navigate(Screen.HomeScreen.route)
+                        navController.navigate(Screen.HomeScreen.route + "?username=${username}")
                     },
                     color = Color(0xFF5D9EFF),
                     fontWeight = FontWeight.Bold,
@@ -421,16 +421,17 @@ fun PersonalScreen(
                             horizontalArrangement = Arrangement.SpaceBetween,
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Text(text = "Đơn Mua", fontSize = 20.sp, fontWeight = FontWeight.Bold)
+                            Text(text = "Đơn mua", fontSize = 20.sp, fontWeight = FontWeight.Bold)
                             TextButton(
                                 onClick = {
                                     // Chuyển màn hình Lịch sử mua hàng
-                                    //Chuyển đến màn hình OrderListScreen(Lịch sử mua hàng)
-                                    //ở tab có vị tris thứ 3
                                     navController.navigate(Screen.OrderListScreen.route + "?idCustomer=${account.idPerson}")
                                 }
                             ) {
-                                Text(text = "Lịch sử mua hàng")
+                                Text(text = "Lịch sử mua hàng",
+                                    fontSize = 20.sp,
+                                    color = Color(0xFF5D9EFF)
+                                )
                             }
                         }
                         Column(
@@ -448,9 +449,7 @@ fun PersonalScreen(
                                     description = "Chờ xác nhận",
                                     //Chuyen den tab chờ xác nhận
                                     onclick = {
-                                        navController.navigate("OrderListScreen/0")
-                                        //Chuyển đến màn hình OrderListScreen(Lịch sử mua hàng)
-                                        //ở tab có vị trí thứ 0
+                                        navController.navigate(Screen.OrderListScreen.route + "?idCustomer=${account.idPerson}")
                                     }
                                 )
                                 OrderStatusItem(
@@ -458,9 +457,7 @@ fun PersonalScreen(
                                     description = "Chờ lấy hàng",
                                     //Chuyển màn hình tab Chờ giao hàng
                                     onclick = {
-                                        //Chuyển đến màn hình OrderListScreen(Lịch sử mua hàng)
-                                        //ở tab có vị trí thứ 1
-                                        navController.navigate("OrderListScreen/1")
+                                        navController.navigate(Screen.OrderListScreen.route + "?idCustomer=${account.idPerson}")
                                     }
                                 )
                                 OrderStatusItem(
@@ -468,9 +465,7 @@ fun PersonalScreen(
                                     description = "Chờ giao hàng",
                                     //Chuyển màn hình tab Chờ lấy hàng
                                     onclick = {
-                                        //Chuyển đến màn hình OrderListScreen(Lịch sử mua hàng)
-                                        //ở tab có vị trí thứ 2
-                                        navController.navigate("OrderListScreen/2")
+                                        navController.navigate(Screen.OrderListScreen.route + "?idCustomer=${account.idPerson}")
                                     }
                                 )
                                 OrderStatusItem(
@@ -479,7 +474,7 @@ fun PersonalScreen(
                                     //Chuyển màn hình đánh giá sản phẩm
                                     onclick = {
                                         /*Thực hiện chức năng chuyển màn hình đánh giá*/
-                                        navController.navigate(Screen.Rating_History.route)
+                                        //navController.navigate(Screen.Rating_History.route)
                                     }
                                 )
                             }

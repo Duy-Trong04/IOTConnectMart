@@ -24,4 +24,9 @@ interface CustomerAPIService {
     suspend fun getCustomerByIdOrder(
         @Query("id") id: Int
     ): Customer
+
+    @GET("customer/getCustomerReviewDeviceByIdDevice.php")
+    suspend fun getCustomerReviewDeviceByIdDevice(
+        @Query("idDevice") idDevice: Int
+    ): CustomerResponse
 }

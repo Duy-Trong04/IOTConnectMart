@@ -16,7 +16,7 @@ import kotlinx.coroutines.withContext
 class CustomerViewModel:ViewModel() {
     var customer by mutableStateOf<Customer?>(null)
         private set
-    var listCustomerByOrder by mutableStateOf<List<Customer>>(emptyList())
+    var listCustomerReviewDevice by mutableStateOf<List<Customer>>(emptyList())
     var khachhangUpdateResult by mutableStateOf("")
         private set
 
@@ -31,6 +31,18 @@ class CustomerViewModel:ViewModel() {
             }
         } catch (e: Exception) {
             emit(emptyList())  // Trả danh sách trống nếu có lỗi
+        }
+    }
+    fun getCustomerReviewDeviceByIdDevice(idDevice: Int) {
+        viewModelScope.launch {
+            try {
+                val response = withContext(Dispatchers.IO) {
+                    RetrofitClient.customerAPIService.getCustomerReviewDeviceByIdDevice(idDevice)
+                }
+                listCustomerReviewDevice = response.customer
+            } catch (e: Exception) {
+                Log.e("Customer Error", "Lỗi khi lấy customer", e)
+            }
         }
     }
     fun getCustomerById(id: String) {

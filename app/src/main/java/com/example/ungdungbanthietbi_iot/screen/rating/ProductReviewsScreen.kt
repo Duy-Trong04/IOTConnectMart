@@ -1,5 +1,6 @@
 package com.example.ungdungbanthietbi_iot.screen.rating
 
+import android.icu.text.SimpleDateFormat
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
@@ -37,9 +38,12 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+import com.example.ungdungbanthietbi_iot.data.customer.CustomerViewModel
 import com.example.ungdungbanthietbi_iot.data.review_device.ReviewViewModel
 import com.example.ungdungbanthietbi_iot.data.review_device.Review
+import java.util.Locale
 
 /** Giao diện màn hình danh sách đánh giá của sản phẩm (ProductReviewsScreen)
  * -------------------------------------------
@@ -70,7 +74,7 @@ fun ProductReviewsScreen(
     // Biến trạng thái để sản phẩm yêu thích không
     var isUseful by remember { mutableStateOf(false) }
     // Hiển thị màn hình danh sách đánh giá với các đánh giá mẫu
-    ReviewListScreen(reviews = listReview, navController = navController, isUseful = isUseful)
+    ReviewListScreen(reviews = listReview, navController = navController, isUseful = isUseful, id.toInt())
 }
 
 /** Giao diện màn hình danh sách đánh giá của sản phẩm (ReviewListScreen)
@@ -91,13 +95,14 @@ fun ProductReviewsScreen(
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ReviewListScreen(reviews: List<Review>, navController: NavController, isUseful: Boolean) {
+fun ReviewListScreen(reviews: List<Review>, navController: NavController, isUseful: Boolean, id:Int) {
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Đánh giá ",
+                title = { Text("Đánh giá",
                     modifier = Modifier.fillMaxWidth(),
-                    textAlign = TextAlign.Center
+                    textAlign = TextAlign.Start,
+                    fontWeight = FontWeight.Bold
                 ) },
                 navigationIcon = {
                     IconButton(onClick = {
@@ -119,11 +124,11 @@ fun ReviewListScreen(reviews: List<Review>, navController: NavController, isUsef
         LazyColumn(
             modifier = Modifier.padding(it)
                 .fillMaxSize()
-                .padding(16.dp),
+                .padding(8.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             items(reviews) { index ->
-                ReviewCard(review = index, isUseful = isUseful)// Hiển thị từng bài đánh giá
+                ReviewCard(review = index, isUseful = isUseful, id)// Hiển thị từng bài đánh giá
             }
         }
     }
@@ -146,16 +151,25 @@ fun ReviewListScreen(reviews: List<Review>, navController: NavController, isUsef
  *
  */
 @Composable
-fun ReviewCard(review: Review, isUseful:Boolean) {
+fun ReviewCard(review: Review, isUseful:Boolean, id:Int) {
     var currentisUseful by remember { mutableStateOf(isUseful) } // Trạng thái đánh dấu hữu ích
+    val customerViewModel: CustomerViewModel = viewModel()
+    val listCustomer = customerViewModel.listCustomerReviewDevice
+
+    LaunchedEffect(id) {
+        customerViewModel.getCustomerReviewDeviceByIdDevice(id)
+    }
     Card(
         shape = RoundedCornerShape(8.dp),
         elevation = CardDefaults.cardElevation(4.dp),
-        modifier = Modifier.fillMaxWidth()
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(
+            containerColor = Color.White
+        )
     ) {
         // Hàng chứa ảnh sản phẩm và tên người dùng
         Row (
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier.fillMaxWidth().padding(start = 5.dp, end = 5.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
         ){
@@ -169,12 +183,15 @@ fun ReviewCard(review: Review, isUseful:Boolean) {
                     modifier = Modifier.size(50.dp).padding(end = 8.dp),
                     contentScale = ContentScale.Crop
                 )
-                // Tên người dùng
-                Text(
-                    text = review.idCustomer,
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 16.sp
-                )
+                for (customer in listCustomer){
+                    if(customer.id == review.idCustomer){
+                        Text(
+                            text = "${customer.surname} ${customer.lastName}",
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 18.sp
+                        )
+                    }
+                }
             }
             // Nút "Hữu ích"
             Row (
@@ -192,7 +209,9 @@ fun ReviewCard(review: Review, isUseful:Boolean) {
             }
         }
         // Thanh đánh giá sao
-        Row{
+        Row(
+            modifier = Modifier.padding(start = 5.dp, end = 5.dp)
+        ){
             for (i in 1..5) {
                 Text(
                     text = if (i <= review.rating) "★" else "☆",
@@ -204,17 +223,29 @@ fun ReviewCard(review: Review, isUseful:Boolean) {
         // Nội dung bình luận
         Text(
             text = review.comment,
-            fontSize = 14.sp,
+            fontSize = 16.sp,
             overflow = TextOverflow.Ellipsis,
-            modifier = Modifier.padding(vertical = 4.dp)
+            modifier = Modifier.padding(start = 5.dp, end = 5.dp)
         )
         // Ngày đánh giá
         Text(
-            text = review.created_at,
-            fontSize = 13.sp,
-            color = Color.Gray
+            text = formatDate(review.created_at),
+            fontSize = 14.sp,
+            color = Color.Gray,
+            modifier = Modifier.padding(start = 5.dp, end = 5.dp)
         )
     }
 }
 
 
+@Composable
+fun formatDate(inputDate: String): String {
+    return try {
+        val inputFormat = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()) // Định dạng từ API
+        val outputFormat = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()) // Định dạng đầu ra
+        val date = inputFormat.parse(inputDate)
+        date?.let { outputFormat.format(it) } ?: "Ngày không hợp lệ"
+    } catch (e: Exception) {
+        "Ngày không hợp lệ"
+    }
+}
