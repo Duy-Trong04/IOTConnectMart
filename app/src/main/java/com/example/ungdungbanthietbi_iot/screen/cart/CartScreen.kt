@@ -184,7 +184,7 @@ fun CartScreen(
                         )
                     ) {
                         Text("MUA HÀNG",
-                            fontSize = 22.sp
+                            fontSize = 20.sp
                         )
                     }
                     if (openDialog == true) {
@@ -243,13 +243,12 @@ fun CartScreen(
                 var soLuong by remember { mutableStateOf(cart.stock) }
                 val sanPham = deviceViewModel.listDeviceOfCustomer.find { it.idDevice == cart.idDevice }
 
-                var chieucaocard by remember { mutableStateOf(190) }
                 if(sanPham != null){
                     Card(
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(8.dp)
-                            .height(chieucaocard.dp),
+                            .height(200.dp),
                         elevation = CardDefaults.cardElevation(4.dp),
                         colors = CardDefaults.cardColors(containerColor = Color.White),
                         onClick = {
@@ -260,7 +259,7 @@ fun CartScreen(
                             modifier = Modifier
                                 .fillMaxSize()
                                 .background(Color.White, shape = RoundedCornerShape(8.dp))
-                                .padding(8.dp),
+                                .padding(2.dp),
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.Start
                         ){
@@ -290,16 +289,16 @@ fun CartScreen(
                                 model = sanPham.image,
                                 contentDescription = null,
                                 modifier = Modifier
-                                    .size(150.dp),
+                                    .size(120.dp),
                                 contentScale = ContentScale.Fit
                             )
                             Column(modifier = Modifier.weight(1f)) {
                                 // Tên sản phẩm
-                                Text(text = sanPham.name, fontWeight = FontWeight.Bold, fontSize = 20.sp)
-                                Spacer(modifier = Modifier.height(8.dp))
+                                Text(text = sanPham.name, fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                                Spacer(modifier = Modifier.height(5.dp))
                                 // Giá sản phẩm
                                 Text(text = "Giá: ${formatGiaTien(sanPham.sellingPrice)}", color = Color.Red)
-                                Spacer(modifier = Modifier.height(8.dp))
+                                Spacer(modifier = Modifier.height(5.dp))
                                 Row(verticalAlignment = Alignment.CenterVertically) {
                                     // Nút giảm số lượng
                                     IconButton(onClick = {
