@@ -73,7 +73,7 @@ fun NavGraph(
     NavHost(
         navController = navController,
         // Màn hình đầu tiên hiển thị
-        startDestination = Screen.IntroScreen.route
+        startDestination = Screen.HomeScreen.route
     ){
         // Màn hình IntroScreen sau khoảng thời gian quy định thì chuyển sang màn hình trang chủ HomeScreen
         composable(route = Screen.IntroScreen.route){

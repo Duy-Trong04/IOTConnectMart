@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
@@ -61,6 +62,7 @@ import com.example.ungdungbanthietbi_iot.data.account.AccountViewModel
 import com.example.ungdungbanthietbi_iot.navigation.Screen
 import kotlinx.coroutines.launch
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.ui.draw.clip
 
 /** Giao diện màn hình đăng nhập (LoginScreen)
  * -------------------------------------------
@@ -118,20 +120,20 @@ fun LoginScreen(navController: NavController, accountViewModel: AccountViewModel
                         color = Color(0xFF085979),
                         fontWeight = FontWeight.Bold
                     )
-
+                    Spacer(modifier = Modifier.height(16.dp))
                     // Hiển thị logo từ file drawable
                     Image(
                         // Thay "logo" bằng tên file ảnh
-                        painter = painterResource(id = R.drawable.logo),
+                        painter = painterResource(id = R.drawable.logo9),
                         contentDescription = "Logo",
-                        modifier = Modifier.size(300.dp)
+                        modifier = Modifier.size(240.dp).clip(CircleShape) // Đặt hình dạng là hình tròn
                     )
-                    Text(
-                        text = "IOT Connect Mart",
-                        fontSize = 27.sp,
-                        color = Color(0xFF085979),
-                        fontWeight = FontWeight.Bold
-                    )
+//                    Text(
+//                        text = "IOT Connect Mart",
+//                        fontSize = 27.sp,
+//                        color = Color(0xFF085979),
+//                        fontWeight = FontWeight.Bold
+//                    )
 
                     Spacer(modifier = Modifier.height(16.dp))
                     //email

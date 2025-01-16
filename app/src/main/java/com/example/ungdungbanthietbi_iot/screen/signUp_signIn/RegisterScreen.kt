@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
@@ -70,6 +71,7 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
+import androidx.compose.ui.draw.clip
 import kotlinx.coroutines.coroutineScope
 
 
@@ -182,20 +184,20 @@ fun RegisterScreen(
                         color = Color(0xFF085979),
                         fontWeight = FontWeight.Bold
                     )
-
+                    Spacer(modifier = Modifier.height(16.dp))
                     // Hiển thị logo từ file drawable
                     Image(
                         // Thay "logo" bằng tên file ảnh của bạn
-                        painter = painterResource(id = R.drawable.logo),
+                        painter = painterResource(id = R.drawable.logo9),
                         contentDescription = "Logo",
-                        modifier = Modifier.size(300.dp)
+                        modifier = Modifier.size(240.dp).clip(CircleShape)
                     )
-                    Text(
-                        text = "IOT Connect Mart",
-                        fontSize = 27.sp,
-                        color = Color(0xFF085979),
-                        fontWeight = FontWeight.Bold
-                    )
+//                    Text(
+//                        text = "IOT Connect Mart",
+//                        fontSize = 27.sp,
+//                        color = Color(0xFF085979),
+//                        fontWeight = FontWeight.Bold
+//                    )
 
                     Spacer(modifier = Modifier.height(16.dp))
                     //Họ
