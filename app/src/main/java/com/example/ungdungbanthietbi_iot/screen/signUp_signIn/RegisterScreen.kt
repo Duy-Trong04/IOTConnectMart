@@ -137,32 +137,32 @@ fun RegisterScreen(
     // Gửi dữ liệu lên server
     val accountNew = AddAccount(username, username, password)
     val customerNew = AddCustomer(username, ho, ten, sdt)
-    LaunchedEffect(accountCheckResult, customerCheckResult) {
-        if(accountCheckResult == false || customerCheckResult == false) {
-            // Kiểm tra điều kiện hợp lệ trước khi gửi lên server
-            if (username.isNotEmpty() && password.isNotEmpty() && comfirmPassword.isNotEmpty() && sdt.isNotEmpty() && ho.isNotEmpty() && ten.isNotEmpty()) {
-                if (password == comfirmPassword) {
-                    // Thực hiện gọi API hoặc gửi dữ liệu tới server
-                    accountViewModel.addToAccount(accountNew)
-                    // Ví dụ gọi ViewModel để gửi dữ liệu
-                    customerViewModel.addToCustomer(customerNew)
-                    // Điều hướng đến màn hình đăng nhập sau khi thành công
-                    openDialog_Dk=true
-
-                } else {
-                    openDialog =
-                        true  // Nếu mật khẩu không khớp, hiển thị thông báo lỗi
-                }
-            } else {
-                openDialog =
-                    true  // Nếu thiếu thông tin, hiển thị thông báo lỗi
-            }
-            Log.d("AccountViewModel", "Đăng ký thành công\n")
-        } else if (accountCheckResult == true) {
-            openDialog = true
-            Log.d("AccountViewModel", "Đăng ký thất bại\n")
-        }
-    }
+    accountViewModel.check_Dk(accountNew)
+    customerViewModel.check_Dk(customerNew)
+    //LaunchedEffect(accountCheckResult, customerCheckResult) {
+//        if(accountCheckResult == false || customerCheckResult == false) {
+//            // Kiểm tra điều kiện hợp lệ trước khi gửi lên server
+//            if (username.isNotEmpty() && password.isNotEmpty() && comfirmPassword.isNotEmpty() && sdt.isNotEmpty() && ho.isNotEmpty() && ten.isNotEmpty()) {
+//                if (password == comfirmPassword) {
+//                    // Thực hiện gọi API hoặc gửi dữ liệu tới server
+//                    accountViewModel.addToAccount(accountNew)
+//                    // Ví dụ gọi ViewModel để gửi dữ liệu
+//                    customerViewModel.addToCustomer(customerNew)
+//                    // Điều hướng đến màn hình đăng nhập sau khi thành công
+//                    openDialog_Dk=true
+//
+//                } else {
+//                    openDialog = true  // Nếu mật khẩu không khớp, hiển thị thông báo lỗi
+//                }
+//            } else {
+//                openDialog = true  // Nếu thiếu thông tin, hiển thị thông báo lỗi
+//            }
+//            Log.d("AccountViewModel", "Đăng ký thành công\n")
+//        } else if (accountCheckResult == true&& customerCheckResult == true) {
+//            openDialog = true
+//            Log.d("AccountViewModel", "Đăng ký thất bại\n")
+//        }
+   // }
     Scaffold(
         modifier = Modifier.fillMaxWidth(),
         topBar = {
@@ -387,6 +387,28 @@ fun RegisterScreen(
                         onClick = {
                             accountViewModel.check_Dk(accountNew)
                             customerViewModel.check_Dk(customerNew)
+                            if(accountCheckResult == false || customerCheckResult == false) {
+                                // Kiểm tra điều kiện hợp lệ trước khi gửi lên server
+                                if (username.isNotEmpty() && password.isNotEmpty() && comfirmPassword.isNotEmpty() && sdt.isNotEmpty() && ho.isNotEmpty() && ten.isNotEmpty()) {
+                                    if (password == comfirmPassword) {
+                                        // Thực hiện gọi API hoặc gửi dữ liệu tới server
+                                        accountViewModel.addToAccount(accountNew)
+                                        // Ví dụ gọi ViewModel để gửi dữ liệu
+                                        customerViewModel.addToCustomer(customerNew)
+                                        // Điều hướng đến màn hình đăng nhập sau khi thành công
+                                        openDialog_Dk=true
+
+                                    } else {
+                                        openDialog = true  // Nếu mật khẩu không khớp, hiển thị thông báo lỗi
+                                    }
+                                } else {
+                                    openDialog = true  // Nếu thiếu thông tin, hiển thị thông báo lỗi
+                                }
+                                Log.d("AccountViewModel", "Đăng ký thành công\n")
+                            } else if (accountCheckResult == true&& customerCheckResult == true) {
+                                openDialog = true
+                                Log.d("AccountViewModel", "Đăng ký thất bại\n")
+                            }
                         },
                         modifier = Modifier
                             .width(350.dp)
@@ -410,8 +432,9 @@ fun RegisterScreen(
                     Text("Vui lòng nhập đầy đủ thông tin")
                 } else if (password != comfirmPassword) {
                     Text("Password và Comfirm Password không khớp")
-                } else {
-                    Text("Username đã tồn tại")
+                }
+                else {
+                    Text("Tài khoản đã tồn tại")
                 }
             },
             confirmButton = {
