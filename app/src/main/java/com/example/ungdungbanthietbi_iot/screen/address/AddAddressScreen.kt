@@ -12,6 +12,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.BottomAppBar
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -41,6 +42,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Dialog
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.example.ungdungbanthietbi_iot.data.address_book.Address
@@ -71,7 +73,7 @@ fun AddAddressScreen(
     idCustomer:String
 ){
 
-
+    var showDialog by remember { mutableStateOf(false) }
 
     val addressViewModel:AddressViewModel = viewModel()
     var listAddress = addressViewModel.listAddress
@@ -156,36 +158,41 @@ fun AddAddressScreen(
                     Button(
                         modifier = Modifier.fillMaxWidth(),
                         onClick = {
-                            /* Thêm logic thêm địa chỉ */
-                            if(isDefault){
-                                for(address in listAddress){
-                                    if(address.isDefault == 1){
-                                        var address = Address(
-                                            address.id,
-                                            address.idCustomer,
-                                            address.district,
-                                            address.city,
-                                            address.ward,
-                                            address.street,
-                                            0
-                                        )
-                                        addressViewModel.updateAddress(address)
+                            if(city.trim() != "" || district.trim() != "" || ward != "" || street != ""){
+                                /* Thêm logic thêm địa chỉ */
+                                if(isDefault){
+                                    for(address in listAddress){
+                                        if(address.isDefault == 1){
+                                            var address = Address(
+                                                address.id,
+                                                address.idCustomer,
+                                                address.district,
+                                                address.city,
+                                                address.ward,
+                                                address.street,
+                                                0
+                                            )
+                                            addressViewModel.updateAddress(address)
+                                        }
                                     }
                                 }
+                                if(idCustomer != null){
+                                    var address = Address(
+                                        0,
+                                        idCustomer,
+                                        district,
+                                        city,
+                                        ward,
+                                        street,
+                                        if(isDefault) 1 else 0
+                                    )
+                                    addressViewModel.addAddress(address)
+                                }
+                                navController.popBackStack()
                             }
-                            if(idCustomer != null){
-                                var address = Address(
-                                    0,
-                                    idCustomer,
-                                    district,
-                                    city,
-                                    ward,
-                                    street,
-                                    if(isDefault) 1 else 0
-                                )
-                                addressViewModel.addAddress(address)
+                            else{
+                                showDialog = true
                             }
-                            navController.popBackStack()
                         },
                         colors = ButtonDefaults.buttonColors(
                             containerColor = Color(0xFF5D9EFF)
@@ -194,6 +201,21 @@ fun AddAddressScreen(
                         elevation = ButtonDefaults.buttonElevation(4.dp)// Tạo độ nổi
                     ) {
                         Text("Thêm địa chỉ", fontSize = 20.sp)
+                    }
+                    if(showDialog){
+                        AlertDialog(
+                            onDismissRequest = { showDialog = false },
+                            title = { Text(text = "Thông báo") },
+                            text = { Text(text = "Vui lòng nhập đầy đủ thông tin địa chỉ.") },
+                            confirmButton = {
+                                Button(onClick = { showDialog = false },
+                                    colors = ButtonDefaults.buttonColors(
+                                        containerColor = Color(0xFF5D9EFF)
+                                    )) {
+                                    Text("OK")
+                                }
+                            }
+                        )
                     }
                 }
             }
