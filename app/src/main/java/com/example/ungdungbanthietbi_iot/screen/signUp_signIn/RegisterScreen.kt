@@ -126,43 +126,15 @@ fun RegisterScreen(
     // Biến kiểm tra kết quả đăng nhập
     var openDialog by remember { mutableStateOf(false) }
     var openDialog_Dk by remember { mutableStateOf(false) }
-    // Khởi tạo FocusRequester cho các trường nhập liệu
-    val focusRequesterHo = remember { FocusRequester() }
-    val focusRequesterTen = remember { FocusRequester() }
-    val focusRequesterSdt = remember { FocusRequester() }
-    val focusRequesterEmail = remember { FocusRequester() }
-    val focusRequesterPassword = remember { FocusRequester() }
-    val focusRequesterComfirmPassword = remember { FocusRequester() }
-    // Sử dụng coroutineScope thông qua rememberCoroutineScope
+
     // Gửi dữ liệu lên server
     val accountNew = AddAccount(username, username, password)
     val customerNew = AddCustomer(username, ho, ten, sdt)
     accountViewModel.check_Dk(accountNew)
     customerViewModel.check_Dk(customerNew)
-    //LaunchedEffect(accountCheckResult, customerCheckResult) {
-//        if(accountCheckResult == false || customerCheckResult == false) {
-//            // Kiểm tra điều kiện hợp lệ trước khi gửi lên server
-//            if (username.isNotEmpty() && password.isNotEmpty() && comfirmPassword.isNotEmpty() && sdt.isNotEmpty() && ho.isNotEmpty() && ten.isNotEmpty()) {
-//                if (password == comfirmPassword) {
-//                    // Thực hiện gọi API hoặc gửi dữ liệu tới server
-//                    accountViewModel.addToAccount(accountNew)
-//                    // Ví dụ gọi ViewModel để gửi dữ liệu
-//                    customerViewModel.addToCustomer(customerNew)
-//                    // Điều hướng đến màn hình đăng nhập sau khi thành công
-//                    openDialog_Dk=true
-//
-//                } else {
-//                    openDialog = true  // Nếu mật khẩu không khớp, hiển thị thông báo lỗi
-//                }
-//            } else {
-//                openDialog = true  // Nếu thiếu thông tin, hiển thị thông báo lỗi
-//            }
-//            Log.d("AccountViewModel", "Đăng ký thành công\n")
-//        } else if (accountCheckResult == true&& customerCheckResult == true) {
-//            openDialog = true
-//            Log.d("AccountViewModel", "Đăng ký thất bại\n")
-//        }
-   // }
+
+    var phoneError by remember { mutableStateOf("") }
+
     Scaffold(
         modifier = Modifier.fillMaxWidth(),
         topBar = {
@@ -192,13 +164,6 @@ fun RegisterScreen(
                         contentDescription = "Logo",
                         modifier = Modifier.size(240.dp).clip(CircleShape)
                     )
-//                    Text(
-//                        text = "IOT Connect Mart",
-//                        fontSize = 27.sp,
-//                        color = Color(0xFF085979),
-//                        fontWeight = FontWeight.Bold
-//                    )
-
                     Spacer(modifier = Modifier.height(16.dp))
                     //Họ
                     TextField(
@@ -250,7 +215,16 @@ fun RegisterScreen(
                     //SDT
                     TextField(
                         value = sdt,
-                        onValueChange = { sdt = it },
+                        onValueChange = {
+                            sdt = it
+                            if (it.matches(Regex("\\d*"))) { // Chỉ cho phép nhập số
+                                sdt = it
+                            }
+                            phoneError = if (it.length == 10) {
+                                ""
+                            } else {
+                                "Số điện thoại phải đúng 10 số"
+                            } },
                         modifier = Modifier.width(350.dp).padding(4.dp),
                         placeholder = { Text(text = "SĐT") },
                         leadingIcon = {
@@ -269,6 +243,13 @@ fun RegisterScreen(
                             keyboardType = KeyboardType.Phone, imeAction = ImeAction.Next
                         )
                     )
+                    if (phoneError.isNotEmpty()) {
+                        Text(
+                            text = phoneError,
+                            color = Color.Red,
+                            fontSize = 12.sp
+                        )
+                    }
 
                     //email
                     TextField(

@@ -48,6 +48,8 @@ fun EditEmailScreen(id: String,onBack: () -> Unit = {}, email: String) {
     var email1 by remember { mutableStateOf(email) }
     var id by remember { mutableStateOf(id) }
     var emailModel: CustomerViewModel= viewModel()
+
+    var emailError by remember { mutableStateOf("") }
     Scaffold(
         topBar = {
             TopAppBar(
@@ -74,7 +76,9 @@ fun EditEmailScreen(id: String,onBack: () -> Unit = {}, email: String) {
                         email = Email(id,email1)
                         emailModel.updateEmail(email)
                         onBack()
-                    }) {
+                    },
+                        enabled = emailError.isEmpty()
+                    ) {
                         Icon(
                             imageVector = Icons.Default.Done,
                             contentDescription = "Save",
@@ -99,10 +103,24 @@ fun EditEmailScreen(id: String,onBack: () -> Unit = {}, email: String) {
                 item {
                     OutlinedTextField(
                         value = email1,
-                        onValueChange = { email1 = it },
+                        onValueChange = {
+                            email1 = it
+                            emailError = if (!it.endsWith("@gmail.com")) {
+                                "Email phải có đuôi '@gmail.com'"
+                            } else {
+                                ""
+                            }},
                         label = { Text("Email") },
+                        isError = emailError.isNotEmpty(),
                         modifier = Modifier.fillMaxWidth()
                     )
+                    if (emailError.isNotEmpty()) {
+                        Text(
+                            text = emailError,
+                            color = Color.Red,
+                            fontSize = 12.sp
+                        )
+                    }
                 }
             }
         }

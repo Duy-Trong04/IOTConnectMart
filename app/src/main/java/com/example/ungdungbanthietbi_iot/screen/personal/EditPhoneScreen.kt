@@ -47,10 +47,13 @@ import com.example.ungdungbanthietbi_iot.data.customer.Phone
 //@Preview(showBackground = true)
 @Composable
 fun EditPhoneScreen(id: String,onBack: () -> Unit = {}, phoneNumber:String ) {
-    //var phone by remember { mutableStateOf("01234566677") }
+
     var phone1 by remember { mutableStateOf(phoneNumber) }
     var id by remember { mutableStateOf(id) }
     var phoneModel: CustomerViewModel= viewModel()
+
+    var errorMessage by remember { mutableStateOf("") }
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -73,10 +76,14 @@ fun EditPhoneScreen(id: String,onBack: () -> Unit = {}, phoneNumber:String ) {
                 actions = {
                     IconButton(onClick = {
                     /* Chức năng lưu lại thông tin đã sửa */
-                        val phone: Phone
-                        phone = Phone(id,phone1)
-                        phoneModel.updatePhone(phone)
-                        onBack()
+                        // Kiểm tra tính hợp lệ của số điện thoại
+                        if (phone1.length != 10 || !phone1.matches(Regex("\\d+"))) {
+                            errorMessage = "Số điện thoại phải có đúng 10 chữ số!"
+                        } else {
+                            val phone = Phone(id, phone1)
+                            phoneModel.updatePhone(phone)
+                            onBack()
+                        }
                     }) {
                         Icon(
                             imageVector = Icons.Default.Done,
@@ -102,13 +109,25 @@ fun EditPhoneScreen(id: String,onBack: () -> Unit = {}, phoneNumber:String ) {
                 item {
                     OutlinedTextField(
                         value = phone1,
-                        onValueChange = { phone1 = it },
+                        onValueChange = {
+                            if (it.matches(Regex("\\d*"))) { // Chỉ cho phép nhập số
+                            phone1 = it
+                        } },
                         label = { Text("Phone") },
                         modifier = Modifier.fillMaxWidth(),
+                        isError = errorMessage.isNotEmpty(),
                         keyboardOptions = KeyboardOptions.Default.copy(
                             keyboardType = KeyboardType.Phone // Hiển thị bàn phím số
                         )
                     )
+                    if (errorMessage.isNotEmpty()) {
+                        Text(
+                            text = errorMessage,
+                            color = Color.Red,
+                            fontSize = 12.sp,
+                            modifier = Modifier.padding(top = 4.dp)
+                        )
+                    }
                 }
             }
         }
