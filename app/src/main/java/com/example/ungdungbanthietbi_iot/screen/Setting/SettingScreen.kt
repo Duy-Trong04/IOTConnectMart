@@ -43,6 +43,8 @@ fun AccountSettingsScreen(navController: NavHostController, onBack: () -> Unit =
     val screenWidth = configuration.screenWidthDp.dp
     val id by remember { mutableStateOf(idCustomer) }
     val password by remember { mutableStateOf(password) }
+
+    var showDialog by remember { mutableStateOf(false) }
     Scaffold(
         topBar = {
             TopAppBar(
@@ -95,10 +97,11 @@ fun AccountSettingsScreen(navController: NavHostController, onBack: () -> Unit =
                     ){
                         Button(
                             onClick = {
-                                /* Thêm chức năng đăng xuất */
-                                navController.navigate(Screen.LoginScreen.route){
-                                    popUpTo(0) {inclusive = true} //Xóa màn hình trước
-                                }
+                                showDialog = true // Hiển thị dialog
+//                                /* Thêm chức năng đăng xuất */
+//                                navController.navigate(Screen.LoginScreen.route){
+//                                    popUpTo(0) {inclusive = true} //Xóa màn hình trước
+//                                }
                             },
                             colors = ButtonDefaults.buttonColors(containerColor = Color.White),
                             shape = RoundedCornerShape(50),
@@ -133,6 +136,28 @@ fun AccountSettingsScreen(navController: NavHostController, onBack: () -> Unit =
             }
         }
     )
+    if (showDialog) {
+        AlertDialog(
+            onDismissRequest = { showDialog = false }, // Đóng dialog khi nhấn ra ngoài
+            title = { Text("Xác nhận đăng xuất") },
+            text = { Text("Bạn có chắc chắn muốn đăng xuất không?") },
+            confirmButton = {
+                TextButton(onClick = {
+                    showDialog = false // Đóng dialog
+                    navController.navigate(Screen.LoginScreen.route) {
+                        popUpTo(0) { inclusive = true } // Xóa màn hình trước
+                    }
+                }) {
+                    Text("Đồng ý", color = Color(0xFF5F9EFF))
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDialog = false }) { // Đóng dialog
+                    Text("Hủy", color = Color.Gray)
+                }
+            }
+        )
+    }
 }
 
 
