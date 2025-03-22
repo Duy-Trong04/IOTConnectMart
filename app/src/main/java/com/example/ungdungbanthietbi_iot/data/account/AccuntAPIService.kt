@@ -20,7 +20,10 @@ data class AddAccountResponse(
     val success: Boolean,
     val message: String
 )
-
+data class accountUpdateResponse(
+    val success: Boolean,
+    val message: String
+)
 
 interface AccuntAPIService {
     @GET("account/check_account.php")
@@ -50,5 +53,8 @@ interface AccuntAPIService {
         @Body account: UpdatePassword
     ): Boolean
 
-
+    @PUT("account/update.php")
+    suspend fun updateAccount(
+        @Body account: Account
+    ): accountUpdateResponse
 }

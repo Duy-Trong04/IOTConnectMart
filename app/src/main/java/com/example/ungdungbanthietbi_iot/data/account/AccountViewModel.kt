@@ -30,7 +30,7 @@ class AccountViewModel:ViewModel() {
 
 
 
-    var taikhoanUpdateResult by mutableStateOf("")
+    var accountUpdateResult by mutableStateOf("")
 
     var username: String? = null
 //    var idPerson: String? = null
@@ -109,6 +109,24 @@ class AccountViewModel:ViewModel() {
             } catch (e: Exception) {
                 Log.e("AccountViewModel", "Lỗi kết nối: ${e.message}")
                 //_customerCheckResult.value = false
+            }
+        }
+    }
+
+    fun updateAccount(account: Account) {
+        viewModelScope.launch {
+            try {
+                val response = withContext(Dispatchers.IO) {
+                    RetrofitClient.accountAPIService.updateAccount(account)
+                }
+                accountUpdateResult = if (response.success) {
+                    "Cập nhật thành công: ${response.message}"
+                } else {
+                    "Cập nhật thất bại: ${response.message}"
+                }
+            } catch (e: Exception) {
+                accountUpdateResult = "Lỗi khi cập nhật account: ${e.message}"
+                Log.e("Account Error", "Lỗi khi cập nhật account: ${e.message}")
             }
         }
     }

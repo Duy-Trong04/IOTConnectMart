@@ -19,7 +19,7 @@ class CustomerViewModel:ViewModel() {
     var customer by mutableStateOf<Customer?>(null)
         private set
     var listCustomerReviewDevice by mutableStateOf<List<Customer>>(emptyList())
-    var khachhangUpdateResult by mutableStateOf("")
+    var customerUpdateResult by mutableStateOf("")
         private set
 
     var customerAddResult by mutableStateOf("")
@@ -40,6 +40,25 @@ class CustomerViewModel:ViewModel() {
             emit(emptyList())  // Trả danh sách trống nếu có lỗi
         }
     }
+
+    fun updateCustomer(customer: Customer) {
+        viewModelScope.launch {
+            try {
+                val response = withContext(Dispatchers.IO) {
+                    RetrofitClient.customerAPIService.updateCustomer(customer)
+                }
+                customerUpdateResult = if (response.success) {
+                    "Cập nhật thành công: ${response.message}"
+                } else {
+                    "Cập nhật thất bại: ${response.message}"
+                }
+            } catch (e: Exception) {
+                customerUpdateResult = "Lỗi khi cập nhật khách hàng: ${e.message}"
+                Log.e("Update Error", "Lỗi khi cập nhật khách hàng: ${e.message}")
+            }
+        }
+    }
+
     fun getCustomerReviewDeviceByIdDevice(idDevice: Int) {
         viewModelScope.launch {
             try {

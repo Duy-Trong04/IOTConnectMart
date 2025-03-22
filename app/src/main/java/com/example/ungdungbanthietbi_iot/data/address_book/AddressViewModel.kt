@@ -64,9 +64,10 @@ class AddressViewModel: ViewModel() {
                 val response = withContext(Dispatchers.IO) {
                     RetrofitClient.addressAPIService.getAddressByIdCustomer(idCustomer)
                 }
-                listAddress = response.address
+                listAddress = response.address ?: emptyList() // Gán giá trị mảng rỗng nếu response.diachi null
             } catch (e: Exception) {
                 Log.e("Addrss Error", "Lỗi khi lấy dia chi: ${e.message}")
+                listAddress = emptyList()
             }
         }
     }

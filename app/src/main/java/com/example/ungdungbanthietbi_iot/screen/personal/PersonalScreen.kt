@@ -9,11 +9,15 @@ import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Category
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.ExitToApp
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.LocalShipping
+import androidx.compose.material.icons.filled.LocationOn
+import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Search
@@ -21,6 +25,8 @@ import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.ShoppingCart
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.VerifiedUser
+import androidx.compose.material.icons.filled.Visibility
+import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -33,19 +39,25 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.example.ungdungbanthietbi_iot.R
+import com.example.ungdungbanthietbi_iot.data.account.Account
 import com.example.ungdungbanthietbi_iot.data.account.AccountViewModel
+import com.example.ungdungbanthietbi_iot.data.customer.Customer
 import com.example.ungdungbanthietbi_iot.data.customer.CustomerViewModel
 import com.example.ungdungbanthietbi_iot.data.device.Device
 import com.example.ungdungbanthietbi_iot.data.device.DeviceViewModel
@@ -55,14 +67,8 @@ import java.text.DecimalFormat
 import com.example.ungdungbanthietbi_iot.screen.home.CardAllDevice
 import com.example.ungdungbanthietbi_iot.screen.home.CardFavorites
 
-/*Người thực hiện: Nguyễn Mạnh Cường
- Ngày viết: 12/12/2024
- ------------------------
- Input: không
- Output: Hiện thị Màn hình Hồ sơ của người dùng
-*/
+
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
-//@Preview(showBackground = true)
 @Composable
 fun PersonalScreen(
     navController: NavController,
@@ -85,11 +91,9 @@ fun PersonalScreen(
 
     // Lấy ViewModel
     val accountViewModel:AccountViewModel = viewModel()
-    val customerViewModel:CustomerViewModel = viewModel()
 
     // Lấy thông tin tài khoản từ ViewModel
     val account = accountViewModel.account
-    val customer = customerViewModel.customer
 
     // Gọi API nếu taikhoan chưa được lấy
     LaunchedEffect(username) {
@@ -104,12 +108,12 @@ fun PersonalScreen(
         Text(text = "Đang tải thông tin tài khoản...")
         return
     }
-    if (account != null) {
-        customerViewModel.getCustomerById(account.idPerson.toString())
-    }
 
     // Biến trạng thái để sản phẩm yêu thích không
     var isFavorite by remember { mutableStateOf(false) }
+
+    // Kiểm tra trạng thái Tab
+    var currentTab by remember { mutableStateOf("accountInfo") }
     // Danh mục
     ModalNavigationDrawer(
         drawerState = navdrawerState,
@@ -205,12 +209,6 @@ fun PersonalScreen(
                         }
                     },
                     actions = {
-                        IconButton(
-                            onClick = {
-                                navController.navigate(Screen.SettingScreen.route + "/${account.idPerson}/${account.password}")
-                            }) {
-                            Icon(Icons.Filled.Settings, contentDescription = "Setting")
-                        }
                         IconButton(
                             onClick = {
                                 navController.navigate(Screen.Cart_Screen.route +"?idCustomer=${account.idPerson}&username=${account.username}")
@@ -351,171 +349,480 @@ fun PersonalScreen(
                         }
                     }
                 }
-            },
+            }
 
-            content = { paddingValues ->
-                LazyColumn(
-                    modifier = Modifier
-                        .padding(paddingValues)
-                        .padding(16.dp),
-                    verticalArrangement = Arrangement.Center
-                ) {
-                    if (customer != null) {
-                        item {
-                            Box(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .height(150.dp)
-                                    .clickable {
-                                        //Chuyển màn hình chỉnh sửa hồ sơ
-                                        navController.navigate(Screen.EditProfileScreen.route + "?username=${accountViewModel.username}")
-                                    },
-                                contentAlignment = Alignment.CenterStart
-                            ) {
-                                Row(
-                                    horizontalArrangement = Arrangement.Center,
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
-                                    Image(
-                                        painter = painterResource(id = R.drawable.avatar),
-                                        contentDescription = null,
-                                        modifier = Modifier
-                                            .size(100.dp)
-                                            .clip(CircleShape),
-                                        contentScale = ContentScale.Crop
+        )
+        {
+            LazyColumn(
+                modifier = Modifier
+                    .padding(it)
+                    .fillMaxSize()
+                    .background(Color(0xFFF2F2F2))
+            ) {
+                item {
+                    Column(
+                        modifier = Modifier
+                            .padding(start = 16.dp, end = 16.dp, top = 16.dp)
+                    ) {
+
+                        when (currentTab) {
+                            //"duyetdonhang" -> navController.navigate(NavRoute.ADMINSCREEN.route)
+                            "accountInfo" -> AccountInfoSection(username)
+                            "cartManagement" -> LaunchedEffect(currentTab) {
+                                navController.navigate(Screen.OrderListScreen.route + "?idCustomer=${account.idPerson}")
+                            }
+                            "changePassword" -> ChangePasswordSection(username)
+                            "addresses" -> LaunchedEffect(currentTab) {
+                                navController.navigate("${Screen.Address_Selection.route}?idCustomer=${account.idPerson}")
+                            }
+                        }
+                    }
+                }
+
+                item {
+                    Spacer(modifier = Modifier.height(16.dp))
+                }
+
+                // Phần menu danh sách bên dưới
+                item {
+                    AccountOptionsSection(
+                        onOptionSelected = { selectedTab ->
+                            currentTab = selectedTab
+                        },
+                        currentTab = currentTab,
+                        navController = navController
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun AccountInfoSection(
+    username: String
+){
+    val maxLength = 10
+
+    var accountViewModel: AccountViewModel = viewModel()
+    var customerViewModel: CustomerViewModel = viewModel()
+
+    val account = accountViewModel.account
+    val customer = customerViewModel.customer
+
+    var isFocused by remember { mutableStateOf(false) }
+    var isButtonEnabled by remember { mutableStateOf(false) }
+
+    var snackbarHostState = remember {
+        SnackbarHostState()
+    }
+
+    var scope = rememberCoroutineScope()
+    LaunchedEffect(username) {
+        if (username.isNotEmpty()) {
+            accountViewModel.getUserByUsername(username)
+        }
+    }
+
+    if (account != null) {
+        customerViewModel.getCustomerById(account.idPerson.toString())
+    }
+
+    Card(
+        shape = RoundedCornerShape(10.dp),
+        elevation = CardDefaults.cardElevation(2.dp),
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(containerColor = Color.White)
+    ){
+        Column(modifier = Modifier.padding(16.dp)) {
+            Text("Thông tin tài khoản", fontWeight = FontWeight.Bold, fontSize = 20.sp)
+
+            Spacer(modifier = Modifier.height(8.dp))
+            if (customer != null) {
+                val surname = remember { mutableStateOf(customer.surname) }
+                val lastname = remember { mutableStateOf(customer.lastName) }
+                val phone = remember { mutableStateOf(customer.phone) }
+                val email = remember { mutableStateOf(customer.email) }
+                val gender = remember { mutableStateOf(customer.gender) }
+                val selectedDay = remember { mutableStateOf(customer.birthdate.split("-")[2]) }
+                val selectedMonth = remember { mutableStateOf(customer.birthdate.split("-")[1]) }
+                val selectedYear = remember { mutableStateOf(customer.birthdate.split("-")[0]) }
+
+                val initialSurname = remember { mutableStateOf(customer.surname) }
+                val initialLastName = remember { mutableStateOf(customer.lastName) }
+                val initialPhone = remember { mutableStateOf(customer.phone) }
+                val initialEmail = remember { mutableStateOf(customer.email) }
+                val initialGender = remember { mutableStateOf(customer.gender) }
+                val initialBirthdate = remember { mutableStateOf(customer.birthdate) }
+
+                fun checkIfChanged(): Boolean {
+                    return lastname.value != initialLastName.value ||
+                            phone.value != initialPhone.value ||
+                            email.value != initialEmail.value ||
+                            gender.value != initialGender.value ||
+                            selectedDay.value != initialBirthdate.value.split("-")[2] ||
+                            selectedMonth.value != initialBirthdate.value.split("-")[1] ||
+                            selectedYear.value != initialBirthdate.value.split("-")[0]
+                }
+
+                LaunchedEffect(lastname.value, phone.value, email.value, gender.value, selectedDay.value, selectedMonth.value, selectedYear.value) {
+                    isButtonEnabled = checkIfChanged()
+                }
+
+                val fullName = remember { mutableStateOf("${customer.surname} ${customer.lastName}".trim()) }
+
+                // Họ tên
+                Text("Họ Tên: ", fontWeight = FontWeight.Bold)
+                OutlinedTextField(
+                    value = fullName.value,
+                    onValueChange = {
+                        fullName.value = it.trimStart()
+                        isButtonEnabled = checkIfChanged()
+                    },
+                    modifier = Modifier.fillMaxWidth().onFocusChanged {
+                        if (it.isFocused) isFocused = true
+                    },
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = Color(0xFF5F9EFF),
+                        unfocusedBorderColor = Color(0xFF5F9EFF),
+                        focusedLabelColor = Color(0xFF5F9EFF)
+                    ),
+                    shape = RoundedCornerShape(17.dp),
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                val genderList = listOf("Nam", "Nữ")
+
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text("Giới tính: ", fontWeight = FontWeight.Bold)
+                    Spacer(modifier = Modifier.width(16.dp))
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        genderList.forEachIndexed { index, label ->
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                RadioButton(
+                                    selected = gender.value == index,
+                                    onClick = { gender.value = index },
+                                    colors = RadioButtonDefaults.colors(
+                                        selectedColor = Color(0xFF5F9EFF)
                                     )
-                                    Column(
-                                        modifier = Modifier.fillMaxWidth()
-                                    ) {
-                                        Text(
-                                            text = "${customer.surname} ${customer.lastName}",
-                                            modifier = Modifier.padding(start = 16.dp),
-                                            fontSize = 20.sp,
-                                            fontWeight = FontWeight.Bold
-                                        )
-                                        Spacer(modifier = Modifier.height(3.dp))
-                                        Text(
-                                            text = customer.email,
-                                            modifier = Modifier.padding(start = 16.dp),
-                                            fontSize = 20.sp,
-                                            fontWeight = FontWeight.W300
-                                        )
-                                        Spacer(modifier = Modifier.height(3.dp))
-                                        Text(
-                                            text = customer.phone,
-                                            modifier = Modifier.padding(start = 16.dp),
-                                            fontSize = 20.sp,
-                                            fontWeight = FontWeight.W300
-                                        )
-                                    }
-                                }
+                                )
+                                Text(text = label)
+                                Spacer(modifier = Modifier.width(8.dp)) // Thêm khoảng cách giữa 2 cái
                             }
                         }
                     }
+                }
 
-                    item {
-                        Divider()
-                        Spacer(modifier = Modifier.height(16.dp))
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Text(text = "Đơn mua", fontSize = 20.sp, fontWeight = FontWeight.Bold)
-                            TextButton(
-                                onClick = {
-                                    // Chuyển màn hình Lịch sử mua hàng
-                                    navController.navigate(Screen.OrderListScreen.route + "?idCustomer=${account.idPerson}")
-                                }
-                            ) {
-                                Text(text = "Lịch sử mua hàng",
-                                    fontSize = 20.sp,
-                                    color = Color(0xFF5D9EFF)
+                // Số điện thoại
+                Text("Số điện thoại: ", fontWeight = FontWeight.Bold)
+                OutlinedTextField(
+                    value = phone.value,
+                    onValueChange = {
+                        if(it.length <=maxLength){
+                            phone.value = it
+                            isButtonEnabled = checkIfChanged()
+                        }
+                    },
+                    keyboardOptions = KeyboardOptions.Default.copy(keyboardType = KeyboardType.Phone),
+                    modifier = Modifier.fillMaxWidth().onFocusChanged {
+                        if (it.isFocused) isFocused = true
+                    },
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = Color(0xFF5F9EFF),
+                        unfocusedBorderColor = Color(0xFF5F9EFF),
+                        focusedLabelColor = Color(0xFF5F9EFF)
+                    ),
+                    shape = RoundedCornerShape(17.dp),
+                )
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                // Email
+                Text("Email: ", fontWeight = FontWeight.Bold)
+                OutlinedTextField(
+                    value = email.value,
+                    onValueChange = {
+                        email.value = it
+                        isButtonEnabled = checkIfChanged()},
+                    keyboardOptions = KeyboardOptions.Default.copy(keyboardType = KeyboardType.Email),
+                    modifier = Modifier.fillMaxWidth().onFocusChanged {
+                        if (it.isFocused) isFocused = true
+                    },
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = Color(0xFF5F9EFF),
+                        unfocusedBorderColor = Color(0xFF5F9EFF),
+                        focusedLabelColor = Color(0xFF5F9EFF)
+                    ),
+                    shape = RoundedCornerShape(17.dp),
+                )
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                // Ngày sinh
+                Text("Ngày sinh: ", fontWeight = FontWeight.Bold)
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    DropdownMenuField(
+                        label = "Ngày",
+                        items = (1..31).map { it.toString() },
+                        selectedValue = selectedDay.value,
+                        onValueChange = { selectedDay.value = it },
+                        modifier = Modifier
+                            .weight(1.15f)
+                            .padding(end = 0.5.dp)
+                    )
+                    Spacer(modifier = Modifier.width(4.dp))
+
+                    DropdownMenuField(
+                        label = "Tháng",
+                        items = (1..12).map { it.toString() },
+                        selectedValue = selectedMonth.value,
+                        onValueChange = { selectedMonth.value = it },
+                        modifier = Modifier
+                            .weight(1.2f)
+                            .padding(horizontal = 0.5.dp)
+                    )
+                    Spacer(modifier = Modifier.width(4.dp))
+
+                    DropdownMenuField(
+                        label = "Năm",
+                        items = (1900..2025).map { it.toString() }.reversed(),
+                        selectedValue = selectedYear.value,
+                        onValueChange = { selectedYear.value = it },
+                        modifier = Modifier
+                            .weight(1.4f)
+                            .padding(start = 0.5.dp)
+                    )
+                }
+                Spacer(modifier = Modifier.height(16.dp))
+                SnackbarHost(
+                    modifier = Modifier.padding(4.dp),
+                    hostState = snackbarHostState,
+                )
+
+                Button(
+                    onClick = {
+                        // Xử lý lưu dữ liệu
+                        val regexName = "^[a-zA-Z\\p{L} ]+$"
+                        val regexPhone = "^\\d{10}$".toRegex()
+
+                        if (lastname.value.isBlank() || !lastname.value.matches(Regex(regexName))) {
+                            scope.launch {
+                                snackbarHostState.showSnackbar(
+                                    message = "Họ và tên không hợp lệ",
+                                    duration = SnackbarDuration.Short
                                 )
                             }
-                        }
-                        Column(
-                            modifier = Modifier
-                                .padding(8.dp)
-                                .fillMaxWidth()
-                        ) {
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.SpaceAround,
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                OrderStatusItem(
-                                    icon = Icons.Filled.VerifiedUser,
-                                    description = "Chờ xác nhận",
-                                    //Chuyen den tab chờ xác nhận
-                                    onclick = {
-                                        navController.navigate(Screen.OrderListScreen.route + "?idCustomer=${account.idPerson}")
-                                    }
-                                )
-                                OrderStatusItem(
-                                    icon = Icons.Filled.LocalShipping,
-                                    description = "Chờ lấy hàng",
-                                    //Chuyển màn hình tab Chờ giao hàng
-                                    onclick = {
-                                        navController.navigate(Screen.OrderListScreen.route + "?idCustomer=${account.idPerson}")
-                                    }
-                                )
-                                OrderStatusItem(
-                                    icon = Icons.Filled.LocalShipping,
-                                    description = "Chờ giao hàng",
-                                    //Chuyển màn hình tab Chờ lấy hàng
-                                    onclick = {
-                                        navController.navigate(Screen.OrderListScreen.route + "?idCustomer=${account.idPerson}")
-                                    }
-                                )
-                                OrderStatusItem(
-                                    icon = Icons.Filled.Star,
-                                    description = "Đánh Giá",
-                                    //Chuyển màn hình đánh giá sản phẩm
-                                    onclick = {
-                                        /*Thực hiện chức năng chuyển màn hình đánh giá*/
-                                        //navController.navigate(Screen.Rating_History.route)
-                                    }
+                        } else if (!regexPhone.matches(phone.value)) {
+                            scope.launch {
+                                snackbarHostState.showSnackbar(
+                                    message = "Số điện thoại phải có 10 số."
                                 )
                             }
-                        }
-                        Spacer(modifier = Modifier.height(16.dp))
-                        Text(
-                            text = "Sản phẩm yêu thích",
-                            fontSize = 20.sp,
-                            fontWeight = FontWeight.Bold
-                        )
-                        Spacer(modifier = Modifier.height(8.dp))
-                    }
+                        } else if (email.value.isBlank()) {
+                            scope.launch {
+                                snackbarHostState.showSnackbar(
+                                    message = "Email không được để trống.",
+                                    duration = SnackbarDuration.Short
+                                )
+                            }
+                        } else if (!email.value.contains("@")) {
+                            scope.launch {
+                                snackbarHostState.showSnackbar(
+                                    message = "Email phải chứa ký tự '@'.",
+                                    duration = SnackbarDuration.Short
+                                )
+                            }
+                        } else {
+                            // Tách họ và tên từ fullName
+                            val nameParts = fullName.value.trim().split("\\s+".toRegex())
+                            val surnameValue: String
+                            val lastNameValue: String
 
-                    item {
-                        if(listDeviceLiked.isEmpty()){
-                            Text(
-                                text = "Không có sản phẩm nào trong danh sách yêu thích",
-                                color = Color.Gray,
-                                modifier = Modifier.padding(20.dp)
+                            if (nameParts.size >= 2) {
+                                surnameValue = nameParts[0]                             // Lấy chữ đầu làm Họ
+                                lastNameValue = nameParts.drop(1).joinToString(" ")     // Phần còn lại làm Tên
+                            } else {
+                                surnameValue = ""
+                                lastNameValue = nameParts[0]
+                            }
+
+                            val khachHang = Customer(
+                                id = customer.id,
+                                surname = surnameValue,
+                                lastName = lastNameValue,
+                                email = email.value,
+                                phone = phone.value,
+                                birthdate = "${selectedYear.value}-${selectedMonth.value}-${selectedDay.value}",
+                                gender = gender.value,
+                                created_at = "",
+                                update_at = "",
+                                status = "1"
                             )
-                        }
-                        else{
-                            LazyRow(modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(10.dp),
-                                horizontalArrangement = Arrangement.Start
-                            ) {
-                                items(listDeviceLiked){
-                                    if (account != null){
-                                        CardFavorites(
-                                            device = it,
-                                            isFavorite,
-                                            account.idPerson,
-                                            account.username,
-                                            navController
-                                        )
-                                    }
-                                }
+                            customerViewModel.updateCustomer(khachHang)
+                            scope.launch {
+                                snackbarHostState.showSnackbar(
+                                    message = "Cập nhật thành công",
+                                    duration = SnackbarDuration.Short
+                                )
                             }
                         }
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(5.dp),// Bo góc nút
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF5F9EFF))
+                ) {
+                    Text("LƯU THAY ĐỔI", color = Color.White, fontSize = 16.sp)
+                }
+            }
+        }
+    }
+}
+
+
+@Composable
+fun DropdownMenuField(
+    label: String,
+    items: List<String>,
+    selectedValue: String,
+    onValueChange: (String) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    var isExpanded by remember { mutableStateOf(false) } // Trạng thái menu
+
+    Column(modifier = modifier) {
+        OutlinedTextField(
+            value = selectedValue,
+            onValueChange = { onValueChange(it) },
+            label = { Text(label) },
+            readOnly = true,
+            trailingIcon = {
+                Text(
+                    text = "▼",
+                    modifier = Modifier
+                        .clickable { isExpanded = !isExpanded }
+                        .padding(8.dp)
+                )
+            },
+            modifier = Modifier.fillMaxWidth(),
+            colors = OutlinedTextFieldDefaults.colors(
+                focusedBorderColor = Color(0xFF5F9EFF),
+                unfocusedBorderColor = Color(0xFF5F9EFF),
+                focusedLabelColor = Color(0xFF5F9EFF)
+            ),
+            shape = RoundedCornerShape(17.dp),
+        )
+
+        DropdownMenu(
+            //containerColor = Color.White,
+            expanded = isExpanded,
+            onDismissRequest = { isExpanded = false },
+            modifier = Modifier
+                .heightIn(max = 250.dp)
+                .widthIn(300.dp)
+                .background(Color.White)
+        ) {
+            items.forEach { item ->
+                DropdownMenuItem(
+                    text = { Text(item, fontWeight = FontWeight.Bold, fontSize = 15.sp) },
+                    onClick = {
+                        onValueChange(item)
+                        isExpanded = false
                     }
+                )
+            }
+        }
+    }
+}
+
+@Composable
+fun AccountOptionsSection(
+    onOptionSelected: (String) -> Unit,
+    currentTab: String,
+    navController: NavController,
+) {
+    val openDialog = remember { mutableStateOf(false) }
+
+    Card(
+        shape = RoundedCornerShape(10.dp),
+        elevation = CardDefaults.cardElevation(2.dp),
+        modifier = Modifier
+            .padding(start = 16.dp, end = 16.dp, bottom = 16.dp)
+            .fillMaxWidth(),
+        colors = CardDefaults.cardColors(containerColor = Color.White)
+    ) {
+
+
+        Column(modifier = Modifier.padding(8.dp)) {
+
+
+            AccountOptionItem(
+                iconRes = Icons.Filled.Person,
+                label = "Thông tin tài khoản",
+                isSelected = currentTab == "accountInfo",
+                onClick = { onOptionSelected("accountInfo") }
+            )
+            AccountOptionItem(
+                iconRes = Icons.Filled.LocationOn,
+                label = "Số địa chỉ",
+                isSelected = currentTab == "addresses",
+                onClick = { onOptionSelected("addresses") }
+            )
+            AccountOptionItem(
+                iconRes = Icons.Filled.ShoppingCart,
+                label = "Quản lý đơn hàng",
+                isSelected = currentTab == "cartManagement",
+                onClick = { onOptionSelected("cartManagement") }
+            )
+            AccountOptionItem(
+                iconRes = Icons.Filled.Lock,
+                label = "Đổi mật khẩu",
+                isSelected = currentTab == "changePassword",
+                onClick = { onOptionSelected("changePassword") }
+            )
+            AccountOptionItem(
+                iconRes = Icons.Filled.ExitToApp,
+                label = "Đăng xuất",
+                isSelected = false, // Không cần trạng thái cho mục đăng xuất
+                onClick = {
+                    openDialog.value = true
+                }
+            )
+        }
+    }
+
+    if (openDialog.value == true) {
+        AlertDialog(
+            containerColor = Color.White,
+            onDismissRequest = { openDialog.value = false },
+            title = { Text("Đăng xuất") },
+            text = { Text("Đăng xuất tài khoản của bạn?", fontSize = 17.sp) },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        openDialog.value = false
+                        navController.navigate(Screen.HomeScreen.route)
+                    },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color(0xFF5F9EFF),
+                        contentColor = Color.White
+                    )
+                ) {
+                    Text("OK", fontSize = 14.sp)
+                }
+            },
+            dismissButton = {
+                Button(
+                    onClick = {
+                        openDialog.value = false
+                    },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color(0xFF5F9EFF),
+                        contentColor = Color.White
+                    )
+                ) {
+                    Text("Cancel", fontSize = 14.sp)
                 }
             }
         )
@@ -523,25 +830,265 @@ fun PersonalScreen(
 }
 
 @Composable
-fun OrderStatusItem(icon: ImageVector, description: String,onclick:()->Unit) {
-    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-        IconButton(
-            onClick = onclick,
-            modifier = Modifier.size(48.dp)
-        ) {
-            Icon(
-                icon,
-                contentDescription = description,
-                modifier = Modifier.size(40.dp)
-            )
-        }
-        Spacer(modifier = Modifier.height(8.dp))
+fun AccountOptionItem(
+    iconRes: ImageVector,
+    label: String,
+    isSelected: Boolean,
+    onClick: () -> Unit
+) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable { onClick() }
+            .padding(vertical = 8.dp)
+    ) {
+        Icon(
+            imageVector = iconRes,
+            contentDescription = label,
+            tint = if (isSelected) Color(0xFF5F9EFF) else Color.Gray
+        )
+        Spacer(modifier = Modifier.width(16.dp))
         Text(
-            text = description,
-            modifier = Modifier.size(60.dp),
-            fontSize = 14.sp,
-            textAlign = TextAlign.Center
+            text = label,
+            color = if (isSelected) Color(0xFF5F9EFF) else Color.Black,
+            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
         )
     }
 }
 
+@Composable
+fun ChangePasswordSection(
+    username: String
+) {
+    var snackbarHostState = remember {
+        SnackbarHostState()
+    }
+    var scope = rememberCoroutineScope()
+
+    var matkhaucu by remember { mutableStateOf("") }
+    var matkhaumoi by remember { mutableStateOf("") }
+    var kiemtramkmoi by remember { mutableStateOf("") }
+
+    var accountViewModel: AccountViewModel = viewModel()
+
+    var account = accountViewModel.account
+
+    accountViewModel.getUserByUsername(username)
+    var password by remember { mutableStateOf(account?.password) }
+
+    var isPasswordVisible by remember { mutableStateOf(false) }
+    var isPasswordVisible1 by remember { mutableStateOf(false) }
+    var isPasswordVisible2 by remember { mutableStateOf(false) }
+    Card(
+        shape = RoundedCornerShape(16.dp),
+        elevation = CardDefaults.cardElevation(4.dp),
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(containerColor = Color.White)
+    ) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            Text("Đổi mật khẩu", fontWeight = FontWeight.Bold, fontSize = 20.sp)
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            OutlinedTextField(
+                modifier = Modifier.fillMaxWidth(),
+                value = matkhaucu,
+                label = { Text("Mật khẩu cũ") },
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedBorderColor = Color(0xFF5F9EFF),
+                    unfocusedBorderColor = Color(0xFF5F9EFF),
+                    focusedLabelColor = Color(0xFF5F9EFF)
+                ),
+                trailingIcon = {
+                    IconButton(onClick = { isPasswordVisible = !isPasswordVisible }) {
+                        Icon(
+                            imageVector = if (isPasswordVisible) Icons.Filled.Visibility else Icons.Filled.VisibilityOff,
+                            contentDescription = if (isPasswordVisible) "Ẩn mật khẩu" else "Hiện mật khẩu"
+                        )
+                    }
+                },
+                singleLine = true,
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+                visualTransformation = if (isPasswordVisible) VisualTransformation.None else PasswordVisualTransformation(),
+                shape = RoundedCornerShape(17.dp),
+                onValueChange = { matkhaucu = it }
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+
+            OutlinedTextField(
+                modifier = Modifier.fillMaxWidth(),
+                value = matkhaumoi,
+                label = { Text("Mật khẩu mới") },
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedBorderColor = Color(0xFF5F9EFF),
+                    unfocusedBorderColor = Color(0xFF5F9EFF),
+                    focusedLabelColor = Color(0xFF5F9EFF)
+                ),
+                trailingIcon = {
+                    IconButton(onClick = { isPasswordVisible1 = !isPasswordVisible1 }) {
+                        Icon(
+                            imageVector = if (isPasswordVisible1) Icons.Filled.Visibility else Icons.Filled.VisibilityOff,
+                            contentDescription = if (isPasswordVisible1) "Ẩn mật khẩu" else "Hiện mật khẩu"
+                        )
+                    }
+                },
+                singleLine = true,
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+                visualTransformation = if (isPasswordVisible1) VisualTransformation.None else PasswordVisualTransformation(),
+                shape = RoundedCornerShape(17.dp),
+                onValueChange = { matkhaumoi = it }
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+
+            OutlinedTextField(
+                modifier = Modifier.fillMaxWidth(),
+                value = kiemtramkmoi,
+                label = { Text("Nhập lại mật khẩu") },
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedBorderColor = Color(0xFF5F9EFF),
+                    unfocusedBorderColor = Color(0xFF5F9EFF),
+                    focusedLabelColor = Color(0xFF5F9EFF)
+                ),
+                trailingIcon = {
+                    IconButton(onClick = { isPasswordVisible2 = !isPasswordVisible2 }) {
+                        Icon(
+                            imageVector = if (isPasswordVisible2) Icons.Filled.Visibility else Icons.Filled.VisibilityOff,
+                            contentDescription = if (isPasswordVisible2) "Ẩn mật khẩu" else "Hiện mật khẩu"
+                        )
+                    }
+                },
+                singleLine = true,
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+                visualTransformation = if (isPasswordVisible2) VisualTransformation.None else PasswordVisualTransformation(),
+                shape = RoundedCornerShape(17.dp),
+                onValueChange = { kiemtramkmoi = it }
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            SnackbarHost(
+                modifier = Modifier.padding(4.dp),
+                hostState = snackbarHostState
+            )
+            Button(
+                onClick = {
+                    if (account != null) {
+                        if(matkhaucu == password){
+                            if(matkhaumoi.isEmpty() || kiemtramkmoi.isEmpty()){
+                                scope.launch {
+                                    snackbarHostState.showSnackbar(
+                                        message = "Vui lòng nhập đày đủ thông tin!"
+                                    )
+                                }
+                            }
+                            else if (matkhaumoi.contains(" ")){
+                                scope.launch {
+                                    snackbarHostState.showSnackbar(
+                                        message = "Mật khẩu mới không được chứa khoảng trắng!"
+                                    )
+                                }
+                            }
+                            else if(matkhaumoi == matkhaucu){
+                                scope.launch {
+                                    snackbarHostState.showSnackbar(
+                                        message = "Mật khẩu mới không được trùng với mật khẩu cũ!"
+                                    )
+                                }
+                            }
+                            else if(matkhaumoi != kiemtramkmoi){
+                                scope.launch {
+                                    snackbarHostState.showSnackbar(
+                                        message = "Xác nhận mật khẩu không khớp!"
+                                    )
+                                }
+                            }
+                            else{
+                                scope.launch {
+                                    snackbarHostState.showSnackbar(
+                                        message = "Đổi mật khẩu thành công!"
+                                    )
+                                }
+                                val taiKhoan = Account(
+                                    idPerson = account.idPerson,
+                                    idRole = "CUS",
+                                    username = username,
+                                    password = matkhaumoi,
+                                    report = 0,
+                                    isNew = 1,
+                                    status = 1
+                                )
+                                accountViewModel.updateAccount(taiKhoan)
+                            }
+                        }
+                        else{
+                            scope.launch {
+                                snackbarHostState.showSnackbar(
+                                    message = "Mật khẩu cũ không chính xác!"
+                                )
+                            }
+                        }
+
+//                        if (username.isEmpty() || matkhaucu.isEmpty() || kiemtramkmoi.isEmpty()) {
+//                            scope.launch {
+//                                snackbarHostState.showSnackbar(
+//                                    message = "Vui lòng nhập đày đủ thông tin."
+//                                )
+//                            }
+//                        } else if (matkhaucu != password) {
+//                            scope.launch {
+//                                snackbarHostState.showSnackbar(
+//                                    message = "Mật khẩu cũ chưa đúng!"
+//                                )
+//                            }
+//                        } else if (matkhaumoi.contains(" ")) {
+//                            scope.launch {
+//                                snackbarHostState.showSnackbar(
+//                                    message = "Mật khẩu mới không được chứa khoảng trắng!"
+//                                )
+//                            }
+//                        } else if(matkhaumoi!=kiemtramkmoi){
+//                            scope.launch {
+//                                snackbarHostState.showSnackbar(
+//                                    message = "Xác nhận mật khẩu không khớp!"
+//                                )
+//                            }
+//                        } else if (matkhaumoi.contains(username)) {
+//                            scope.launch {
+//                                snackbarHostState.showSnackbar(
+//                                    message = "Password không được chứa Username!"
+//                                )
+//                            }
+//                        } else if (matkhaumoi.length < 3) {
+//                            scope.launch {
+//                                snackbarHostState.showSnackbar(
+//                                    message = "Password phải từ 8 ký tự trở lên!"
+//                                )
+//                            }
+//                        }else{
+//                            scope.launch {
+//                                snackbarHostState.showSnackbar(
+//                                    message = "Đổi mật khẩu thành công!"
+//                                )
+//                            }
+//                            val taiKhoan = Account(
+//                                idPerson = account.idPerson,
+//                                idRole = "CUS",
+//                                username = username,
+//                                password = matkhaumoi,
+//                                report = 0,
+//                                isNew = 1,
+//                                status = 1
+//                            )
+//                            accountViewModel.updateAccount(taiKhoan)
+//                        }
+                    }
+                },
+
+                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF5F9EFF)),
+                shape = RoundedCornerShape(5.dp),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text("ĐỔI MẬT KHẨU", color = Color.White, fontSize = 16.sp)
+            }
+        }
+    }
+}

@@ -20,6 +20,11 @@ data class AddCustomerResponse(
     val message: String
 )
 
+data class CustmerUpdateResponse(
+    val success: Boolean,
+    val message: String
+)
+
 interface CustomerAPIService {
     // Lấy tất cả khách hàng
     @GET("customer/read.php")
@@ -74,4 +79,8 @@ interface CustomerAPIService {
         @Body customer: Gender
     ): Boolean
 
+    @PUT("customer/update.php")
+    suspend fun updateCustomer(
+        @Body customer: Customer
+    ): CustmerUpdateResponse
 }
