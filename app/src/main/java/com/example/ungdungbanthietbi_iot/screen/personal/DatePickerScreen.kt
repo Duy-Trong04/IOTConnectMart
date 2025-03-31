@@ -56,6 +56,9 @@ fun CalendarDialog(
     // State để kiểm soát BottomSheet (hoặc Dialog)
     var showMonthPicker by remember { mutableStateOf(false) }
     var showYearPicker by remember { mutableStateOf(false) }
+    val currentDate = LocalDate.now()
+    // State để kiểm soát dialog thông báo lỗi
+    var showErrorDialog by remember { mutableStateOf(false) }
 
     // Show Dialog để chọn năm trước khi chuyển sang tháng
     if (showYearPicker) {
@@ -87,11 +90,17 @@ fun CalendarDialog(
         onDismissRequest = onDismiss,
         confirmButton = {
             Button(onClick = {
-                onDateSelected(LocalDate.of(selectedYear, selectedMonth, selectedDate))
-                val birthdate = LocalDate.of(selectedYear, selectedMonth, selectedDate)
-                val b = Birthdate(customerID.toString(), birthdate.toString())
-                birthdateModel.updateBirthdate(b)
-                onDismiss()
+                val selectedBirthDate = LocalDate.of(selectedYear, selectedMonth, selectedDate)
+                if(selectedBirthDate<=currentDate) {
+                    onDateSelected(LocalDate.of(selectedYear, selectedMonth, selectedDate))
+                    val birthdate = LocalDate.of(selectedYear, selectedMonth, selectedDate)
+                    val b = Birthdate(customerID.toString(), birthdate.toString())
+                    birthdateModel.updateBirthdate(b)
+                    onDismiss()
+                }
+                else{
+                    showErrorDialog = true
+                }
             }) {
                 Text("Xác nhận", color = Color.White)
             }
@@ -112,18 +121,6 @@ fun CalendarDialog(
                 verticalArrangement = Arrangement.spacedBy(16.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-//                // Năm chọn (Year Picker)
-//                Text(
-//                    text = "Chọn năm: $selectedYear",
-//                    fontSize = fontSize,
-//                    fontWeight = FontWeight.Bold,
-//                    modifier = Modifier
-//                        .clickable { showYearPicker = true } // Click để chọn năm
-//                        .padding(8.dp),
-//                    color = Color(0xFF5F9EFF)
-//                )
-
-                // Month and Year Controls
                 Row(
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically,
@@ -193,6 +190,18 @@ fun CalendarDialog(
             }
         }
     )
+    if (showErrorDialog) {
+        AlertDialog(
+            onDismissRequest = { showErrorDialog = false },
+            confirmButton = {
+                Button(onClick = { showErrorDialog = false }) {
+                    Text("OK")
+                }
+            },
+            title = { Text("Lỗi") },
+            text = { Text("Ngày tháng năm sinh phải nhỏ hơn hoặc bằng ngày hiện tại.") }
+        )
+    }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
