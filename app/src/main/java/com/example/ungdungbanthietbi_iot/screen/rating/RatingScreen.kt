@@ -34,11 +34,14 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Snackbar
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -51,6 +54,12 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavController
+import com.example.ungdungbanthietbi_iot.data.review_device.Review
+import com.example.ungdungbanthietbi_iot.data.review_device.ReviewViewModel
+import com.example.ungdungbanthietbi_iot.screen.order_detail.getCurrentTimestamp
+import kotlinx.coroutines.delay
 
 /** Giao diện màn hình đánh giá, bình luận (RatingScreen)
  * -------------------------------------------
@@ -71,21 +80,26 @@ import androidx.compose.ui.unit.sp
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun RatingScreen(){
+fun RatingScreen(navController: NavController, idReview: Int, idCustomer: String?, idDevice: Int){
+
+    val reviewViewModel:ReviewViewModel = viewModel()
+
     var rating by remember { mutableStateOf(0) } // Lưu trạng thái số sao được đánh giá
     var comment by remember { mutableStateOf("") } // Lưu nội dung bình luận
     var images by remember { mutableStateOf(mutableListOf<Uri>()) } // Lưu danh sách ảnh
     var isAnonymous by remember { mutableStateOf(false) } // Trạng thái ẩn danh
 
+    val showSnackbar = remember { mutableStateOf(false) }
+    val snackbarMessage = remember { mutableStateOf("") }
+
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Đánh giá sản phẩm",
-                    modifier = Modifier.fillMaxWidth(), textAlign = TextAlign.Center,
+                title = { Text("Đánh giá sản phẩm ${idReview} ${idCustomer} ${idDevice}",
                     fontWeight = FontWeight.Bold
                 )},
                 navigationIcon = {
-                    IconButton(onClick = { /* Back action */ }) {
+                    IconButton(onClick = { navController.popBackStack() }) {
                         Icon(Icons.Default.ArrowBack, contentDescription = "Back")
                     }
                 },
@@ -106,6 +120,19 @@ fun RatingScreen(){
                         .fillMaxWidth()
                         .padding(10.dp)
                 ) {
+                    if (showSnackbar.value) {
+                        LaunchedEffect(Unit) {
+                            delay(3000) // Chờ 3000ms (3 giây)
+                            showSnackbar.value = false // Đặt giá trị để tắt Snackbar
+                        }
+                        Snackbar(
+                            modifier = Modifier.padding(16.dp),
+                            containerColor = Color.White,
+                            contentColor = Color.Gray
+                        ) {
+                            Text(snackbarMessage.value)
+                        }
+                    }
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         verticalAlignment = Alignment.CenterVertically,
@@ -134,7 +161,47 @@ fun RatingScreen(){
                     Spacer(modifier = Modifier.height(8.dp))
                     // Nút Gửi
                     Button(
-                        onClick = { /* Xử lý gửi đánh giá */ },
+                        onClick = {
+                            if(isAnonymous){
+                                val updateReview = Review(
+                                    idReview = idReview,
+                                    idCustomer = "Ẩn danh",
+                                    idEmployee = "Null",
+                                    idDevice = idDevice,
+                                    comment = comment,
+                                    rating = rating,
+                                    response = "",
+                                    note = "",
+                                    created_at = getCurrentTimestamp(),
+                                    updated_at = getCurrentTimestamp(),
+                                    status = 1
+                                )
+                                reviewViewModel.updateReview(updateReview)
+                            }
+                            else{
+                                if(idCustomer != null){
+                                    val updateReview = Review(
+                                        idReview = idReview,
+                                        idCustomer = idCustomer,
+                                        idEmployee = "Null",
+                                        idDevice = idDevice,
+                                        comment = comment,
+                                        rating = rating,
+                                        response = "",
+                                        note = "",
+                                        created_at = getCurrentTimestamp(),
+                                        updated_at = getCurrentTimestamp(),
+                                        status = 1
+                                    )
+                                    reviewViewModel.updateReview(updateReview)
+                                }
+                            }
+
+                            showSnackbar.value = true
+                            snackbarMessage.value = "Đánh giá của bạn đã được gửi thành công!"
+
+                            navController.popBackStack()
+                        },
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(50.dp),
@@ -243,13 +310,6 @@ fun RatingScreen(){
                                 .clip(RoundedCornerShape(8.dp))
                                 .background(Color.LightGray)
                         ) {
-                            // Hiển thị hình ảnh
-//                        Image(
-//                            painter = rememberImagePainter(image),
-//                            contentDescription = "Ảnh đánh giá",
-//                            modifier = Modifier.fillMaxSize(),
-//                            contentScale = ContentScale.Crop
-//                        )
                         }
                     }
                 }
@@ -257,11 +317,10 @@ fun RatingScreen(){
         }
     }
 }
-
-//@Preview(showBackground = true)
-//@Composable
-//fun RatingScreenPreview() {
-//    UngDungBanThietBi_IOTTheme {
-//        RatingScreen()
-//    }
-//}
+// Hàm giả lập lấy thời gian hiện tại, bạn có thể thay thế bằng cách lấy thời gian theo chuẩn của hệ thống
+fun getCurrentTimestamp(): String {
+    // Ví dụ: trả về thời gian hiện tại theo định dạng "yyyy-MM-dd HH:mm:ss"
+    val current = java.util.Calendar.getInstance().time
+    val formatter = java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss", java.util.Locale.getDefault())
+    return formatter.format(current)
+}

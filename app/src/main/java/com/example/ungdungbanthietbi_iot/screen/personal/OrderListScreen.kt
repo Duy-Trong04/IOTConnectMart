@@ -65,7 +65,7 @@ import java.util.Locale
 @Composable
 fun OrderListScreen(navController: NavController, idCustomer: String?) {
     var selectedTabIndexItem by remember { mutableStateOf(0) }
-    val tabs = listOf("Chờ xác nhận", "Chờ lấy hàng", "Chờ giao hàng", "Đã giao", "Đã hủy")
+    val tabs = listOf("Chờ xác nhận", "Chờ lấy hàng", "Chờ giao hàng", "Đã giao", "Hoàn tất", "Đã hủy")
     Scaffold(
         containerColor = Color.White,
         topBar = {
@@ -145,7 +145,8 @@ fun OrderListScreen(navController: NavController, idCustomer: String?) {
                     1 -> ChoLayHangScreen(navController,idCustomer)
                     2 -> ChoGiaoHangScreen(navController, idCustomer)
                     3 -> DaGiaoHangScreen(navController, idCustomer)
-                    4 -> HuyDonHangScreen(navController,idCustomer)
+                    4 -> HoanTatScreen(navController,idCustomer)
+                    5 -> HuyDonHangScreen(navController,idCustomer)
                 }
             }
         }
@@ -170,6 +171,76 @@ fun DaGiaoHangScreen(navController: NavController, idCustomer: String?){
             orderViewModel.getOrderByCustomer(
                 idCustomer,
                 4
+            )
+        } catch (e: Exception) {
+            errorMessage.value = "Lỗi khi tải dữ liệu: ${e.message}"
+        } finally {
+            isLoading.value = false // Kết thúc tải dữ liệu
+        }
+    }
+
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(4.dp)
+    ) {
+        when {
+            isLoading.value -> {
+                CircularProgressIndicator(
+                    modifier = Modifier.align(Alignment.Center)
+                )
+            }
+
+            errorMessage.value != null -> {
+                Text(
+                    text = errorMessage.value ?: "Đã xảy ra lỗi",
+                    color = Color.Red,
+                    modifier = Modifier.align(Alignment.Center),
+                    textAlign = TextAlign.Center
+                )
+            }
+
+            listOrder.isEmpty() -> {
+                Text(
+                    text = "Không có hóa đơn nào đã giao.",
+                    modifier = Modifier.align(Alignment.Center),
+                    textAlign = TextAlign.Center,
+                )
+            }
+
+            else -> {
+                LazyColumn(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(4.dp)
+                ) {
+                    items(listOrder) { order ->
+                        OrderItem(order,navController, false)
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun HoanTatScreen(navController: NavController, idCustomer: String?){
+    val orderViewModel:OrderViewModel = viewModel()
+
+    val listOrder by orderViewModel.listOrderOfCustomer.collectAsState()
+
+    val isLoading =  remember { mutableStateOf(false) }
+
+    val errorMessage = remember { mutableStateOf<String?>(null) }
+
+
+    if (idCustomer != null) {
+        isLoading.value = true // Bắt đầu tải dữ liệu
+        errorMessage.value = null
+        try {
+            orderViewModel.getOrderByCustomer(
+                idCustomer,
+                5
             )
         } catch (e: Exception) {
             errorMessage.value = "Lỗi khi tải dữ liệu: ${e.message}"
@@ -314,7 +385,7 @@ fun HuyDonHangScreen(navController: NavController,idCustomer: String?) {
         try {
             orderViewModel.getOrderByCustomer(
                 idCustomer,
-                5
+                6
             )
         } catch (e: Exception) {
             errorMessage.value = "Lỗi khi tải dữ liệu: ${e.message}"
@@ -597,7 +668,7 @@ fun OrderItem(order: Order, navController: NavController, isCancel: Boolean) {
                                 order.updated_at,
                                 order.accept_at,
                                 order.idEmployee,
-                                5)
+                                6)
                             orderViewModel.updateOrder(orderNew)
                         }
                     ) {

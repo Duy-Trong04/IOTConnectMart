@@ -366,7 +366,7 @@ fun PersonalScreen(
                     ) {
 
                         when (currentTab) {
-                            //"duyetdonhang" -> navController.navigate(NavRoute.ADMINSCREEN.route)
+
                             "accountInfo" -> AccountInfoSection(username)
                             "cartManagement" -> LaunchedEffect(currentTab) {
                                 navController.navigate(Screen.OrderListScreen.route + "?idCustomer=${account.idPerson}")
@@ -374,6 +374,9 @@ fun PersonalScreen(
                             "changePassword" -> ChangePasswordSection(username)
                             "addresses" -> LaunchedEffect(currentTab) {
                                 navController.navigate("${Screen.Address_Selection.route}?idCustomer=${account.idPerson}")
+                            }
+                            "rating" -> LaunchedEffect(currentTab) {
+                                navController.navigate("${Screen.Rating_History.route}?idCustomer=${account.idPerson}")
                             }
                         }
                     }
@@ -776,6 +779,12 @@ fun AccountOptionsSection(
                 onClick = { onOptionSelected("cartManagement") }
             )
             AccountOptionItem(
+                iconRes = Icons.Filled.Star,
+                label = "Đánh giá",
+                isSelected = currentTab == "rating",
+                onClick = { onOptionSelected("rating") }
+            )
+            AccountOptionItem(
                 iconRes = Icons.Filled.Lock,
                 label = "Đổi mật khẩu",
                 isSelected = currentTab == "changePassword",
@@ -797,7 +806,7 @@ fun AccountOptionsSection(
             containerColor = Color.White,
             onDismissRequest = { openDialog.value = false },
             title = { Text("Đăng xuất") },
-            text = { Text("Đăng xuất tài khoản của bạn?", fontSize = 17.sp) },
+            text = { Text("Bạn chắc chắn muốn đăng xuất?", fontSize = 17.sp) },
             confirmButton = {
                 Button(
                     onClick = {
@@ -807,7 +816,8 @@ fun AccountOptionsSection(
                     colors = ButtonDefaults.buttonColors(
                         containerColor = Color(0xFF5F9EFF),
                         contentColor = Color.White
-                    )
+                    ),
+                    shape = RoundedCornerShape(8.dp)
                 ) {
                     Text("OK", fontSize = 14.sp)
                 }
@@ -820,7 +830,8 @@ fun AccountOptionsSection(
                     colors = ButtonDefaults.buttonColors(
                         containerColor = Color(0xFF5F9EFF),
                         contentColor = Color.White
-                    )
+                    ),
+                    shape = RoundedCornerShape(8.dp)
                 ) {
                     Text("Cancel", fontSize = 14.sp)
                 }
@@ -1026,60 +1037,6 @@ fun ChangePasswordSection(
                                 )
                             }
                         }
-
-//                        if (username.isEmpty() || matkhaucu.isEmpty() || kiemtramkmoi.isEmpty()) {
-//                            scope.launch {
-//                                snackbarHostState.showSnackbar(
-//                                    message = "Vui lòng nhập đày đủ thông tin."
-//                                )
-//                            }
-//                        } else if (matkhaucu != password) {
-//                            scope.launch {
-//                                snackbarHostState.showSnackbar(
-//                                    message = "Mật khẩu cũ chưa đúng!"
-//                                )
-//                            }
-//                        } else if (matkhaumoi.contains(" ")) {
-//                            scope.launch {
-//                                snackbarHostState.showSnackbar(
-//                                    message = "Mật khẩu mới không được chứa khoảng trắng!"
-//                                )
-//                            }
-//                        } else if(matkhaumoi!=kiemtramkmoi){
-//                            scope.launch {
-//                                snackbarHostState.showSnackbar(
-//                                    message = "Xác nhận mật khẩu không khớp!"
-//                                )
-//                            }
-//                        } else if (matkhaumoi.contains(username)) {
-//                            scope.launch {
-//                                snackbarHostState.showSnackbar(
-//                                    message = "Password không được chứa Username!"
-//                                )
-//                            }
-//                        } else if (matkhaumoi.length < 3) {
-//                            scope.launch {
-//                                snackbarHostState.showSnackbar(
-//                                    message = "Password phải từ 8 ký tự trở lên!"
-//                                )
-//                            }
-//                        }else{
-//                            scope.launch {
-//                                snackbarHostState.showSnackbar(
-//                                    message = "Đổi mật khẩu thành công!"
-//                                )
-//                            }
-//                            val taiKhoan = Account(
-//                                idPerson = account.idPerson,
-//                                idRole = "CUS",
-//                                username = username,
-//                                password = matkhaumoi,
-//                                report = 0,
-//                                isNew = 1,
-//                                status = 1
-//                            )
-//                            accountViewModel.updateAccount(taiKhoan)
-//                        }
                     }
                 },
 

@@ -41,6 +41,7 @@ import com.example.ungdungbanthietbi_iot.screen.personal.OrderListScreen
 import com.example.ungdungbanthietbi_iot.screen.personal.PersonalScreen
 import com.example.ungdungbanthietbi_iot.screen.rating.ProductReviewsScreen
 import com.example.ungdungbanthietbi_iot.screen.rating.RatingHistoryScreen
+import com.example.ungdungbanthietbi_iot.screen.rating.RatingScreen
 import com.example.ungdungbanthietbi_iot.ui.theme.parseSelectedProducts
 
 /** Chuyển hướng (NavGraph)
@@ -232,9 +233,29 @@ fun NavGraph(
             CheckOutSuccessScreen(navController, username)
         }
         //Màn hình lịch sử đánh giá, bình luận
-        composable(route = Screen.Rating_History.route) {
-            RatingHistoryScreen(navController)
+        composable(route = Screen.Rating_History.route + "?idCustomer={idCustomer}",
+            arguments = listOf(
+                navArgument("idCustomer") {type = NavType.StringType }
+            )
+        ) {
+            val idCustomer = it.arguments?.getString("idCustomer") ?: ""
+            RatingHistoryScreen(navController, idCustomer)
         }
+
+        //Màn hình đánh giá, bình luận
+        composable(route = Screen.Rating_Screen.route + "?idReview={idReview}&idCustomer={idCustomer}&idDevice={idDevice}",
+            arguments = listOf(
+                navArgument("idReview") {type = NavType.IntType },
+                navArgument("idCustomer") {type = NavType.StringType },
+                navArgument("idDevice") {type = NavType.IntType }
+            )
+        ) {
+            val idReview = it.arguments?.getInt("idReview") ?: 0
+            val idCustomer = it.arguments?.getString("idCustomer") ?: ""
+            val idDevice = it.arguments?.getInt("idDevice") ?: 0
+            RatingScreen(navController, idReview, idCustomer, idDevice)
+        }
+
         //Màn hình xem chi tiết đơn hàng
         composable(
             route = Screen.Order_Detail.route + "?id={id}&totalAmount={totalAmount}",
@@ -304,16 +325,7 @@ fun NavGraph(
             val idCustomer = it.arguments?.getString("idCustomer") ?: ""
             OrderListScreen(navController, idCustomer)
         }
-//        //Đường dẫn đến màn hình lịch sử sản phẩm và chỉ đến tab cần đến
-//        //Ví dụ: ấn vào chờ xác nhận thì đến tab chờ xác nhận
-//        composable(Screen.OrderListScreen.route + "/{initialPage}" + "?idCustomer={idCustomer}") { backStackEntry ->
-//            val initialPage = backStackEntry.arguments?.getString("initialPage")?.toInt() ?: 0
-//            val idCustomer = backStackEntry.arguments?.getString("idCustomer") ?: ""
-//            OrderListScreen(onBack = { navController.popBackStack() }, initialPage, idCustomer)
-//        }
 
-
-        //Cac man hinh thay doi thong tin ca nhan
         //Dẫn đến màn chọn(chỉnh sửa) Username
         composable(Screen.EditUsernamScreen.route + "/{id}/{username}") {
             backStackEntry ->

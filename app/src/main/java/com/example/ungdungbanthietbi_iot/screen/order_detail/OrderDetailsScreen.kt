@@ -43,8 +43,11 @@ import coil.compose.AsyncImage
 import com.example.ungdungbanthietbi_iot.data.address_book.AddressViewModel
 import com.example.ungdungbanthietbi_iot.data.customer.CustomerViewModel
 import com.example.ungdungbanthietbi_iot.data.device.DeviceViewModel
+import com.example.ungdungbanthietbi_iot.data.order.Order
 import com.example.ungdungbanthietbi_iot.data.order.OrderViewModel
 import com.example.ungdungbanthietbi_iot.data.order_detail.OrderDetailViewModel
+import com.example.ungdungbanthietbi_iot.data.review_device.Review
+import com.example.ungdungbanthietbi_iot.data.review_device.ReviewViewModel
 import com.example.ungdungbanthietbi_iot.navigation.Screen
 import java.text.DecimalFormat
 
@@ -77,6 +80,8 @@ fun OrderDetailsScreen(
     val addressViewModel:AddressViewModel = viewModel()
     val deviceViewModel:DeviceViewModel = viewModel()
     val customerViewModel:CustomerViewModel = viewModel()
+    val reviewViewModel:ReviewViewModel = viewModel()
+
 
     var order = orderViewModel.order
     var address = addressViewModel.address
@@ -133,27 +138,72 @@ fun OrderDetailsScreen(
             )
         },
         bottomBar = {
-            BottomAppBar (
-                containerColor = Color.Transparent,
-                modifier = Modifier.fillMaxWidth().height(100.dp)
-            ){
-                // Nút "Xác nhận đã nhận hàng"
-                Button(
-                    onClick = { /* Xử lý xác nhận */ },
-                    modifier = Modifier
-                        .fillMaxWidth(),
-                    shape = RoundedCornerShape(5.dp),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = Color(0xFF5D9EFF)
-                    ),
-                    enabled = false,
-                    elevation = ButtonDefaults.buttonElevation(2.dp)
-                ) {
-                    Text(
-                        text = "Xác nhận đã nhận hàng", color = Color.White,
-                        fontSize = 20.sp
-                    )
+            if(order?.status == 4){
+                BottomAppBar (
+                    containerColor = Color.Transparent,
+                    modifier = Modifier.fillMaxWidth().height(100.dp)
+                ){
+                    // Nút "Xác nhận đã nhận hàng"
+                    Button(
+                        onClick = {
+                            var orderNew = Order(
+                                order!!.id,
+                                order.idCustomer,
+                                order.totalAmount,
+                                order.paymentMethod,
+                                order.address,
+                                order.accountNumber,
+                                order.phone,
+                                order.nameRecipient,
+                                order.note,
+                                order.platformOrder,
+                                order.created_at,
+                                order.updated_at,
+                                order.accept_at,
+                                order.idEmployee,
+                                5)
+                            orderViewModel.updateOrder(orderNew)
+
+                            // Sau khi cập nhật đơn hàng, tạo đánh giá cho từng sản phẩm trong order_detail
+                            listOrderDetail?.forEach { device ->
+                                val review = Review(
+                                    idReview = 0, // Giả sử id sẽ được tự sinh khi lưu vào database
+                                    idCustomer = customer?.id ?: "",
+                                    idEmployee = "Null", // Nếu có idEmployee cụ thể, cập nhật tương ứng
+                                    idDevice = device.idDevice,
+                                    comment = "", // Để trống, người dùng có thể cập nhật sau
+                                    rating = 0,   // Giá trị mặc định, có thể thay đổi sau khi người dùng đánh giá
+                                    response = "Null",
+                                    note = "Null",
+                                    created_at = getCurrentTimestamp(), // Hàm lấy thời gian hiện tại
+                                    updated_at = getCurrentTimestamp(),
+                                    status = 0 // Ví dụ: 1 là trạng thái "chưa đánh giá" hoặc trạng thái mặc định
+                                )
+                                reviewViewModel.addReview(review)
+                            }
+                            navController.popBackStack()
+                        },
+                        modifier = Modifier
+                            .fillMaxWidth(),
+                        shape = RoundedCornerShape(5.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = Color(0xFF5D9EFF)
+                        ),
+
+                        elevation = ButtonDefaults.buttonElevation(2.dp)
+                    ) {
+                        Text(
+                            text = "Xác nhận đã nhận hàng", color = Color.White,
+                            fontSize = 20.sp
+                        )
+                    }
                 }
+            }
+            else {
+                BottomAppBar (
+                    containerColor = Color.Transparent,
+                    modifier = Modifier.fillMaxWidth().height(100.dp)
+                ){}
             }
         }
     ) { padding ->
@@ -186,6 +236,8 @@ fun OrderDetailsScreen(
                                 "Chờ giao hàng"
                             } else if (order?.status == 4) {
                                 "Đã giao"
+                            } else if (order?.status == 5) {
+                                "Hoàn tất"
                             } else {
                                 "Đã hủy"
                             },
@@ -347,4 +399,12 @@ fun OrderDetailsScreen(
             }
         }
     }
+}
+
+// Hàm giả lập lấy thời gian hiện tại, bạn có thể thay thế bằng cách lấy thời gian theo chuẩn của hệ thống
+fun getCurrentTimestamp(): String {
+    // Ví dụ: trả về thời gian hiện tại theo định dạng "yyyy-MM-dd HH:mm:ss"
+    val current = java.util.Calendar.getInstance().time
+    val formatter = java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss", java.util.Locale.getDefault())
+    return formatter.format(current)
 }

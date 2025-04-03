@@ -3,6 +3,7 @@ package com.example.ungdungbanthietbi_iot.data.device
 import android.util.Log
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
@@ -38,6 +39,20 @@ class DeviceViewModel:ViewModel() {
     var searchResult: List<Device> by mutableStateOf(emptyList())
 
 
+
+    var deviceMap = mutableStateMapOf<String, Device>()
+        private set
+
+    fun getDeviceBySlug2(id: String) {
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                val fetchedDevice = RetrofitClient.deviceAPIService.getDeviceById(id)
+                deviceMap[id] = fetchedDevice  // Lưu riêng từng sản phẩm
+            } catch (e: Exception) {
+                Log.e("DeviceViewModel", "Error getting device", e)
+            }
+        }
+    }
     fun getDeviceByCart(idCustomer: String) {
         viewModelScope.launch {
             try {

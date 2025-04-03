@@ -585,7 +585,9 @@ fun ProductDetailsScreen(
                                 TextButton(onClick = { showSnackbarF.value = false }) {
                                     Text(text = "Đóng", color = Color.White)
                                 }
-                            }
+                            },
+                            containerColor = Color.White,
+                            contentColor = Color.Gray
                         ) {
                             Text(snackbarMessageF.value)
                         }

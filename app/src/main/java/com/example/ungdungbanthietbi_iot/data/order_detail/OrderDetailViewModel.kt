@@ -17,6 +17,8 @@ class OrderDetailViewModel:ViewModel() {
 
     var listOrderDetail by mutableStateOf<List<OrderDetail>>(emptyList())
 
+    var listOrderDetailByStatus by mutableStateOf<List<OrderDetail>>(emptyList())
+
     fun addOrderDetail(orderDetail: OrderDetail) {
         viewModelScope.launch {
             try {
@@ -40,6 +42,20 @@ class OrderDetailViewModel:ViewModel() {
                     RetrofitClient.orderDetailAPIService.getOrderDetailByIdOrder(idOrder)
                 }
                 listOrderDetail = response.order
+            } catch (e: Exception) {
+                // Xử lý lỗi nếu có
+                Log.e("Order Detail Error", "Lỗi khi lấy order detail: ${e.message}")
+            }
+        }
+    }
+
+    fun getOrderDetailByStatus(idCustomer: String, status: Int) {
+        viewModelScope.launch {
+            try {
+                val response = withContext(Dispatchers.IO) {
+                    RetrofitClient.orderDetailAPIService.getOrderDetailByStatus(idCustomer, status)
+                }
+                listOrderDetailByStatus = response.order
             } catch (e: Exception) {
                 // Xử lý lỗi nếu có
                 Log.e("Order Detail Error", "Lỗi khi lấy order detail: ${e.message}")

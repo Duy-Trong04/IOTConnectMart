@@ -24,4 +24,10 @@ interface OrderDetailAPIService {
     suspend fun getOrderDetailByIdOrder(
         @Query("idOrder") idOrder: Int,
     ): OrderDetailResponse
+
+    @GET("order_detail/getOrderDetailByStatus.php")
+    suspend fun getOrderDetailByStatus(
+        @Query("idCustomer") idCustomer: String,
+        @Query("status") status: Int
+    ): OrderDetailResponse
 }
