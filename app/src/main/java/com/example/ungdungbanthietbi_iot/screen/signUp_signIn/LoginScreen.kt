@@ -89,9 +89,9 @@ fun LoginScreen(navController: NavController, accountViewModel: AccountViewModel
         SnackbarHostState()
     }
     // Biến nhận dữ liệu email từ người dùng
-    var username by remember { mutableStateOf("") }
+    var username by remember { mutableStateOf("test123") }
     // Biến nhận dữ liệu password từ người dùng
-    var password by remember { mutableStateOf("") }
+    var password by remember { mutableStateOf("test123") }
 
     var scope = rememberCoroutineScope()
     val loginResult = accountViewModel.loginResult.value

@@ -65,6 +65,25 @@ class DeviceViewModel:ViewModel() {
             }
         }
     }
+    // Map lưu trữ danh sách thiết bị theo từng orderId
+    var devicesByOrder by mutableStateOf<Map<Int, List<Device>>>(emptyMap())
+        private set
+
+    fun getDeviceByIdOrder2(orderId: Int) {
+        viewModelScope.launch {
+            try {
+                val response = withContext(Dispatchers.IO) {
+                    RetrofitClient.deviceAPIService.getDeviceByIdOrder(orderId)
+                }
+                // Cập nhật vào map
+                devicesByOrder = devicesByOrder.toMutableMap().apply {
+                    put(orderId, response.device)
+                }
+            } catch (e: Exception) {
+                Log.e("DeviceViewModel", "Lỗi khi lấy thiết bị: ${e.message}")
+            }
+        }
+    }
     fun getDeviceByIdOrder(id: Int) {
         viewModelScope.launch {
             try {

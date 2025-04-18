@@ -38,6 +38,7 @@ sealed class Screen(var route: String) {
     object Cart_Screen:Screen("cart_screen")
     object Product_Reviews:Screen("product_reviews")
     object Rating_Screen:Screen("rating_screen")
+    object Update_Rating_Screen:Screen("update_rating_screen")
     object Rating_History:Screen("rating_history")
     object CheckOutSuccess:Screen("checkout_success")
 

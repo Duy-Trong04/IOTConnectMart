@@ -1,5 +1,6 @@
 package com.example.ungdungbanthietbi_iot.screen.order_detail
 
+import android.util.Log
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -19,6 +20,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Divider
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -29,6 +31,12 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -49,6 +57,7 @@ import com.example.ungdungbanthietbi_iot.data.order_detail.OrderDetailViewModel
 import com.example.ungdungbanthietbi_iot.data.review_device.Review
 import com.example.ungdungbanthietbi_iot.data.review_device.ReviewViewModel
 import com.example.ungdungbanthietbi_iot.navigation.Screen
+import kotlinx.coroutines.launch
 import java.text.DecimalFormat
 
 /** Giao diện màn hình chi tiết đơn hàng (OrderDetailsScreen)
@@ -88,6 +97,7 @@ fun OrderDetailsScreen(
     var listOrderDetail = orderDetailViewModel.listOrderDetail
     var listDevice = deviceViewModel.listDeviceByOrder
     var customer = customerViewModel.customer
+    var reviewInfo by remember { mutableStateOf<Review?>(null) }
 
     LaunchedEffect(idOrder) {
         orderViewModel.getOrderById(idOrder)
@@ -103,10 +113,25 @@ fun OrderDetailsScreen(
         orderDetailViewModel.getOrderDetailByIdOrder(idOrder)
     }
 
+    // Chạy lại bất cứ khi nào `listDevice` hoặc `customer` thay đổi
+    LaunchedEffect(listDevice, customer) {
+        if (customer != null && listDevice.isNotEmpty()) {
+            listDevice.forEach { device ->
+                // Khởi tạo null để Compose hiển thị loading (hoặc tránh miss key)
+                reviewViewModel.initReviewCheck(device.idDevice)
+                reviewViewModel.checkReview(customer.id, device.idDevice)
+                reviewViewModel.checkReview2(customer.id, device.idDevice)
+                reviewInfo = reviewViewModel.checkReviewDirect(customer.id, device.idDevice, 2)
+            }
+        }
+    }
+
+
     //format giá sản phẩm
     val formatter = DecimalFormat("##,###,###")
     val formattedPrice = formatter.format(totalAmount)
 
+    val scope = rememberCoroutineScope()
     Scaffold(
         topBar = {
             TopAppBar(
@@ -146,42 +171,31 @@ fun OrderDetailsScreen(
                     // Nút "Xác nhận đã nhận hàng"
                     Button(
                         onClick = {
-                            var orderNew = Order(
-                                order!!.id,
-                                order.idCustomer,
-                                order.totalAmount,
-                                order.paymentMethod,
-                                order.address,
-                                order.accountNumber,
-                                order.phone,
-                                order.nameRecipient,
-                                order.note,
-                                order.platformOrder,
-                                order.created_at,
-                                order.updated_at,
-                                order.accept_at,
-                                order.idEmployee,
-                                5)
+                            val orderNew = order.copy(status = 5)
                             orderViewModel.updateOrder(orderNew)
 
-                            // Sau khi cập nhật đơn hàng, tạo đánh giá cho từng sản phẩm trong order_detail
-                            listOrderDetail?.forEach { device ->
-                                val review = Review(
-                                    idReview = 0, // Giả sử id sẽ được tự sinh khi lưu vào database
-                                    idCustomer = customer?.id ?: "",
-                                    idEmployee = "Null", // Nếu có idEmployee cụ thể, cập nhật tương ứng
-                                    idDevice = device.idDevice,
-                                    comment = "", // Để trống, người dùng có thể cập nhật sau
-                                    rating = 0,   // Giá trị mặc định, có thể thay đổi sau khi người dùng đánh giá
-                                    response = "Null",
-                                    note = "Null",
-                                    created_at = getCurrentTimestamp(), // Hàm lấy thời gian hiện tại
-                                    updated_at = getCurrentTimestamp(),
-                                    status = 0 // Ví dụ: 1 là trạng thái "chưa đánh giá" hoặc trạng thái mặc định
-                                )
-                                reviewViewModel.addReview(review)
+                            scope.launch {
+                                 //Duyệt qua listOrderDetail và xử lý từng device
+                                listOrderDetail?.forEach { device ->
+                                    val reviewFromApi = reviewViewModel.checkReviewDirect(
+                                        idCustomer = customer!!.id,
+                                        idDevice = device.idDevice,
+                                        status = 1
+                                    )
+                                    Log.e("Review", "reviewFromApi = $reviewFromApi")
+
+                                    // Tạo đối tượng Review dựa trên kết quả check review
+                                    if (reviewFromApi != null) {
+                                        // Nếu review đã tồn tại, update với thông tin có sẵn (lấy idReview từ reviewFromApi)
+                                        val reviewUpdate = reviewFromApi.copy(
+                                            status = 2
+                                            // Các trường khác bạn có thể giữ nguyên hoặc thay đổi theo logic của bạn
+                                        )
+                                        reviewViewModel.updateReview(reviewUpdate)
+                                    }
+                                }
+                                navController.popBackStack()
                             }
-                            navController.popBackStack()
                         },
                         modifier = Modifier
                             .fillMaxWidth(),
@@ -303,6 +317,8 @@ fun OrderDetailsScreen(
                     ) {
                         Column(modifier = Modifier.padding(8.dp)) {
                             listDevice.forEach { device ->
+                                val reviewExists = reviewViewModel.reviewExistsMap[device.idDevice] // lấy trạng thái đánh giá
+                                val reviewExists2 = reviewViewModel.reviewExistsMap2[device.idDevice] // lấy trạng thái đánh giá
                                 Row(
                                     modifier = Modifier.fillMaxWidth().padding(4.dp),
                                     horizontalArrangement = Arrangement.SpaceBetween,
@@ -320,23 +336,76 @@ fun OrderDetailsScreen(
                                                 .padding(end = 8.dp),
                                             contentScale = ContentScale.Fit
                                         )
-                                        Text(
-                                            text = device.name,
-                                            fontSize = 16.sp
-                                        )
-                                    }
-                                    Text(
-                                        text = "${formatter.format(device.sellingPrice)}đ",
-                                        fontSize = 16.sp
-                                    )
-                                    Spacer(modifier = Modifier.width(5.dp))
-                                    for (detail in listOrderDetail) {
-                                        if (detail.idDevice == device.idDevice) {
+                                        Column {
                                             Text(
-                                                text = "x${detail.stock}",
+                                                text = device.name,
                                                 fontSize = 16.sp
                                             )
+                                            Row(
+                                                verticalAlignment = Alignment.CenterVertically
+                                            ) {
+                                                Text(
+                                                    text = "${formatter.format(device.sellingPrice)}VNĐ",
+                                                    fontSize = 14.sp,
+                                                    color = Color.Red
+                                                )
+                                                Spacer(modifier = Modifier.width(8.dp))
+                                                for (detail in listOrderDetail) {
+                                                    if (detail.idDevice == device.idDevice) {
+                                                        Text(
+                                                            text = "x${detail.stock}",
+                                                            fontSize = 14.sp,
+                                                            fontWeight = FontWeight.Bold
+                                                        )
+                                                    }
+                                                }
+                                            }
                                         }
+                                    }
+                                    when (order!!.status) {
+                                        5 -> when {
+                                            reviewExists == false && reviewExists2 == false -> Button(
+                                                onClick = {
+                                                    navController.navigate(
+                                                        Screen.Rating_Screen.route +
+                                                                "?idCustomer=${customer!!.id}&idDevice=${device.idDevice}"
+                                                    )
+                                                },
+                                                shape = RoundedCornerShape(8.dp),
+                                                colors = ButtonDefaults.buttonColors(
+                                                    containerColor = Color(0xFF5D9EFF),
+                                                    contentColor   = Color.White
+                                                )
+                                            ) {
+                                                Text("Đánh giá")
+                                            }
+
+                                            // Đã review lần 1 nhưng chưa review lần 2 → hiển nút Cập nhật
+                                            reviewInfo != null -> Button(
+                                                onClick = {
+                                                    navController.navigate(Screen.Update_Rating_Screen.route + "?idReview=${reviewInfo!!.idReview}&idCustomer=${customer!!.id}")
+                                                },
+                                                shape = RoundedCornerShape(8.dp),
+                                                colors = ButtonDefaults.buttonColors(
+                                                    containerColor = Color(0xFF5D9EFF),
+                                                    contentColor   = Color.White
+                                                )
+                                            ) {
+                                                Text("Cập nhật")
+                                            }
+
+                                            // reviewExists hoặc reviewExists2 == null → đang load
+                                            reviewExists  == null ||
+                                                    reviewExists2 == null -> CircularProgressIndicator(
+                                                modifier = Modifier.size(18.dp),
+                                                color = Color(0xFF5D9EFF)
+                                            )
+
+                                            else -> {
+                                                // đã review cả hai lần → không hiển thị nút nào
+                                            }
+                                        }
+                                        else -> {}
                                     }
                                 }
                             }
@@ -353,7 +422,7 @@ fun OrderDetailsScreen(
                                 )
                                 // Tổng tiền
                                 Text(
-                                    text = "${formattedPrice}đ",
+                                    text = "${formattedPrice}VNĐ",
                                     fontWeight = FontWeight.Bold,
                                     fontSize = 18.sp,
                                 )
@@ -370,7 +439,7 @@ fun OrderDetailsScreen(
                                 )
                                 // Tổng tiền
                                 Text(
-                                    text = "0đ",
+                                    text = "0VNĐ",
                                     fontWeight = FontWeight.Bold,
                                     fontSize = 18.sp,
                                 )
@@ -387,7 +456,7 @@ fun OrderDetailsScreen(
                                 )
                                 // Tổng tiền
                                 Text(
-                                    text = "${formattedPrice}đ",
+                                    text = "${formattedPrice}VNĐ",
                                     fontWeight = FontWeight.Bold,
                                     fontSize = 18.sp,
                                     color = Color.Red

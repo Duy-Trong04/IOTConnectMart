@@ -114,6 +114,7 @@ fun PersonalScreen(
 
     // Kiểm tra trạng thái Tab
     var currentTab by remember { mutableStateOf("accountInfo") }
+
     // Danh mục
     ModalNavigationDrawer(
         drawerState = navdrawerState,
@@ -364,20 +365,10 @@ fun PersonalScreen(
                         modifier = Modifier
                             .padding(start = 16.dp, end = 16.dp, top = 16.dp)
                     ) {
-
                         when (currentTab) {
 
                             "accountInfo" -> AccountInfoSection(username)
-                            "cartManagement" -> LaunchedEffect(currentTab) {
-                                navController.navigate(Screen.OrderListScreen.route + "?idCustomer=${account.idPerson}")
-                            }
                             "changePassword" -> ChangePasswordSection(username)
-                            "addresses" -> LaunchedEffect(currentTab) {
-                                navController.navigate("${Screen.Address_Selection.route}?idCustomer=${account.idPerson}")
-                            }
-                            "rating" -> LaunchedEffect(currentTab) {
-                                navController.navigate("${Screen.Rating_History.route}?idCustomer=${account.idPerson}")
-                            }
                         }
                     }
                 }
@@ -393,7 +384,8 @@ fun PersonalScreen(
                             currentTab = selectedTab
                         },
                         currentTab = currentTab,
-                        navController = navController
+                        navController = navController,
+                        username = username
                     )
                 }
             }
@@ -744,9 +736,21 @@ fun AccountOptionsSection(
     onOptionSelected: (String) -> Unit,
     currentTab: String,
     navController: NavController,
+    username:String
 ) {
     val openDialog = remember { mutableStateOf(false) }
+// Lấy ViewModel
+    val accountViewModel:AccountViewModel = viewModel()
 
+    // Lấy thông tin tài khoản từ ViewModel
+    val account = accountViewModel.account
+
+    // Gọi API nếu taikhoan chưa được lấy
+    LaunchedEffect(username) {
+        if (username.isNotEmpty()) {
+            accountViewModel.getUserByUsername(username)
+        }
+    }
     Card(
         shape = RoundedCornerShape(10.dp),
         elevation = CardDefaults.cardElevation(2.dp),
@@ -770,19 +774,19 @@ fun AccountOptionsSection(
                 iconRes = Icons.Filled.LocationOn,
                 label = "Số địa chỉ",
                 isSelected = currentTab == "addresses",
-                onClick = { onOptionSelected("addresses") }
+                onClick = { navController.navigate(Screen.Address_Selection.route + "?idCustomer=${account?.idPerson}") }
             )
             AccountOptionItem(
                 iconRes = Icons.Filled.ShoppingCart,
-                label = "Quản lý đơn hàng",
+                label = "Theo dõi đơn hàng",
                 isSelected = currentTab == "cartManagement",
-                onClick = { onOptionSelected("cartManagement") }
+                onClick = { navController.navigate(Screen.OrderListScreen.route + "?idCustomer=${account?.idPerson}") }
             )
             AccountOptionItem(
                 iconRes = Icons.Filled.Star,
                 label = "Đánh giá",
                 isSelected = currentTab == "rating",
-                onClick = { onOptionSelected("rating") }
+                onClick = { navController.navigate(Screen.Rating_History.route + "?idCustomer=${account?.idPerson}") }
             )
             AccountOptionItem(
                 iconRes = Icons.Filled.Lock,
@@ -811,7 +815,10 @@ fun AccountOptionsSection(
                 Button(
                     onClick = {
                         openDialog.value = false
-                        navController.navigate(Screen.HomeScreen.route)
+                        navController.navigate(Screen.HomeScreen.route){
+                            // Sau khi đăng xuất, loại bỏ các màn cũ ra khỏi back stack
+                            popUpTo(0)
+                        }
                     },
                     colors = ButtonDefaults.buttonColors(
                         containerColor = Color(0xFF5F9EFF),
