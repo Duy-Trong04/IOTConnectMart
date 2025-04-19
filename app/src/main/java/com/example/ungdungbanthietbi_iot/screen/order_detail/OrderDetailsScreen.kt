@@ -298,7 +298,7 @@ fun OrderDetailsScreen(
 
             }
             item {
-                if(listDevice != null){
+                if(listDevice != null && order != null){
                     Spacer(modifier = Modifier.height(16.dp))
                     // Chi tiết sản phẩm
                     Text(
@@ -362,7 +362,7 @@ fun OrderDetailsScreen(
                                             }
                                         }
                                     }
-                                    when (order!!.status) {
+                                    when (order.status) {
                                         5 -> when {
                                             reviewExists == false && reviewExists2 == false -> Button(
                                                 onClick = {
@@ -393,14 +393,6 @@ fun OrderDetailsScreen(
                                             ) {
                                                 Text("Cập nhật")
                                             }
-
-                                            // reviewExists hoặc reviewExists2 == null → đang load
-                                            reviewExists  == null ||
-                                                    reviewExists2 == null -> CircularProgressIndicator(
-                                                modifier = Modifier.size(18.dp),
-                                                color = Color(0xFF5D9EFF)
-                                            )
-
                                             else -> {
                                                 // đã review cả hai lần → không hiển thị nút nào
                                             }
@@ -464,6 +456,14 @@ fun OrderDetailsScreen(
                             }
                         }
                     }
+                }
+                else{
+                    CircularProgressIndicator(
+                        modifier = Modifier
+                            .size(50.dp)
+                            .padding(16.dp),
+                        color = Color(0xFF5D9EFF)
+                    )
                 }
             }
         }

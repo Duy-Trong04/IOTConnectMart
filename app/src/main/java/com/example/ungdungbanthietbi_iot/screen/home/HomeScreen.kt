@@ -2,6 +2,7 @@ package com.example.ungdungbanthietbi_iot.screen.home
 
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.ExperimentalAnimationApi
+import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.with
@@ -24,6 +25,8 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
@@ -107,6 +110,10 @@ import com.example.ungdungbanthietbi_iot.navigation.Screen
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.text.DecimalFormat
+import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
+import androidx.compose.material3.CircularProgressIndicator
 
 /** Giao diện màn hình Trang chủ (HomeScreen)
  * -------------------------------------------
@@ -504,47 +511,81 @@ fun HomeScreen(
             )
             {
                 item {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .pointerInput(Unit) {
-                                detectHorizontalDragGestures { change, dragAmount ->
-                                    change.consume() // Tiêu thụ sự kiện kéo
-                                    if (dragAmount > 0 && listSlideShow.isNotEmpty()) { // Trượt sang phải
-                                        currentIndex =
-                                            if (currentIndex == 0) listSlideShow.size - 1 else currentIndex - 1
-                                    } else if (listSlideShow.isNotEmpty()) { // Trượt sang trái
-                                        currentIndex = (currentIndex + 1) % listSlideShow.size
-                                    }
-                                }
-                            },
-                        contentAlignment = Alignment.Center
-                    ) {
-                        if (listSlideShow.isNotEmpty()) {
-                            SlideImage(painter = rememberImagePainter(data = listSlideShow[currentIndex].image))
-                        } else {
-                            Text(text = "No slides available", fontSize = 16.sp, modifier = Modifier.padding(16.dp))
+                    if (listSlideShow.isNotEmpty()) {
+                        // Tạo PagerState với số lượng trang "vô hạn"
+                        val pagerState = rememberPagerState(
+                            initialPage = Int.MAX_VALUE / 2, // Bắt đầu ở giữa để lướt cả hai hướng
+                            pageCount = { Int.MAX_VALUE } // Số lượng trang vô hạn
+                        )
+
+                        // Ánh xạ currentIndex với vị trí thật trong listSlideShow
+                        LaunchedEffect(pagerState.currentPage) {
+                            currentIndex = pagerState.currentPage % listSlideShow.size
+                            if (currentIndex < 0) {
+                                currentIndex += listSlideShow.size // Đảm bảo currentIndex luôn dương
+                            }
                         }
-                    }
-                    Spacer(modifier = Modifier.height(8.dp))
-                    // Indicator (dấu chấm dưới)
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(8.dp),
-                        horizontalArrangement = Arrangement.Center
-                    ) {
-                        listSlideShow.forEachIndexed { index, _ ->
-                            Box(
-                                modifier = Modifier
-                                    .size(17.dp) // Tăng kích thước của các chấm tròn
-                                    .padding(4.dp)
-                                    .background(
-                                        color = if (index == currentIndex) Color(0xFF5D9EFF) else Color.LightGray,
-                                        shape = CircleShape
-                                    )
+
+                        // Tự động chuyển đổi vẫn hoạt động dựa trên currentIndex
+                        LaunchedEffect(currentIndex) {
+                            val targetPage = pagerState.currentPage - (pagerState.currentPage % listSlideShow.size) + currentIndex
+                            if (targetPage != pagerState.currentPage) {
+                                pagerState.animateScrollToPage(targetPage)
+                            }
+                        }
+
+                        // HorizontalPager với lướt vô hạn
+                        HorizontalPager(
+                            state = pagerState,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(250.dp)
+                        ) { page ->
+                            // Ánh xạ page thành chỉ số thật trong listSlideShow
+                            val realIndex = page % listSlideShow.size
+                            val adjustedIndex = if (realIndex < 0) realIndex + listSlideShow.size else realIndex
+                            SlideImage(
+                                painter = rememberImagePainter(data = listSlideShow[adjustedIndex].image),
                             )
                         }
+
+                        Spacer(modifier = Modifier.height(8.dp))
+
+                        // Indicator (các chấm tròn dưới SlideShow)
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(8.dp),
+                            horizontalArrangement = Arrangement.Center
+                        ) {
+                            listSlideShow.forEachIndexed { index, _ ->
+                                val animatedColor by animateColorAsState(
+                                    targetValue = if (index == currentIndex) Color(0xFF5D9EFF) else Color.LightGray
+                                )
+                                Box(
+                                    modifier = Modifier
+                                        .size(17.dp)
+                                        .padding(4.dp)
+                                        .background(
+                                            color = animatedColor,
+                                            shape = CircleShape
+                                        )
+                                        .clickable {
+                                            // Chuyển đến trang tương ứng
+                                            currentIndex = index
+                                        }
+                                )
+                            }
+                        }
+                    } else {
+                        Text(
+                            text = "No slides available",
+                            fontSize = 16.sp,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(16.dp),
+                            textAlign = TextAlign.Center
+                        )
                     }
                 }
                 item {
@@ -637,31 +678,48 @@ fun HomeScreen(
                 }
                 item {
                     // Tất cả sản phẩm
-                    Text("Tất cả sản phẩm", modifier = Modifier.padding(20.dp),
+                    Text(
+                        "Tất cả sản phẩm", modifier = Modifier.padding(20.dp),
                         color = Color(0xFF085979),
                         fontWeight = FontWeight.Bold
                     )
-                    LazyRow(modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(10.dp),
-                        horizontalArrangement = Arrangement.Start) {
-                        items(listAllDevice){
-                            if(account != null){
-                                CardAllDevice(device = it,
-                                    isFavorite = isFavorite,
-                                    account.idPerson,
-                                    account.username,
-                                    navController
-                                )
+                }
+                val pairedDevices = listAllDevice.chunked(2) // Chia danh sách thành các nhóm 2 phần tử
+                items(pairedDevices) { pair ->
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 10.dp),
+                        horizontalArrangement = Arrangement.spacedBy(10.dp)
+                    ) {
+                        pair.forEach { device ->
+                            Box(
+                                modifier = Modifier
+                                    .weight(1f) // Mỗi sản phẩm chiếm 50% chiều rộng
+                                    .padding(vertical = 5.dp)
+                            ) {
+                                if (account != null) {
+                                    CardAllDevice(
+                                        device = device,
+                                        isFavorite = isFavorite,
+                                        idCustomer = account.idPerson,
+                                        username = account.username,
+                                        navController = navController
+                                    )
+                                } else {
+                                    CardAllDevice(
+                                        device = device,
+                                        isFavorite = isFavorite,
+                                        idCustomer = null,
+                                        username = username,
+                                        navController = navController
+                                    )
+                                }
                             }
-                            else{
-                                CardAllDevice(device = it,
-                                    isFavorite = isFavorite,
-                                    null,
-                                    username,
-                                    navController
-                                )
-                            }
+                        }
+                        // Nếu chỉ có 1 sản phẩm trong cặp, thêm một Box trống để giữ layout
+                        if (pair.size == 1) {
+                            Box(modifier = Modifier.weight(1f))
                         }
                     }
                 }
@@ -746,7 +804,7 @@ fun CardDeviceFeatured(device: Device, isFavorite:Boolean, idCustomer:String?, u
                     var isProductFound = false
                     for (liked in listLiked) {
                         if (device.idDevice == liked.idDevice) {
-                            likedViewModel.updateLiked(liked)
+                            //likedViewModel.updateLiked(liked)
                             isProductFound = true
                             break
                         }

@@ -53,6 +53,11 @@ import java.text.DecimalFormat
  * Nội dung cập nhật:
  *
  */
+// Enum để xác định loại hành động xóa
+enum class DeleteAction {
+    SINGLE, // Xóa một sản phẩm
+    ALL     // Xóa tất cả sản phẩm được chọn
+}
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CartScreen(
@@ -101,25 +106,31 @@ fun CartScreen(
     LaunchedEffect(idCustomer) {
         cartViewModel.getCartByIdCustomer(idCustomer)
         deviceViewModel.getDeviceByCart(idCustomer)
-        listCart.forEach { selectedItems[it.id] = false } // Mặc định không chọn sản phẩm nào
+        addressViewModel.getAddressByIdCustomer(idCustomer)
     }
-
+    // Khởi tạo selectedItems khi listCart thay đổi
+    LaunchedEffect(listCart) {
+        selectedItems.clear()
+        listCart.forEach { selectedItems[it.id] = false }
+        selectedProducts.clear()
+        calculateTotalPrice()
+    }
     // Tính tổng tiền khi dữ liệu giỏ hàng hoặc sản phẩm thay đổi
     LaunchedEffect(listCart, deviceViewModel.listDeviceOfCustomer) {
         calculateTotalPrice() // Tính tổng tiền khi dữ liệu thay đổi
     }
 
-    LaunchedEffect(idCustomer) {
-        addressViewModel.getAddressByIdCustomer(idCustomer)
-    }
-
+// Biến trạng thái cho dialog xác nhận
+    var showDeleteDialog by remember { mutableStateOf(false) }
+    var deleteAction by remember { mutableStateOf<DeleteAction?>(null) }
+    var cartIdToDelete by remember { mutableStateOf<Int?>(null) } // Lưu id của sản phẩm cần xóa (cho xóa một sản phẩm)
     Log.d("",listAddress.toString())
 
     Scaffold(
         topBar = {
             TopAppBar(
                 modifier = Modifier.fillMaxWidth(),
-                title = { Text("Giỏ hàng(${listCart.size})", textAlign = TextAlign.Start,
+                title = { Text("Giỏ hàng (${listCart.size})", textAlign = TextAlign.Start,
                     modifier = Modifier.fillMaxWidth(),
                     fontWeight = FontWeight.Bold
                 )},
@@ -128,6 +139,45 @@ fun CartScreen(
                     titleContentColor = Color.White,
                     navigationIconContentColor = Color.White
                 ),
+                actions = {
+                    //Xóa hết
+                    TextButton(
+                        onClick = {
+//                            if (selectedItems.values.any { it == true }) {
+//                                // Xóa các sản phẩm được chọn
+//                                selectedItems.forEach { (cartId, isSelected) ->
+//                                    if (isSelected) {
+//                                        cartViewModel.deleteCart(cartId)
+//                                    }
+//                                }
+//                                // Cập nhật lại danh sách giỏ hàng
+//                                cartViewModel.listCart = cartViewModel.listCart.filter { !selectedItems[it.id]!! }
+//                                // Xóa danh sách selectedItems và selectedProducts
+//                                selectedItems.clear()
+//                                selectedProducts.clear()
+//                                calculateTotalPrice() // Tính lại tổng tiền
+//                            } else {
+//                                showDialog = true // Hiển thị dialog nếu không có sản phẩm nào được chọn
+//                            }
+                            if (selectedItems.values.any { it == true }) {
+                                deleteAction = DeleteAction.ALL // Đặt hành động là xóa tất cả
+                                showDeleteDialog = true // Hiển thị dialog xác nhận
+                            } else {
+                                showDialog = true
+                            }
+                        },
+                        colors = ButtonDefaults.textButtonColors(
+                            contentColor = Color.White,
+                            containerColor = Color(0xFF5D9EFF)
+                        )
+                    ) {
+                        Text(
+                            text = "Xóa",
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 20.sp
+                        )
+                    }
+                },
                 navigationIcon = {
                     // Nút quay lại
                     IconButton(onClick = {
@@ -154,11 +204,47 @@ fun CartScreen(
                         .fillMaxWidth()
                         .padding(10.dp)
                 ) {
-                    // Hiển thị tổng giá thanh toán
-                    Text(
-                        "Tổng thanh toán: ${formatGiaTien(totalPrice)}",
-                        style = TextStyle(color = Color.Red, fontSize = 18.sp)
-                    )
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Checkbox(
+                                checked = selectedItems.isNotEmpty() && selectedItems.values.all { it == true } && listCart.isNotEmpty(),
+                                onCheckedChange = { isChecked ->
+                                    // Cập nhật trạng thái chọn tất cả sản phẩm
+                                    listCart.forEach { cart ->
+                                        selectedItems[cart.id] = isChecked
+                                        if (isChecked) {
+                                            // Thêm sản phẩm vào danh sách selectedProducts
+                                            selectedProducts.add(Triple(cart.idDevice, cart.stock, cart.id))
+                                        } else {
+                                            // Xóa sản phẩm khỏi danh sách selectedProducts
+                                            selectedProducts.removeAll { it.first == cart.idDevice }
+                                        }
+                                    }
+                                    calculateTotalPrice() // Tính lại tổng tiền
+                                },
+                                colors = CheckboxDefaults.colors(
+                                    checkedColor = Color(0xFF5D9EFF),
+                                    uncheckedColor = Color.Gray
+                                )
+                            )
+                            Text(
+                                text = "Tất cả",
+                                fontSize = 18.sp,
+                                color = Color.Black
+                            )
+                        }
+                        // Hiển thị tổng giá thanh toán
+                        Text(
+                            "Tổng thanh toán: ${formatGiaTien(totalPrice)}",
+                            style = TextStyle(color = Color.Red, fontSize = 18.sp)
+                        )
+                    }
                     val selectedProductsString = selectedProducts.joinToString(",") { "${it.first}:${it.second}:${it.third}" }
 
                     Spacer(modifier = Modifier.height(8.dp))
@@ -233,6 +319,74 @@ fun CartScreen(
                             containerColor = Color(0xFF5D9EFF)
                         )) {
                         Text("OK")
+                    }
+                }
+            )
+        }
+        if (showDeleteDialog) {
+            AlertDialog(
+                onDismissRequest = {
+                    showDeleteDialog = false
+                    deleteAction = null
+                    cartIdToDelete = null
+                },
+                title = { Text(text = "Xác nhận xóa") },
+                text = {
+                    Text(
+                        text = when (deleteAction) {
+                            DeleteAction.SINGLE -> "Bạn có chắc chắn muốn xóa sản phẩm này khỏi giỏ hàng?"
+                            DeleteAction.ALL -> "Bạn có chắc chắn muốn xóa tất cả sản phẩm được chọn khỏi giỏ hàng?"
+                            null -> ""
+                        }
+                    )
+                },
+                confirmButton = {
+                    Button(
+                        onClick = {
+                            when (deleteAction) {
+                                DeleteAction.SINGLE -> {
+                                    cartIdToDelete?.let { cartId ->
+                                        cartViewModel.deleteCart(cartId)
+                                        cartViewModel.listCart = cartViewModel.listCart.filter { it.id != cartId }
+                                        calculateTotalPrice()
+                                    }
+                                }
+                                DeleteAction.ALL -> {
+                                    selectedItems.forEach { (cartId, isSelected) ->
+                                        if (isSelected) {
+                                            cartViewModel.deleteCart(cartId)
+                                        }
+                                    }
+                                    cartViewModel.listCart = cartViewModel.listCart.filter { !selectedItems[it.id]!! }
+                                    selectedItems.clear()
+                                    selectedProducts.clear()
+                                    calculateTotalPrice()
+                                }
+                                null -> {}
+                            }
+                            showDeleteDialog = false
+                            deleteAction = null
+                            cartIdToDelete = null
+                        },
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = Color(0xFF5D9EFF)
+                        )
+                    ) {
+                        Text("Xóa")
+                    }
+                },
+                dismissButton = {
+                    Button(
+                        onClick = {
+                            showDeleteDialog = false
+                            deleteAction = null
+                            cartIdToDelete = null
+                        },
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = Color.Gray
+                        )
+                    ) {
+                        Text("Hủy")
                     }
                 }
             )
@@ -353,9 +507,9 @@ fun CartScreen(
                             }
                             // Nút xóa sản phẩm
                             IconButton(onClick = {
-                                cartViewModel.deleteCart(cart.id)
-                                cartViewModel.listCart = cartViewModel.listCart.filter { it.id != cart.id }
-                                calculateTotalPrice()
+                                cartIdToDelete = cart.id
+                                deleteAction = DeleteAction.SINGLE // Đặt hành động là xóa một sản phẩm
+                                showDeleteDialog = true // Hiển thị dialog xác nhận
                             }) {
                                 Icon(
                                     imageVector = Icons.Default.Delete,

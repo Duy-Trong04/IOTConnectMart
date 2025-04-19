@@ -66,244 +66,6 @@ import com.example.ungdungbanthietbi_iot.navigation.Screen
 @Composable
 fun RatingHistoryScreen(navController: NavController, idCustomer: String?) {
 
-
-    val reviewViewModel: ReviewViewModel = viewModel()
-    val listReviewChuaDanhGia = reviewViewModel.listReviewChuaDanhGia
-    val listReviewDaDanhGia = reviewViewModel.listReviewDaDanhGia
-
-    LaunchedEffect (listReviewChuaDanhGia.size){
-        reviewViewModel.getReviewByIdCustomerChuaDanhGia(idCustomer.toString())
-    }
-    LaunchedEffect (listReviewDaDanhGia.size){
-        reviewViewModel.getReviewByIdCustomerDaDanhGia(idCustomer.toString())
-    }
-
-    var selectedTabIndexItem by remember { mutableStateOf(1) }
-    val tabs = listOf("Chưa đánh giá (${listReviewChuaDanhGia.size})", "Đã đánh giá (${listReviewDaDanhGia.size})")
-    Scaffold (
-        containerColor = Color.White,
-        topBar = {
-            TopAppBar(
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = Color(0xFF5D9EFF),
-                    navigationIconContentColor = Color.White,
-                    titleContentColor = Color.White
-                ),
-                title = {
-                    Text(text = "Đánh giá của tôi",
-                        fontWeight = FontWeight.Bold,
-                        modifier = Modifier.fillMaxWidth(),
-                        textAlign = TextAlign.Start
-                    )
-                },
-                navigationIcon = {
-                    IconButton(
-                        onClick = {
-                            navController.popBackStack()
-                        }
-                    ) {
-                        Icon(imageVector = Icons.Filled.ArrowBack, contentDescription = "")
-                    }
-                }
-            )
-        }
-    ){
-        Column(
-            modifier = Modifier
-                .padding(it)
-                .padding(3.dp),
-        ) {
-            TabRow(
-                selectedTabIndex = selectedTabIndexItem,
-                modifier = Modifier.fillMaxWidth(),
-                contentColor = Color(0xFF5D9EFF),
-                containerColor = Color.White,
-                indicator = { tabPositions ->
-                    TabRowDefaults.Indicator(
-                        modifier = Modifier
-                            .tabIndicatorOffset(tabPositions[selectedTabIndexItem]),
-                        color = Color(0xFF5D9EFF)
-                    )
-                }
-            ) {
-                tabs.forEachIndexed { index, title ->
-                    Tab(
-                        selected = selectedTabIndexItem == index,
-                        onClick = { selectedTabIndexItem = index },
-                        modifier = Modifier.weight(1f)
-                    ) {
-                        Text(
-                            text = title,
-                            fontSize = 18.sp,
-                            fontWeight = FontWeight.W600,
-                            modifier = Modifier.padding(8.dp)
-                        )
-                    }
-                }
-            }
-
-            // Content
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-            ) {
-                when (selectedTabIndexItem) {
-                    0 -> ChuaDanhGiaScreen(navController,idCustomer)
-                    1 -> DaDanhGiaScreen(navController,idCustomer)
-                }
-            }
-        }
-    }
-
-}
-
-@Composable
-fun ChuaDanhGiaScreen(navController: NavController, idCustomer: String?){
-
-    val reviewViewModel: ReviewViewModel = viewModel()
-    val listReviewChuaDanhGia = reviewViewModel.listReviewChuaDanhGia
-
-    LaunchedEffect (idCustomer){
-        reviewViewModel.getReviewByIdCustomerChuaDanhGia(idCustomer.toString())
-    }
-
-    if(listReviewChuaDanhGia.isEmpty()) {
-        Box(
-            contentAlignment = Alignment.Center,
-            modifier = Modifier.fillMaxSize()
-        ) {
-            Text(
-                "Bạn không có sản phẩm nào cần đánh giá!",
-                fontSize = 16.sp,
-                textAlign = TextAlign.Center,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-        }
-    }
-    else{
-
-        LazyColumn(modifier = Modifier.padding(8.dp)) {
-                items(listReviewChuaDanhGia) { review ->
-                    ReviewCard(
-                        review = review,
-                        idCustomer = idCustomer,
-                        idDevice = review.idDevice,
-                        navController
-                    )
-                    Spacer(modifier = Modifier.height(8.dp)) // Khoảng cách giữa các mục
-                }
-        }
-    }
-
-}
-
-@Composable
-fun ReviewCard(review: Review, idCustomer: String?, idDevice: Int?, navController: NavController) {
-
-    val deviceViewModel: DeviceViewModel = viewModel()
-    val device = deviceViewModel.deviceMap[idDevice.toString()] // Lấy thiết bị theo ID
-    // Gọi API lấy device khi idDevice thay đổi
-    LaunchedEffect(idDevice) {
-        if (idDevice != null && device == null) {
-            deviceViewModel.getDeviceBySlug2(idDevice.toString())
-        }
-    }
-
-    val orderDetailViewModel: OrderDetailViewModel = viewModel()
-    var listOrderDetail = orderDetailViewModel.listOrderDetailByStatus
-
-    LaunchedEffect (idCustomer){
-        orderDetailViewModel.getOrderDetailByStatus(idCustomer.toString(), 0)
-    }
-
-
-    // Lọc ra đơn hàng liên quan với review hiện tại.
-    val orderDetail = listOrderDetail.firstOrNull { it.idDevice == idDevice }
-
-    Card(
-        shape = RoundedCornerShape(8.dp),
-        elevation = CardDefaults.cardElevation(4.dp),
-        modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = Color.White)
-    ) {
-        Column(
-            modifier = Modifier.padding(16.dp)
-        ) {
-            device?.let {
-                Row(
-                    modifier = Modifier.clickable {
-                        navController.navigate(Screen.ProductDetailsScreen.route + "?id=${idDevice}")
-                    },
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    AsyncImage(
-                        model = it.image,
-                        contentDescription = null,
-                        modifier = Modifier
-                            .width(50.dp)
-                            .height(50.dp)
-                    )
-
-                    Spacer(modifier = Modifier.width(8.dp))
-
-                    Text(
-                        text = it.name,
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 16.sp
-                    )
-                }
-            }
-            Row (
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween
-            ){
-                // Phần thông tin chi tiết đơn hàng
-                orderDetail?.let { detail ->
-                    Column(
-                        modifier = Modifier
-//                        .clickable {
-//                            navController.navigate(Screen.OrderDetailScreen.route + "?id=${detail.id}")
-//                        }
-                    ) {
-                        Text(
-                            text = "Mã đơn hàng: ${detail.idOrder}",
-                            fontWeight = FontWeight.SemiBold,
-                            fontSize = 16.sp
-                        )
-                        Spacer(modifier = Modifier.height(4.dp))
-                        Text(
-                            text = "Số lượng: ${detail.stock}",
-                            fontSize = 14.sp
-                        )
-                        Spacer(modifier = Modifier.height(4.dp))
-                        Text(
-                            text = "Giá: ${detail.price}",
-                            fontSize = 14.sp
-                        )
-                    }
-                }
-                Button(
-                    onClick = {
-                    navController.navigate(Screen.Rating_Screen.route + "?idReview=${review.idReview}&idCustomer=${idCustomer}&idDevice=${idDevice}")
-                },
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = Color(0xFF5D9EFF),
-                        contentColor = Color.White
-                    ),
-                    shape = RoundedCornerShape(8.dp)
-                ) {
-                    Text(text = "Đánh giá",
-                        fontSize = 18.sp,
-                    )
-                }
-            }
-        }
-    }
-}
-
-@Composable
-fun DaDanhGiaScreen(navController: NavController, idCustomer: String?){
     val reviewViewModel: ReviewViewModel = viewModel()
     val listReviewDaDanhGia = reviewViewModel.listReviewDaDanhGia
     val listReviewDanhGiaLan2 = reviewViewModel.listReviewDanhGiaLan2
@@ -350,30 +112,68 @@ fun DaDanhGiaScreen(navController: NavController, idCustomer: String?){
 //        }
 //    }
 //    val sunReview = (listReviewDanhGiaLan2+listReviewDaDanhGia)
- //       .distinctBy { it.idReview }
-    if(all.isEmpty()) {
-        Box(
-            contentAlignment = Alignment.Center,
-            modifier = Modifier.fillMaxSize()
-        ) {
-            Text(
-                "Bạn chưa có đánh giá nào!",
-                fontSize = 16.sp,
-                textAlign = TextAlign.Center,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+    //       .distinctBy { it.idReview }
+    Scaffold (
+        containerColor = Color.White,
+        topBar = {
+            TopAppBar(
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = Color(0xFF5D9EFF),
+                    navigationIconContentColor = Color.White,
+                    titleContentColor = Color.White
+                ),
+                title = {
+                    Text(text = "Đánh giá của tôi (${all.size})",
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier.fillMaxWidth(),
+                        textAlign = TextAlign.Start
+                    )
+                },
+                navigationIcon = {
+                    IconButton(
+                        onClick = {
+                            navController.popBackStack()
+                        }
+                    ) {
+                        Icon(imageVector = Icons.Filled.ArrowBack, contentDescription = "")
+                    }
+                }
             )
         }
-    }
-    else{
-        LazyColumn(modifier = Modifier.padding(8.dp)) {
-            items(all) { review ->
-                ReviewItem(review = review, idCustomer = idCustomer, idDevice = review.idDevice, navController)
-                Spacer(modifier = Modifier.height(8.dp)) // Khoảng cách giữa các mục
+    ){
+        Column(
+            modifier = Modifier
+                .padding(it)
+                .padding(3.dp),
+        ) {
+            // Content
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+            ) {
+
+                if(all.isEmpty()) {
+                    Box(
+                        contentAlignment = Alignment.Center,
+                        modifier = Modifier.fillMaxSize()
+                    ) {
+                        Text(
+                            "Bạn chưa có đánh giá nào!",
+                            fontSize = 16.sp,
+                            textAlign = TextAlign.Center,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
+                else{
+                    LazyColumn(modifier = Modifier.padding(8.dp)) {
+                        items(all) { review ->
+                            ReviewItem(review = review, idCustomer = idCustomer, idDevice = review.idDevice, navController)
+                            Spacer(modifier = Modifier.height(8.dp)) // Khoảng cách giữa các mục
+                        }
+                    }
+                }
             }
-//            items(listReviewDanhGiaLan2) { review ->
-//                ReviewItem(review = review, idCustomer = idCustomer, idDevice = review.idDevice, navController)
-//                Spacer(modifier = Modifier.height(8.dp)) // Khoảng cách giữa các mục
-//            }
         }
     }
 
@@ -440,7 +240,7 @@ fun ReviewItem(review: Review, idCustomer: String?, idDevice: Int?, navControlle
                         )
                     ) {
                         Text(
-                            text = "Cập nhật ${reviewInfo!!.idReview}",
+                            text = "Cập nhật",
                             fontSize = 18.sp
                         )
                     }

@@ -47,6 +47,7 @@ import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.RectangleShape
@@ -54,24 +55,20 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import coil.compose.AsyncImage
+import com.example.ungdungbanthietbi_iot.data.customer.CustomerViewModel
 import com.example.ungdungbanthietbi_iot.data.device.DeviceViewModel
 import com.example.ungdungbanthietbi_iot.data.order.OrderViewModel
 import com.example.ungdungbanthietbi_iot.data.order_detail.OrderDetailViewModel
+import com.example.ungdungbanthietbi_iot.data.review_device.Review
+import com.example.ungdungbanthietbi_iot.data.review_device.ReviewViewModel
 import com.example.ungdungbanthietbi_iot.navigation.Screen
 import java.text.DecimalFormat
 import java.util.Locale
 
-
-/*Người thực hiện: Nguyễn Mạnh Cường
- Ngày viết: 12/12/2024
- ------------------------
- Input: không
- Output: Hiện thị Màn hình Lịch sử mua hàng của người dùng
-*/
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun OrderListScreen(navController: NavController, idCustomer: String?) {
-    var selectedTabIndexItem by remember { mutableStateOf(0) }
+    var selectedTabIndexItem by rememberSaveable { mutableStateOf(0) }
     val tabs = listOf("Chờ xác nhận", "Chờ lấy hàng", "Chờ giao hàng", "Đã giao", "Hoàn tất", "Đã hủy")
     Scaffold(
         containerColor = Color.White,
@@ -630,9 +627,15 @@ fun OrderItem(
     orderDetailViewModel: OrderDetailViewModel,
     deviceViewModel: DeviceViewModel
 ) {
+
+    val reviewViewModel: ReviewViewModel = viewModel()
+    val customerViewModel: CustomerViewModel = viewModel()
+    val customer = customerViewModel.customer
+
     LaunchedEffect(key1 = order.id) {
         deviceViewModel.getDeviceByIdOrder2(order.id)
         orderDetailViewModel.getOrderDetailByIdOrder2(order.id)
+        customerViewModel.getCustomerByIdOrder(order.id)
     }
 
     val listDevice by remember(order.id) {
@@ -642,6 +645,22 @@ fun OrderItem(
     val listDetail by remember(order.id) {
         derivedStateOf { orderDetailViewModel.orderDetailsByOrder[order.id] ?: emptyList() }
     }
+
+    var reviewInfo by remember { mutableStateOf<Review?>(null) }
+
+    // Chạy lại bất cứ khi nào `listDevice` hoặc `customer` thay đổi
+    LaunchedEffect(listDevice, customer) {
+        if (customer != null && listDevice.isNotEmpty()) {
+            listDevice.forEach { device ->
+                // Khởi tạo null để Compose hiển thị loading (hoặc tránh miss key)
+                reviewViewModel.initReviewCheck(device.idDevice)
+                reviewViewModel.checkReview(customer.id, device.idDevice)
+                reviewViewModel.checkReview2(customer.id, device.idDevice)
+                reviewInfo = reviewViewModel.checkReviewDirect(customer.id, device.idDevice, 2)
+            }
+        }
+    }
+
     //format giá sản phẩm
     val formatter = DecimalFormat("#,###,###")
     val formattedPrice = formatter.format(order.totalAmount)
@@ -689,7 +708,7 @@ fun OrderItem(
                                 ),
                                 shape = RoundedCornerShape(5.dp),
                                 onClick =  {
-                                    var orderNew = Order(
+                                    val orderNew = Order(
                                         order.id,
                                         order.idCustomer,
                                         order.totalAmount,
@@ -716,6 +735,8 @@ fun OrderItem(
 
                 Column() {
                     listDevice.forEach { device ->
+                        val reviewExists = reviewViewModel.reviewExistsMap[device.idDevice] // lấy trạng thái đánh giá
+                        val reviewExists2 = reviewViewModel.reviewExistsMap2[device.idDevice]
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.SpaceBetween,
@@ -739,26 +760,70 @@ fun OrderItem(
                                         fontSize = 16.sp
                                     )
                                     Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.SpaceBetween,
                                         verticalAlignment = Alignment.CenterVertically
-                                    ) {
-                                        Text(
-                                            text = "${formatter.format(device.sellingPrice)}VNĐ",
-                                            fontSize = 14.sp,
-                                            color = Color.Red
-                                        )
-                                        Spacer(modifier = Modifier.width(8.dp))
-                                        for (detail in listDetail) {
-                                            if (detail.idDevice == device.idDevice) {
-                                                Text(
-                                                    text = "x${detail.stock}",
-                                                    fontSize = 14.sp,
-                                                    fontWeight = FontWeight.Bold
-                                                )
+                                    ){
+                                        Row(
+                                            verticalAlignment = Alignment.CenterVertically
+                                        ) {
+                                            Text(
+                                                text = "${formatter.format(device.sellingPrice)}VNĐ",
+                                                fontSize = 14.sp,
+                                                color = Color.Red
+                                            )
+                                            Spacer(modifier = Modifier.width(8.dp))
+                                            for (detail in listDetail) {
+                                                if (detail.idDevice == device.idDevice) {
+                                                    Text(
+                                                        text = "x${detail.stock}",
+                                                        fontSize = 14.sp,
+                                                        fontWeight = FontWeight.Bold
+                                                    )
+                                                }
                                             }
+                                        }
+                                        when (order.status) {
+                                            5 -> when {
+                                                reviewExists == false && reviewExists2 == false -> Button(
+                                                    onClick = {
+                                                        navController.navigate(
+                                                            Screen.Rating_Screen.route +
+                                                                    "?idCustomer=${customer!!.id}&idDevice=${device.idDevice}"
+                                                        )
+                                                    },
+                                                    shape = RoundedCornerShape(8.dp),
+                                                    colors = ButtonDefaults.buttonColors(
+                                                        containerColor = Color(0xFF5D9EFF),
+                                                        contentColor   = Color.White
+                                                    )
+                                                ) {
+                                                    Text("Đánh giá")
+                                                }
+
+                                                // Đã review lần 1 nhưng chưa review lần 2 → hiển nút Cập nhật
+                                                reviewInfo != null -> Button(
+                                                    onClick = {
+                                                        navController.navigate(Screen.Update_Rating_Screen.route + "?idReview=${reviewInfo!!.idReview}&idCustomer=${customer!!.id}")
+                                                    },
+                                                    shape = RoundedCornerShape(8.dp),
+                                                    colors = ButtonDefaults.buttonColors(
+                                                        containerColor = Color(0xFF5D9EFF),
+                                                        contentColor   = Color.White
+                                                    )
+                                                ) {
+                                                    Text("Cập nhật")
+                                                }
+                                                else -> {
+                                                    // đã review cả hai lần → không hiển thị nút nào
+                                                }
+                                            }
+                                            else -> {}
                                         }
                                     }
                                 }
                             }
+
                         }
                         Divider()
                     }

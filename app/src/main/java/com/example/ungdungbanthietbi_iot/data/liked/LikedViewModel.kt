@@ -25,6 +25,7 @@ class LikedViewModel:ViewModel() {
                 }
                 listLiked = response.liked
             } catch (e: Exception) {
+                listLiked = emptyList()
                 Log.e("Liked Error", "Lỗi khi lấy Liked: ${e.message}")
             }
         }
