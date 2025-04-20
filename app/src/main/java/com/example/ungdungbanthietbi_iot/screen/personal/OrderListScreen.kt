@@ -62,6 +62,7 @@ import com.example.ungdungbanthietbi_iot.data.order_detail.OrderDetailViewModel
 import com.example.ungdungbanthietbi_iot.data.review_device.Review
 import com.example.ungdungbanthietbi_iot.data.review_device.ReviewViewModel
 import com.example.ungdungbanthietbi_iot.navigation.Screen
+import com.example.ungdungbanthietbi_iot.utils.formatGiaTien
 import java.text.DecimalFormat
 import java.util.Locale
 
@@ -660,10 +661,6 @@ fun OrderItem(
             }
         }
     }
-
-    //format giá sản phẩm
-    val formatter = DecimalFormat("#,###,###")
-    val formattedPrice = formatter.format(order.totalAmount)
     Card(
         colors = CardDefaults.cardColors(
             containerColor = Color.White
@@ -768,7 +765,7 @@ fun OrderItem(
                                             verticalAlignment = Alignment.CenterVertically
                                         ) {
                                             Text(
-                                                text = "${formatter.format(device.sellingPrice)}VNĐ",
+                                                text = formatGiaTien(device.sellingPrice),
                                                 fontSize = 14.sp,
                                                 color = Color.Red
                                             )
@@ -829,7 +826,7 @@ fun OrderItem(
                     }
                 }
                 Spacer(modifier = Modifier.height(8.dp))
-                Text(text = "Tổng Tiền: ${formattedPrice}VNĐ", color = Color.Red)
+                Text(text = "Tổng Tiền: ${formatGiaTien(order.totalAmount)}", color = Color.Red)
                 Text(text = "Ngày Đặt Hàng: ${formatDate(order.created_at)}")
             }
         }

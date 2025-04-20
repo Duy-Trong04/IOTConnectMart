@@ -114,6 +114,7 @@ import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material3.CircularProgressIndicator
+import com.example.ungdungbanthietbi_iot.utils.formatGiaTien
 
 /** Giao diện màn hình Trang chủ (HomeScreen)
  * -------------------------------------------
@@ -741,9 +742,6 @@ fun CardDeviceFeatured(device: Device, isFavorite:Boolean, idCustomer:String?, u
     LaunchedEffect(listLiked) {
         check = listLiked.any { it.idDevice == device.idDevice }
     }
-    //format giá sản phẩm
-    val formatter = DecimalFormat("#,###,###")
-    val formattedPrice = formatter.format(device.sellingPrice)
     Card(
         modifier = Modifier
             .width(200.dp)// Đặt chiều rộng cố định cho Card
@@ -787,7 +785,7 @@ fun CardDeviceFeatured(device: Device, isFavorite:Boolean, idCustomer:String?, u
                 )
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(
-                    text = "${formattedPrice} VNĐ",
+                    text = formatGiaTien(device.sellingPrice),
                     color = Color.Red,
                     modifier = Modifier.fillMaxWidth(),
                     textAlign = TextAlign.Center,
@@ -852,9 +850,6 @@ fun CardAllDevice(device: Device, isFavorite:Boolean, idCustomer:String?, userna
     LaunchedEffect(listLiked) {
         check = listLiked.any { it.idDevice == device.idDevice }
     }
-    //format giá sản phẩm
-    val formatter = DecimalFormat("#,###,###")
-    val formattedPrice = formatter.format(device.sellingPrice)
     Card(
         modifier = Modifier
             .width(200.dp)// Đặt chiều rộng cố định cho Card
@@ -898,7 +893,7 @@ fun CardAllDevice(device: Device, isFavorite:Boolean, idCustomer:String?, userna
                 )
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(
-                    text = "${formattedPrice} VNĐ",
+                    text = formatGiaTien(device.sellingPrice),
                     color = Color.Red,
                     modifier = Modifier.fillMaxWidth(),
                     textAlign = TextAlign.Center,
@@ -963,9 +958,6 @@ fun CardFavorites(device: Device, isFavorite:Boolean, idCustomer:String?, userna
     LaunchedEffect(listLiked) {
         check = listLiked.any { it.idDevice == device.idDevice }
     }
-    //format giá sản phẩm
-    val formatter = DecimalFormat("#,###,###")
-    val formattedPrice = formatter.format(device.sellingPrice)
     Card(
         modifier = Modifier
             .width(200.dp)// Đặt chiều rộng cố định cho Card
@@ -1009,7 +1001,7 @@ fun CardFavorites(device: Device, isFavorite:Boolean, idCustomer:String?, userna
                 )
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(
-                    text = "${formattedPrice} VNĐ",
+                    text = formatGiaTien(device.sellingPrice),
                     color = Color.Red,
                     modifier = Modifier.fillMaxWidth(),
                     textAlign = TextAlign.Center,

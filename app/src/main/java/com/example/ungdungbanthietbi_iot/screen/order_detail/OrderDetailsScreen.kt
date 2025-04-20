@@ -57,6 +57,7 @@ import com.example.ungdungbanthietbi_iot.data.order_detail.OrderDetailViewModel
 import com.example.ungdungbanthietbi_iot.data.review_device.Review
 import com.example.ungdungbanthietbi_iot.data.review_device.ReviewViewModel
 import com.example.ungdungbanthietbi_iot.navigation.Screen
+import com.example.ungdungbanthietbi_iot.utils.formatGiaTien
 import kotlinx.coroutines.launch
 import java.text.DecimalFormat
 
@@ -125,11 +126,6 @@ fun OrderDetailsScreen(
             }
         }
     }
-
-
-    //format giá sản phẩm
-    val formatter = DecimalFormat("##,###,###")
-    val formattedPrice = formatter.format(totalAmount)
 
     val scope = rememberCoroutineScope()
     Scaffold(
@@ -289,7 +285,7 @@ fun OrderDetailsScreen(
                             )
                             Text(text = "Số điện thoại: ${customer?.phone}", fontSize = 16.sp)
                             Text(
-                                text = "Địa chỉ: ${address.street}, ${address.ward}, ${address.district}, ${address.city}",
+                                text = "Địa chỉ: ${order!!.address}",
                                 fontSize = 16.sp
                             )
                         }
@@ -345,7 +341,7 @@ fun OrderDetailsScreen(
                                                 verticalAlignment = Alignment.CenterVertically
                                             ) {
                                                 Text(
-                                                    text = "${formatter.format(device.sellingPrice)}VNĐ",
+                                                    text = formatGiaTien(device.sellingPrice),
                                                     fontSize = 14.sp,
                                                     color = Color.Red
                                                 )
@@ -414,7 +410,7 @@ fun OrderDetailsScreen(
                                 )
                                 // Tổng tiền
                                 Text(
-                                    text = "${formattedPrice}VNĐ",
+                                    text = formatGiaTien(totalAmount),
                                     fontWeight = FontWeight.Bold,
                                     fontSize = 18.sp,
                                 )
@@ -431,7 +427,7 @@ fun OrderDetailsScreen(
                                 )
                                 // Tổng tiền
                                 Text(
-                                    text = "0VNĐ",
+                                    text = "0 VNĐ",
                                     fontWeight = FontWeight.Bold,
                                     fontSize = 18.sp,
                                 )
@@ -448,7 +444,7 @@ fun OrderDetailsScreen(
                                 )
                                 // Tổng tiền
                                 Text(
-                                    text = "${formattedPrice}VNĐ",
+                                    text = formatGiaTien(totalAmount),
                                     fontWeight = FontWeight.Bold,
                                     fontSize = 18.sp,
                                     color = Color.Red

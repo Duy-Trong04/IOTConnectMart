@@ -36,6 +36,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -62,6 +63,7 @@ import com.example.ungdungbanthietbi_iot.data.order.OrderViewModel
 import com.example.ungdungbanthietbi_iot.data.order_detail.OrderDetail
 import com.example.ungdungbanthietbi_iot.data.order_detail.OrderDetailViewModel
 import com.example.ungdungbanthietbi_iot.navigation.Screen
+import com.example.ungdungbanthietbi_iot.utils.formatGiaTien
 import java.text.DecimalFormat
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
@@ -130,18 +132,18 @@ fun CheckoutScreen(
             customerViewModel.getCustomerById(addressDefault.idCustomer)
         }
     }
-
+    // Theo dõi các ID đã tải
+    val loadedDeviceIds = remember { mutableStateListOf<String>() }
     // Lấy thông tin sản phẩm khi màn hình được tạo
     LaunchedEffect(selectedProducts) {
+        deviceViewModel.clearDevices() // Xóa danh sách cũ
         selectedProducts.forEach { triple ->
-            deviceViewModel.getdeviceById2(triple.first.toString())
+            val deviceId = triple.first.toString()
+            if (!loadedDeviceIds.contains(deviceId)) {
+                deviceViewModel.getdeviceById2(deviceId)
+                loadedDeviceIds.add(deviceId)
+            }
         }
-    }
-
-    //Hàm format tiền
-    fun formatGiaTien(gia: Double): String {
-        val formatter = DecimalFormat("#,###,###")
-        return "${formatter.format(gia)}đ"
     }
 
     Scaffold(
@@ -235,7 +237,10 @@ fun CheckoutScreen(
                                 }
                                 // Xóa các sản phẩm khỏi giỏ hàng
                                 selectedProducts.forEach { triple ->
-                                    cartViewModel.deleteCart(triple.third)
+                                    if(triple.third != 0){
+                                        cartViewModel.deleteCart(triple.third)
+                                    }
+
                                 }
                             }
                             navController.navigate(Screen.CheckOutSuccess.route +"?username=${username}"){
@@ -253,84 +258,6 @@ fun CheckoutScreen(
                         )
                     }
                 }
-//                Row(
-//                    modifier = Modifier
-//                        .fillMaxWidth()
-//                        .padding(8.dp),
-//                    verticalAlignment = Alignment.CenterVertically,
-//                    horizontalArrangement = Arrangement.SpaceBetween
-//                ) {
-//                    Text(
-//                        "Tổng thanh toán: ${formatGiaTien(tongtien)}",
-//                        style = TextStyle(fontWeight = FontWeight.Bold, fontSize = 18.sp),
-//                        color = Color.Red
-//                    )
-//                    Button(
-//                        onClick = {
-//                            if(account != null && addressDefault != null){
-//                                // Lấy mã khách hàng và địa chỉ
-//                                val idPerson = account.idPerson ?: ""
-//                                val idAddress = "${addressDefault.street}, ${addressDefault.ward}, ${addressDefault.district}, ${addressDefault.city}, Việt Nam"
-//                                val phone = customer?.phone ?: ""
-//                                // Tạo đối tượng HoaDonBan
-//                                val order = Order(
-//                                    0, // id sẽ được tự động tạo khi insert vào DB
-//                                    idPerson,
-//                                    tongtien,
-//                                    selectedPaymentMethod,
-//                                    idAddress,
-//                                    "NULL",
-//                                    phone,
-//                                    "NULL",
-//                                    "NULL",
-//                                    "Mobile",
-//                                    formattedDate,
-//                                    formattedDate,
-//                                    formattedDate,
-//                                    "EMP000001",
-//                                    1 // Trạng thái thanh toán
-//                                )
-//
-//                                // Thêm Order trước
-//                               orderViewModel.addOrder(order)
-//
-//                                // Sau khi Order đã được thêm, tiếp tục thêm OrderDetail
-//                                selectedProducts.forEach{triple ->
-//                                    listDevice.forEach { device ->
-//                                        if(device.idDevice == triple.first){
-//                                            // Tạo đối tượng OrderDetail
-//                                            val orderDetail = OrderDetail(
-//                                                0,// id sẽ được tự động tạo khi insert vào DB
-//                                                0, // idOrder cần phải lấy từ bảng order sau khi insert
-//                                                device.idDevice,
-//                                                device.sellingPrice,
-//                                                triple.second,
-//                                                device.sellingPrice,
-//                                                0
-//                                            )
-//
-//                                            //Thêm OrderDetail vào db
-//                                            orderDetailViewModel.addOrderDetail(orderDetail)
-//                                        }
-//                                    }
-//                                }
-//                                // Xóa các sản phẩm khỏi giỏ hàng
-//                                selectedProducts.forEach { triple ->
-//                                    cartViewModel.deleteCart(triple.third)
-//                                }
-//                            }
-//                            navController.navigate(Screen.CheckOutSuccess.route +"?username=${username}"){
-//                                popUpTo(0) { inclusive = true }
-//                            }
-//
-//                        },
-//                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF5D9EFF)),
-//                        shape = RoundedCornerShape(5.dp),
-//                        elevation = ButtonDefaults.buttonElevation(2.dp),
-//                    ) {
-//                        Text("Đặt hàng", color = Color.White, fontSize = 18.sp)
-//                    }
-//                }
             }
         }
     ) {
@@ -365,20 +292,20 @@ fun CheckoutScreen(
                             Column {
                                 Row(
                                     modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.Start,
+                                    horizontalArrangement = Arrangement.SpaceBetween,
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {
                                     Text(
                                         text = "${customer?.surname} ${customer?.lastName}",
                                         fontWeight = FontWeight.Bold
                                     )
-//                                    Text(
-//                                        text = "Thay đổi",
-//                                        color = Color(0xFF5D9EFF),
-//                                        modifier = Modifier.clickable {
-//                                            //Nav
-//                                        }
-//                                    )
+                                    Text(
+                                        text = "Thay đổi",
+                                        color = Color(0xFF5D9EFF),
+                                        modifier = Modifier.clickable {
+                                            navController.navigate("${Screen.Address_Selection.route}?idCustomer=${customer!!.id}")
+                                        }
+                                    )
                                 }
 
                                 Text(
@@ -394,7 +321,7 @@ fun CheckoutScreen(
                 }
 
             }
-            items(listDevice) { device ->
+            items(listDevice.distinctBy { it.idDevice }) { device ->
                 selectedProducts.forEach { triple ->
                     if (device.idDevice == triple.first)
                         DeviceItem(device, triple.second) // triple.second là số lượng

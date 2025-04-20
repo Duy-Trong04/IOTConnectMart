@@ -29,8 +29,8 @@ class DeviceViewModel:ViewModel() {
     var listDeviceByOrder by mutableStateOf<List<Device>>(emptyList())
 
 
-    private val _listDevce = MutableStateFlow<List<Device>>(emptyList())
-    val listDevice: StateFlow<List<Device>> get() = _listDevce
+    private val _listDevice = MutableStateFlow<List<Device>>(emptyList())
+    val listDevice: StateFlow<List<Device>> get() = _listDevice
 
 
     // Dữ liệu tìm kiếm
@@ -180,10 +180,21 @@ class DeviceViewModel:ViewModel() {
         viewModelScope.launch(Dispatchers.IO) {
             try {
                 val device = RetrofitClient.deviceAPIService.getDeviceById(id)
-                _listDevce.update { currentList -> currentList + device }
+                _listDevice.update { currentList ->
+                    // Chỉ thêm thiết bị nếu chưa tồn tại
+                    if (currentList.none { it.idDevice == device.idDevice }) {
+                        currentList + device
+                    } else {
+                        currentList // Giữ nguyên danh sách nếu thiết bị đã tồn tại
+                    }
+                }
             } catch (e: Exception) {
                 Log.e("DeviceViewModel", "Error getting Device", e)
             }
         }
+    }
+    // Hàm để xóa danh sách thiết bị
+    fun clearDevices() {
+        _listDevice.value = emptyList()
     }
 }

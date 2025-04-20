@@ -34,6 +34,7 @@ import com.example.ungdungbanthietbi_iot.data.address_book.AddressViewModel
 import com.example.ungdungbanthietbi_iot.data.cart.CartViewModel
 import com.example.ungdungbanthietbi_iot.data.device.DeviceViewModel
 import com.example.ungdungbanthietbi_iot.navigation.Screen
+import com.example.ungdungbanthietbi_iot.utils.formatGiaTien
 import java.text.DecimalFormat
 
 
@@ -97,11 +98,6 @@ fun CartScreen(
             }
         }
     }
-    //Hàm format tiền
-    fun formatGiaTien(gia: Double): String {
-        val formatter = DecimalFormat("#,###,###")
-        return "${formatter.format(gia)}đ"
-    }
     // Lấy dữ liệu và tính tổng tiền ban đầu
     LaunchedEffect(idCustomer) {
         cartViewModel.getCartByIdCustomer(idCustomer)
@@ -120,11 +116,10 @@ fun CartScreen(
         calculateTotalPrice() // Tính tổng tiền khi dữ liệu thay đổi
     }
 
-// Biến trạng thái cho dialog xác nhận
+    // Biến trạng thái cho dialog xác nhận
     var showDeleteDialog by remember { mutableStateOf(false) }
     var deleteAction by remember { mutableStateOf<DeleteAction?>(null) }
     var cartIdToDelete by remember { mutableStateOf<Int?>(null) } // Lưu id của sản phẩm cần xóa (cho xóa một sản phẩm)
-    Log.d("",listAddress.toString())
 
     Scaffold(
         topBar = {
@@ -143,22 +138,6 @@ fun CartScreen(
                     //Xóa hết
                     TextButton(
                         onClick = {
-//                            if (selectedItems.values.any { it == true }) {
-//                                // Xóa các sản phẩm được chọn
-//                                selectedItems.forEach { (cartId, isSelected) ->
-//                                    if (isSelected) {
-//                                        cartViewModel.deleteCart(cartId)
-//                                    }
-//                                }
-//                                // Cập nhật lại danh sách giỏ hàng
-//                                cartViewModel.listCart = cartViewModel.listCart.filter { !selectedItems[it.id]!! }
-//                                // Xóa danh sách selectedItems và selectedProducts
-//                                selectedItems.clear()
-//                                selectedProducts.clear()
-//                                calculateTotalPrice() // Tính lại tổng tiền
-//                            } else {
-//                                showDialog = true // Hiển thị dialog nếu không có sản phẩm nào được chọn
-//                            }
                             if (selectedItems.values.any { it == true }) {
                                 deleteAction = DeleteAction.ALL // Đặt hành động là xóa tất cả
                                 showDeleteDialog = true // Hiển thị dialog xác nhận
@@ -288,18 +267,22 @@ fun CartScreen(
                                 )
                             },
                             confirmButton = {
-                                Button(
-                                    onClick = {
-                                        openDialog = false
-                                        navController.navigate("${Screen.Address_Selection.route}?idCustomer=${idCustomer}")
-                                    },
-                                    colors = ButtonDefaults.buttonColors(
-                                        containerColor = Color(0xFF5D9EFF)
-                                    )
-                                ) {
-                                    Text(text = "Thêm địa chỉ",
-                                        fontSize = 18.sp
-                                    )
+                                Row(){
+                                    Button(
+                                        onClick = {
+                                            showDialog = false
+                                            navController.navigate("${Screen.Address_Selection.route}?idCustomer=${idCustomer}")
+                                        },
+                                        colors = ButtonDefaults.buttonColors(
+                                            containerColor = Color(0xFF5D9EFF)
+                                        ),
+                                        modifier = Modifier.fillMaxWidth(),
+                                        shape = RoundedCornerShape(10.dp)
+                                    ) {
+                                        Text(text = "Thêm địa chỉ",
+                                            fontSize = 18.sp
+                                        )
+                                    }
                                 }
                             },
                         )
