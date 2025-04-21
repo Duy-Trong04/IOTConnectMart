@@ -59,7 +59,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.example.ungdungbanthietbi_iot.data.review_device.Review
 import com.example.ungdungbanthietbi_iot.data.review_device.ReviewViewModel
-import com.example.ungdungbanthietbi_iot.screen.order_detail.getCurrentTimestamp
+import com.example.ungdungbanthietbi_iot.utils.getCurrentTimestamp
 import kotlinx.coroutines.delay
 
 /** Giao diện màn hình đánh giá, bình luận (RatingScreen)
@@ -299,11 +299,4 @@ fun RatingScreen(navController: NavController, idCustomer: String?, idDevice: In
             }
         }
     }
-}
-// Hàm giả lập lấy thời gian hiện tại, bạn có thể thay thế bằng cách lấy thời gian theo chuẩn của hệ thống
-fun getCurrentTimestamp(): String {
-
-    val current = java.util.Calendar.getInstance().time
-    val formatter = java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.getDefault())
-    return formatter.format(current)
 }

@@ -99,6 +99,7 @@ fun OrderDetailsScreen(
     var listDevice = deviceViewModel.listDeviceByOrder
     var customer = customerViewModel.customer
     var reviewInfo by remember { mutableStateOf<Review?>(null) }
+    var reviewInfo2 by remember { mutableStateOf<Review?>(null) }
 
     LaunchedEffect(idOrder) {
         orderViewModel.getOrderById(idOrder)
@@ -123,6 +124,7 @@ fun OrderDetailsScreen(
                 reviewViewModel.checkReview(customer.id, device.idDevice)
                 reviewViewModel.checkReview2(customer.id, device.idDevice)
                 reviewInfo = reviewViewModel.checkReviewDirect(customer.id, device.idDevice, 2)
+                reviewInfo2 = reviewViewModel.checkReviewDirect(customer.id, device.idDevice, 1)
             }
         }
     }
@@ -313,8 +315,6 @@ fun OrderDetailsScreen(
                     ) {
                         Column(modifier = Modifier.padding(8.dp)) {
                             listDevice.forEach { device ->
-                                val reviewExists = reviewViewModel.reviewExistsMap[device.idDevice] // lấy trạng thái đánh giá
-                                val reviewExists2 = reviewViewModel.reviewExistsMap2[device.idDevice] // lấy trạng thái đánh giá
                                 Row(
                                     modifier = Modifier.fillMaxWidth().padding(4.dp),
                                     horizontalArrangement = Arrangement.SpaceBetween,
@@ -360,7 +360,7 @@ fun OrderDetailsScreen(
                                     }
                                     when (order.status) {
                                         5 -> when {
-                                            reviewExists == false && reviewExists2 == false -> Button(
+                                            reviewInfo == null && reviewInfo2 == null -> Button(
                                                 onClick = {
                                                     navController.navigate(
                                                         Screen.Rating_Screen.route +
@@ -464,12 +464,4 @@ fun OrderDetailsScreen(
             }
         }
     }
-}
-
-// Hàm giả lập lấy thời gian hiện tại, bạn có thể thay thế bằng cách lấy thời gian theo chuẩn của hệ thống
-fun getCurrentTimestamp(): String {
-    // Ví dụ: trả về thời gian hiện tại theo định dạng "yyyy-MM-dd HH:mm:ss"
-    val current = java.util.Calendar.getInstance().time
-    val formatter = java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss", java.util.Locale.getDefault())
-    return formatter.format(current)
 }

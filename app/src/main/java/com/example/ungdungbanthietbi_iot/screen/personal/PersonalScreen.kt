@@ -27,6 +27,7 @@ import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.VerifiedUser
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
+import androidx.compose.material.icons.outlined.ShoppingCart
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -44,6 +45,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
@@ -57,6 +59,7 @@ import androidx.navigation.NavController
 import com.example.ungdungbanthietbi_iot.R
 import com.example.ungdungbanthietbi_iot.data.account.Account
 import com.example.ungdungbanthietbi_iot.data.account.AccountViewModel
+import com.example.ungdungbanthietbi_iot.data.cart.CartViewModel
 import com.example.ungdungbanthietbi_iot.data.customer.Customer
 import com.example.ungdungbanthietbi_iot.data.customer.CustomerViewModel
 import com.example.ungdungbanthietbi_iot.data.device.Device
@@ -89,6 +92,8 @@ fun PersonalScreen(
         "Đồng hồ thông minh",
     )
 
+    val cartViewModel: CartViewModel = viewModel()
+    val listCart = cartViewModel.listCart
     // Lấy ViewModel
     val accountViewModel:AccountViewModel = viewModel()
 
@@ -103,6 +108,7 @@ fun PersonalScreen(
     }
     if(account != null){
         deviceViewModel.getDeviceByLiked(account.idPerson.toString())
+        cartViewModel.getCartByIdCustomer(account.idPerson.toString())
     }
     if(account == null){
         Text(text = "Đang tải thông tin tài khoản...")
@@ -210,11 +216,36 @@ fun PersonalScreen(
                         }
                     },
                     actions = {
-                        IconButton(
-                            onClick = {
-                                navController.navigate(Screen.Cart_Screen.route +"?idCustomer=${account.idPerson}&username=${account.username}")
+                        Box(
+                            modifier = Modifier
+                                .size(48.dp) // Kích thước của Box để chứa icon
+                        ) {
+                            // Icon giỏ hàng
+                            IconButton(onClick = {
+                                // vào màn hình giỏ hàng nếu chưa đăng nhập thì vào màn hình đăng nhập(LoginScreen)
+                                if(account == null){
+                                    navController.navigate(Screen.LoginScreen.route)
+                                }
+                                else{
+                                    navController.navigate(Screen.Cart_Screen.route +"?idCustomer=${account.idPerson}&username=${account.username}")
+                                }
                             }) {
-                            Icon(Icons.Filled.ShoppingCart, contentDescription = "Gio hang")
+                                Icon(
+                                    imageVector = Icons.Outlined.ShoppingCart, contentDescription = "Giỏ hàng",
+                                    tint = Color.White
+                                )
+                            }
+
+                            // Số lượng giỏ hàng nằm đè lên góc phải của icon
+                            Text(
+                                text = "${listCart.size}", // Thay bằng biến nếu cần động
+                                color = Color.Red,
+                                fontSize = 16.sp,
+                                fontWeight = FontWeight.Bold,
+                                modifier = Modifier
+                                    .align(Alignment.TopEnd)
+                                    .offset(x = (-5).dp, y = (-2).dp)
+                            )
                         }
                     },
                     colors = TopAppBarDefaults.topAppBarColors(
@@ -738,7 +769,9 @@ fun AccountOptionsSection(
     navController: NavController,
     username:String
 ) {
+    val context = LocalContext.current
     val openDialog = remember { mutableStateOf(false) }
+    val scope = rememberCoroutineScope()
 // Lấy ViewModel
     val accountViewModel:AccountViewModel = viewModel()
 
@@ -814,10 +847,27 @@ fun AccountOptionsSection(
             confirmButton = {
                 Button(
                     onClick = {
-                        openDialog.value = false
-                        navController.navigate(Screen.HomeScreen.route){
-                            // Sau khi đăng xuất, loại bỏ các màn cũ ra khỏi back stack
-                            popUpTo(0)
+//                        openDialog.value = false
+//                        navController.navigate(Screen.HomeScreen.route){
+//                            // Sau khi đăng xuất, loại bỏ các màn cũ ra khỏi back stack
+//                            popUpTo(0)
+//                        }
+                        scope.launch {
+                            try {
+                                // Gọi hàm logout để xóa dữ liệu trong DataStore
+                                accountViewModel.logout(context)
+                                // Đóng dialog
+                                openDialog.value = false
+                                // Điều hướng về IntroScreen sau khi đăng xuất
+                                navController.navigate(Screen.IntroScreen.route) {
+                                    // Xóa toàn bộ back stack để người dùng không quay lại HomeScreen
+                                    popUpTo(0) { inclusive = true }
+                                }
+                                //Log.d("AccountOptions", "Navigated to IntroScreen after logout")
+                            } catch (e: Exception) {
+                                ///Log.e("AccountOptions", "Error during logout: ${e.message}", e)
+                                openDialog.value = false
+                            }
                         }
                     },
                     colors = ButtonDefaults.buttonColors(

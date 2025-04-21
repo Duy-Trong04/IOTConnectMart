@@ -19,6 +19,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -42,6 +43,7 @@ import androidx.compose.material.icons.filled.ShoppingCart
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.SupportAgent
 import androidx.compose.material.icons.filled.ThumbUp
+import androidx.compose.material.icons.outlined.ShoppingCart
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.BottomAppBar
 import androidx.compose.material3.Button
@@ -182,17 +184,25 @@ fun ProductDetailsScreen(
 
     val cartViewModel:CartViewModel = viewModel()
     val listCart = cartViewModel.listCart
+
+    if(idCustomer != null){
+        LaunchedEffect (listCart.size) {
+            cartViewModel.getCartByIdCustomer(idCustomer)
+        }
+    }
+
+
     LaunchedEffect(idCustomer) {
         if(idCustomer!=null){
-            cartViewModel.getCartByIdCustomer(idCustomer)
+
             likedViewModel.getLikedByIdCustomer(idCustomer)
         }
     }
 
     // Biến trạng thái để sản phẩm yêu thích không
-    var isFavorite by remember { mutableStateOf(false) }
+    val isFavorite by remember { mutableStateOf(false) }
     // Biến lưu trữ giá trị đánh giá
-    var averageRating = if (listReview.isNotEmpty()) {
+    val averageRating = if (listReview.isNotEmpty()) {
         val avg = listReview.map { it.rating }.average() // Tính trung bình cộng
         // Làm tròn tới 1 chữ số thập phân
         (avg * 10.0).roundToInt() / 10.0
@@ -283,20 +293,35 @@ fun ProductDetailsScreen(
                                 tint = Color.White
                             )
                         }
+                        Box(
+                            modifier = Modifier
+                                .size(48.dp) // Kích thước của Box để chứa icon
+                        ) {
+                            // Icon giỏ hàng
+                            IconButton(onClick = {
+                                // vào màn hình giỏ hàng nếu chưa đăng nhập thì vào màn hình đăng nhập(LoginScreen)
+                                if(account == null){
+                                    navController.navigate(Screen.LoginScreen.route)
+                                }
+                                else{
+                                    navController.navigate(Screen.Cart_Screen.route +"?idCustomer=${account.idPerson}&username=${account.username}")
+                                }
+                            }) {
+                                Icon(
+                                    imageVector = Icons.Outlined.ShoppingCart, contentDescription = "Giỏ hàng",
+                                    tint = Color.White
+                                )
+                            }
 
-                        // Icon Giỏ hàng
-                        IconButton(onClick = {
-                            if(account == null){
-                                navController.navigate(Screen.LoginScreen.route)
-                            }
-                            else{
-                                navController.navigate(Screen.Cart_Screen.route +"?idCustomer=${account.idPerson}&username=${account.username}")
-                            }
-                        }) {
-                            Icon(
-                                imageVector = Icons.Default.ShoppingCart,
-                                contentDescription = "Giỏ hàng",
-                                tint = Color.White
+                            // Số lượng giỏ hàng nằm đè lên góc phải của icon
+                            Text(
+                                text = "${listCart.size}", // Thay bằng biến nếu cần động
+                                color = Color.Red,
+                                fontSize = 16.sp,
+                                fontWeight = FontWeight.Bold,
+                                modifier = Modifier
+                                    .align(Alignment.TopEnd)
+                                    .offset(x = (-5).dp, y = (-2).dp)
                             )
                         }
                     }
@@ -309,11 +334,11 @@ fun ProductDetailsScreen(
                     modifier = Modifier.padding(16.dp),
                     action = {
                         TextButton(onClick = { snackbarHostState.currentSnackbarData?.dismiss() }) {
-                            Text(text = "Đóng", color = Color.White)
+                            Text(text = "Đóng", color = Color.Black)
                         }
                     },
-                    containerColor = Color.Red,
-                    contentColor = Color.White
+                    containerColor = Color.White,
+                    contentColor = Color.Black
                 ) {
                     Text(data.visuals.message)
                 }
@@ -870,26 +895,6 @@ fun CardReview(review: Review, isChecked:Boolean, onlick:() -> Unit, id:Int){
                         )
                     }
                 }
-            }
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.End,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                IconButton(onClick = {
-                    currentChecked = !currentChecked
-                },
-                    modifier = Modifier
-                        .size(24.dp)
-                ) {
-                    Icon(
-                        imageVector = Icons.Filled.ThumbUp,
-                        contentDescription = if (currentChecked) "check" else "not check",
-                        tint = if(currentChecked) Color(0xFFFBC02D) else Color.Gray
-                    )
-                }
-                Text("Hữu ích", modifier = Modifier.padding(end = 5.dp, start = 5.dp))
             }
         }
         Text(

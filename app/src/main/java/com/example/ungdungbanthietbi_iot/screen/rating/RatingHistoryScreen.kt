@@ -95,24 +95,6 @@ fun RatingHistoryScreen(navController: NavController, idCustomer: String?) {
 
     val all = (reviewViewModel.listReviewDanhGiaLan2 + reviewViewModel.listReviewDaDanhGia)
         .distinctBy { it.idReview }
-//    val currentEntry = navController.currentBackStackEntryAsState().value
-//// quan sát LiveData bên trong savedStateHandle
-//    val needRefresh by currentEntry?.savedStateHandle
-//        ?.getLiveData<Boolean>("needRefreshReviews")
-//        ?.observeAsState(false) ?: remember { mutableStateOf(false) }
-//
-//    LaunchedEffect(needRefresh) {
-//        if (needRefresh) {
-//            idCustomer?.let {
-//                reviewViewModel.getReviewByIdCustomerDaDanhGia(it)
-//                reviewViewModel.getReviewByIdCustomerDanhGiaLan2(it)
-//                // xóa flag để không refresh lại lần nữa
-//                currentEntry?.savedStateHandle?.remove<Boolean>("needRefreshReviews")
-//            }
-//        }
-//    }
-//    val sunReview = (listReviewDanhGiaLan2+listReviewDaDanhGia)
-    //       .distinctBy { it.idReview }
     Scaffold (
         containerColor = Color.White,
         topBar = {
@@ -259,7 +241,7 @@ fun ReviewItem(review: Review, idCustomer: String?, idDevice: Int?, navControlle
             Spacer(modifier = Modifier.height(4.dp))
             // Ngày đánh giá
             Text(
-                text = review.created_at,
+                text = formatDate(review.created_at),
                 fontSize = 12.sp,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )

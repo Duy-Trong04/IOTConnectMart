@@ -20,6 +20,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -113,7 +114,9 @@ import java.text.DecimalFormat
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
+import androidx.compose.material.icons.outlined.ShoppingCart
 import androidx.compose.material3.CircularProgressIndicator
+import com.example.ungdungbanthietbi_iot.data.cart.CartViewModel
 import com.example.ungdungbanthietbi_iot.utils.formatGiaTien
 
 /** Giao diện màn hình Trang chủ (HomeScreen)
@@ -163,6 +166,9 @@ fun HomeScreen(
         }
     }
 
+    val cartViewModel: CartViewModel = viewModel()
+    val listCart = cartViewModel.listCart
+
     val accountViewModel:AccountViewModel = viewModel()
     val account = accountViewModel.account
 
@@ -172,6 +178,7 @@ fun HomeScreen(
 
     if(account != null){
         deviceViewModel.getDeviceByLiked(account.idPerson.toString())
+        cartViewModel.getCartByIdCustomer(account.idPerson.toString())
     }
 
     val navdrawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
@@ -315,21 +322,38 @@ fun HomeScreen(
                         }
                     },
                     actions = {
-                        IconButton(onClick = {
-                            // vào màn hình giỏ hàng nếu chưa đăng nhập thì vào màn hình đăng nhập(LoginScreen)
-                            if(account == null){
-                                navController.navigate(Screen.LoginScreen.route)
-                            }
-                            else{
-                                navController.navigate(Screen.Cart_Screen.route +"?idCustomer=${account.idPerson}&username=${account.username}")
-                            }
-                        }
+                        Box(
+                            modifier = Modifier
+                                .size(48.dp) // Kích thước của Box để chứa icon
                         ) {
-                            Icon(
-                                imageVector = Icons.Default.ShoppingCart, contentDescription = "Giỏ hàng",
-                                tint = Color.White
+                            // Icon giỏ hàng
+                            IconButton(onClick = {
+                                // vào màn hình giỏ hàng nếu chưa đăng nhập thì vào màn hình đăng nhập(LoginScreen)
+                                if(account == null){
+                                    navController.navigate(Screen.LoginScreen.route)
+                                }
+                                else{
+                                    navController.navigate(Screen.Cart_Screen.route +"?idCustomer=${account.idPerson}&username=${account.username}")
+                                }
+                            }) {
+                                Icon(
+                                    imageVector = Icons.Outlined.ShoppingCart, contentDescription = "Giỏ hàng",
+                                    tint = Color.White
+                                )
+                            }
+
+                            // Số lượng giỏ hàng nằm đè lên góc phải của icon
+                            Text(
+                                text = "${listCart.size}", // Thay bằng biến nếu cần động
+                                color = Color.Red,
+                                fontSize = 16.sp,
+                                fontWeight = FontWeight.Bold,
+                                modifier = Modifier
+                                    .align(Alignment.TopEnd)
+                                    .offset(x = (-5).dp, y = (-2).dp)
                             )
                         }
+
                     }
                 )
             },

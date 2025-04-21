@@ -72,6 +72,7 @@ import com.example.ungdungbanthietbi_iot.ui.theme.parseSelectedProducts
 
 @Composable
 fun NavGraph(
+    startDestination: String, // Thêm tham số startDestination động
     navController:NavHostController,
     deviceViewModel: DeviceViewModel,
     slideShowViewModel: SlideShowViewModel,
@@ -83,7 +84,7 @@ fun NavGraph(
     NavHost(
         navController = navController,
         // Màn hình đầu tiên hiển thị
-        startDestination = Screen.HomeScreen.route,
+        startDestination = startDestination,
         enterTransition = {   // Khi màn hình mới xuất hiện
             scaleIn(
                 initialScale = 0.8f, // màn hình bắt đầu nhỏ hơn 80% kích thước ban đầu
@@ -113,14 +114,7 @@ fun NavGraph(
     ){
         // Màn hình IntroScreen sau khoảng thời gian quy định thì chuyển sang màn hình trang chủ HomeScreen
         composable(route = Screen.IntroScreen.route){
-            IntroScreen(onTimeout = {
-                navController.navigate("HomeScreen"){
-                    // Xóa màn hình IntroScreen khỏi ngăn xếp
-                    popUpTo(Screen.IntroScreen.route){
-                        inclusive = true
-                    }
-                }
-            })
+            IntroScreen(accountViewModel, navController)
         }
 
         //Home chưa đăng nhập

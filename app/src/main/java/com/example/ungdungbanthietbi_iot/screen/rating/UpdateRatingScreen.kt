@@ -61,7 +61,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.example.ungdungbanthietbi_iot.data.review_device.Review
 import com.example.ungdungbanthietbi_iot.data.review_device.ReviewViewModel
-import com.example.ungdungbanthietbi_iot.screen.order_detail.getCurrentTimestamp
+import com.example.ungdungbanthietbi_iot.utils.getCurrentTimestamp
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 

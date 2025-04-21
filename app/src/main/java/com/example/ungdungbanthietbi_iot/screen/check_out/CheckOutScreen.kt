@@ -64,6 +64,7 @@ import com.example.ungdungbanthietbi_iot.data.order_detail.OrderDetail
 import com.example.ungdungbanthietbi_iot.data.order_detail.OrderDetailViewModel
 import com.example.ungdungbanthietbi_iot.navigation.Screen
 import com.example.ungdungbanthietbi_iot.utils.formatGiaTien
+import com.example.ungdungbanthietbi_iot.utils.getCurrentTimestamp
 import java.text.DecimalFormat
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
@@ -93,10 +94,6 @@ fun CheckoutScreen(
     tongtien: Double,
     username:String
 ) {
-
-    val ngayHienTai = LocalDate.now() // Lấy ngày hiện tại
-    val formattedDate = ngayHienTai.format(DateTimeFormatter.ofPattern("yyyy/MM/dd"))
-
     val deviceViewModel:DeviceViewModel = viewModel()
     val cartViewModel:CartViewModel = viewModel()
     val accountViewModel:AccountViewModel = viewModel()
@@ -205,9 +202,9 @@ fun CheckoutScreen(
                                     "NULL",
                                     "NULL",
                                     "Mobile",
-                                    formattedDate,
-                                    formattedDate,
-                                    formattedDate,
+                                    getCurrentTimestamp(),
+                                    getCurrentTimestamp(),
+                                    getCurrentTimestamp(),
                                     "EMP000001",
                                     1 // Trạng thái thanh toán
                                 )

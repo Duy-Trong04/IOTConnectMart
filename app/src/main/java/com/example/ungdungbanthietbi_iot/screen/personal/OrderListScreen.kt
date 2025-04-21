@@ -62,6 +62,7 @@ import com.example.ungdungbanthietbi_iot.data.order_detail.OrderDetailViewModel
 import com.example.ungdungbanthietbi_iot.data.review_device.Review
 import com.example.ungdungbanthietbi_iot.data.review_device.ReviewViewModel
 import com.example.ungdungbanthietbi_iot.navigation.Screen
+import com.example.ungdungbanthietbi_iot.utils.formatDate
 import com.example.ungdungbanthietbi_iot.utils.formatGiaTien
 import java.text.DecimalFormat
 import java.util.Locale
@@ -607,19 +608,6 @@ fun ChoXacNhanScreen(navController: NavController,idCustomer: String?) {
 
 
 @Composable
-fun formatDate(inputDate: String): String {
-    return try {
-        val inputFormat = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()) // Định dạng từ API
-        val outputFormat = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()) // Định dạng đầu ra
-        val date = inputFormat.parse(inputDate)
-        date?.let { outputFormat.format(it) } ?: "Ngày không hợp lệ"
-    } catch (e: Exception) {
-        "Ngày không hợp lệ"
-    }
-}
-
-
-@Composable
 fun OrderItem(
     order: Order,
     navController: NavController,
@@ -648,7 +636,7 @@ fun OrderItem(
     }
 
     var reviewInfo by remember { mutableStateOf<Review?>(null) }
-
+    var reviewInfo2 by remember { mutableStateOf<Review?>(null) }
     // Chạy lại bất cứ khi nào `listDevice` hoặc `customer` thay đổi
     LaunchedEffect(listDevice, customer) {
         if (customer != null && listDevice.isNotEmpty()) {
@@ -658,6 +646,7 @@ fun OrderItem(
                 reviewViewModel.checkReview(customer.id, device.idDevice)
                 reviewViewModel.checkReview2(customer.id, device.idDevice)
                 reviewInfo = reviewViewModel.checkReviewDirect(customer.id, device.idDevice, 2)
+                reviewInfo2 = reviewViewModel.checkReviewDirect(customer.id, device.idDevice, 1)
             }
         }
     }
@@ -732,8 +721,6 @@ fun OrderItem(
 
                 Column() {
                     listDevice.forEach { device ->
-                        val reviewExists = reviewViewModel.reviewExistsMap[device.idDevice] // lấy trạng thái đánh giá
-                        val reviewExists2 = reviewViewModel.reviewExistsMap2[device.idDevice]
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.SpaceBetween,
@@ -782,7 +769,7 @@ fun OrderItem(
                                         }
                                         when (order.status) {
                                             5 -> when {
-                                                reviewExists == false && reviewExists2 == false -> Button(
+                                                reviewInfo == null && reviewInfo2 == null -> Button(
                                                     onClick = {
                                                         navController.navigate(
                                                             Screen.Rating_Screen.route +
