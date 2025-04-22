@@ -192,13 +192,27 @@ fun NavGraph(
         }
         //Màn hình chọn địa chỉ
         composable(
-            route = Screen.Address_Selection.route + "?idCustomer={idCustomer}",
+            route = "${Screen.Address_Selection.route}?idCustomer={idCustomer}&selectedAddressId={selectedAddressId}",
             arguments = listOf(
-                navArgument("idCustomer") {type = NavType.StringType }
+                navArgument("idCustomer") {
+                    type = NavType.StringType
+                    nullable = true
+                    defaultValue = null
+                },
+                navArgument("selectedAddressId") {
+                    type = NavType.StringType // Sử dụng StringType để hỗ trợ null
+                    nullable = true
+                    defaultValue = null
+                }
             )
-        ){
-            val idCustomer = it.arguments?.getString("idCustomer") ?: ""
-            AddressSelectionScreen(navController, idCustomer)
+        ) { backStackEntry ->
+            val idCustomer = backStackEntry.arguments?.getString("idCustomer")
+            val selectedAddressId = backStackEntry.arguments?.getString("selectedAddressId")?.toIntOrNull()
+            AddressSelectionScreen(
+                navController = navController,
+                idCustomer = idCustomer,
+                selectedAddressId = selectedAddressId
+            )
         }
         //Màn hình Xác nhận OTP
         composable(route = Screen.VerifyOTPScreen.route) {

@@ -23,6 +23,8 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.RadioButton
+import androidx.compose.material3.RadioButtonDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -30,6 +32,10 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -64,56 +70,71 @@ import com.example.ungdungbanthietbi_iot.navigation.Screen
 @Composable
 fun AddressSelectionScreen(
     navController: NavController,
-    idCustomer:String?
-){
+    idCustomer: String?,
+    selectedAddressId: Int? // Thêm tham số này
+) {
+    val addressViewModel: AddressViewModel = viewModel()
+    val listAddress by addressViewModel::listAddress
+    // Khởi tạo trạng thái chọn với selectedAddressId từ CheckoutScreen
+    var currentSelectedAddressId by remember { mutableStateOf(selectedAddressId) }
 
-    val addressViewModel:AddressViewModel = viewModel()
-    var listAddress = addressViewModel.listAddress
-
-    LaunchedEffect(idCustomer) {
+    LaunchedEffect(Unit) {
         addressViewModel.getAddressByIdCustomer(idCustomer)
     }
 
+    // Hàm xử lý khi chọn địa chỉ
+    fun selectAddress(addressId: Int) {
+        currentSelectedAddressId = addressId // Cập nhật địa chỉ được chọn
+        navController.previousBackStackEntry?.savedStateHandle?.set("selectedAddressId", addressId)
+        navController.popBackStack()
+    }
 
-    Scaffold (
+    Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Địa chỉ nhận hàng",
-                    modifier = Modifier.fillMaxWidth(), textAlign = TextAlign.Start,
-                    fontWeight = FontWeight.Bold
-                ) },
+                title = {
+                    Text(
+                        "Địa chỉ nhận hàng",
+                        modifier = Modifier.fillMaxWidth(),
+                        textAlign = TextAlign.Start,
+                        fontWeight = FontWeight.Bold
+                    )
+                },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = Color(0xFF5D9EFF),
                     titleContentColor = Color.White,
                     navigationIconContentColor = Color.White
                 ),
                 navigationIcon = {
-                    IconButton(onClick = {
-                        navController.popBackStack()
-                    }) {
+                    IconButton(onClick = { navController.popBackStack() }) {
                         Icon(Icons.Default.ArrowBack, contentDescription = null)
                     }
                 }
             )
         }
-    ){
-        Column(modifier = Modifier.fillMaxWidth().background(Color(0xFFF6F6F6)).padding(it)) {
+    ) { paddingValues ->
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(Color(0xFFF6F6F6))
+                .padding(paddingValues)
+        ) {
             LazyColumn(modifier = Modifier.weight(1f).padding(5.dp)) {
-                // Hiển thị các địa chỉ
                 items(listAddress) { address ->
                     AddressItem(
-                        address,
-                        navController
+                        address = address,
+                        navController = navController,
+                        selectedAddressId = currentSelectedAddressId,
+                        onSelectClick = { addressId -> selectAddress(addressId) }
                     )
                 }
-                // Nút thêm địa chỉ mới
-                item{
+                item {
                     Box(
                         modifier = Modifier.fillMaxWidth(),
                         contentAlignment = Alignment.Center
                     ) {
                         TextButton(onClick = {
-                            navController.navigate(Screen.Add_Address.route + "?idCustomer=${idCustomer}")
+                            navController.navigate("${Screen.Add_Address.route}?idCustomer=${idCustomer}")
                         }) {
                             Icon(
                                 Icons.Default.AddCircleOutline,
@@ -133,7 +154,6 @@ fun AddressSelectionScreen(
             }
         }
     }
-
 }
 
 /** Card chứa thông tin của từng địa chỉ (AddressItem)
@@ -155,77 +175,88 @@ fun AddressSelectionScreen(
 @Composable
 fun AddressItem(
     address: Address,
-    navController: NavController
+    navController: NavController,
+    selectedAddressId: Int?, // ID của địa chỉ đang được chọn
+    onSelectClick: (Int) -> Unit // Callback khi chọn địa chỉ
 ) {
     val customerViewModel: CustomerViewModel = viewModel()
     val customer = customerViewModel.customer
-    if(address != null){
-        LaunchedEffect (address){
-            customerViewModel.getCustomerById(address.idCustomer)
-        }
+
+    LaunchedEffect(address) {
+        customerViewModel.getCustomerById(address.idCustomer)
     }
 
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(5.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = Color.White
-        ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-        onClick = {
-            navController.navigate("${Screen.Update_Address.route}?idCustomer=${address.idCustomer}&id=${address.id}")
-        }
+            .padding(5.dp)
+            .clickable { onSelectClick(address.id) }, // Nhấn vào Card để chọn
+        colors = CardDefaults.cardColors(containerColor = Color.White),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
-        Column (
-            modifier = Modifier.padding(5.dp).padding(7.dp),
-            verticalArrangement = Arrangement.Center
-        ){
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    "Người nhận: ${customer?.surname} ${customer?.lastName}",
-                    fontSize = 18.sp,
-                    fontWeight = FontWeight.Bold,
+        Row(
+            modifier = Modifier
+                .padding(12.dp)
+                .fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            // RadioButton ở bên trái
+            RadioButton(
+                selected = selectedAddressId == address.id,
+                onClick = { onSelectClick(address.id) },
+                colors = RadioButtonDefaults.colors(
+                    selectedColor = Color(0xFF5D9EFF),
+                    unselectedColor = Color.Gray
                 )
-
-                TextButton(
-                    shape = RoundedCornerShape(10.dp),
-                    onClick = {
-                        navController.navigate("${Screen.Update_Address.route}?idCustomer=${address.idCustomer}&id=${address.id}")
-                    }
+            )
+            // Nội dung địa chỉ
+            Column(
+                modifier = Modifier.weight(1f)
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        "Chỉnh sửa",
-                        fontSize = 16.sp,
-                        fontWeight = FontWeight.W500,
+                        text = "Người nhận: ${customer?.surname} ${customer?.lastName}",
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                    TextButton(
+                        shape = RoundedCornerShape(10.dp),
+                        onClick = {
+                            navController.navigate("${Screen.Update_Address.route}?idCustomer=${address.idCustomer}&id=${address.id}")
+                        }
+                    ) {
+                        Text(
+                            text = "Sửa",
+                            fontSize = 16.sp,
+                            fontWeight = FontWeight.W500,
+                            color = Color(0xFF5D9EFF)
+                        )
+                    }
+                }
+                Text(
+                    text = "Số điện thoại: ${customer?.phone}",
+                    fontSize = 18.sp,
+                    modifier = Modifier.padding(bottom = 8.dp)
+                )
+                Text(
+                    text = "Địa chỉ: ${address.street}, ${address.ward}, ${address.district}, ${address.city}",
+                    modifier = Modifier.padding(bottom = 8.dp),
+                    fontSize = 18.sp
+                )
+                if (address.isDefault == 1) {
+                    Text(
+                        text = "Mặc định",
+                        fontSize = 13.sp,
+                        modifier = Modifier
+                            .border(1.dp, Color(0xFF5D9EFF), shape = RoundedCornerShape(10.dp))
+                            .padding(3.dp),
                         color = Color(0xFF5D9EFF)
                     )
                 }
-            }
-
-            Text(
-                "Số điện thoai: ${customer?.phone}",
-                fontSize = 18.sp,
-                modifier = Modifier.padding(bottom = 8.dp),
-            )
-            Text(
-                "Địa chỉ: ${address.street}, ${address.ward}, ${address.district}, ${address.city}",
-                modifier = Modifier.padding(bottom = 8.dp),
-                fontSize = 18.sp,
-            )
-
-            if(address.isDefault == 1){
-                Text(
-                    "Mặc đinh",
-                    fontSize = 13.sp,
-                    modifier = Modifier.border(1.dp, Color(0xFF5D9EFF), shape = RoundedCornerShape(10.dp))
-                        .padding(3.dp),
-                    color = Color(0xFF5D9EFF)
-                )
             }
         }
     }
