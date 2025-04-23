@@ -26,6 +26,9 @@ class AccountViewModel:ViewModel() {
     var account: Account? by mutableStateOf(null)
         private set
 
+    var accountById: Account? by mutableStateOf(null)
+        private set
+
     var accountAddResult by mutableStateOf("")
 
     private val _loginResult = MutableStateFlow<CheckLoginResponse?>(null)
@@ -36,7 +39,7 @@ class AccountViewModel:ViewModel() {
     var accountUpdateResult by mutableStateOf("")
 
     var username: String? = null
-//    var idPerson: String? = null
+    var idPerson: String? = null
 
     private val _accountCheckResult = mutableStateOf<Boolean?>(null)
     val accountCheckResult: State<Boolean?> = _accountCheckResult
@@ -71,7 +74,17 @@ class AccountViewModel:ViewModel() {
             try {
                 account = RetrofitClient.accountAPIService.getAccountByUsername(username)
             } catch (e: Exception) {
-                Log.e("SanPhamViewModel", "Error getting SanPham", e)
+                Log.e("AccountViewModel", "Error getting SanPham", e)
+            }
+        }
+    }
+    fun getAccountById(idPerson: String) {
+        this.idPerson = idPerson
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                accountById = RetrofitClient.accountAPIService.getAccountById(idPerson)
+            } catch (e: Exception) {
+                Log.e("AccountViewModel", "Error getting account", e)
             }
         }
     }

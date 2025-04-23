@@ -207,8 +207,8 @@ fun CheckoutScreen(
                                     note = "NULL",
                                     platformOrder = "Mobile",
                                     created_at = getCurrentTimestamp(),
-                                    updated_at = getCurrentTimestamp(),
-                                    accept_at = getCurrentTimestamp(),
+                                    updated_at = "NULL",
+                                    accept_at = "NULL",
                                     idEmployee = "EMP000001",
                                     status = 1
                                 )

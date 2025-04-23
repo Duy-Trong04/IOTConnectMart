@@ -190,7 +190,8 @@ fun AddressItem(
         modifier = Modifier
             .fillMaxWidth()
             .padding(5.dp)
-            .clickable { onSelectClick(address.id) }, // Nhấn vào Card để chọn
+            .clickable { if (selectedAddressId != null) onSelectClick(address.id)
+                       else { navController.navigate("${Screen.Update_Address.route}?idCustomer=${address.idCustomer}&id=${address.id}") }}, // Nhấn vào Card để chọn
         colors = CardDefaults.cardColors(containerColor = Color.White),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
@@ -200,15 +201,19 @@ fun AddressItem(
                 .fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // RadioButton ở bên trái
-            RadioButton(
-                selected = selectedAddressId == address.id,
-                onClick = { onSelectClick(address.id) },
-                colors = RadioButtonDefaults.colors(
-                    selectedColor = Color(0xFF5D9EFF),
-                    unselectedColor = Color.Gray
+            // Hiển thị RadioButton chỉ khi selectedAddressId != null
+            if (selectedAddressId != null) {
+                RadioButton(
+                    selected = selectedAddressId == address.id,
+                    onClick = { onSelectClick(address.id) },
+                    colors = RadioButtonDefaults.colors(
+                        selectedColor = Color(0xFF5D9EFF),
+                        unselectedColor = Color.Gray
+                    )
                 )
-            )
+            } else {
+                Spacer(modifier = Modifier.width(8.dp)) // Giữ khoảng cách khi không có RadioButton
+            }
             // Nội dung địa chỉ
             Column(
                 modifier = Modifier.weight(1f)
@@ -223,18 +228,23 @@ fun AddressItem(
                         fontSize = 18.sp,
                         fontWeight = FontWeight.Bold
                     )
-                    TextButton(
-                        shape = RoundedCornerShape(10.dp),
-                        onClick = {
-                            navController.navigate("${Screen.Update_Address.route}?idCustomer=${address.idCustomer}&id=${address.id}")
+                    if (selectedAddressId != null) {
+                        TextButton(
+                            shape = RoundedCornerShape(10.dp),
+                            onClick = {
+                                navController.navigate("${Screen.Update_Address.route}?idCustomer=${address.idCustomer}&id=${address.id}")
+                            }
+                        ) {
+                            Text(
+                                text = "Sửa",
+                                fontSize = 16.sp,
+                                fontWeight = FontWeight.W500,
+                                color = Color(0xFF5D9EFF)
+                            )
                         }
-                    ) {
-                        Text(
-                            text = "Sửa",
-                            fontSize = 16.sp,
-                            fontWeight = FontWeight.W500,
-                            color = Color(0xFF5D9EFF)
-                        )
+                    }
+                    else {
+                        Spacer(modifier = Modifier.width(8.dp)) // Giữ khoảng cách khi không có RadioButton
                     }
                 }
                 Text(

@@ -62,6 +62,7 @@ import com.example.ungdungbanthietbi_iot.data.order_detail.OrderDetailViewModel
 import com.example.ungdungbanthietbi_iot.data.review_device.Review
 import com.example.ungdungbanthietbi_iot.data.review_device.ReviewViewModel
 import com.example.ungdungbanthietbi_iot.navigation.Screen
+import com.example.ungdungbanthietbi_iot.screen.order_detail.calculateDaysSinceReceived
 import com.example.ungdungbanthietbi_iot.utils.formatDate
 import com.example.ungdungbanthietbi_iot.utils.formatGiaTien
 import java.text.DecimalFormat
@@ -634,20 +635,22 @@ fun OrderItem(
     val listDetail by remember(order.id) {
         derivedStateOf { orderDetailViewModel.orderDetailsByOrder[order.id] ?: emptyList() }
     }
-
-    var reviewInfo by remember { mutableStateOf<Review?>(null) }
-    var reviewInfo2 by remember { mutableStateOf<Review?>(null) }
+    // Map để lưu trạng thái đánh giá cho từng sản phẩm
+    var reviewState by remember { mutableStateOf<Map<Int, Pair<Review?, Review?>>>(emptyMap()) }
     // Chạy lại bất cứ khi nào `listDevice` hoặc `customer` thay đổi
     LaunchedEffect(listDevice, customer) {
         if (customer != null && listDevice.isNotEmpty()) {
+            val newReviewState = mutableMapOf<Int, Pair<Review?, Review?>>()
             listDevice.forEach { device ->
                 // Khởi tạo null để Compose hiển thị loading (hoặc tránh miss key)
                 reviewViewModel.initReviewCheck(device.idDevice)
                 reviewViewModel.checkReview(customer.id, device.idDevice)
                 reviewViewModel.checkReview2(customer.id, device.idDevice)
-                reviewInfo = reviewViewModel.checkReviewDirect(customer.id, device.idDevice, 2)
-                reviewInfo2 = reviewViewModel.checkReviewDirect(customer.id, device.idDevice, 1)
+                val reviewFirst = reviewViewModel.checkReviewDirect(customer.id, device.idDevice, 2)
+                val reviewSecond = reviewViewModel.checkReviewDirect(customer.id, device.idDevice, 1)
+                newReviewState[device.idDevice] = Pair(reviewFirst, reviewSecond)
             }
+            reviewState = newReviewState
         }
     }
     Card(
@@ -767,42 +770,60 @@ fun OrderItem(
                                                 }
                                             }
                                         }
-                                        when (order.status) {
-                                            5 -> when {
-                                                reviewInfo == null && reviewInfo2 == null -> Button(
+                                        if (order.status == 5) {
+                                            val (reviewFirst, reviewSecond) = reviewState[device.idDevice] ?: Pair(null, null)
+                                            val isSecondOrLaterPurchase = reviewFirst != null
+                                            val hasReview = if (isSecondOrLaterPurchase) {
+                                                reviewSecond != null // Chỉ coi là có đánh giá nếu đã có reviewSecond
+                                            } else {
+                                                reviewFirst != null || reviewSecond != null // Mua lần đầu thì kiểm tra cả hai
+                                            }
+                                            if (!hasReview) {
+                                                Button(
                                                     onClick = {
-                                                        navController.navigate(
-                                                            Screen.Rating_Screen.route +
-                                                                    "?idCustomer=${customer!!.id}&idDevice=${device.idDevice}"
-                                                        )
+                                                        if (isSecondOrLaterPurchase && reviewFirst != null) {
+                                                            // Mua lần thứ hai hoặc tiếp theo: điều hướng đến Update_Rating_Screen
+                                                            navController.navigate(
+                                                                Screen.Update_Rating_Screen.route +
+                                                                        "?idReview=${reviewFirst.idReview}&idCustomer=${customer!!.id}"
+                                                            )
+                                                        } else {
+                                                            // Mua lần đầu: điều hướng đến Rating_Screen
+                                                            navController.navigate(
+                                                                Screen.Rating_Screen.route +
+                                                                        "?idCustomer=${customer!!.id}&idDevice=${device.idDevice}"
+                                                            )
+                                                        }
                                                     },
                                                     shape = RoundedCornerShape(8.dp),
                                                     colors = ButtonDefaults.buttonColors(
                                                         containerColor = Color(0xFF5D9EFF),
-                                                        contentColor   = Color.White
+                                                        contentColor = Color.White
                                                     )
                                                 ) {
                                                     Text("Đánh giá")
                                                 }
-
-                                                // Đã review lần 1 nhưng chưa review lần 2 → hiển nút Cập nhật
-                                                reviewInfo != null -> Button(
-                                                    onClick = {
-                                                        navController.navigate(Screen.Update_Rating_Screen.route + "?idReview=${reviewInfo!!.idReview}&idCustomer=${customer!!.id}")
-                                                    },
-                                                    shape = RoundedCornerShape(8.dp),
-                                                    colors = ButtonDefaults.buttonColors(
-                                                        containerColor = Color(0xFF5D9EFF),
-                                                        contentColor   = Color.White
-                                                    )
-                                                ) {
-                                                    Text("Cập nhật")
-                                                }
-                                                else -> {
-                                                    // đã review cả hai lần → không hiển thị nút nào
+                                            } else {
+                                                val daysSinceReceived = calculateDaysSinceReceived(order.accept_at)
+                                                if (daysSinceReceived <= 10) {
+                                                    Button(
+                                                        onClick = {
+                                                            val reviewToEdit = reviewSecond ?: reviewFirst
+                                                            navController.navigate(
+                                                                Screen.Update_Rating_Screen.route +
+                                                                        "?idReview=${reviewToEdit!!.idReview}&idCustomer=${customer!!.id}"
+                                                            )
+                                                        },
+                                                        shape = RoundedCornerShape(8.dp),
+                                                        colors = ButtonDefaults.buttonColors(
+                                                            containerColor = Color(0xFF5D9EFF),
+                                                            contentColor = Color.White
+                                                        )
+                                                    ) {
+                                                        Text("Chỉnh sửa")
+                                                    }
                                                 }
                                             }
-                                            else -> {}
                                         }
                                     }
                                 }

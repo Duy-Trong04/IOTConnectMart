@@ -43,6 +43,11 @@ interface AccuntAPIService {
         @Query("username") username: String
     ): Account
 
+    @GET("account/getAccountById.php")
+    suspend fun getAccountById(
+        @Query("idPerson") idPerson: String
+    ): Account
+
     @POST("account/create.php")
     suspend fun addAccount(
         @Body account: AddAccount

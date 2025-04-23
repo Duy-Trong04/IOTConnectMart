@@ -69,6 +69,7 @@ import kotlinx.coroutines.launch
 import java.text.DecimalFormat
 import com.example.ungdungbanthietbi_iot.screen.home.CardAllDevice
 import com.example.ungdungbanthietbi_iot.screen.home.CardFavorites
+import java.time.LocalDate
 
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
@@ -239,12 +240,18 @@ fun PersonalScreen(
                             // Số lượng giỏ hàng nằm đè lên góc phải của icon
                             Text(
                                 text = "${listCart.size}", // Thay bằng biến nếu cần động
-                                color = Color.Red,
+                                color = Color(0xFF5D9EFF),
                                 fontSize = 16.sp,
                                 fontWeight = FontWeight.Bold,
+                                textAlign = TextAlign.Center, // Căn giữa text
                                 modifier = Modifier
                                     .align(Alignment.TopEnd)
-                                    .offset(x = (-5).dp, y = (-2).dp)
+                                    .size(24.dp) // Đảm bảo kích thước đủ lớn cho hình tròn
+                                    .offset(x = (-2).dp, y = (-2).dp)
+                                    .background(color = Color.White, CircleShape)
+                                    .clip(CircleShape) // Cắt theo hình tròn nếu cần
+                                    //.padding(4.dp)
+                                    .wrapContentSize(align = Alignment.Center) // Đảm bảo nội dung nằm giữa hình tròn
                             )
                         }
                     },
@@ -465,21 +472,45 @@ fun AccountInfoSection(
 
             Spacer(modifier = Modifier.height(8.dp))
             if (customer != null) {
+
+                // Xử lý ngày sinh mặc định (18 năm trước) nếu birthdate null
+                val defaultDate = remember {
+                    val now = LocalDate.now()
+                    now.minusYears(18)
+                }
+
+                val birthdate = customer.birthdate?.takeIf { it.isNotBlank() } ?: defaultDate.toString()
+
+                // Khởi tạo các giá trị ngày sinh
+                var initialDay: String
+                var initialMonth: String
+                var initialYear: String
+                try {
+                    val parts = birthdate.split("-")
+                    initialYear = parts[0]
+                    initialMonth = parts[1]
+                    initialDay = parts[2]
+                } catch (e: Exception) {
+                    initialYear = defaultDate.year.toString()
+                    initialMonth = defaultDate.monthValue.toString()
+                    initialDay = defaultDate.dayOfMonth.toString()
+                }
+
                 val surname = remember { mutableStateOf(customer.surname) }
                 val lastname = remember { mutableStateOf(customer.lastName) }
                 val phone = remember { mutableStateOf(customer.phone) }
                 val email = remember { mutableStateOf(customer.email) }
                 val gender = remember { mutableStateOf(customer.gender) }
-                val selectedDay = remember { mutableStateOf(customer.birthdate.split("-")[2]) }
-                val selectedMonth = remember { mutableStateOf(customer.birthdate.split("-")[1]) }
-                val selectedYear = remember { mutableStateOf(customer.birthdate.split("-")[0]) }
+                val selectedDay = remember { mutableStateOf(initialDay) }
+                val selectedMonth = remember { mutableStateOf(initialMonth) }
+                val selectedYear = remember { mutableStateOf(initialYear) }
 
                 val initialSurname = remember { mutableStateOf(customer.surname) }
                 val initialLastName = remember { mutableStateOf(customer.lastName) }
                 val initialPhone = remember { mutableStateOf(customer.phone) }
                 val initialEmail = remember { mutableStateOf(customer.email) }
                 val initialGender = remember { mutableStateOf(customer.gender) }
-                val initialBirthdate = remember { mutableStateOf(customer.birthdate) }
+                val initialBirthdate = remember { mutableStateOf(birthdate) }
 
                 fun checkIfChanged(): Boolean {
                     return lastname.value != initialLastName.value ||
@@ -629,6 +660,17 @@ fun AccountInfoSection(
 
                 Button(
                     onClick = {
+                        // Kiểm tra ngày sinh hợp lệ
+                        if (!isValidDate(selectedDay.value, selectedMonth.value, selectedYear.value)) {
+                            scope.launch {
+                                snackbarHostState.showSnackbar(
+                                    message = "Ngày sinh không hợp lệ",
+                                    duration = SnackbarDuration.Short
+                                )
+                            }
+                            return@Button
+                        }
+
                         // Xử lý lưu dữ liệu
                         val regexName = "^[a-zA-Z\\p{L} ]+$"
                         val regexPhone = "^\\d{10}$".toRegex()
@@ -761,7 +803,15 @@ fun DropdownMenuField(
         }
     }
 }
-
+fun isValidDate(day: String, month: String, year: String): Boolean {
+    return try {
+        val date = LocalDate.of(year.toInt(), month.toInt(), day.toInt())
+        // Kiểm tra thêm nếu ngày sinh không được lớn hơn ngày hiện tại
+        date.isBefore(LocalDate.now()) || date.isEqual(LocalDate.now())
+    } catch (e: Exception) {
+        false
+    }
+}
 @Composable
 fun AccountOptionsSection(
     onOptionSelected: (String) -> Unit,

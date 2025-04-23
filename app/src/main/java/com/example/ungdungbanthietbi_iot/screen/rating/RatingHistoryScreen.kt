@@ -38,6 +38,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import androidx.navigation.compose.currentBackStackEntryAsState
 import coil.compose.AsyncImage
+import com.example.ungdungbanthietbi_iot.data.account.AccountViewModel
 import com.example.ungdungbanthietbi_iot.data.customer.CustomerViewModel
 import com.example.ungdungbanthietbi_iot.data.device.Device
 import com.example.ungdungbanthietbi_iot.data.device.DeviceViewModel
@@ -164,7 +165,9 @@ fun RatingHistoryScreen(navController: NavController, idCustomer: String?) {
 @Composable
 fun ReviewItem(review: Review, idCustomer: String?, idDevice: Int?, navController: NavController) {
     val customerViewModel: CustomerViewModel = viewModel()
+    val accountViewModel: AccountViewModel = viewModel()
     val custmer = customerViewModel.customer
+    val account = accountViewModel.accountById
 
     val reviewViewModel: ReviewViewModel = viewModel()
 
@@ -189,6 +192,7 @@ fun ReviewItem(review: Review, idCustomer: String?, idDevice: Int?, navControlle
 
     LaunchedEffect (idCustomer){
         customerViewModel.getCustomerById(idCustomer.toString())
+        accountViewModel.getAccountById(idCustomer.toString())
     }
 
     Card(
@@ -248,7 +252,7 @@ fun ReviewItem(review: Review, idCustomer: String?, idDevice: Int?, navControlle
             device?.let {
                 Row(
                     modifier = Modifier.fillMaxWidth().clickable {
-                        navController.navigate(Screen.ProductDetailsScreen.route + "?id=${idDevice}")
+                        navController.navigate(Screen.ProductDetailsScreen.route + "?id=${idDevice}&idCustomer=${idCustomer}&username=${account!!.username}")
                     },
                     verticalAlignment = Alignment.CenterVertically
                 ) {

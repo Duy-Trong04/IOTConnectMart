@@ -24,6 +24,7 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.grid.GridCells
@@ -345,12 +346,18 @@ fun HomeScreen(
                             // Số lượng giỏ hàng nằm đè lên góc phải của icon
                             Text(
                                 text = "${listCart.size}", // Thay bằng biến nếu cần động
-                                color = Color.Red,
+                                color = Color(0xFF5D9EFF),
                                 fontSize = 16.sp,
                                 fontWeight = FontWeight.Bold,
+                                textAlign = TextAlign.Center, // Căn giữa text
                                 modifier = Modifier
                                     .align(Alignment.TopEnd)
-                                    .offset(x = (-5).dp, y = (-2).dp)
+                                    .size(24.dp) // Đảm bảo kích thước đủ lớn cho hình tròn
+                                    .offset(x = (-2).dp, y = (-2).dp)
+                                    .background(color = Color.White, CircleShape)
+                                    .clip(CircleShape) // Cắt theo hình tròn nếu cần
+                                    //.padding(4.dp)
+                                    .wrapContentSize(align = Alignment.Center) // Đảm bảo nội dung nằm giữa hình tròn
                             )
                         }
 
