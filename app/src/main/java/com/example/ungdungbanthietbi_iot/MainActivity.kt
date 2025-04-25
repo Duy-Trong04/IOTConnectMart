@@ -87,7 +87,7 @@ class MainActivity : ComponentActivity() {
                         }
                     } else {
                         // Nếu không có thông tin đăng nhập, điều hướng đến IntroScreen
-                        startDestination = Screen.IntroScreen.route
+                        startDestination = Screen.HomeScreen.route
                         isChecking = false
                     }
                 }

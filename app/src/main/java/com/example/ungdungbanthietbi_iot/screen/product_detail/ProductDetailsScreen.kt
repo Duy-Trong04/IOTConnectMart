@@ -101,7 +101,7 @@ import com.example.ungdungbanthietbi_iot.data.liked.LikedViewModel
 import com.example.ungdungbanthietbi_iot.data.review_device.Review
 import com.example.ungdungbanthietbi_iot.data.review_device.ReviewViewModel
 import com.example.ungdungbanthietbi_iot.navigation.Screen
-import com.example.ungdungbanthietbi_iot.screen.home.CardAllDevice
+import com.example.ungdungbanthietbi_iot.screen.home.CardDevice
 import com.example.ungdungbanthietbi_iot.utils.formatGiaTien
 import kotlinx.coroutines.delay
 import java.text.DecimalFormat
@@ -833,7 +833,7 @@ fun ProductDetailsScreen(
                     ) {
                         items(listAllDevice){
                             if(account != null){
-                                CardAllDevice(device = it,
+                                CardDevice(device = it,
                                     isFavorite = isFavorite,
                                     account.idPerson,
                                     account.username,
@@ -841,7 +841,7 @@ fun ProductDetailsScreen(
                                 )
                             }
                             else{
-                                CardAllDevice(device = it,
+                                CardDevice(device = it,
                                     isFavorite = isFavorite,
                                     null,
                                     username,

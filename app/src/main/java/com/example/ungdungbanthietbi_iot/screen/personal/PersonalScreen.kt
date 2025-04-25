@@ -40,6 +40,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
@@ -56,6 +57,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+import coil.compose.AsyncImage
 import com.example.ungdungbanthietbi_iot.R
 import com.example.ungdungbanthietbi_iot.data.account.Account
 import com.example.ungdungbanthietbi_iot.data.account.AccountViewModel
@@ -66,9 +68,6 @@ import com.example.ungdungbanthietbi_iot.data.device.Device
 import com.example.ungdungbanthietbi_iot.data.device.DeviceViewModel
 import com.example.ungdungbanthietbi_iot.navigation.Screen
 import kotlinx.coroutines.launch
-import java.text.DecimalFormat
-import com.example.ungdungbanthietbi_iot.screen.home.CardAllDevice
-import com.example.ungdungbanthietbi_iot.screen.home.CardFavorites
 import java.time.LocalDate
 
 
@@ -76,16 +75,15 @@ import java.time.LocalDate
 @Composable
 fun PersonalScreen(
     navController: NavController,
-    username:String,
+    username: String,
     deviceViewModel: DeviceViewModel,
 ) {
-
     deviceViewModel.getAllDevice()
-    val listAllDevice : List<Device> = deviceViewModel.listAllDevice
+    val listAllDevice: List<Device> = deviceViewModel.listAllDevice
     val listDeviceLiked: List<Device> = deviceViewModel.listDeviceOfCustomer
 
     val navdrawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
-    val scope = rememberCoroutineScope() //xử lý suspending fun (mở và đóng drawer)
+    val scope = rememberCoroutineScope()
     val countries = listOf(
         "Thiết bị chiếu sáng",
         "Thiết bị cảm biến",
@@ -95,34 +93,54 @@ fun PersonalScreen(
 
     val cartViewModel: CartViewModel = viewModel()
     val listCart = cartViewModel.listCart
-    // Lấy ViewModel
-    val accountViewModel:AccountViewModel = viewModel()
-
-    // Lấy thông tin tài khoản từ ViewModel
+    val accountViewModel: AccountViewModel = viewModel()
     val account = accountViewModel.account
+    var isLoading by remember { mutableStateOf(true) }
 
-    // Gọi API nếu taikhoan chưa được lấy
     LaunchedEffect(username) {
         if (username.isNotEmpty()) {
             accountViewModel.getUserByUsername(username)
+            isLoading = false
+        } else {
+            isLoading = false
         }
     }
-    if(account != null){
-        deviceViewModel.getDeviceByLiked(account.idPerson.toString())
-        cartViewModel.getCartByIdCustomer(account.idPerson.toString())
+
+    LaunchedEffect(account) {
+        if (account != null) {
+            deviceViewModel.getDeviceByLiked(account.idPerson.toString())
+            cartViewModel.getCartByIdCustomer(account.idPerson.toString())
+        }
     }
-    if(account == null){
-        Text(text = "Đang tải thông tin tài khoản...")
+
+    if (isLoading) {
+        Box(
+            modifier = Modifier.fillMaxSize(),
+            contentAlignment = Alignment.Center
+        ) {
+            CircularProgressIndicator()
+        }
         return
     }
 
-    // Biến trạng thái để sản phẩm yêu thích không
-    var isFavorite by remember { mutableStateOf(false) }
+    if (account == null) {
+        Box(
+            modifier = Modifier.fillMaxSize(),
+            contentAlignment = Alignment.Center
+        ) {
+            Text("Không tìm thấy thông tin tài khoản. Vui lòng đăng nhập lại.")
+            Button(
+                onClick = { navController.navigate(Screen.LoginScreen.route) },
+                modifier = Modifier.padding(top = 16.dp)
+            ) {
+                Text("Đăng nhập")
+            }
+        }
+        return
+    }
 
-    // Kiểm tra trạng thái Tab
     var currentTab by remember { mutableStateOf("accountInfo") }
 
-    // Danh mục
     ModalNavigationDrawer(
         drawerState = navdrawerState,
         drawerContent = {
@@ -135,14 +153,12 @@ fun PersonalScreen(
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-
                     Text(
                         text = "IOT Connect Mart",
                         modifier = Modifier.padding(5.dp),
                         color = Color.White,
                         fontWeight = FontWeight.Bold
                     )
-
                     Icon(
                         imageVector = Icons.Default.Close,
                         contentDescription = "Đóng danh mục",
@@ -150,7 +166,6 @@ fun PersonalScreen(
                             .padding(end = 5.dp)
                             .size(24.dp)
                             .clickable {
-                                // thoát danh mục
                                 scope.launch {
                                     navdrawerState.apply {
                                         if (isClosed) open() else close()
@@ -164,7 +179,7 @@ fun PersonalScreen(
                 Text(
                     text = "T R A N G  C H Ủ",
                     modifier = Modifier.padding(12.dp).clickable {
-                        navController.navigate(Screen.HomeScreen.route + "?username=${username}")
+                        navController.navigate(Screen.HomeScreen.route + "?username=$username")
                     },
                     color = Color(0xFF5D9EFF),
                     fontWeight = FontWeight.Bold,
@@ -176,10 +191,7 @@ fun PersonalScreen(
                             Row(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .padding(
-                                        vertical = 5.dp,
-                                        horizontal = 5.dp
-                                    )
+                                    .padding(vertical = 5.dp, horizontal = 5.dp)
                                     .drawBehind {
                                         drawLine(
                                             color = Color.Black,
@@ -191,7 +203,10 @@ fun PersonalScreen(
                             ) {
                                 Text(text = country)
                             }
-                        }, selected = false, onClick = { /* Chọn danh mục */ })
+                        },
+                        selected = false,
+                        onClick = { /* Chọn danh mục */ }
+                    )
                 }
             }
         }
@@ -205,54 +220,53 @@ fun PersonalScreen(
                     navigationIcon = {
                         IconButton(onClick = {
                             scope.launch {
-                                // mở và đóng drawer
                                 navdrawerState.apply {
                                     if (isClosed) open() else close()
                                 }
                             }
                         }) {
-                            Icon(imageVector = Icons.Default.Menu,
+                            Icon(
+                                imageVector = Icons.Default.Menu,
                                 contentDescription = "List"
                             )
                         }
                     },
                     actions = {
                         Box(
-                            modifier = Modifier
-                                .size(48.dp) // Kích thước của Box để chứa icon
+                            modifier = Modifier.size(48.dp)
                         ) {
-                            // Icon giỏ hàng
                             IconButton(onClick = {
-                                // vào màn hình giỏ hàng nếu chưa đăng nhập thì vào màn hình đăng nhập(LoginScreen)
-                                if(account == null){
+                                if (account == null) {
                                     navController.navigate(Screen.LoginScreen.route)
-                                }
-                                else{
-                                    navController.navigate(Screen.Cart_Screen.route +"?idCustomer=${account.idPerson}&username=${account.username}")
+                                } else {
+                                    navController.navigate(
+                                        Screen.Cart_Screen.route +
+                                                "?idCustomer=${account.idPerson}&username=${account.username}"
+                                    )
                                 }
                             }) {
                                 Icon(
-                                    imageVector = Icons.Outlined.ShoppingCart, contentDescription = "Giỏ hàng",
+                                    imageVector = Icons.Outlined.ShoppingCart,
+                                    contentDescription = "Giỏ hàng",
                                     tint = Color.White
                                 )
                             }
-
-                            // Số lượng giỏ hàng nằm đè lên góc phải của icon
-                            Text(
-                                text = "${listCart.size}", // Thay bằng biến nếu cần động
-                                color = Color(0xFF5D9EFF),
-                                fontSize = 16.sp,
-                                fontWeight = FontWeight.Bold,
-                                textAlign = TextAlign.Center, // Căn giữa text
-                                modifier = Modifier
-                                    .align(Alignment.TopEnd)
-                                    .size(24.dp) // Đảm bảo kích thước đủ lớn cho hình tròn
-                                    .offset(x = (-2).dp, y = (-2).dp)
-                                    .background(color = Color.White, CircleShape)
-                                    .clip(CircleShape) // Cắt theo hình tròn nếu cần
-                                    //.padding(4.dp)
-                                    .wrapContentSize(align = Alignment.Center) // Đảm bảo nội dung nằm giữa hình tròn
-                            )
+                            if (listCart.isNotEmpty()) {
+                                Text(
+                                    text = "${listCart.size}",
+                                    color = Color(0xFF5D9EFF),
+                                    fontSize = 16.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    textAlign = TextAlign.Center,
+                                    modifier = Modifier
+                                        .align(Alignment.TopEnd)
+                                        .size(24.dp)
+                                        .offset(x = (-2).dp, y = (-2).dp)
+                                        .background(color = Color.White, CircleShape)
+                                        .clip(CircleShape)
+                                        .wrapContentSize(align = Alignment.Center)
+                                )
+                            }
                         }
                     },
                     colors = TopAppBarDefaults.topAppBarColors(
@@ -262,136 +276,8 @@ fun PersonalScreen(
                         actionIconContentColor = Color.White
                     )
                 )
-            },
-            bottomBar = {
-                BottomAppBar(
-                    containerColor = Color.White,
-                    contentColor = Color.Black,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                    //.border(1.dp, Color.Black)
-                ){
-                    Row(modifier = Modifier.fillMaxWidth()
-                        .padding(start = 25.dp, end = 25.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ){
-                        Column(
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            modifier = Modifier.size(70.dp)
-                        ) {
-                            Box (
-                                modifier = Modifier.size(50.dp)
-                                    .clip(CircleShape)
-                                    .clickable { navController.navigate(Screen.HomeScreen.route + "?username=${username}") },
-                                contentAlignment = Alignment.Center,
-
-                                ){
-                                Icon(
-                                    imageVector = Icons.Default.Home,
-                                    contentDescription = "Trang chủ",
-                                    //modifier = Modifier.weight(1f),
-                                    modifier = Modifier.size(25.dp),
-                                    tint = Color.Black
-                                )
-                            }
-                            Text(
-                                text = "Trang chủ",
-                                fontSize = 14.sp,
-                                color = Color.Black
-                            )
-                        }
-                        Column(
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            modifier = Modifier.size(70.dp)
-                        ) {
-                            Box (
-                                modifier = Modifier.size(50.dp)
-                                    .clip(CircleShape)
-                                    .clickable {
-                                        scope.launch {
-                                            // mở và đóng drawer
-                                            navdrawerState.apply {
-                                                if (isClosed) open() else close()
-                                            }
-                                        }
-                                    },
-                                contentAlignment = Alignment.Center,
-                            ){
-                                Icon(
-                                    imageVector = Icons.Default.Category,
-                                    contentDescription = "danh mục",
-                                    //modifier = Modifier.weight(1f),
-                                    modifier = Modifier.size(25.dp),
-                                    tint = Color.Black
-                                )
-                            }
-                            Text(
-                                text = "Danh mục",
-                                fontSize = 14.sp,
-                                color = Color.Black
-                            )
-                        }
-                        Column(
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            modifier = Modifier.size(70.dp)
-                        ) {
-                            Box (
-                                modifier = Modifier.size(50.dp)
-                                    .clip(CircleShape)
-                                    .clickable {
-                                        navController.navigate(Screen.Search_Screen.route)
-                                    },
-                                contentAlignment = Alignment.Center,
-                            ){
-                                Icon(
-                                    imageVector = Icons.Default.Search,
-                                    contentDescription = "Tìm kiếm",
-                                    //modifier = Modifier.weight(1f),
-                                    modifier = Modifier.size(25.dp),
-                                    tint = Color.Black
-                                )
-                            }
-                            Text(
-                                text = "Tìm kiếm",
-                                fontSize = 14.sp,
-                                color = Color.Black
-                            )
-                        }
-                        Column(
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            modifier = Modifier.size(70.dp)
-                        ) {
-                            Box (
-                                modifier = Modifier.size(50.dp)
-                                    .clip(CircleShape)
-                                    .clickable {
-                                        //navController.popBackStack()
-                                        navController.navigate(Screen.PersonalScreen.route+ "?username=${accountViewModel.username}")
-                                    }
-                                    .background(Color(0xFF5D9EFF), RoundedCornerShape(5.dp)),
-                                contentAlignment = Alignment.Center,
-                            ){
-                                Icon(
-                                    imageVector = Icons.Default.Person,
-                                    contentDescription = "Tài khoản",
-                                    //modifier = Modifier.weight(1f),
-                                    modifier = Modifier.size(25.dp),
-                                    tint = Color.White
-                                )
-                            }
-                            Text(
-                                text = "Tôi",
-                                fontSize = 14.sp,
-                                color = Color.Black
-                            )
-                        }
-                    }
-                }
             }
-
-        )
-        {
+        ) {
             LazyColumn(
                 modifier = Modifier
                     .padding(it)
@@ -404,18 +290,12 @@ fun PersonalScreen(
                             .padding(start = 16.dp, end = 16.dp, top = 16.dp)
                     ) {
                         when (currentTab) {
-
                             "accountInfo" -> AccountInfoSection(username)
                             "changePassword" -> ChangePasswordSection(username)
                         }
                     }
                 }
-
-                item {
-                    Spacer(modifier = Modifier.height(16.dp))
-                }
-
-                // Phần menu danh sách bên dưới
+                item { Spacer(modifier = Modifier.height(16.dp)) }
                 item {
                     AccountOptionsSection(
                         onOptionSelected = { selectedTab ->
@@ -426,6 +306,7 @@ fun PersonalScreen(
                         username = username
                     )
                 }
+                item { Spacer(modifier = Modifier.height(40.dp)) }
             }
         }
     }
@@ -465,14 +346,57 @@ fun AccountInfoSection(
         shape = RoundedCornerShape(10.dp),
         elevation = CardDefaults.cardElevation(2.dp),
         modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = Color.White)
+        colors = CardDefaults.cardColors(containerColor = Color.White),
     ){
         Column(modifier = Modifier.padding(16.dp)) {
-            Text("Thông tin tài khoản", fontWeight = FontWeight.Bold, fontSize = 20.sp)
+            //Text("Thông tin tài khoản", fontWeight = FontWeight.Bold, fontSize = 20.sp)
 
             Spacer(modifier = Modifier.height(8.dp))
             if (customer != null) {
+                //Ảnh đại diện
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.Center
+                ){
+//                    AsyncImage(
+//                        model = "",
+//                        contentDescription = "Avatar",
+//                        modifier = Modifier
+//                            .size(100.dp)
+//                            .clip(CircleShape),
+//                        contentScale = ContentScale.Crop
+//                    )
+                    Box(
+                        modifier = Modifier
+                            .size(100.dp)
+                            .clip(CircleShape)
+                    ) {
+                        // Ảnh đại diện
+                        Image(
+                            painter = painterResource(id = R.drawable.logo9),
+                            contentDescription = "Avatar",
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .clip(CircleShape),
+                            contentScale = ContentScale.Crop
+                        )
 
+                        // Chữ "Sửa" mờ nhạt nằm bên dưới
+                        Text(
+                            text = "Sửa",
+                            color = Color.White.copy(alpha = 0.5f), // Màu chữ mờ nhạt
+                            fontSize = 14.sp,
+                            textAlign = TextAlign.Center,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .align(Alignment.BottomCenter) // Căn chữ ở dưới cùng
+                                .background(Color.Black.copy(alpha = 0.3f), RoundedCornerShape(4.dp)) // Nền mờ
+                                .padding(horizontal = 8.dp, vertical = 2.dp) // Khoảng cách bên trong chữ
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
                 // Xử lý ngày sinh mặc định (18 năm trước) nếu birthdate null
                 val defaultDate = remember {
                     val now = LocalDate.now()
