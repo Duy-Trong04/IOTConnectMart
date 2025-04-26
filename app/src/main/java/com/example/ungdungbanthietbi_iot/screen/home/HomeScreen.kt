@@ -406,7 +406,12 @@ fun HomeScreen(
                             icon = Icons.Default.Person,
                             label = "Tôi",
                             isSelected = selectedTabIndex == 3,
-                            onClick = { selectedTabIndex = 3 }
+                            onClick = {
+                                if(username != null) selectedTabIndex = 3
+                                else {
+                                    navController.navigate(Screen.LoginScreen.route)
+                                }
+                            }
                         )
                     }
                 }
@@ -455,8 +460,8 @@ fun HomeScreen(
                 )
                 1 -> CategoryContent(padding = padding, categories = categories, navController = navController, username = username)
                 2 -> SearchContent(padding = padding, navController = navController, username = username)
-                3 -> if (username != null) PersonalScreen(navController = navController, username = username, deviceViewModel = deviceViewModel)
-                else LoginScreen(navController = navController, accountViewModel = accountViewModel)
+                3 -> username?.let { PersonalScreen(navController = navController, username = it, deviceViewModel = deviceViewModel) }
+
             }
         }
     }
@@ -781,7 +786,7 @@ fun CardDevice(
             if (username != null) {
                 navController.navigate(Screen.ProductDetailsScreen.route + "?id=${device.idDevice}&idCustomer=${idCustomer}&username=${username}")
             } else {
-                navController.navigate(Screen.ProductDetailsScreen.route + "?id=${device.idDevice}&idCustomer=${idCustomer}")
+                navController.navigate(Screen.ProductDetailsScreen.route + "?id=${device.idDevice}")
             }
         },
         colors = CardDefaults.cardColors(

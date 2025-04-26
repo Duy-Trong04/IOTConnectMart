@@ -330,21 +330,38 @@ fun NavGraph(
             )
         ){
             val username = it.arguments?.getString("username") ?: ""
-            SearchScreen(navController, deviceViewModel, username)
+            SearchScreen(navController, username)
         }
 
         //Màn hình tìm kiếm chưa có tài khoản
         composable(
             route = Screen.Search_Screen.route
         ){
-            SearchScreen(navController, deviceViewModel, null)
+            SearchScreen(navController, null)
         }
 
         //Màn hình kết quả tìm kiếm
         composable(
-            route = Screen.Search_Results.route
+            route = Screen.Search_Results.route + "?query={query}&username={username}",
+            arguments = listOf(
+                navArgument("query") {type = NavType.StringType },
+                navArgument("username") {type = NavType.StringType }
+            )
         ){
-            SearchResultsScreen(navController)
+            val query = it.arguments?.getString("query") ?: ""
+            val username = it.arguments?.getString("username") ?: ""
+            SearchResultsScreen(navController, query, username)
+        }
+
+        //Màn hình kết quả tìm kiếm chưa đăng nhập
+        composable(
+            route = Screen.Search_Results.route + "?query={query}",
+            arguments = listOf(
+                navArgument("query") {type = NavType.StringType },
+            )
+        ){
+            val query = it.arguments?.getString("query") ?: ""
+            SearchResultsScreen(navController, query, null)
         }
 
         //Màn hình sản phẩm yêu thích

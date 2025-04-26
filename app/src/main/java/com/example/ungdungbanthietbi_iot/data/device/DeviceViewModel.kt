@@ -26,6 +26,8 @@ class DeviceViewModel:ViewModel() {
 
     var listDeviceOfCustomer by mutableStateOf<List<Device>>(emptyList())
         private set
+
+
     var listDeviceByOrder by mutableStateOf<List<Device>>(emptyList())
 
 
@@ -33,15 +35,13 @@ class DeviceViewModel:ViewModel() {
     val listDevice: StateFlow<List<Device>> get() = _listDevice
 
 
-    // Dữ liệu tìm kiếm
-    var searchQuery: String by mutableStateOf("")
-    var searchHistory: MutableList<String> by mutableStateOf(mutableStateListOf())
-    var searchResult: List<Device> by mutableStateOf(emptyList())
-
-
-
     var deviceMap = mutableStateMapOf<String, Device>()
         private set
+
+    private val _listDeviceSearch = MutableStateFlow<List<Device>>(emptyList())
+    val listDeviceSearch: StateFlow<List<Device>> get() = _listDeviceSearch
+    private val _searchQuery = MutableStateFlow("")
+    val searchQuery: StateFlow<String> get() = _searchQuery
 
     fun getDeviceBySlug2(id: String) {
         viewModelScope.launch(Dispatchers.IO) {
@@ -140,40 +140,41 @@ class DeviceViewModel:ViewModel() {
         viewModelScope.launch (Dispatchers.IO){
             try {
                 device = RetrofitClient.deviceAPIService.getDeviceById(id)
-                searchResult = listAllDevice // Hiển thị toàn bộ danh sách ban đầu
             }
             catch (e:Exception){
                 Log.e("DeviceViewModel", "Error getting device", e)
             }
         }
     }
-    // Tìm kiếm thiết bị và lưu vào lịch sử khi nhấn nút tìm kiếm
-    fun searchDevice(query: String) {
-        searchQuery = query
-        if (query.isNotEmpty()) {
-            val filteredDevices = listAllDevice.filter {
-                it.name.contains(query.trim(), ignoreCase = true) || it.descriptionNormal.contains(query.trim(), ignoreCase = true)
+    // Tìm kiếm thiết bị
+    fun searchDevice(name: String, des: String) {
+        viewModelScope.launch {
+            try {
+                val response = withContext(Dispatchers.IO) {
+                    RetrofitClient.deviceAPIService.searchDevice(name, des)
+                }
+                if (response.device.isNotEmpty()) {
+                    _listDeviceSearch.value = response.device
+                    Log.d("Search Success", "Tìm kiếm thành công: ${response.device.size} thiết bị")
+                } else {
+                    _listDeviceSearch.value = emptyList()
+                    Log.e("Search Error", "Không tìm thấy thiết bị phù hợp")
+                }
+            } catch (e: Exception) {
+                Log.e("Search Error", "Lỗi khi tìm kiếm thiết bị: ${e.message}")
+                _listDeviceSearch.value = emptyList()
             }
-            searchResult = filteredDevices
-
-            // Thêm từ khóa vào lịch sử tìm kiếm nếu chưa có
-            if (!searchHistory.contains(query)) {
-                searchHistory.add(query)
-            }
-        } else {
-            // Khi không có từ khóa tìm kiếm, hiển thị tất cả thiết bị
-            searchResult = listAllDevice
         }
     }
 
-    // Xóa lịch sử tìm kiếm
-    fun removeSearchHistory(keyword: String) {
-        searchHistory.remove(keyword)
+    // Cập nhật từ khóa tìm kiếm
+    fun updateSearchQuery(query: String) {
+        _searchQuery.value = query
     }
 
-    // Xóa toàn bộ lịch sử tìm kiếm
-    fun clearSearchHistory() {
-        searchHistory.clear()
+    // Xóa danh sách thiết bị tìm kiếm
+    fun clearSearchResults() {
+        _listDeviceSearch.value = emptyList()
     }
 
     fun getdeviceById2(id: String) {
