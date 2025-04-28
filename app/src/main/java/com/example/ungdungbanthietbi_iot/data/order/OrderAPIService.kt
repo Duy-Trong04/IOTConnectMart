@@ -40,6 +40,11 @@ interface OrderAPIService {
         @Query("status") status: Int
     ): OrderResponse
 
+    @GET("order/getAllOrder.php")
+    suspend fun getAllOrderByCustomer(
+        @Query("idCustomer") idCustomer: String,
+    ): OrderResponse
+
     @POST("order/delete.php")
     suspend fun deleteOrder(
         @Body deleteRequest: orderDeleteRequest

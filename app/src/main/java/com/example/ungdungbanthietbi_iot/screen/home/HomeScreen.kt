@@ -45,6 +45,7 @@ import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Menu
+import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.ShoppingCart
@@ -116,6 +117,7 @@ import com.example.ungdungbanthietbi_iot.navigation.Screen
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import com.example.ungdungbanthietbi_iot.data.cart.CartViewModel
+import com.example.ungdungbanthietbi_iot.screen.notification.NotificationScreen
 import com.example.ungdungbanthietbi_iot.screen.personal.PersonalScreen
 import com.example.ungdungbanthietbi_iot.screen.signUp_signIn.LoginScreen
 import com.example.ungdungbanthietbi_iot.utils.formatGiaTien
@@ -397,8 +399,8 @@ fun HomeScreen(
                             onClick = { selectedTabIndex = 1 }
                         )
                         NavItem(
-                            icon = Icons.Default.Search,
-                            label = "Tìm kiếm",
+                            icon = Icons.Default.Notifications,
+                            label = "Thông báo",
                             isSelected = selectedTabIndex == 2,
                             onClick = { selectedTabIndex = 2 }
                         )
@@ -459,7 +461,7 @@ fun HomeScreen(
                     categories = categories
                 )
                 1 -> CategoryContent(padding = padding, categories = categories, navController = navController, username = username)
-                2 -> SearchContent(padding = padding, navController = navController, username = username)
+                2 -> NotificationScreen(navController = navController, idUser = account!!.idPerson)
                 3 -> username?.let { PersonalScreen(navController = navController, username = it, deviceViewModel = deviceViewModel) }
 
             }

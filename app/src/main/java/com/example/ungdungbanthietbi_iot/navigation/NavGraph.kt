@@ -40,6 +40,7 @@ import com.example.ungdungbanthietbi_iot.screen.Setting.ChangePassword
 import com.example.ungdungbanthietbi_iot.screen.Setting.ContactScreen
 import com.example.ungdungbanthietbi_iot.screen.address.UpdateAddress
 import com.example.ungdungbanthietbi_iot.screen.check_out.CheckOutSuccessScreen
+import com.example.ungdungbanthietbi_iot.screen.notification.NotificationScreen
 import com.example.ungdungbanthietbi_iot.screen.personal.AccountSettingsScreen
 import com.example.ungdungbanthietbi_iot.screen.personal.EditEmailScreen
 import com.example.ungdungbanthietbi_iot.screen.personal.EditPhoneScreen
@@ -266,6 +267,8 @@ fun NavGraph(
                 ProductReviewsScreen(navController, idDevice, reviewViewModel)
             }
         }
+
+        //màn hình thanh toán
         composable(
             route = Screen.CheckOutSuccess.route  + "?username={username}",
             arguments = listOf(
@@ -437,6 +440,8 @@ fun NavGraph(
             AccountSettingsScreen(navController,onBack = { navController.popBackStack()},id,password)
             ChangePassword(onBack = { navController.popBackStack()},id,password)
         }
+
+        //màn hình thông tin cá nhân
         composable(
             Screen.PersonalScreen.route + "?username={username}",
             arguments = listOf(
@@ -445,6 +450,15 @@ fun NavGraph(
         ) {
             val username = it.arguments?.getString("username") ?: ""
             PersonalScreen(navController, username, deviceViewModel)
+        }
+
+        //màn hình thông báo
+        composable(
+            Screen.Notification_Screen.route +"?idUser={idUser}",
+            arguments = listOf(navArgument("idUser") {type = NavType.StringType})
+        ) {
+            val idUser = it.arguments?.getString("idUser") ?: ""
+            NotificationScreen(navController, idUser)
         }
     }
 }

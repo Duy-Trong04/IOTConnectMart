@@ -20,6 +20,9 @@ class OrderViewModel:ViewModel() {
     private val _listOrderOfCustomer = MutableStateFlow<List<Order>>(emptyList())
     val listOrderOfCustomer: StateFlow<List<Order>> = _listOrderOfCustomer
 
+    private val _listAllOrderOfCustomer = MutableStateFlow<List<Order>>(emptyList())
+    val listAllOrderOfCustomer: StateFlow<List<Order>> = _listAllOrderOfCustomer
+
 
     var id by mutableStateOf(0)
 
@@ -32,6 +35,20 @@ class OrderViewModel:ViewModel() {
                 order = RetrofitClient.orderAPIService.getOrderById(id)
             } catch (e: Exception) {
                 Log.e("OrderViewModel", "Error getting Order", e)
+            }
+        }
+    }
+
+    fun getAllOrderByCustomer(idCustomer: String) {
+        viewModelScope.launch {
+            try {
+                val response = withContext(Dispatchers.IO) {
+                    RetrofitClient.orderAPIService.getAllOrderByCustomer(idCustomer)
+                }
+                _listAllOrderOfCustomer.value = response.order ?: emptyList() // Cập nhật StateFlow
+            } catch (e: Exception) {
+                Log.e("Order Error", "Lỗi khi lấy order: ${e.message}")
+                _listAllOrderOfCustomer.value = emptyList() // Gán danh sách rỗng khi có lỗi
             }
         }
     }

@@ -58,6 +58,8 @@ import com.example.ungdungbanthietbi_iot.data.cart.CartViewModel
 import com.example.ungdungbanthietbi_iot.data.customer.CustomerViewModel
 import com.example.ungdungbanthietbi_iot.data.device.Device
 import com.example.ungdungbanthietbi_iot.data.device.DeviceViewModel
+import com.example.ungdungbanthietbi_iot.data.notice.Notice
+import com.example.ungdungbanthietbi_iot.data.notice.NoticeViewModel
 import com.example.ungdungbanthietbi_iot.data.order.Order
 import com.example.ungdungbanthietbi_iot.data.order.OrderViewModel
 import com.example.ungdungbanthietbi_iot.data.order_detail.OrderDetail
@@ -101,6 +103,8 @@ fun CheckoutScreen(
     val orderViewModel: OrderViewModel = viewModel()
     val orderDetailViewModel: OrderDetailViewModel = viewModel()
     val customerViewModel: CustomerViewModel = viewModel()
+    val noticeViewModel:NoticeViewModel = viewModel()
+
 
     val listDevice by deviceViewModel.listDevice.collectAsState(initial = emptyList())
     var selectedPaymentMethod by remember { mutableStateOf("Thanh toán khi nhận hàng (COD)") }
@@ -214,6 +218,17 @@ fun CheckoutScreen(
                                 )
 
                                 orderViewModel.addOrder(order)
+
+                                val notice = Notice(
+                                    id = 0,
+                                    idUser = idPerson,
+                                    idRole = "NULL",
+                                    text = "Đơn hàng của bạn đã được đặt thành công!",
+                                    type = "Đơn hàng",
+                                    created_at = getCurrentTimestamp(),
+                                    status = 1
+                                )
+                                noticeViewModel.addNotice(notice)
 
                                 selectedProducts.forEach { triple ->
                                     listDevice.forEach { device ->
