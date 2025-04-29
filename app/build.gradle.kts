@@ -2,6 +2,7 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
+    alias(libs.plugins.kotlin.serialization)
 }
 
 android {
@@ -83,4 +84,6 @@ dependencies {
 
     implementation ("androidx.compose.foundation:foundation:1.7.8")
     implementation ("androidx.datastore:datastore-preferences:1.1.4")
+
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.8.1")
 }

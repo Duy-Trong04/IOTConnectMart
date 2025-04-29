@@ -376,131 +376,164 @@ fun CartScreen(
         }
         // Danh sách sản phẩm
         LazyColumn(modifier = Modifier.padding(padding)) {
-            items(listCart) { cart ->
-                var soLuong by remember { mutableStateOf(cart.stock) }
-                val sanPham = deviceViewModel.listDeviceOfCustomer.find { it.idDevice == cart.idDevice }
+            if(listCart.isNotEmpty()) {
+                items(listCart) { cart ->
+                    var soLuong by remember { mutableStateOf(cart.stock) }
+                    val sanPham =
+                        deviceViewModel.listDeviceOfCustomer.find { it.idDevice == cart.idDevice }
 
-                if(sanPham != null){
-                    Card(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(8.dp)
-                            .height(200.dp),
-                        elevation = CardDefaults.cardElevation(4.dp),
-                        colors = CardDefaults.cardColors(containerColor = Color.White),
-                        onClick = {
-                            navController.navigate(Screen.ProductDetailsScreen.route + "?id=${sanPham.idDevice}")
-                        }
-                    ) {
-                        Row (
+                    if (sanPham != null) {
+                        Card(
                             modifier = Modifier
-                                .fillMaxSize()
-                                .background(Color.White, shape = RoundedCornerShape(8.dp))
-                                .padding(2.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.Start
-                        ){
-                            // Checkbox chọn sản phẩm
-                            Checkbox(
-                                checked = selectedItems[cart.id] == true,
-                                colors = CheckboxDefaults.colors(
-                                    checkedColor = Color(0xFF5D9EFF),
-                                    uncheckedColor = Color.Gray,
-                                ),
-                                onCheckedChange = { isChecked ->
-                                    selectedItems[cart.id] = isChecked
-
-                                    if (isChecked) {
-                                        // Thêm sản phẩm vào danh sách selectedProducts cùng với MaGioHang
-                                        selectedProducts.add(Triple(cart.idDevice, cart.stock, cart.id))
-                                    } else {
-                                        // Loại bỏ sản phẩm khỏi danh sách
-                                        selectedProducts.removeAll { it.first == cart.idDevice }
-                                    }
-                                    // Tính lại tổng tiền sau khi thay đổi trạng thái checkbox
-                                    calculateTotalPrice()
-                                },
-                            )
-                            // Hình ảnh sản phẩm (chỉ là giả)
-                            AsyncImage(
-                                model = sanPham.image,
-                                contentDescription = null,
+                                .fillMaxWidth()
+                                .padding(8.dp)
+                                .height(200.dp),
+                            elevation = CardDefaults.cardElevation(4.dp),
+                            colors = CardDefaults.cardColors(containerColor = Color.White),
+                            onClick = {
+                                navController.navigate(Screen.ProductDetailsScreen.route + "?id=${sanPham.idDevice}")
+                            }
+                        ) {
+                            Row(
                                 modifier = Modifier
-                                    .size(120.dp),
-                                contentScale = ContentScale.Fit
-                            )
-                            Column(modifier = Modifier.weight(1f)) {
-                                // Tên sản phẩm
-                                Text(text = sanPham.name, fontWeight = FontWeight.Bold, fontSize = 16.sp)
-                                Spacer(modifier = Modifier.height(5.dp))
-                                // Giá sản phẩm
-                                Text(text = "Giá: ${formatGiaTien(sanPham.sellingPrice)}", color = Color.Red)
-                                Spacer(modifier = Modifier.height(5.dp))
-                                Row(verticalAlignment = Alignment.CenterVertically) {
-                                    // Nút giảm số lượng
-                                    IconButton(onClick = {
-                                        if (soLuong > 1) {
-                                            soLuong-- // Giảm số lượng
-                                            cart.stock = soLuong
-                                            cartViewModel.updateAllCart()
+                                    .fillMaxSize()
+                                    .background(Color.White, shape = RoundedCornerShape(8.dp))
+                                    .padding(2.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.Start
+                            ) {
+                                // Checkbox chọn sản phẩm
+                                Checkbox(
+                                    checked = selectedItems[cart.id] == true,
+                                    colors = CheckboxDefaults.colors(
+                                        checkedColor = Color(0xFF5D9EFF),
+                                        uncheckedColor = Color.Gray,
+                                    ),
+                                    onCheckedChange = { isChecked ->
+                                        selectedItems[cart.id] = isChecked
 
-
-                                            // Cập nhật lại số lượng trong selectedProducts
-                                            val index = selectedProducts.indexOfFirst { it.first == cart.idDevice }
-                                            if (index != -1) {
-                                                selectedProducts[index] = Triple(cart.idDevice, soLuong, cart.id)
-                                            }
-
-                                            calculateTotalPrice() // Tính lại tổng tiền
+                                        if (isChecked) {
+                                            // Thêm sản phẩm vào danh sách selectedProducts cùng với MaGioHang
+                                            selectedProducts.add(
+                                                Triple(
+                                                    cart.idDevice,
+                                                    cart.stock,
+                                                    cart.id
+                                                )
+                                            )
+                                        } else {
+                                            // Loại bỏ sản phẩm khỏi danh sách
+                                            selectedProducts.removeAll { it.first == cart.idDevice }
                                         }
-                                    }) {
-                                        Icon(
-                                            imageVector = Icons.Filled.Remove,
-                                            contentDescription = "Decrease Quantity"
-                                        )
-                                    }
-                                    // Hiển thị số lượng
+                                        // Tính lại tổng tiền sau khi thay đổi trạng thái checkbox
+                                        calculateTotalPrice()
+                                    },
+                                )
+                                // Hình ảnh sản phẩm (chỉ là giả)
+                                AsyncImage(
+                                    model = sanPham.image,
+                                    contentDescription = null,
+                                    modifier = Modifier
+                                        .size(120.dp),
+                                    contentScale = ContentScale.Fit
+                                )
+                                Column(modifier = Modifier.weight(1f)) {
+                                    // Tên sản phẩm
                                     Text(
-                                        text = soLuong.toString(),
-                                        modifier = Modifier.padding(horizontal = 8.dp),
+                                        text = sanPham.name,
+                                        fontWeight = FontWeight.Bold,
                                         fontSize = 16.sp
                                     )
-                                    // Nút tăng số lượng
-                                    IconButton(onClick = {
-                                        if (soLuong < 500 /* 500 là số lượng tồn kho*/) {
-                                            soLuong++ // Tăng số lượng
-                                            cart.stock = soLuong
-                                            cartViewModel.updateAllCart()
+                                    Spacer(modifier = Modifier.height(5.dp))
+                                    // Giá sản phẩm
+                                    Text(
+                                        text = "Giá: ${formatGiaTien(sanPham.sellingPrice)}",
+                                        color = Color.Red
+                                    )
+                                    Spacer(modifier = Modifier.height(5.dp))
+                                    Row(verticalAlignment = Alignment.CenterVertically) {
+                                        // Nút giảm số lượng
+                                        IconButton(onClick = {
+                                            if (soLuong > 1) {
+                                                soLuong-- // Giảm số lượng
+                                                cart.stock = soLuong
+                                                cartViewModel.updateAllCart()
 
-                                            // Cập nhật lại số lượng trong selectedProducts
-                                            val index = selectedProducts.indexOfFirst { it.first == cart.idDevice }
-                                            if (index != -1) {
-                                                selectedProducts[index] = Triple(cart.idDevice, soLuong, cart.id)
+
+                                                // Cập nhật lại số lượng trong selectedProducts
+                                                val index =
+                                                    selectedProducts.indexOfFirst { it.first == cart.idDevice }
+                                                if (index != -1) {
+                                                    selectedProducts[index] =
+                                                        Triple(cart.idDevice, soLuong, cart.id)
+                                                }
+
+                                                calculateTotalPrice() // Tính lại tổng tiền
                                             }
-
-                                            calculateTotalPrice() // Tính lại tổng tiền
+                                        }) {
+                                            Icon(
+                                                imageVector = Icons.Filled.Remove,
+                                                contentDescription = "Decrease Quantity"
+                                            )
                                         }
-                                    }) {
-                                        Icon(
-                                            imageVector = Icons.Filled.Add,
-                                            contentDescription = "Increase Quantity"
+                                        // Hiển thị số lượng
+                                        Text(
+                                            text = soLuong.toString(),
+                                            modifier = Modifier.padding(horizontal = 8.dp),
+                                            fontSize = 16.sp
                                         )
+                                        // Nút tăng số lượng
+                                        IconButton(onClick = {
+                                            if (soLuong < 500 /* 500 là số lượng tồn kho*/) {
+                                                soLuong++ // Tăng số lượng
+                                                cart.stock = soLuong
+                                                cartViewModel.updateAllCart()
+
+                                                // Cập nhật lại số lượng trong selectedProducts
+                                                val index =
+                                                    selectedProducts.indexOfFirst { it.first == cart.idDevice }
+                                                if (index != -1) {
+                                                    selectedProducts[index] =
+                                                        Triple(cart.idDevice, soLuong, cart.id)
+                                                }
+
+                                                calculateTotalPrice() // Tính lại tổng tiền
+                                            }
+                                        }) {
+                                            Icon(
+                                                imageVector = Icons.Filled.Add,
+                                                contentDescription = "Increase Quantity"
+                                            )
+                                        }
                                     }
                                 }
-                            }
-                            // Nút xóa sản phẩm
-                            IconButton(onClick = {
-                                cartIdToDelete = cart.id
-                                deleteAction = DeleteAction.SINGLE // Đặt hành động là xóa một sản phẩm
-                                showDeleteDialog = true // Hiển thị dialog xác nhận
-                            }) {
-                                Icon(
-                                    imageVector = Icons.Default.Delete,
-                                    contentDescription = "Remove Item"
-                                )
+                                // Nút xóa sản phẩm
+                                IconButton(onClick = {
+                                    cartIdToDelete = cart.id
+                                    deleteAction =
+                                        DeleteAction.SINGLE // Đặt hành động là xóa một sản phẩm
+                                    showDeleteDialog = true // Hiển thị dialog xác nhận
+                                }) {
+                                    Icon(
+                                        imageVector = Icons.Default.Delete,
+                                        contentDescription = "Remove Item"
+                                    )
+                                }
                             }
                         }
                     }
+                }
+            }
+            else{
+                item {
+                    Text(
+                        text = "Giỏ hàng trống!",
+                        fontSize = 20.sp,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp)
+                    )
                 }
             }
         }

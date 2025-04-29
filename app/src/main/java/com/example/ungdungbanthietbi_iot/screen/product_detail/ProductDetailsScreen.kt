@@ -315,22 +315,24 @@ fun ProductDetailsScreen(
                                 )
                             }
 
-                            // Số lượng giỏ hàng nằm đè lên góc phải của icon
-                            Text(
-                                text = "${listCart.size}", // Thay bằng biến nếu cần động
-                                color = Color(0xFF5D9EFF),
-                                fontSize = 16.sp,
-                                fontWeight = FontWeight.Bold,
-                                textAlign = TextAlign.Center, // Căn giữa text
-                                modifier = Modifier
-                                    .align(Alignment.TopEnd)
-                                    .size(24.dp) // Đảm bảo kích thước đủ lớn cho hình tròn
-                                    .offset(x = (-2).dp, y = (-2).dp)
-                                    .background(color = Color.White, CircleShape)
-                                    .clip(CircleShape) // Cắt theo hình tròn nếu cần
-                                    //.padding(4.dp)
-                                    .wrapContentSize(align = Alignment.Center) // Đảm bảo nội dung nằm giữa hình tròn
-                            )
+                            if(listCart.isEmpty()) {
+                                // Số lượng giỏ hàng nằm đè lên góc phải của icon
+                                Text(
+                                    text = "${listCart.size}", // Thay bằng biến nếu cần động
+                                    color = Color(0xFF5D9EFF),
+                                    fontSize = 16.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    textAlign = TextAlign.Center, // Căn giữa text
+                                    modifier = Modifier
+                                        .align(Alignment.TopEnd)
+                                        .size(24.dp) // Đảm bảo kích thước đủ lớn cho hình tròn
+                                        .offset(x = (-2).dp, y = (-2).dp)
+                                        .background(color = Color.White, CircleShape)
+                                        .clip(CircleShape) // Cắt theo hình tròn nếu cần
+                                        //.padding(4.dp)
+                                        .wrapContentSize(align = Alignment.Center) // Đảm bảo nội dung nằm giữa hình tròn
+                                )
+                            }
                         }
                     }
                 }

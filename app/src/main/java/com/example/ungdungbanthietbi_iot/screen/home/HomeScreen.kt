@@ -165,10 +165,13 @@ fun HomeScreen(
         accountViewModel.getUserByUsername(username)
     }
 
-    if (account != null) {
-        deviceViewModel.getDeviceByLiked(account.idPerson.toString())
-        cartViewModel.getCartByIdCustomer(account.idPerson.toString())
+    LaunchedEffect (Unit){
+        if (account != null) {
+            deviceViewModel.getDeviceByLiked(account.idPerson.toString())
+            cartViewModel.getCartByIdCustomer(account.idPerson.toString())
+        }
     }
+
 
     val navdrawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     val scope = rememberCoroutineScope()
@@ -690,26 +693,6 @@ fun CategoryContent(
         items(categories) { category ->
             CategoryItem(category = category, navController = navController, username = username)
         }
-    }
-}
-
-@Composable
-fun SearchContent(
-    padding: PaddingValues,
-    navController: NavController,
-    username: String?
-) {
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(padding),
-        contentAlignment = Alignment.Center
-    ) {
-        Text(
-            text = "Giao diện tìm kiếm",
-            fontSize = 20.sp,
-            color = Color(0xFF616161)
-        )
     }
 }
 
