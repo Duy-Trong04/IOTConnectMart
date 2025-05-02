@@ -119,8 +119,10 @@ class DeviceViewModel:ViewModel() {
     fun getAllDevice(){
         viewModelScope.launch(Dispatchers.IO) {
             try {
-                listAllDevice = RetrofitClient.deviceAPIService.getAllDevice()
+                var response = RetrofitClient.deviceAPIService.getAllDevice()
+                listAllDevice = response ?: emptyList()
             } catch (e: Exception) {
+                listAllDevice = emptyList()
                 e.printStackTrace() // Xử lý lỗi
             }
         }

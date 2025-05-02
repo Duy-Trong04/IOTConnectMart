@@ -23,7 +23,7 @@ class LikedViewModel:ViewModel() {
                 val response = withContext(Dispatchers.IO) {
                     RetrofitClient.likedAPIService.getLikedByIdCustomer(idCustomer)
                 }
-                listLiked = response.liked
+                listLiked = response.liked ?: emptyList()
             } catch (e: Exception) {
                 listLiked = emptyList()
                 Log.e("Liked Error", "Lỗi khi lấy Liked: ${e.message}")

@@ -464,7 +464,7 @@ fun HomeScreen(
                     categories = categories
                 )
                 1 -> CategoryContent(padding = padding, categories = categories, navController = navController, username = username)
-                2 -> NotificationScreen(navController = navController, idUser = account!!.idPerson)
+                2 -> NotificationScreen(navController = navController, idUser = account!!.idPerson ?: "")
                 3 -> username?.let { PersonalScreen(navController = navController, username = it, deviceViewModel = deviceViewModel) }
 
             }

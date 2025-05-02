@@ -250,8 +250,13 @@ fun NavGraph(
         //Màn hình giỏ hàng
         composable(route = Screen.Cart_Screen.route + "?idCustomer={idCustomer}&username={username}",
             arguments = listOf(
-                navArgument("idCustomer"){type = NavType.StringType },
-                navArgument("username") {type = NavType.StringType }
+                navArgument("idCustomer"){
+                    type = NavType.StringType
+                    defaultValue = ""},
+                navArgument("username") {
+                    type = NavType.StringType
+                    defaultValue = ""
+                }
             )
         ) {
             val idCustomer = it.arguments?.getString("idCustomer") ?: ""
@@ -455,7 +460,10 @@ fun NavGraph(
         //màn hình thông báo
         composable(
             Screen.Notification_Screen.route +"?idUser={idUser}",
-            arguments = listOf(navArgument("idUser") {type = NavType.StringType})
+            arguments = listOf(navArgument("idUser") {
+                type = NavType.StringType
+                defaultValue = ""
+            })
         ) {
             val idUser = it.arguments?.getString("idUser") ?: ""
             NotificationScreen(navController, idUser)

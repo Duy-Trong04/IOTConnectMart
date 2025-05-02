@@ -85,6 +85,7 @@ fun CartScreen(
 
     var showDialog by remember { mutableStateOf(false) }
     var openDialog by remember { mutableStateOf(false) }
+    var showDialogDelete by remember { mutableStateOf(false) }
 
     // Hàm tính tổng tiền
     fun calculateTotalPrice() {
@@ -142,7 +143,7 @@ fun CartScreen(
                                 deleteAction = DeleteAction.ALL // Đặt hành động là xóa tất cả
                                 showDeleteDialog = true // Hiển thị dialog xác nhận
                             } else {
-                                showDialog = true
+                                showDialogDelete = true
                             }
                         },
                         colors = ButtonDefaults.textButtonColors(
@@ -306,6 +307,21 @@ fun CartScreen(
                 }
             )
         }
+        if (showDialogDelete) {
+            AlertDialog(
+                onDismissRequest = { showDialogDelete = false },
+                title = { Text(text = "Thông báo") },
+                text = { Text(text = "Vui lòng chọn sản phẩm để xóa.") },
+                confirmButton = {
+                    Button(onClick = { showDialogDelete = false },
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = Color(0xFF5D9EFF)
+                        )) {
+                        Text("OK")
+                    }
+                }
+            )
+        }
         if (showDeleteDialog) {
             AlertDialog(
                 onDismissRequest = {
@@ -318,7 +334,7 @@ fun CartScreen(
                     Text(
                         text = when (deleteAction) {
                             DeleteAction.SINGLE -> "Bạn có chắc chắn muốn xóa sản phẩm này khỏi giỏ hàng?"
-                            DeleteAction.ALL -> "Bạn có chắc chắn muốn xóa tất cả sản phẩm được chọn khỏi giỏ hàng?"
+                            DeleteAction.ALL -> "Bạn có chắc chắn muốn xóa sản phẩm được chọn khỏi giỏ hàng?"
                             null -> ""
                         }
                     )
