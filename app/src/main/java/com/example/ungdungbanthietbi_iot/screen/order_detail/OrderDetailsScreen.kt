@@ -380,8 +380,12 @@ fun OrderDetailsScreen(
                                                 Text("Đánh giá")
                                             }
                                         } else {
-                                            val daysSinceReceived = calculateDaysSinceReceived(order.accept_at)
-                                            if (daysSinceReceived <= 10) {
+                                            val reviewToEdit = reviewSecond ?: reviewFirst
+                                            // Kiểm tra thời gian từ khi tạo đánh giá
+                                            val daysSinceReviewCreated = reviewToEdit?.created_at?.let { createdAt ->
+                                                calculateDaysSinceReceived(createdAt)
+                                            } ?: Int.MAX_VALUE
+                                            if (daysSinceReviewCreated <= 10) {
                                                 Button(
                                                     onClick = {
                                                         val reviewToEdit = reviewSecond ?: reviewFirst

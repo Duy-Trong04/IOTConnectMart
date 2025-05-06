@@ -193,7 +193,8 @@ fun AddressItem(
             .clickable { if (selectedAddressId != null) onSelectClick(address.id)
                        else { navController.navigate("${Screen.Update_Address.route}?idCustomer=${address.idCustomer}&id=${address.id}") }}, // Nhấn vào Card để chọn
         colors = CardDefaults.cardColors(containerColor = Color.White),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+        shape = RoundedCornerShape(5.dp)
     ) {
         Row(
             modifier = Modifier

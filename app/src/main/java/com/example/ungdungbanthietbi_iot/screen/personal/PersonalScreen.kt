@@ -276,6 +276,17 @@ fun PersonalScreen(
                         actionIconContentColor = Color.White
                     )
                 )
+            },
+            bottomBar = {
+                BottomAppBar (
+                    containerColor = Color.White,
+                    contentColor = Color.Black,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .offset(y = 16.dp) // Dịch chuyển BottomAppBar xuống 16dp
+                ){
+
+                }
             }
         ) {
             LazyColumn(
@@ -306,7 +317,6 @@ fun PersonalScreen(
                         username = username
                     )
                 }
-                item { Spacer(modifier = Modifier.height(40.dp)) }
             }
         }
     }
@@ -759,8 +769,8 @@ fun AccountOptionsSection(
         }
     }
     Card(
-        shape = RoundedCornerShape(10.dp),
-        elevation = CardDefaults.cardElevation(2.dp),
+        shape = RoundedCornerShape(5.dp),
+        elevation = CardDefaults.cardElevation(1.dp),
         modifier = Modifier
             .padding(start = 16.dp, end = 16.dp, bottom = 16.dp)
             .fillMaxWidth(),
@@ -923,8 +933,8 @@ fun ChangePasswordSection(
     var isPasswordVisible1 by remember { mutableStateOf(false) }
     var isPasswordVisible2 by remember { mutableStateOf(false) }
     Card(
-        shape = RoundedCornerShape(16.dp),
-        elevation = CardDefaults.cardElevation(4.dp),
+        shape = RoundedCornerShape(5.dp),
+        elevation = CardDefaults.cardElevation(1.dp),
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(containerColor = Color.White)
     ) {

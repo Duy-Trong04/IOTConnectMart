@@ -143,16 +143,8 @@ fun HomeScreen(
     val listDeviceLiked: List<Device> = deviceViewModel.listDeviceOfCustomer
     var listSlideShow = slideShowViewModel.listSlideShow
 
-    var currentIndex by remember { mutableStateOf(0) }
     LaunchedEffect(Unit) {
         slideShowViewModel.getAllSlideShow()
-    }
-
-    LaunchedEffect(key1 = currentIndex, key2 = listSlideShow.size) {
-        if (listSlideShow.isNotEmpty()) {
-            delay(3000)
-            currentIndex = (currentIndex + 1) % listSlideShow.size
-        }
     }
 
     val cartViewModel: CartViewModel = viewModel()
@@ -399,7 +391,13 @@ fun HomeScreen(
                             icon = Icons.Default.Category,
                             label = "Danh mục",
                             isSelected = selectedTabIndex == 1,
-                            onClick = { selectedTabIndex = 1 }
+                            onClick = {
+                                scope.launch {
+                                    navdrawerState.apply {
+                                        if (isClosed) open() else close()
+                                    }
+                                }
+                            }
                         )
                         NavItem(
                             icon = Icons.Default.Notifications,
@@ -453,7 +451,6 @@ fun HomeScreen(
                     padding = padding,
                     listState = listState,
                     listSlideShow = listSlideShow,
-                    currentIndex = currentIndex,
                     deviceViewModel = deviceViewModel,
                     account = account,
                     navController = navController,
@@ -463,7 +460,6 @@ fun HomeScreen(
                     listDeviceLiked = listDeviceLiked,
                     categories = categories
                 )
-                1 -> CategoryContent(padding = padding, categories = categories, navController = navController, username = username)
                 2 -> NotificationScreen(navController = navController, idUser = account!!.idPerson ?: "")
                 3 -> username?.let { PersonalScreen(navController = navController, username = it, deviceViewModel = deviceViewModel) }
 
@@ -477,7 +473,6 @@ fun HomeContent(
     padding: PaddingValues,
     listState: LazyListState,
     listSlideShow: List<SlideShow>,
-    currentIndex: Int,
     deviceViewModel: DeviceViewModel,
     account: Account?,
     navController: NavController,
@@ -496,13 +491,16 @@ fun HomeContent(
         item {
             if (listSlideShow.isNotEmpty()) {
                 val pagerState = rememberPagerState(
-                    initialPage = Int.MAX_VALUE / 2,
-                    pageCount = { Int.MAX_VALUE }
+                    initialPage = 0,
+                    pageCount = { listSlideShow.size } // Không cần Int.MAX_VALUE
                 )
-                LaunchedEffect(pagerState.currentPage) {
-                    var newIndex = pagerState.currentPage % listSlideShow.size
-                    if (newIndex < 0) {
-                        newIndex += listSlideShow.size
+                val coroutineScope = rememberCoroutineScope()
+                // Tự động chuyển slide
+                LaunchedEffect(Unit) {
+                    while (true) {
+                        delay(3000)
+                        val nextPage = (pagerState.currentPage + 1) % listSlideShow.size
+                        pagerState.animateScrollToPage(nextPage)
                     }
                 }
                 HorizontalPager(
@@ -510,12 +508,10 @@ fun HomeContent(
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(250.dp)
-                        .padding(horizontal = 12.dp, vertical = 6.dp)
+                        .padding(bottom = 4.dp)
                 ) { page ->
-                    val realIndex = page % listSlideShow.size
-                    val adjustedIndex = if (realIndex < 0) realIndex + listSlideShow.size else realIndex
                     SlideImage(
-                        painter = rememberImagePainter(data = listSlideShow[adjustedIndex].image),
+                        painter = rememberImagePainter(data = listSlideShow[page].image),
                     )
                 }
                 Row(
@@ -525,7 +521,7 @@ fun HomeContent(
                     horizontalArrangement = Arrangement.Center
                 ) {
                     listSlideShow.forEachIndexed { index, _ ->
-                        val isActive = index == currentIndex
+                        val isActive = index == pagerState.currentPage
                         val animatedWidth by animateFloatAsState(
                             targetValue = if (isActive) 24f else 8f,
                             animationSpec = tween(300)
@@ -538,7 +534,11 @@ fun HomeContent(
                                     color = if (isActive) Color(0xFF1E88E5) else Color(0xFFB0BEC5),
                                     shape = RoundedCornerShape(2.dp)
                                 )
-                                .clickable { /* currentIndex = index */ }
+                                .clickable { /* currentIndex = index */// Chuyển đến slide khi nhấp vào chấm
+                                    coroutineScope.launch {
+                                        pagerState.animateScrollToPage(index)
+                                    }
+                                }
                         )
                     }
                 }
@@ -679,25 +679,6 @@ fun HomeContent(
 }
 
 @Composable
-fun CategoryContent(
-    padding: PaddingValues,
-    categories: List<Category>,
-    navController: NavController,
-    username: String?
-) {
-    LazyColumn(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(padding)
-    ) {
-        items(categories) { category ->
-            CategoryItem(category = category, navController = navController, username = username)
-        }
-    }
-}
-
-
-@Composable
 fun SectionTitle(text: String) {
     Text(
         text = text,
@@ -778,7 +759,7 @@ fun CardDevice(
             containerColor = Color.White
         ),
         elevation = CardDefaults.cardElevation(1.dp),
-        shape = RoundedCornerShape(4.dp)
+        shape = RoundedCornerShape(5.dp)
     ) {
         Box(modifier = Modifier.fillMaxWidth()) {
             Column(

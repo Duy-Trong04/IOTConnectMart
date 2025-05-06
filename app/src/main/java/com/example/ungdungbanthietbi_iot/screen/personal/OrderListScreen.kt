@@ -660,7 +660,8 @@ fun OrderItem(
         modifier = Modifier
             .fillMaxWidth()
             .padding(5.dp),
-        elevation = CardDefaults.cardElevation(2.dp),
+        shape = RoundedCornerShape(5.dp),
+        elevation = CardDefaults.cardElevation(1.dp),
         onClick = {
             navController.navigate("${Screen.Order_Detail.route}?id=${order.id}&totalAmount=${order.totalAmount}")
         }
@@ -804,8 +805,12 @@ fun OrderItem(
                                                     Text("Đánh giá")
                                                 }
                                             } else {
-                                                val daysSinceReceived = calculateDaysSinceReceived(order.accept_at)
-                                                if (daysSinceReceived <= 10) {
+                                                val reviewToEdit = reviewSecond ?: reviewFirst
+                                                // Kiểm tra thời gian từ khi tạo đánh giá
+                                                val daysSinceReviewCreated = reviewToEdit?.created_at?.let { createdAt ->
+                                                    calculateDaysSinceReceived(createdAt)
+                                                } ?: Int.MAX_VALUE
+                                                if (daysSinceReviewCreated <= 10) {
                                                     Button(
                                                         onClick = {
                                                             val reviewToEdit = reviewSecond ?: reviewFirst

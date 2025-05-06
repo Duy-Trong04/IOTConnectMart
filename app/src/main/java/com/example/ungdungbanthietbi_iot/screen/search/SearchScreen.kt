@@ -313,7 +313,7 @@ fun SearchScreen(
                         }
                     ) {
                         Text(
-                            text = "XÓA LỊCH SỤ TÌM KIẾM",
+                            text = "XÓA LỊCH SỬ TÌM KIẾM",
                             style = TextStyle(
                                 fontSize = 14.sp,
                                 color = Color.Gray

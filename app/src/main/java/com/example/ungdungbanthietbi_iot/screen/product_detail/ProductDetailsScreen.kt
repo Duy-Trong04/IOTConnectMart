@@ -3,6 +3,8 @@ package com.example.ungdungbanthietbi_iot.screen.product_detail
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.with
@@ -315,7 +317,7 @@ fun ProductDetailsScreen(
                                 )
                             }
 
-                            if(listCart.isEmpty()) {
+                            if(listCart.isNotEmpty()) {
                                 // Số lượng giỏ hàng nằm đè lên góc phải của icon
                                 Text(
                                     text = "${listCart.size}", // Thay bằng biến nếu cần động
@@ -555,20 +557,22 @@ fun ProductDetailsScreen(
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(8.dp),
+                                .padding(vertical = 2.dp),
                             horizontalArrangement = Arrangement.Center
                         ) {
                             listImage.forEachIndexed { index, _ ->
-                                val animatedColor by animateColorAsState(
-                                    targetValue = if (index == currentIndex) Color(0xFF5D9EFF) else Color.LightGray
+                                val isActive = index == currentIndex
+                                val animatedWidth by animateFloatAsState(
+                                    targetValue = if (isActive) 24f else 8f,
+                                    animationSpec = tween(300)
                                 )
                                 Box(
                                     modifier = Modifier
-                                        .size(17.dp)
-                                        .padding(4.dp)
+                                        .padding(horizontal = 4.dp)
+                                        .size(width = animatedWidth.dp, height = 4.dp)
                                         .background(
-                                            color = animatedColor,
-                                            shape = CircleShape
+                                            color = if (isActive) Color(0xFF1E88E5) else Color(0xFFB0BEC5),
+                                            shape = RoundedCornerShape(2.dp)
                                         )
                                         .clickable {
                                             // Chuyển đến trang tương ứng

@@ -52,6 +52,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -63,6 +64,7 @@ import com.example.ungdungbanthietbi_iot.data.account.AccountViewModel
 import com.example.ungdungbanthietbi_iot.data.device.Device
 import com.example.ungdungbanthietbi_iot.data.device.DeviceViewModel
 import com.example.ungdungbanthietbi_iot.navigation.Screen
+import com.example.ungdungbanthietbi_iot.utils.formatGiaTien
 import java.text.DecimalFormat
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
@@ -314,18 +316,18 @@ fun ProductCard(
 
     Card(
         modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 4.dp, horizontal = 8.dp)
+            .width(200.dp)
+            .height(250.dp)
+            .padding(4.dp)
             .clickable { onClick() },
-        shape = RoundedCornerShape(4.dp),
+        shape = RoundedCornerShape(5.dp),
         elevation = CardDefaults.cardElevation(1.dp),
         colors = CardDefaults.cardColors(
             containerColor = Color.White
         )
     ) {
         Column(
-            modifier = Modifier.padding(8.dp),
-            verticalArrangement = Arrangement.Center,
+            modifier = Modifier.padding(4.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             // Hình ảnh sản phẩm
@@ -334,18 +336,24 @@ fun ProductCard(
                 contentDescription = device.name,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .size(150.dp)
+                    .size(130.dp)
             )
             Spacer(modifier = Modifier.height(4.dp))
             Text(
                 text = device.name,
-                style = MaterialTheme.typography.bodyLarge,
-                textAlign = TextAlign.Center
+                modifier = Modifier.fillMaxWidth(),
+                textAlign = TextAlign.Center,
+                fontWeight = FontWeight.Bold,
+                fontSize = 15.sp
             )
+            Spacer(modifier = Modifier.height(4.dp))
             Text(
-                text = "$formattedPrice VNĐ",
-                style = MaterialTheme.typography.bodyLarge,
-                color = Color.Red
+                text = formatGiaTien(device.sellingPrice),
+                color = Color.Red,
+                modifier = Modifier.fillMaxWidth(),
+                textAlign = TextAlign.Center,
+                fontWeight = FontWeight.Bold,
+                fontSize = 16.sp
             )
         }
     }

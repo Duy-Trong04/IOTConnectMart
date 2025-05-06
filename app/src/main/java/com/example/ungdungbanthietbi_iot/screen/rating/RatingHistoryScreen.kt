@@ -46,6 +46,7 @@ import com.example.ungdungbanthietbi_iot.data.order_detail.OrderDetailViewModel
 import com.example.ungdungbanthietbi_iot.data.review_device.Review
 import com.example.ungdungbanthietbi_iot.data.review_device.ReviewViewModel
 import com.example.ungdungbanthietbi_iot.navigation.Screen
+import com.example.ungdungbanthietbi_iot.screen.order_detail.calculateDaysSinceReceived
 
 /** Giao diện màn hình lịch sử đánh giá (RatingHistoryScreen)
  * -------------------------------------------
@@ -166,7 +167,7 @@ fun RatingHistoryScreen(navController: NavController, idCustomer: String?) {
 fun ReviewItem(review: Review, idCustomer: String?, idDevice: Int?, navController: NavController) {
     val customerViewModel: CustomerViewModel = viewModel()
     val accountViewModel: AccountViewModel = viewModel()
-    val custmer = customerViewModel.customer
+    val customer = customerViewModel.customer
     val account = accountViewModel.accountById
 
     val reviewViewModel: ReviewViewModel = viewModel()
@@ -194,10 +195,16 @@ fun ReviewItem(review: Review, idCustomer: String?, idDevice: Int?, navControlle
         customerViewModel.getCustomerById(idCustomer.toString())
         accountViewModel.getAccountById(idCustomer.toString())
     }
+    // Tính số ngày kể từ khi tạo đánh giá
+    val daysSinceReviewCreated = remember(review.created_at) {
+        review.created_at?.let { createdAt ->
+            calculateDaysSinceReceived(createdAt)
+        } ?: Int.MAX_VALUE
+    }
 
     Card(
-        shape = RoundedCornerShape(8.dp),
-        elevation = CardDefaults.cardElevation(4.dp),
+        shape = RoundedCornerShape(5.dp),
+        elevation = CardDefaults.cardElevation(1.dp),
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(containerColor = Color.White)
     ) {
@@ -210,11 +217,11 @@ fun ReviewItem(review: Review, idCustomer: String?, idDevice: Int?, navControlle
                 horizontalArrangement = Arrangement.SpaceBetween
             ){
                 Text(
-                    text = "${custmer?.surname} ${custmer?.lastName}",
+                    text = "${customer?.surname} ${customer?.lastName}",
                     fontSize = 18.sp,
                     fontWeight = FontWeight.Bold
                 )
-                if(reviewInfo != null){
+                if(daysSinceReviewCreated <= 10){
                     Button(
                         onClick = {
                             navController.navigate(Screen.Update_Rating_Screen.route + "?idReview=${reviewInfo!!.idReview}&idCustomer=${idCustomer}")
@@ -226,7 +233,7 @@ fun ReviewItem(review: Review, idCustomer: String?, idDevice: Int?, navControlle
                         )
                     ) {
                         Text(
-                            text = "Cập nhật",
+                            text = "Chỉnh sửa",
                             fontSize = 18.sp
                         )
                     }
