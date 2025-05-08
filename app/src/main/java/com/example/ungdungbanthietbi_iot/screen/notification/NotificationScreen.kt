@@ -45,7 +45,7 @@ import java.time.format.DateTimeFormatter
 fun NotificationScreen(navController: NavController, idUser: String?) {
     val noticeViewModel: NoticeViewModel = viewModel()
     val orderViewModel: OrderViewModel = viewModel()
-    val listNotice by remember { mutableStateOf(noticeViewModel.listNotice) }
+    val listNotice by noticeViewModel.listNotice.collectAsState()
     val listOrders by orderViewModel.listAllOrderOfCustomer.collectAsState()
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
@@ -100,7 +100,7 @@ fun NotificationScreen(navController: NavController, idUser: String?) {
             }
         }
     ) { paddingValues ->
-        if (groupedNotices.isEmpty() && otherNotices.isEmpty()) {
+        if (idUser == "") {
             Box(
                 modifier = Modifier
                     .fillMaxSize()

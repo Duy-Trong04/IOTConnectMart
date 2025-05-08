@@ -69,15 +69,10 @@ import com.example.ungdungbanthietbi_iot.screen.order_detail.calculateDaysSinceR
 fun RatingHistoryScreen(navController: NavController, idCustomer: String?) {
 
     val reviewViewModel: ReviewViewModel = viewModel()
-    val listReviewDaDanhGia = reviewViewModel.listReviewDaDanhGia
-    val listReviewDanhGiaLan2 = reviewViewModel.listReviewDanhGiaLan2
-    val list1 by remember { derivedStateOf { reviewViewModel.listReviewDaDanhGia } }
-    val list2 by remember { derivedStateOf { reviewViewModel.listReviewDanhGiaLan2 } }
     // 1) Lần đầu load
     LaunchedEffect(idCustomer) {
         idCustomer?.let {
             reviewViewModel.getReviewByIdCustomerDaDanhGia(it)
-            reviewViewModel.getReviewByIdCustomerDanhGiaLan2(it)
         }
     }
     // 2) Reload mỗi khi screen quay lại (ON_RESUME)
@@ -87,7 +82,6 @@ fun RatingHistoryScreen(navController: NavController, idCustomer: String?) {
             if (event == Lifecycle.Event.ON_RESUME) {
                 idCustomer?.let {
                     reviewViewModel.getReviewByIdCustomerDaDanhGia(it)
-                    reviewViewModel.getReviewByIdCustomerDanhGiaLan2(it)
                 }
             }
         }
@@ -95,7 +89,7 @@ fun RatingHistoryScreen(navController: NavController, idCustomer: String?) {
         onDispose { lifecycleOwner.lifecycle.removeObserver(obs) }
     }
 
-    val all = (reviewViewModel.listReviewDanhGiaLan2 + reviewViewModel.listReviewDaDanhGia)
+    val all = (reviewViewModel.listReviewDaDanhGia)
         .distinctBy { it.idReview }
     Scaffold (
         containerColor = Color.White,
@@ -170,18 +164,6 @@ fun ReviewItem(review: Review, idCustomer: String?, idDevice: Int?, navControlle
     val customer = customerViewModel.customer
     val account = accountViewModel.accountById
 
-    val reviewViewModel: ReviewViewModel = viewModel()
-
-    // 1. State giữ kết quả API (null = chưa review, non-null = đã review)
-    var reviewInfo by remember { mutableStateOf<Review?>(null) }
-
-    // 2. Khi idCustomer hoặc idDevice thay đổi, gọi API
-    LaunchedEffect(idCustomer, idDevice) {
-        if (!idCustomer.isNullOrBlank() && idDevice != null) {
-            reviewInfo = reviewViewModel.checkReviewDirect(idCustomer, idDevice, 2)
-        }
-    }
-
     val deviceViewModel: DeviceViewModel = viewModel()
     val device = deviceViewModel.deviceMap[idDevice.toString()] // Lấy thiết bị theo ID
     // Gọi API lấy device khi idDevice thay đổi
@@ -224,7 +206,7 @@ fun ReviewItem(review: Review, idCustomer: String?, idDevice: Int?, navControlle
                 if(daysSinceReviewCreated <= 10){
                     Button(
                         onClick = {
-                            navController.navigate(Screen.Update_Rating_Screen.route + "?idReview=${reviewInfo!!.idReview}&idCustomer=${idCustomer}")
+                            navController.navigate(Screen.Update_Rating_Screen.route + "?idReview=${review.idReview}&idCustomer=${idCustomer}")
                         },
                         shape = RoundedCornerShape(8.dp),
                         colors = ButtonDefaults.buttonColors(

@@ -460,7 +460,8 @@ fun HomeScreen(
                     listDeviceLiked = listDeviceLiked,
                     categories = categories
                 )
-                2 -> NotificationScreen(navController = navController, idUser = account!!.idPerson ?: "")
+                2 -> if(account != null) NotificationScreen(navController = navController, idUser = account.idPerson)
+                    else NotificationScreen(navController = navController, idUser = "")
                 3 -> username?.let { PersonalScreen(navController = navController, username = it, deviceViewModel = deviceViewModel) }
 
             }

@@ -462,6 +462,7 @@ fun NavGraph(
             Screen.Notification_Screen.route +"?idUser={idUser}",
             arguments = listOf(navArgument("idUser") {
                 type = NavType.StringType
+                nullable = true
                 defaultValue = ""
             })
         ) {

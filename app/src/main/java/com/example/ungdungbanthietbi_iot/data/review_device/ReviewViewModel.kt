@@ -20,21 +20,11 @@ import kotlinx.coroutines.withContext
 class ReviewViewModel:ViewModel() {
     var listReview: List<Review> by mutableStateOf(emptyList())
 
-    var listReviewChuaDanhGia: List<Review> by mutableStateOf(emptyList())
     var listReviewDaDanhGia by mutableStateOf<List<Review>>(emptyList())
-        private set
-    var listReviewDanhGiaLan2 by mutableStateOf<List<Review>>(emptyList())
         private set
 
     var reviewAddResult by mutableStateOf("")
     var reviewUpdateResult by mutableStateOf("")
-
-    // Lưu thông tin review (nếu có) chứ không chỉ true/false
-    private val _reviewInfo = MutableStateFlow<Review?>(null)
-    val reviewInfo: StateFlow<Review?> = _reviewInfo
-
-    private val _errorMessage = MutableStateFlow<String?>(null)
-    val errorMessage: StateFlow<String?> = _errorMessage
 
     var review by mutableStateOf<Review?>(null)
         private set
@@ -121,17 +111,6 @@ class ReviewViewModel:ViewModel() {
         }
     }
 
-
-    fun getReviewByIdCustomerChuaDanhGia(idCustomer: String) {
-        viewModelScope.launch(Dispatchers.IO) {
-            try {
-                listReviewChuaDanhGia = RetrofitClient.reviewAPIService.getReviewByIdCustomer(idCustomer, 0)
-            } catch (e: Exception) {
-                Log.e("ReviewViewModel", "Error getting reviews not rated", e)
-            }
-        }
-    }
-
     fun getReviewByIdCustomerDaDanhGia(idCustomer: String) {
         viewModelScope.launch(Dispatchers.IO) {
             try {
@@ -142,19 +121,6 @@ class ReviewViewModel:ViewModel() {
                 }
             } catch (e: Exception) {
                 Log.e("ReviewVM", "Error getting reviews (1):", e)
-            }
-        }
-    }
-
-    fun getReviewByIdCustomerDanhGiaLan2(idCustomer: String) {
-        viewModelScope.launch(Dispatchers.IO) {
-            try {
-                val resp = RetrofitClient.reviewAPIService.getReviewByIdCustomer(idCustomer, 2)
-                withContext(Dispatchers.Main) {
-                    listReviewDanhGiaLan2 = resp
-                }
-            } catch (e: Exception) {
-                Log.e("ReviewVM", "Error getting reviews (2):", e)
             }
         }
     }

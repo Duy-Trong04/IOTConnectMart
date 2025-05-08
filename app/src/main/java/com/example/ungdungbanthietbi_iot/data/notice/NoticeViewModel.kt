@@ -10,13 +10,16 @@ import com.example.ungdungbanthietbi_iot.data.RetrofitClient
 import com.example.ungdungbanthietbi_iot.data.address_book.Address
 import com.example.ungdungbanthietbi_iot.data.order.Order
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 class NoticeViewModel : ViewModel(){
 
-    var listNotice by mutableStateOf<List<Notice>>(emptyList())
-        private set
+    private val _listNotice = MutableStateFlow<List<Notice>>(emptyList())
+    val listNotice: StateFlow<List<Notice>> = _listNotice.asStateFlow()
 
     var noticeUpdateResult by mutableStateOf("")
         private set
@@ -29,10 +32,10 @@ class NoticeViewModel : ViewModel(){
                 val response = withContext(Dispatchers.IO) {
                     RetrofitClient.noticeAPIService.getNoticeByIdCustomer(idUser)
                 }
-                listNotice = response.notice ?: emptyList()
+                _listNotice.value = response.notice ?: emptyList()
             } catch (e: Exception) {
                 Log.e("Notice Error", "Lỗi khi lấy thông báo: ${e.message}")
-                listNotice = emptyList()
+                _listNotice.value = emptyList()
             }
         }
     }
