@@ -100,7 +100,7 @@ fun NotificationScreen(navController: NavController, idUser: String?) {
             }
         }
     ) { paddingValues ->
-        if (idUser == "") {
+        if (idUser == "" || groupedNotices.isEmpty()) {
             Box(
                 modifier = Modifier
                     .fillMaxSize()

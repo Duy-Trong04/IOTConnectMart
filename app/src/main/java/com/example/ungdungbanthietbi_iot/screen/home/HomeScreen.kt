@@ -140,7 +140,6 @@ fun HomeScreen(
     deviceViewModel.getDeviceFeatured()
     var listAllDevice: List<Device> = deviceViewModel.listAllDevice
     var listDeviceFeatured: List<Device> = deviceViewModel.listDeviceFeatured
-    val listDeviceLiked: List<Device> = deviceViewModel.listDeviceOfCustomer
     var listSlideShow = slideShowViewModel.listSlideShow
 
     LaunchedEffect(Unit) {
@@ -157,7 +156,7 @@ fun HomeScreen(
         accountViewModel.getUserByUsername(username)
     }
 
-    LaunchedEffect (Unit){
+    LaunchedEffect (deviceViewModel.listDeviceOfCustomer){
         if (account != null) {
             deviceViewModel.getDeviceByLiked(account.idPerson.toString())
             cartViewModel.getCartByIdCustomer(account.idPerson.toString())
@@ -455,9 +454,10 @@ fun HomeScreen(
                     account = account,
                     navController = navController,
                     username = username,
+                    isFavorite = isFavorite,
                     listAllDevice = listAllDevice,
                     listDeviceFeatured = listDeviceFeatured,
-                    listDeviceLiked = listDeviceLiked,
+                    listDeviceLiked = deviceViewModel.listDeviceOfCustomer,
                     categories = categories
                 )
                 2 -> if(account != null) NotificationScreen(navController = navController, idUser = account.idPerson)
@@ -478,6 +478,7 @@ fun HomeContent(
     account: Account?,
     navController: NavController,
     username: String?,
+    isFavorite: Boolean,
     listAllDevice: List<Device>,
     listDeviceFeatured: List<Device>,
     listDeviceLiked: List<Device>,
@@ -579,9 +580,10 @@ fun HomeContent(
                 items(listDeviceFeatured) { device ->
                     CardDevice(
                         device = device,
-                        isFavorite = false,
+                        isFavorite = isFavorite,
                         idCustomer = account?.idPerson,
                         username = username,
+                        deviceViewModel = deviceViewModel,
                         navController = navController
                     )
                 }
@@ -633,11 +635,12 @@ fun HomeContent(
                 ) {
                     items(listDeviceLiked) { device ->
                         if (account != null) {
-                            CardDevice(
+                            CardFavorites(
                                 device = device,
-                                isFavorite = false,
+                                isFavorite = isFavorite,
                                 idCustomer = account.idPerson,
                                 username = account.username,
+                                deviceViewModel = deviceViewModel,
                                 navController = navController
                             )
                         }
@@ -663,9 +666,10 @@ fun HomeContent(
                     ) {
                         CardDevice(
                             device = device,
-                            isFavorite =  false,
+                            isFavorite =  isFavorite,
                             idCustomer = account?.idPerson,
                             username = username,
+                            deviceViewModel = deviceViewModel,
                             navController = navController
                         )
                     }
@@ -724,17 +728,124 @@ fun NavItem(
 }
 
 @Composable
+fun CardFavorites(device: Device, isFavorite:Boolean, idCustomer:String?, username: String?, deviceViewModel: DeviceViewModel, navController: NavController){
+    var check  by remember { mutableStateOf(isFavorite) }
+    val likedViewModel: LikedViewModel = viewModel()
+    val listLiked = likedViewModel.listLiked
+    var isLoading by remember { mutableStateOf(false) } // Thêm trạng thái tải cục bộ
+    LaunchedEffect(idCustomer) {
+        if(idCustomer!=null){
+            likedViewModel.getLikedByIdCustomer(idCustomer)
+        }
+    }
+    LaunchedEffect(listLiked) {
+        check = listLiked.any { it.idDevice == device.idDevice }
+    }
+    Card(
+        modifier = Modifier
+            .width(200.dp)
+            .height(250.dp)
+            .padding(4.dp),
+        onClick = {
+            if (username != null){
+                navController.navigate(Screen.ProductDetailsScreen.route + "?id=${device.idDevice}&idCustomer=${idCustomer}&username=${username}")
+            }
+            else{
+                navController.navigate(Screen.ProductDetailsScreen.route + "?id=${device.idDevice}&idCustomer=${idCustomer}")
+            }
+        },
+        colors = CardDefaults.cardColors(
+            containerColor = Color.White
+        ),
+        elevation = CardDefaults.cardElevation(1.dp),
+        shape = RoundedCornerShape(5.dp)
+    ) {
+        Box(modifier = Modifier.fillMaxWidth()){
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(4.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                //load hình ảnh từ API
+                AsyncImage(
+                    model = device.image,
+                    contentDescription = null,
+                    modifier = Modifier.fillMaxWidth().height(130.dp)
+                )
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    text = device.name,
+                    modifier = Modifier.fillMaxWidth(),
+                    textAlign = TextAlign.Center,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 15.sp
+                )
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    text = formatGiaTien(device.sellingPrice),
+                    color = Color.Red,
+                    modifier = Modifier.fillMaxWidth(),
+                    textAlign = TextAlign.Center,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 16.sp
+                )
+            }
+            IconButton(onClick = {
+                    if (idCustomer == null) {
+                        navController.navigate(Screen.LoginScreen.route)
+                    } else if (!isLoading) {
+                        isLoading = true // Bắt đầu tải
+                        if (!check) {
+                            val likedNew = Liked(0, idCustomer, device.idDevice)
+                            likedViewModel.addLiked(likedNew)
+                            check = true // Cập nhật cục bộ
+                        } else {
+                            likedViewModel.deleteLikedByCustomer(idCustomer, device.idDevice)
+                            check = false // Cập nhật cục bộ
+                        }
+                        // Làm mới danh sách yêu thích
+                        likedViewModel.getLikedByIdCustomer(idCustomer)
+                        deviceViewModel.getDeviceByLiked(idCustomer)
+                        isLoading = false // Kết thúc tải
+                    }
+                },
+                enabled = !isLoading,
+                modifier = Modifier
+                    .size(24.dp)
+                    .align(Alignment.TopEnd)
+            ) {
+                if (isLoading) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(24.dp),
+                        color = Color.Red
+                    )
+                } else {
+                    Icon(
+                        imageVector = if (check) Icons.Filled.Favorite else Icons.Filled.FavoriteBorder,
+                        contentDescription = "Favorite",
+                        tint = Color.Red
+                    )
+                }
+            }
+        }
+
+    }
+}
+
+@Composable
 fun CardDevice(
     device: Device,
     isFavorite: Boolean,
     idCustomer: String?,
     username: String?,
+    deviceViewModel: DeviceViewModel,
     navController: NavController
 ) {
     var check by remember { mutableStateOf(isFavorite) }
-    var isPressed by remember { mutableStateOf(false) }
     val likedViewModel: LikedViewModel = viewModel()
     val listLiked = likedViewModel.listLiked
+    var isLoading by remember { mutableStateOf(false) } // Thêm trạng thái tải cục bộ
 
     LaunchedEffect(idCustomer) {
         if (idCustomer != null) {
@@ -796,28 +907,39 @@ fun CardDevice(
                 onClick = {
                     if (idCustomer == null) {
                         navController.navigate(Screen.LoginScreen.route)
-                    } else {
-                        val isProductFound = listLiked.any { it.idDevice == device.idDevice }
-                        if (!isProductFound) {
+                    } else if (!isLoading) {
+                        isLoading = true // Bắt đầu tải
+                        if (!check) {
                             val likedNew = Liked(0, idCustomer, device.idDevice)
                             likedViewModel.addLiked(likedNew)
-                            check = true
+                            check = true // Cập nhật cục bộ
                         } else {
                             likedViewModel.deleteLikedByCustomer(idCustomer, device.idDevice)
-                            check = false
+                            check = false // Cập nhật cục bộ
                         }
+                        // Làm mới danh sách yêu thích
                         likedViewModel.getLikedByIdCustomer(idCustomer)
+                        deviceViewModel.getDeviceByLiked(idCustomer)
+                        isLoading = false // Kết thúc tải
                     }
                 },
+                enabled = !isLoading, // Vô hiệu hóa khi đang tải
                 modifier = Modifier
                     .size(24.dp)
                     .align(Alignment.TopEnd)
             ) {
-                Icon(
-                    imageVector = if (check) Icons.Filled.Favorite else Icons.Filled.FavoriteBorder,
-                    contentDescription = "Favorite",
-                    tint = Color(0xFFD32F2F)
-                )
+                if (isLoading) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(24.dp),
+                        color = Color.Red
+                    )
+                } else {
+                    Icon(
+                        imageVector = if (check) Icons.Filled.Favorite else Icons.Filled.FavoriteBorder,
+                        contentDescription = "Favorite",
+                        tint = Color.Red
+                    )
+                }
             }
         }
     }

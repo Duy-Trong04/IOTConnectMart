@@ -67,6 +67,7 @@ import com.example.ungdungbanthietbi_iot.data.customer.CustomerViewModel
 import com.example.ungdungbanthietbi_iot.data.device.Device
 import com.example.ungdungbanthietbi_iot.data.device.DeviceViewModel
 import com.example.ungdungbanthietbi_iot.navigation.Screen
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.time.LocalDate
 
@@ -95,14 +96,9 @@ fun PersonalScreen(
     val listCart = cartViewModel.listCart
     val accountViewModel: AccountViewModel = viewModel()
     val account = accountViewModel.account
-    var isLoading by remember { mutableStateOf(true) }
-
     LaunchedEffect(username) {
         if (username.isNotEmpty()) {
             accountViewModel.getUserByUsername(username)
-            isLoading = false
-        } else {
-            isLoading = false
         }
     }
 
@@ -113,111 +109,16 @@ fun PersonalScreen(
         }
     }
 
-    if (isLoading) {
-        Box(
-            modifier = Modifier.fillMaxSize(),
-            contentAlignment = Alignment.Center
-        ) {
-            CircularProgressIndicator()
-        }
-        return
-    }
-
-    if (account == null) {
-        Box(
-            modifier = Modifier.fillMaxSize(),
-            contentAlignment = Alignment.Center
-        ) {
-            Text("Không tìm thấy thông tin tài khoản. Vui lòng đăng nhập lại.")
-            Button(
-                onClick = { navController.navigate(Screen.LoginScreen.route) },
-                modifier = Modifier.padding(top = 16.dp)
-            ) {
-                Text("Đăng nhập")
-            }
-        }
-        return
-    }
-
     var currentTab by remember { mutableStateOf("accountInfo") }
+    val snackbarHostState = remember { SnackbarHostState() } // Khai báo SnackbarHostState
 
-    ModalNavigationDrawer(
-        drawerState = navdrawerState,
-        drawerContent = {
-            ModalDrawerSheet {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .background(Color(0xFF5D9EFF))
-                        .padding(5.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(
-                        text = "IOT Connect Mart",
-                        modifier = Modifier.padding(5.dp),
-                        color = Color.White,
-                        fontWeight = FontWeight.Bold
-                    )
-                    Icon(
-                        imageVector = Icons.Default.Close,
-                        contentDescription = "Đóng danh mục",
-                        modifier = Modifier
-                            .padding(end = 5.dp)
-                            .size(24.dp)
-                            .clickable {
-                                scope.launch {
-                                    navdrawerState.apply {
-                                        if (isClosed) open() else close()
-                                    }
-                                }
-                            },
-                        tint = Color.White
-                    )
-                }
-                HorizontalDivider()
-                Text(
-                    text = "T R A N G  C H Ủ",
-                    modifier = Modifier.padding(12.dp).clickable {
-                        navController.navigate(Screen.HomeScreen.route + "?username=$username")
-                    },
-                    color = Color(0xFF5D9EFF),
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 18.sp
-                )
-                countries.forEach { country ->
-                    NavigationDrawerItem(
-                        label = {
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(vertical = 5.dp, horizontal = 5.dp)
-                                    .drawBehind {
-                                        drawLine(
-                                            color = Color.Black,
-                                            start = Offset(0f, size.height),
-                                            end = Offset(size.width, size.height),
-                                            strokeWidth = 1.dp.toPx()
-                                        )
-                                    }
-                            ) {
-                                Text(text = country)
-                            }
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = {
+                    Text("Hồ sơ cá nhân", fontWeight = FontWeight.Bold)
                         },
-                        selected = false,
-                        onClick = { /* Chọn danh mục */ }
-                    )
-                }
-            }
-        }
-    ) {
-        Scaffold(
-            topBar = {
-                TopAppBar(
-                    title = {
-                        Text("Hồ sơ cá nhân", fontWeight = FontWeight.Bold)
-                    },
-                    navigationIcon = {
+                navigationIcon = {
                         IconButton(onClick = {
                             scope.launch {
                                 navdrawerState.apply {
@@ -229,94 +130,102 @@ fun PersonalScreen(
                                 imageVector = Icons.Default.Menu,
                                 contentDescription = "List"
                             )
-                        }
-                    },
-                    actions = {
-                        Box(
-                            modifier = Modifier.size(48.dp)
-                        ) {
-                            IconButton(onClick = {
-                                if (account == null) {
-                                    navController.navigate(Screen.LoginScreen.route)
-                                } else {
-                                    navController.navigate(
-                                        Screen.Cart_Screen.route +
-                                                "?idCustomer=${account.idPerson}&username=${account.username}"
-                                    )
-                                }
-                            }) {
-                                Icon(
-                                    imageVector = Icons.Outlined.ShoppingCart,
-                                    contentDescription = "Giỏ hàng",
-                                    tint = Color.White
+                        } },
+                actions = {
+                    Box(
+                        modifier = Modifier.size(48.dp)
+                    ) {
+                        IconButton(onClick = {
+                            if (account == null) {
+                                navController.navigate(Screen.LoginScreen.route)
+                            } else {
+                                navController.navigate(
+                                    Screen.Cart_Screen.route +
+                                            "?idCustomer=${account.idPerson}&username=${account.username}"
                                 )
                             }
-                            if (listCart.isNotEmpty()) {
-                                Text(
-                                    text = "${listCart.size}",
-                                    color = Color(0xFF5D9EFF),
-                                    fontSize = 16.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    textAlign = TextAlign.Center,
-                                    modifier = Modifier
-                                        .align(Alignment.TopEnd)
-                                        .size(24.dp)
-                                        .offset(x = (-2).dp, y = (-2).dp)
-                                        .background(color = Color.White, CircleShape)
-                                        .clip(CircleShape)
-                                        .wrapContentSize(align = Alignment.Center)
-                                )
-                            }
+                        }) {
+                            Icon(
+                                imageVector = Icons.Outlined.ShoppingCart,
+                                contentDescription = "Giỏ hàng",
+                                tint = Color.White
+                            )
                         }
-                    },
-                    colors = TopAppBarDefaults.topAppBarColors(
-                        containerColor = Color(0xFF5F9EFF),
-                        titleContentColor = Color.White,
-                        navigationIconContentColor = Color.White,
-                        actionIconContentColor = Color.White
-                    )
+                        if (listCart.isNotEmpty()) {
+                            Text(
+                                text = "${listCart.size}",
+                                color = Color(0xFF5D9EFF),
+                                fontSize = 16.sp,
+                                fontWeight = FontWeight.Bold,
+                                textAlign = TextAlign.Center,
+                                modifier = Modifier
+                                    .align(Alignment.TopEnd)
+                                    .size(24.dp)
+                                    .offset(x = (-2).dp, y = (-2).dp)
+                                    .background(color = Color.White, CircleShape)
+                                    .clip(CircleShape)
+                                    .wrapContentSize(align = Alignment.Center)
+                            )
+                        }
+                    } },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = Color(0xFF5F9EFF),
+                    titleContentColor = Color.White,
+                    navigationIconContentColor = Color.White,
+                    actionIconContentColor = Color.White
                 )
-            },
-            bottomBar = {
-                BottomAppBar (
+            ) },
+        bottomBar = {
+            BottomAppBar (
+                containerColor = Color.White,
+                contentColor = Color.Black,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .offset(y = 16.dp) // Dịch chuyển BottomAppBar xuống 16dp
+            ){}
+        },
+        snackbarHost = {
+            SnackbarHost(hostState = snackbarHostState) { data ->
+                Snackbar(
+                    modifier = Modifier.padding(16.dp),
+                    action = {
+                        TextButton(onClick = { snackbarHostState.currentSnackbarData?.dismiss() }) {
+                            Text(text = "Đóng", color = Color.Black)
+                        }
+                    },
                     containerColor = Color.White,
-                    contentColor = Color.Black,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .offset(y = 16.dp) // Dịch chuyển BottomAppBar xuống 16dp
-                ){
-
+                    contentColor = Color.Black
+                ) {
+                    Text(data.visuals.message)
                 }
             }
+        }
+    ) {
+        LazyColumn(
+            modifier = Modifier
+                .padding(it)
+                .fillMaxSize()
+                .background(Color(0xFFF2F2F2))
         ) {
-            LazyColumn(
-                modifier = Modifier
-                    .padding(it)
-                    .fillMaxSize()
-                    .background(Color(0xFFF2F2F2))
-            ) {
-                item {
-                    Column(
-                        modifier = Modifier
-                            .padding(start = 16.dp, end = 16.dp, top = 16.dp)
-                    ) {
-                        when (currentTab) {
-                            "accountInfo" -> AccountInfoSection(username)
-                            "changePassword" -> ChangePasswordSection(username)
-                        }
+            item {
+                Column(
+                    modifier = Modifier
+                        .padding(start = 16.dp, end = 16.dp, top = 16.dp)
+                ) {
+                    when (currentTab) {
+                        "accountInfo" -> AccountInfoSection(username, snackbarHostState)
+                        "changePassword" -> ChangePasswordSection(username, snackbarHostState)
                     }
                 }
-                item { Spacer(modifier = Modifier.height(16.dp)) }
-                item {
-                    AccountOptionsSection(
-                        onOptionSelected = { selectedTab ->
-                            currentTab = selectedTab
-                        },
-                        currentTab = currentTab,
-                        navController = navController,
-                        username = username
-                    )
-                }
+            }
+            item { Spacer(modifier = Modifier.height(16.dp)) }
+            item {
+                AccountOptionsSection(
+                    onOptionSelected = { selectedTab -> currentTab = selectedTab },
+                    currentTab = currentTab,
+                    navController = navController,
+                    username = username
+                )
             }
         }
     }
@@ -324,7 +233,8 @@ fun PersonalScreen(
 
 @Composable
 fun AccountInfoSection(
-    username: String
+    username: String,
+    snackbarHostState: SnackbarHostState // Thêm tham số SnackbarHostState
 ){
     val maxLength = 10
 
@@ -336,10 +246,6 @@ fun AccountInfoSection(
 
     var isFocused by remember { mutableStateOf(false) }
     var isButtonEnabled by remember { mutableStateOf(false) }
-
-    var snackbarHostState = remember {
-        SnackbarHostState()
-    }
 
     var scope = rememberCoroutineScope()
     LaunchedEffect(username) {
@@ -587,10 +493,6 @@ fun AccountInfoSection(
                     )
                 }
                 Spacer(modifier = Modifier.height(16.dp))
-                SnackbarHost(
-                    modifier = Modifier.padding(4.dp),
-                    hostState = snackbarHostState,
-                )
 
                 Button(
                     onClick = {
@@ -598,7 +500,7 @@ fun AccountInfoSection(
                         if (!isValidDate(selectedDay.value, selectedMonth.value, selectedYear.value)) {
                             scope.launch {
                                 snackbarHostState.showSnackbar(
-                                    message = "Ngày sinh không hợp lệ",
+                                    message = "Ngày sinh không hợp lệ!",
                                     duration = SnackbarDuration.Short
                                 )
                             }
@@ -869,7 +771,7 @@ fun AccountOptionsSection(
                         openDialog.value = false
                     },
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = Color(0xFF5F9EFF),
+                        containerColor = Color.Gray,
                         contentColor = Color.White
                     ),
                     shape = RoundedCornerShape(8.dp)
@@ -911,11 +813,9 @@ fun AccountOptionItem(
 
 @Composable
 fun ChangePasswordSection(
-    username: String
+    username: String,
+    snackbarHostState: SnackbarHostState // Thêm tham số SnackbarHostState
 ) {
-    var snackbarHostState = remember {
-        SnackbarHostState()
-    }
     var scope = rememberCoroutineScope()
 
     var matkhaucu by remember { mutableStateOf("") }
@@ -1017,10 +917,6 @@ fun ChangePasswordSection(
                 onValueChange = { kiemtramkmoi = it }
             )
             Spacer(modifier = Modifier.height(8.dp))
-            SnackbarHost(
-                modifier = Modifier.padding(4.dp),
-                hostState = snackbarHostState
-            )
             Button(
                 onClick = {
                     if (account != null) {

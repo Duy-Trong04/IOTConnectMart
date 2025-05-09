@@ -53,6 +53,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Divider
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -203,8 +204,7 @@ fun ProductDetailsScreen(
         }
     }
 
-    // Biến trạng thái để sản phẩm yêu thích không
-    val isFavorite by remember { mutableStateOf(false) }
+
     // Biến lưu trữ giá trị đánh giá
     val averageRating = if (listReview.isNotEmpty()) {
         val avg = listReview.map { it.rating }.average() // Tính trung bình cộng
@@ -218,9 +218,10 @@ fun ProductDetailsScreen(
     val selectedProducts = remember { mutableListOf<Triple<Int, Int, Int>>() }
 
     // Biến lưu trữ giá trị checked
-    var check  by remember { mutableStateOf(false) }
+    // Biến trạng thái để sản phẩm yêu thích không
+    var isFavorite by remember { mutableStateOf(false) }
     LaunchedEffect(listLiked) {
-        check = listLiked.any { it.idDevice == device.idDevice }
+        isFavorite = listLiked.any { it.idDevice == device.idDevice }
     }
     // Biến lưu trữ trạng thái hiển thị dialog
     var showDialog by remember { mutableStateOf(false) }
@@ -232,9 +233,6 @@ fun ProductDetailsScreen(
     val snackbarHostState = remember { SnackbarHostState() }
     val showSnackbar = remember { mutableStateOf(false) }
     val snackbarMessage = remember { mutableStateOf("") }
-
-    val showSnackbarF = remember { mutableStateOf(false) }
-    val snackbarMessageF = remember { mutableStateOf("") }
 
     // Hiển thị Snackbar cho "Thêm vào giỏ hàng"
     LaunchedEffect(showSnackbar.value) {
@@ -249,6 +247,9 @@ fun ProductDetailsScreen(
     LaunchedEffect(idCustomer) {
         addressViewModel.getAddressByIdCustomer(idCustomer)
     }
+
+    var isLoading by remember { mutableStateOf(false) } // Thêm trạng thái tải cục bộ
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -625,61 +626,43 @@ fun ProductDetailsScreen(
                                 fontSize = 20.sp
                             )
 
-                            IconButton(onClick = {
-                                if(idCustomer == null){
-                                    navController.navigate(Screen.LoginScreen.route)
-                                }
-                                else{
-                                    var likedNew:Liked? = null
-                                    var isProductFound = false
-                                    for (liked in listLiked) {
-                                        if (device.idDevice == liked.idDevice) {
-                                            //likedViewModel.updateLiked(liked)
-                                            isProductFound = true
-                                            break
+                            IconButton(
+                                onClick = {
+                                    if (idCustomer == null) {
+                                        navController.navigate(Screen.LoginScreen.route)
+                                    } else if (!isLoading) {
+                                        isLoading = true // Bắt đầu tải
+                                        if (!isFavorite) {
+                                            val likedNew = Liked(0, idCustomer, device.idDevice)
+                                            likedViewModel.addLiked(likedNew)
+                                            snackbarMessage.value = "Thêm vào yêu thích thành công!"
+                                            isFavorite = true // Cập nhật cục bộ
+                                        } else {
+                                            likedViewModel.deleteLikedByCustomer(idCustomer, device.idDevice)
+                                            snackbarMessage.value = "Xóa khỏi yêu thích!"
+                                            isFavorite = false // Cập nhật cục bộ
                                         }
-                                    }
-
-                                    if(!isProductFound){
-                                        likedNew = Liked(0, idCustomer, device.idDevice)
-                                        likedViewModel.addLiked(likedNew)
-                                        check = true
-                                        showSnackbarF.value = true
-                                        snackbarMessageF.value = "Thêm vào yêu thích thành công!"
-                                    }
-                                    else{
-                                        likedViewModel.deleteLikedByCustomer(idCustomer, device.idDevice)
-                                        check = false
-                                        showSnackbarF.value = true
-                                        snackbarMessageF.value = "Xóa khỏi yêu thích!"
-                                    }
-                                    // Làm mới danh sách
-                                    likedViewModel.getLikedByIdCustomer(idCustomer)
-                                }
-                            }) {
-                                Icon(imageVector = if(check) Icons.Filled.Favorite else Icons.Filled.FavoriteBorder,
-                                    contentDescription = "",
-                                    tint = Color.Red,
-                                    modifier = Modifier.size(22.dp)
-                                )
-                            }
-                        }
-                        if (showSnackbarF.value) {
-                            LaunchedEffect(Unit) {
-                                delay(3000) // Chờ 3000ms (3 giây)
-                                showSnackbarF.value = false // Đặt giá trị để tắt Snackbar
-                            }
-                            Snackbar(
-                                modifier = Modifier.padding(16.dp),
-                                action = {
-                                    TextButton(onClick = { showSnackbarF.value = false }) {
-                                        Text(text = "Đóng", color = Color.White)
+                                        // Làm mới danh sách yêu thích
+                                        likedViewModel.getLikedByIdCustomer(idCustomer)
+                                        deviceViewModel.getDeviceByLiked(idCustomer)
+                                        showSnackbar.value = true
+                                        isLoading = false // Kết thúc tải
                                     }
                                 },
-                                containerColor = Color.White,
-                                contentColor = Color.Gray
+                                enabled = !isLoading,
                             ) {
-                                Text(snackbarMessageF.value)
+                                if (isLoading) {
+                                    CircularProgressIndicator(
+                                        modifier = Modifier.size(24.dp),
+                                        color = Color.Red
+                                    )
+                                } else {
+                                    Icon(
+                                        imageVector = if (isFavorite) Icons.Filled.Favorite else Icons.Filled.FavoriteBorder,
+                                        contentDescription = "Favorite",
+                                        tint = Color.Red
+                                    )
+                                }
                             }
                         }
                         Button(
@@ -816,7 +799,7 @@ fun ProductDetailsScreen(
                     }
                 }
                 items(listReview.take(2)){
-                    CardReview(review = it, isChecked = check, onlick = {
+                    CardReview(review = it, isChecked = isFavorite, onlick = {
                         navController.navigate(Screen.Product_Reviews.route + "?idDevice=${it.idDevice}")
                     },
                         id.toInt()
@@ -843,6 +826,7 @@ fun ProductDetailsScreen(
                                     isFavorite = isFavorite,
                                     account.idPerson,
                                     account.username,
+                                    deviceViewModel = deviceViewModel,
                                     navController
                                 )
                             }
@@ -851,6 +835,7 @@ fun ProductDetailsScreen(
                                     isFavorite = isFavorite,
                                     null,
                                     username,
+                                    deviceViewModel = deviceViewModel,
                                     navController
                                 )
                             }

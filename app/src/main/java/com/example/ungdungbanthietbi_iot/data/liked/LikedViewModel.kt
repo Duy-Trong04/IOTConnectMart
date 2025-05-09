@@ -100,11 +100,13 @@ class LikedViewModel:ViewModel() {
                 // Gọi API để thêm sản phẩm vào giỏ hàng trên server
                 val response = RetrofitClient.likedAPIService.addliked(liked)
                 likedAddResult = if (response.success) {
+                    getLikedByIdCustomer(liked.idCustomer)
                     "Cập nhật thành công: ${response.message}"
                 } else {
                     "Cập nhật thất bại: ${response.message}"
                 }
             } catch (e: Exception) {
+                likedAddResult = "Lỗi khi cập nhật giỏ hàng: ${e.message}"
                 Log.e("AddLiked", "Lỗi kết nối: ${e.message}")
             }
         }

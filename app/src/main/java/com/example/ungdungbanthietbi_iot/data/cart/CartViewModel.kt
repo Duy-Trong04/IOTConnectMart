@@ -23,8 +23,9 @@ class CartViewModel:ViewModel() {
                 val response = withContext(Dispatchers.IO) {
                     RetrofitClient.cartAPIService.getCartByIdCustomer(idCustomer)
                 }
-                listCart = response.cart
+                listCart = response.cart ?: emptyList()
             } catch (e: Exception) {
+                listCart = emptyList()
                 Log.e("Cart Error", "Lỗi khi lấy giỏ hàng: ${e.message}")
             }
         }

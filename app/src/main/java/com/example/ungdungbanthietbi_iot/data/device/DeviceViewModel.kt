@@ -102,13 +102,14 @@ class DeviceViewModel:ViewModel() {
                 val response = withContext(Dispatchers.IO) {
                     RetrofitClient.deviceAPIService.getDeviceByLiked(idCustomer)
                 }
-                // Kiểm tra dữ liệu trả về
-                if (response.device.isNotEmpty()) {
-                    listDeviceOfCustomer = response.device
-                    Log.d("Device Success", "Lấy sản phẩm thành công: ${listDeviceOfCustomer.size} sản phẩm")
+                // Giả sử API trả về một trường như `devices` hoặc `data`
+                val devices = response.device ?: emptyList() // Điều chỉnh dựa trên cấu trúc API
+                if (devices.isNotEmpty()) {
+                    listDeviceOfCustomer = devices
+                    Log.d("Device Success", "Lấy sản phẩm thành công: ${listDeviceOfCustomer.size} sản phẩm - Dữ liệu: $listDeviceOfCustomer")
                 } else {
                     listDeviceOfCustomer = emptyList()
-                    Log.e("Device Error", "Không có sản phẩm trong danh sách yêu thích")
+                    Log.w("Device Warning", "Không có sản phẩm trong danh sách yêu thích")
                 }
             } catch (e: Exception) {
                 Log.e("Device Error", "Lỗi khi lấy sản phẩm: ${e.message}")

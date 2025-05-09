@@ -90,7 +90,6 @@ fun FavoritesScreen(
                 navigationIcon = {
                     // Nút quay lại
                     IconButton(onClick = {
-                        likedViewModel.updateAllLiked()
                         navController.popBackStack()
                     }) {
                         Icon(
@@ -114,7 +113,8 @@ fun FavoritesScreen(
                                 .fillMaxWidth()
                                 .padding(8.dp)
                                 .height(190.dp),
-                            elevation = CardDefaults.cardElevation(2.dp),
+                            elevation = CardDefaults.cardElevation(1.dp),
+                            shape = RoundedCornerShape(5.dp),
                             colors = CardDefaults.cardColors(containerColor = Color.White),
                             onClick = {
                                 navController.navigate(Screen.ProductDetailsScreen.route + "?id=${device.idDevice}")
