@@ -1,3 +1,4 @@
+
 package com.example.ungdungbanthietbi_iot.screen.product_detail
 
 import androidx.compose.animation.AnimatedContent
@@ -94,6 +95,7 @@ import com.example.ungdungbanthietbi_iot.R
 import com.example.ungdungbanthietbi_iot.data.account.AccountViewModel
 import com.example.ungdungbanthietbi_iot.data.address_book.AddressViewModel
 import com.example.ungdungbanthietbi_iot.data.cart.Cart
+import com.example.ungdungbanthietbi_iot.data.cart.CartEntity
 import com.example.ungdungbanthietbi_iot.data.cart.CartViewModel
 import com.example.ungdungbanthietbi_iot.data.customer.CustomerViewModel
 import com.example.ungdungbanthietbi_iot.data.device.Device
@@ -254,12 +256,12 @@ fun ProductDetailsScreen(
         topBar = {
             TopAppBar(
                 title = {
-                        Text(
-                            text = "Chi tiết sản phẩm",
-                            fontWeight = FontWeight.Bold,
-                            modifier = Modifier.fillMaxWidth(),
-                            textAlign = TextAlign.Start
-                        )
+                    Text(
+                        text = "Chi tiết sản phẩm",
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier.fillMaxWidth(),
+                        textAlign = TextAlign.Start
+                    )
                 },
                 navigationIcon = {
                     IconButton(
@@ -428,7 +430,7 @@ fun ProductDetailsScreen(
                                             if (idCustomer == null) {
                                                 navController.navigate(Screen.LoginScreen.route)
                                             } else {
-                                                var cartNew: Cart? = null
+                                                var cartNew: CartEntity? = null
                                                 var isProductFound = false
 
                                                 for (cart in listCart) {
@@ -442,12 +444,14 @@ fun ProductDetailsScreen(
                                                 }
 
                                                 if (!isProductFound) {
-                                                    cartNew = Cart(0, idCustomer, device.idDevice, quantity)
+                                                    cartNew = CartEntity(
+                                                        idCustomer = idCustomer,
+                                                        idDevice = device.idDevice,
+                                                        stock = quantity
+                                                    )
                                                     cartViewModel.addToCart(cartNew)
                                                     quantity = 1
                                                 }
-
-                                                cartViewModel.getCartByIdCustomer(idCustomer)
                                             }
                                             showDialog = false
                                             snackbarMessage.value = "Thêm thành công!"
@@ -583,14 +587,18 @@ fun ProductDetailsScreen(
                             }
                         }
                     } else {
-                        Text(
-                            text = "No slides available",
-                            fontSize = 16.sp,
+                        Box(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .padding(16.dp),
-                            textAlign = TextAlign.Center
-                        )
+                            contentAlignment = Alignment.Center
+                        ) {
+                            CircularProgressIndicator(
+                                color = Color(0xFF5D9EFF),
+                                strokeWidth = 4.dp,
+                                modifier = Modifier.size(48.dp)
+                            )
+                        }
                     }
                 }
                 item {

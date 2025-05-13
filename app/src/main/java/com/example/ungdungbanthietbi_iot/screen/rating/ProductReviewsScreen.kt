@@ -43,6 +43,7 @@ import androidx.navigation.NavController
 import com.example.ungdungbanthietbi_iot.data.customer.CustomerViewModel
 import com.example.ungdungbanthietbi_iot.data.review_device.ReviewViewModel
 import com.example.ungdungbanthietbi_iot.data.review_device.Review
+import com.example.ungdungbanthietbi_iot.utils.formatDate
 import java.util.Locale
 
 /** Giao diện màn hình danh sách đánh giá của sản phẩm (ProductReviewsScreen)
@@ -193,20 +194,6 @@ fun ReviewCard(review: Review, isUseful:Boolean, id:Int) {
                     }
                 }
             }
-            // Nút "Hữu ích"
-            Row (
-                verticalAlignment = Alignment.CenterVertically
-            ){
-                IconButton(onClick = {
-                    currentisUseful = !currentisUseful
-                }) {
-                    Icon(imageVector = Icons.Filled.ThumbUp,
-                        contentDescription = "Like",
-                        tint = if(isUseful) Color(0xFFFBC02D) else Color.Gray
-                    )
-                }
-                Text("Hữu ích", modifier = Modifier.padding(end = 5.dp))
-            }
         }
         // Thanh đánh giá sao
         Row(
@@ -234,18 +221,5 @@ fun ReviewCard(review: Review, isUseful:Boolean, id:Int) {
             color = Color.Gray,
             modifier = Modifier.padding(start = 5.dp, end = 5.dp)
         )
-    }
-}
-
-
-@Composable
-fun formatDate(inputDate: String): String {
-    return try {
-        val inputFormat = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()) // Định dạng từ API
-        val outputFormat = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()) // Định dạng đầu ra
-        val date = inputFormat.parse(inputDate)
-        date?.let { outputFormat.format(it) } ?: "Ngày không hợp lệ"
-    } catch (e: Exception) {
-        "Ngày không hợp lệ"
     }
 }

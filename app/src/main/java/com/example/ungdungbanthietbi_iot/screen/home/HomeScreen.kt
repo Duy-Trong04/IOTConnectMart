@@ -545,15 +545,18 @@ fun HomeContent(
                     }
                 }
             } else {
-                Text(
-                    text = "Không có hình ảnh quảng cáo",
-                    fontSize = 16.sp,
-                    color = Color(0xFF616161),
+                Box(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(16.dp),
-                    textAlign = TextAlign.Center
-                )
+                    contentAlignment = Alignment.Center
+                ) {
+                    CircularProgressIndicator(
+                        color = Color(0xFF5D9EFF),
+                        strokeWidth = 4.dp,
+                        modifier = Modifier.size(48.dp)
+                    )
+                }
             }
         }
         item {

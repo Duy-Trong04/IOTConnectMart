@@ -1,3 +1,4 @@
+
 package com.example.ungdungbanthietbi_iot.screen.cart
 
 import android.util.Log
@@ -74,6 +75,7 @@ fun CartScreen(
     // Lấy danh sách giỏ hàng và sản phẩm
     val listCart = cartViewModel.listCart
     val listAddress = addressViewModel.listAddress
+    val listAllDevice = deviceViewModel.listAllDevice
 
     // Biến lưu tổng tiền
     var totalPrice by remember { mutableStateOf(0.0) }
@@ -93,7 +95,7 @@ fun CartScreen(
             totalPrice = 0.0
         } else {
             totalPrice = listCart.filter { selectedItems[it.id] == true }.sumOf { giohang ->
-                val device = deviceViewModel.listDeviceOfCustomer.find { it.idDevice == giohang.idDevice }
+                val device = listAllDevice.find { it.idDevice == giohang.idDevice }
                 val gia = device?.sellingPrice ?: 0.0
                 gia * giohang.stock
             }
@@ -102,7 +104,7 @@ fun CartScreen(
     // Lấy dữ liệu và tính tổng tiền ban đầu
     LaunchedEffect(idCustomer) {
         cartViewModel.getCartByIdCustomer(idCustomer)
-        deviceViewModel.getDeviceByCart(idCustomer)
+        deviceViewModel.getAllDevice()
         addressViewModel.getAddressByIdCustomer(idCustomer)
     }
     // Khởi tạo selectedItems khi listCart thay đổi
@@ -113,7 +115,7 @@ fun CartScreen(
         calculateTotalPrice()
     }
     // Tính tổng tiền khi dữ liệu giỏ hàng hoặc sản phẩm thay đổi
-    LaunchedEffect(listCart, deviceViewModel.listDeviceOfCustomer) {
+    LaunchedEffect(listCart, listAllDevice) {
         calculateTotalPrice() // Tính tổng tiền khi dữ liệu thay đổi
     }
 
@@ -161,7 +163,7 @@ fun CartScreen(
                 navigationIcon = {
                     // Nút quay lại
                     IconButton(onClick = {
-                        cartViewModel.updateAllCart()
+                        cartViewModel.updateAllCart(idCustomer)
                         navController.popBackStack()
                     }) {
                         Icon(
@@ -232,16 +234,16 @@ fun CartScreen(
                     Button(
                         modifier = Modifier.fillMaxWidth(),
                         onClick = {
-                           if(selectedProducts.isEmpty()){
-                               showDialog = true // Hiển thị dialog nếu không có sản phẩm nào được chọn
-                           }
-                           else if(addressViewModel.listAddress.isEmpty()){ // Kiểm tra danh sách địa chỉ rỗng
-                               openDialog = true // Hiển thị dialog thông báo thêm địa chỉ
-                           }
-                           else{
-                               val selectedProductsString = selectedProducts.joinToString(",") { "${it.first}:${it.second}:${it.third}" }
-                               navController.navigate(Screen.Check_Out.route + "?selectedProducts=${selectedProductsString}&tongtien=${totalPrice}&username=${username}")
-                           }
+                            if(selectedProducts.isEmpty()){
+                                showDialog = true // Hiển thị dialog nếu không có sản phẩm nào được chọn
+                            }
+                            else if(addressViewModel.listAddress.isEmpty()){ // Kiểm tra danh sách địa chỉ rỗng
+                                openDialog = true // Hiển thị dialog thông báo thêm địa chỉ
+                            }
+                            else{
+                                val selectedProductsString = selectedProducts.joinToString(",") { "${it.first}:${it.second}:${it.third}" }
+                                navController.navigate(Screen.Check_Out.route + "?selectedProducts=${selectedProductsString}&tongtien=${totalPrice}&username=${username}")
+                            }
                         },
                         shape = RoundedCornerShape(5.dp),
                         elevation = ButtonDefaults.buttonElevation(5.dp),
@@ -345,18 +347,13 @@ fun CartScreen(
                             when (deleteAction) {
                                 DeleteAction.SINGLE -> {
                                     cartIdToDelete?.let { cartId ->
-                                        cartViewModel.deleteCart(cartId)
-                                        cartViewModel.listCart = cartViewModel.listCart.filter { it.id != cartId }
+                                        cartViewModel.deleteCart(cartId, idCustomer)
                                         calculateTotalPrice()
                                     }
                                 }
                                 DeleteAction.ALL -> {
-                                    selectedItems.forEach { (cartId, isSelected) ->
-                                        if (isSelected) {
-                                            cartViewModel.deleteCart(cartId)
-                                        }
-                                    }
-                                    cartViewModel.listCart = cartViewModel.listCart.filter { !selectedItems[it.id]!! }
+                                    val selectedIds = selectedItems.filterValues { it }.keys.toList()
+                                    cartViewModel.deleteAllSelectedCarts(selectedIds, idCustomer)
                                     selectedItems.clear()
                                     selectedProducts.clear()
                                     calculateTotalPrice()
@@ -392,19 +389,49 @@ fun CartScreen(
         }
         // Danh sách sản phẩm
         LazyColumn(modifier = Modifier.padding(padding)) {
-            if(listCart.isNotEmpty()) {
+            if(listCart.isEmpty()) {
+                item {
+                    Text(
+                        text = "Giỏ hàng trống!",
+                        fontSize = 20.sp,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp)
+                    )
+                }
+
+            }
+            else if(listAllDevice.isEmpty()){
+                item {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        CircularProgressIndicator(
+                            color = Color(0xFF5D9EFF),
+                            strokeWidth = 4.dp,
+                            modifier = Modifier.size(48.dp)
+                        )
+                    }
+                }
+            }
+            else{
                 items(listCart) { cart ->
-                    var soLuong by remember { mutableStateOf(cart.stock) }
-                    val sanPham =
-                        deviceViewModel.listDeviceOfCustomer.find { it.idDevice == cart.idDevice }
+
+                    val sanPham = listAllDevice.find { it.idDevice == cart.idDevice }
 
                     if (sanPham != null) {
+                        var soLuong by remember { mutableStateOf(cart.stock) }
                         Card(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .padding(8.dp)
                                 .height(200.dp),
-                            elevation = CardDefaults.cardElevation(4.dp),
+                            elevation = CardDefaults.cardElevation(1.dp),
+                            shape = RoundedCornerShape(5.dp),
                             colors = CardDefaults.cardColors(containerColor = Color.White),
                             onClick = {
                                 navController.navigate(Screen.ProductDetailsScreen.route + "?id=${sanPham.idDevice}")
@@ -473,7 +500,7 @@ fun CartScreen(
                                             if (soLuong > 1) {
                                                 soLuong-- // Giảm số lượng
                                                 cart.stock = soLuong
-                                                cartViewModel.updateAllCart()
+                                                cartViewModel.updateCart(cart)
 
 
                                                 // Cập nhật lại số lượng trong selectedProducts
@@ -503,7 +530,7 @@ fun CartScreen(
                                             if (soLuong < 500 /* 500 là số lượng tồn kho*/) {
                                                 soLuong++ // Tăng số lượng
                                                 cart.stock = soLuong
-                                                cartViewModel.updateAllCart()
+                                                cartViewModel.updateCart(cart)
 
                                                 // Cập nhật lại số lượng trong selectedProducts
                                                 val index =
@@ -538,18 +565,6 @@ fun CartScreen(
                             }
                         }
                     }
-                }
-            }
-            else{
-                item {
-                    Text(
-                        text = "Giỏ hàng trống!",
-                        fontSize = 20.sp,
-                        textAlign = TextAlign.Center,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(16.dp)
-                    )
                 }
             }
         }

@@ -1,5 +1,8 @@
 package com.example.ungdungbanthietbi_iot.screen.personal
 
+import android.net.Uri
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -246,6 +249,16 @@ fun AccountInfoSection(
 
     var isFocused by remember { mutableStateOf(false) }
     var isButtonEnabled by remember { mutableStateOf(false) }
+    var selectedImageUri by remember { mutableStateOf<Uri?>(null) } // Lưu URI ảnh được chọn
+
+    // Launcher để chọn ảnh từ thư viện
+    val launcher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri: Uri? ->
+        selectedImageUri = uri // Cập nhật URI ảnh được chọn
+        // Nếu cần lưu ảnh vào backend, gọi hàm trong ViewModel tại đây
+        // ví dụ: customerViewModel.updateAvatar(uri)
+    }
 
     var scope = rememberCoroutineScope()
     LaunchedEffect(username) {
@@ -259,8 +272,8 @@ fun AccountInfoSection(
     }
 
     Card(
-        shape = RoundedCornerShape(10.dp),
-        elevation = CardDefaults.cardElevation(2.dp),
+        shape = RoundedCornerShape(5.dp),
+        elevation = CardDefaults.cardElevation(1.dp),
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(containerColor = Color.White),
     ){
@@ -286,16 +299,28 @@ fun AccountInfoSection(
                         modifier = Modifier
                             .size(100.dp)
                             .clip(CircleShape)
+                            .clickable { launcher.launch("image/*") }
                     ) {
-                        // Ảnh đại diện
-                        Image(
-                            painter = painterResource(id = R.drawable.logo9),
-                            contentDescription = "Avatar",
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .clip(CircleShape),
-                            contentScale = ContentScale.Crop
-                        )
+                        // Hiển thị ảnh được chọn hoặc ảnh mặc định
+                        if (selectedImageUri != null) {
+                            AsyncImage(
+                                model = selectedImageUri,
+                                contentDescription = "Avatar",
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .clip(CircleShape),
+                                contentScale = ContentScale.Crop
+                            )
+                        } else {
+                            Image(
+                                painter = painterResource(id = R.drawable.logo9),
+                                contentDescription = "Avatar",
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .clip(CircleShape),
+                                contentScale = ContentScale.Crop
+                            )
+                        }
 
                         // Chữ "Sửa" mờ nhạt nằm bên dưới
                         Text(
@@ -359,7 +384,8 @@ fun AccountInfoSection(
                             gender.value != initialGender.value ||
                             selectedDay.value != initialBirthdate.value.split("-")[2] ||
                             selectedMonth.value != initialBirthdate.value.split("-")[1] ||
-                            selectedYear.value != initialBirthdate.value.split("-")[0]
+                            selectedYear.value != initialBirthdate.value.split("-")[0] ||
+                            selectedImageUri != null // Kiểm tra nếu ảnh thay đổi
                 }
 
                 LaunchedEffect(lastname.value, phone.value, email.value, gender.value, selectedDay.value, selectedMonth.value, selectedYear.value) {
@@ -565,12 +591,18 @@ fun AccountInfoSection(
                                 status = "1"
                             )
                             customerViewModel.updateCustomer(khachHang)
+                            // Nếu có ảnh được chọn, cập nhật ảnh
+                            selectedImageUri?.let { uri ->
+                                // Gọi hàm trong ViewModel để lưu ảnh, ví dụ:
+                                // customerViewModel.updateAvatar(uri)
+                            }
                             scope.launch {
                                 snackbarHostState.showSnackbar(
                                     message = "Cập nhật thành công",
                                     duration = SnackbarDuration.Short
                                 )
                             }
+                            selectedImageUri = null // Reset ảnh sau khi lưu
                         }
                     },
                     modifier = Modifier.fillMaxWidth(),

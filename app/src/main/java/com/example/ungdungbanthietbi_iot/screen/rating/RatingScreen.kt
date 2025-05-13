@@ -153,7 +153,7 @@ fun RatingScreen(navController: NavController, idCustomer: String?, idDevice: In
                             if (idCustomer != null) {
                                 val addReview = Review(
                                     idReview = 0,
-                                    idCustomer = idCustomer,
+                                    idCustomer = if (isAnonymous) "Anonymous" else idCustomer,
                                     idEmployee = "Null",
                                     idDevice = idDevice,
                                     comment = comment,

@@ -47,6 +47,7 @@ import com.example.ungdungbanthietbi_iot.data.review_device.Review
 import com.example.ungdungbanthietbi_iot.data.review_device.ReviewViewModel
 import com.example.ungdungbanthietbi_iot.navigation.Screen
 import com.example.ungdungbanthietbi_iot.screen.order_detail.calculateDaysSinceReceived
+import com.example.ungdungbanthietbi_iot.utils.formatDate
 
 /** Giao diện màn hình lịch sử đánh giá (RatingHistoryScreen)
  * -------------------------------------------

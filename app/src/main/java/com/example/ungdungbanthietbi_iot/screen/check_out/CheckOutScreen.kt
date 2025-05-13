@@ -249,7 +249,11 @@ fun CheckoutScreen(
 
                                 selectedProducts.forEach { triple ->
                                     if (triple.third != 0) {
-                                        cartViewModel.deleteCart(triple.third)
+                                        account.idPerson?.let {
+                                            cartViewModel.deleteCart(triple.third,
+                                                it
+                                            )
+                                        }
                                     }
                                 }
                             }
