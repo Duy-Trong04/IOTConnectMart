@@ -71,6 +71,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -469,6 +470,7 @@ fun HomeScreen(
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeContent(
     padding: PaddingValues,
@@ -484,205 +486,236 @@ fun HomeContent(
     listDeviceLiked: List<Device>,
     categories: List<Category>
 ) {
-    LazyColumn(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(padding),
-        state = listState
+    val coroutineScope = rememberCoroutineScope()
+    var isRefreshing by remember { mutableStateOf(false) }
+
+    // Hàm xử lý refresh
+    fun onRefresh() {
+        isRefreshing = true
+        coroutineScope.launch {
+            // Load lại dữ liệu
+            deviceViewModel.getAllDevice()
+            deviceViewModel.getDeviceFeatured()
+            if (account != null) {
+                deviceViewModel.getDeviceByLiked(account.idPerson.toString())
+            }
+            // Giả lập thời gian load (có thể bỏ nếu API nhanh)
+            delay(1000)
+            isRefreshing = false
+        }
+    }
+
+    PullToRefreshBox(
+        isRefreshing = isRefreshing,
+        onRefresh = { onRefresh() },
+        modifier = Modifier.fillMaxSize()
     ) {
-        item {
-            if (listSlideShow.isNotEmpty()) {
-                val pagerState = rememberPagerState(
-                    initialPage = 0,
-                    pageCount = { listSlideShow.size } // Không cần Int.MAX_VALUE
-                )
-                val coroutineScope = rememberCoroutineScope()
-                // Tự động chuyển slide
-                LaunchedEffect(Unit) {
-                    while (true) {
-                        delay(3000)
-                        val nextPage = (pagerState.currentPage + 1) % listSlideShow.size
-                        pagerState.animateScrollToPage(nextPage)
-                    }
-                }
-                HorizontalPager(
-                    state = pagerState,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(250.dp)
-                        .padding(bottom = 4.dp)
-                ) { page ->
-                    SlideImage(
-                        painter = rememberImagePainter(data = listSlideShow[page].image),
+        LazyColumn(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(padding),
+            state = listState
+        ) {
+            item {
+                if (listSlideShow.isNotEmpty()) {
+                    val pagerState = rememberPagerState(
+                        initialPage = 0,
+                        pageCount = { listSlideShow.size } // Không cần Int.MAX_VALUE
                     )
-                }
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(vertical = 2.dp),
-                    horizontalArrangement = Arrangement.Center
-                ) {
-                    listSlideShow.forEachIndexed { index, _ ->
-                        val isActive = index == pagerState.currentPage
-                        val animatedWidth by animateFloatAsState(
-                            targetValue = if (isActive) 24f else 8f,
-                            animationSpec = tween(300)
-                        )
-                        Box(
-                            modifier = Modifier
-                                .padding(horizontal = 4.dp)
-                                .size(width = animatedWidth.dp, height = 4.dp)
-                                .background(
-                                    color = if (isActive) Color(0xFF1E88E5) else Color(0xFFB0BEC5),
-                                    shape = RoundedCornerShape(2.dp)
-                                )
-                                .clickable { /* currentIndex = index */// Chuyển đến slide khi nhấp vào chấm
-                                    coroutineScope.launch {
-                                        pagerState.animateScrollToPage(index)
-                                    }
-                                }
-                        )
-                    }
-                }
-            } else {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(16.dp),
-                    contentAlignment = Alignment.Center
-                ) {
-                    CircularProgressIndicator(
-                        color = Color(0xFF5D9EFF),
-                        strokeWidth = 4.dp,
-                        modifier = Modifier.size(48.dp)
-                    )
-                }
-            }
-        }
-        item {
-            SectionTitle("Danh mục sản phẩm")
-            LazyRow(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 12.dp, vertical = 8.dp),
-                horizontalArrangement = Arrangement.spacedBy(16.dp)
-            ) {
-                items(categories) { category ->
-                    CategoryItem(category = category, navController = navController, username = username)
-                }
-            }
-        }
-        item {
-            SectionTitle("Sản phẩm nổi bật")
-            LazyRow(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 12.dp),
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                items(listDeviceFeatured) { device ->
-                    CardDevice(
-                        device = device,
-                        isFavorite = isFavorite,
-                        idCustomer = account?.idPerson,
-                        username = username,
-                        deviceViewModel = deviceViewModel,
-                        navController = navController
-                    )
-                }
-            }
-        }
-        item {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                SectionTitle("Sản phẩm yêu thích")
-                Text(
-                    text = "Xem tất cả",
-                    fontSize = 14.sp,
-                    color = Color(0xFF1E88E5),
-                    fontWeight = FontWeight.SemiBold,
-                    modifier = Modifier
-                        .clickable {
-                            if (account == null) {
-                                navController.navigate(Screen.LoginScreen.route)
-                            } else {
-                                navController.navigate(
-                                    Screen.Favorites_Screen.route +
-                                            "?idCustomer=${account.idPerson}&username=${account.username}"
-                                )
-                            }
+                    val coroutineScope = rememberCoroutineScope()
+                    // Tự động chuyển slide
+                    LaunchedEffect(Unit) {
+                        while (true) {
+                            delay(3000)
+                            val nextPage = (pagerState.currentPage + 1) % listSlideShow.size
+                            pagerState.animateScrollToPage(nextPage)
                         }
-                        .padding(end = 20.dp)
-                )
-            }
-            if (listDeviceLiked.isEmpty()) {
-                Text(
-                    text = "Chưa có sản phẩm yêu thích",
-                    color = Color(0xFF616161),
-                    fontSize = 14.sp,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(16.dp),
-                    textAlign = TextAlign.Center
-                )
-            } else {
-                LazyRow(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 16.dp),
-                    horizontalArrangement = Arrangement.spacedBy(16.dp)
-                ) {
-                    items(listDeviceLiked) { device ->
-                        if (account != null) {
-                            CardFavorites(
-                                device = device,
-                                isFavorite = isFavorite,
-                                idCustomer = account.idPerson,
-                                username = account.username,
-                                deviceViewModel = deviceViewModel,
-                                navController = navController
+                    }
+                    HorizontalPager(
+                        state = pagerState,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(250.dp)
+                            .padding(bottom = 4.dp)
+                    ) { page ->
+                        SlideImage(
+                            painter = rememberImagePainter(data = listSlideShow[page].image),
+                        )
+                    }
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 2.dp),
+                        horizontalArrangement = Arrangement.Center
+                    ) {
+                        listSlideShow.forEachIndexed { index, _ ->
+                            val isActive = index == pagerState.currentPage
+                            val animatedWidth by animateFloatAsState(
+                                targetValue = if (isActive) 24f else 8f,
+                                animationSpec = tween(300)
+                            )
+                            Box(
+                                modifier = Modifier
+                                    .padding(horizontal = 4.dp)
+                                    .size(width = animatedWidth.dp, height = 4.dp)
+                                    .background(
+                                        color = if (isActive) Color(0xFF1E88E5) else Color(
+                                            0xFFB0BEC5
+                                        ),
+                                        shape = RoundedCornerShape(2.dp)
+                                    )
+                                    .clickable { /* currentIndex = index */// Chuyển đến slide khi nhấp vào chấm
+                                        coroutineScope.launch {
+                                            pagerState.animateScrollToPage(index)
+                                        }
+                                    }
                             )
                         }
                     }
-                }
-            }
-        }
-        item {
-            SectionTitle("Tất cả sản phẩm")
-        }
-        val pairedDevices = listAllDevice.chunked(2)
-        items(pairedDevices) { pair ->
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 12.dp, vertical = 4.dp),
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                pair.forEach { device ->
+                } else {
                     Box(
                         modifier = Modifier
-                            .weight(1f)
+                            .fillMaxWidth()
+                            .padding(16.dp),
+                        contentAlignment = Alignment.Center
                     ) {
+                        CircularProgressIndicator(
+                            color = Color(0xFF5D9EFF),
+                            strokeWidth = 4.dp,
+                            modifier = Modifier.size(48.dp)
+                        )
+                    }
+                }
+            }
+            item {
+                SectionTitle("Danh mục sản phẩm")
+                LazyRow(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 12.dp, vertical = 8.dp),
+                    horizontalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
+                    items(categories) { category ->
+                        CategoryItem(
+                            category = category,
+                            navController = navController,
+                            username = username
+                        )
+                    }
+                }
+            }
+            item {
+                SectionTitle("Sản phẩm nổi bật")
+                LazyRow(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 12.dp),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    items(listDeviceFeatured) { device ->
                         CardDevice(
                             device = device,
-                            isFavorite =  isFavorite,
+                            isFavorite = isFavorite,
                             idCustomer = account?.idPerson,
                             username = username,
                             deviceViewModel = deviceViewModel,
                             navController = navController
                         )
                     }
-                    if (pair.size == 1) {
-                        Box(modifier = Modifier.weight(1f))
+                }
+            }
+            item {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    SectionTitle("Sản phẩm yêu thích")
+                    Text(
+                        text = "Xem tất cả",
+                        fontSize = 14.sp,
+                        color = Color(0xFF1E88E5),
+                        fontWeight = FontWeight.SemiBold,
+                        modifier = Modifier
+                            .clickable {
+                                if (account == null) {
+                                    navController.navigate(Screen.LoginScreen.route)
+                                } else {
+                                    navController.navigate(
+                                        Screen.Favorites_Screen.route +
+                                                "?idCustomer=${account.idPerson}&username=${account.username}"
+                                    )
+                                }
+                            }
+                            .padding(end = 20.dp)
+                    )
+                }
+                if (listDeviceLiked.isEmpty()) {
+                    Text(
+                        text = "Chưa có sản phẩm yêu thích",
+                        color = Color(0xFF616161),
+                        fontSize = 14.sp,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp),
+                        textAlign = TextAlign.Center
+                    )
+                } else {
+                    LazyRow(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp),
+                        horizontalArrangement = Arrangement.spacedBy(16.dp)
+                    ) {
+                        items(listDeviceLiked) { device ->
+                            if (account != null) {
+                                CardFavorites(
+                                    device = device,
+                                    isFavorite = isFavorite,
+                                    idCustomer = account.idPerson,
+                                    username = account.username,
+                                    deviceViewModel = deviceViewModel,
+                                    navController = navController
+                                )
+                            }
+                        }
                     }
                 }
             }
+            item {
+                SectionTitle("Tất cả sản phẩm")
+            }
+            val pairedDevices = listAllDevice.chunked(2)
+            items(pairedDevices) { pair ->
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 12.dp, vertical = 4.dp),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    pair.forEach { device ->
+                        Box(
+                            modifier = Modifier
+                                .weight(1f)
+                        ) {
+                            CardDevice(
+                                device = device,
+                                isFavorite = isFavorite,
+                                idCustomer = account?.idPerson,
+                                username = username,
+                                deviceViewModel = deviceViewModel,
+                                navController = navController
+                            )
+                        }
+                        if (pair.size == 1) {
+                            Box(modifier = Modifier.weight(1f))
+                        }
+                    }
+                }
+            }
+            item { Spacer(modifier = Modifier.height(40.dp)) }
         }
-        item { Spacer(modifier = Modifier.height(40.dp)) }
     }
 }
 

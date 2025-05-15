@@ -260,8 +260,11 @@ fun UpdateRatingScreen(navController: NavController, idReview: Int, idCustomer: 
                         .fillMaxWidth()
                         .height(150.dp),
                     shape = RoundedCornerShape(8.dp),
-                    colors = TextFieldDefaults.outlinedTextFieldColors(
-                        focusedBorderColor = Color(0xFF5D9EFF),
+                    colors = TextFieldDefaults.colors(
+                        focusedIndicatorColor = Color(0xFF5D9EFF),
+                        focusedLabelColor = Color(0xFF5D9EFF),
+                        unfocusedContainerColor = Color.White,
+                        focusedContainerColor = Color.White,
                         cursorColor = Color(0xFF5D9EFF)
                     ),
                     maxLines = 5

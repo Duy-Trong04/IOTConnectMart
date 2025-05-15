@@ -276,7 +276,7 @@ fun ProductDetailsScreen(
                         )
                     }
                 },
-                colors = TopAppBarDefaults.smallTopAppBarColors(
+                colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = Color(0xFF5D9EFF),
                     titleContentColor = Color.White
                 ),
