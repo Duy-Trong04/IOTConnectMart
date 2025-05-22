@@ -68,8 +68,6 @@ import com.example.ungdungbanthietbi_iot.navigation.Screen
 import com.example.ungdungbanthietbi_iot.utils.formatGiaTien
 import com.example.ungdungbanthietbi_iot.utils.getCurrentTimestamp
 import java.text.DecimalFormat
-import java.time.LocalDate
-import java.time.format.DateTimeFormatter
 
 
 /** Giao diện màn hình thanh toán (CheckoutScreen)
@@ -315,7 +313,7 @@ fun CheckoutScreen(
                                         color = Color(0xFF5D9EFF),
                                         modifier = Modifier.clickable {
                                             //navController.navigate("${Screen.Address_Selection.route}?idCustomer=${customer?.id}")
-                                            navController.navigate("${Screen.Address_Selection.route}?idCustomer=${customer?.id}&selectedAddressId=${address?.id}")
+                                            navController.navigate("${Screen.Address_Selection.route}?idCustomer=${customer?.id}&selectedAddressId=${address.id}")
                                         }
                                     )
                                 }
@@ -432,7 +430,7 @@ fun CheckoutScreen(
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
                             Text("Tổng tiền hàng")
-                            Text(text = "${formatGiaTien(tongtien)}")
+                            Text(text = formatGiaTien(tongtien))
                         }
                         Row(
                             modifier = Modifier.fillMaxWidth(),

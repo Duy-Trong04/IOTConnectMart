@@ -92,7 +92,8 @@ fun SearchResultsScreen(
     LaunchedEffect(query) {
         if (!query.isNullOrEmpty()) {
             deviceViewModel.updateSearchQuery(query)
-            deviceViewModel.searchDevice(query, query) // Tìm kiếm theo name hoặc des
+            deviceViewModel.searchDevice("", query) // Tìm kiếm theo name hoặc des
+            deviceViewModel.searchDevice(query, "")
         }
     }
 

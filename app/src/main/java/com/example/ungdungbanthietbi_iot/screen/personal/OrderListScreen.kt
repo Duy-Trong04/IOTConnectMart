@@ -31,11 +31,13 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Divider
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.ScrollableTabRow
 import androidx.compose.material3.TabRowDefaults
+import androidx.compose.material3.TabRowDefaults.SecondaryIndicator
 import androidx.compose.material3.TabRowDefaults.tabIndicatorOffset
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
@@ -68,11 +70,20 @@ import com.example.ungdungbanthietbi_iot.utils.formatGiaTien
 import java.text.DecimalFormat
 import java.util.Locale
 
+enum class OrderStatus(val value: Int, val displayName: String) {
+    CHO_XAC_NHAN(1, "Chờ xác nhận"),
+    CHO_LAY_HANG(2, "Đang chuẩn bị hàng"),
+    CHO_GIAO_HANG(3, "Đang giao hàng"),
+    DA_GIAO(4, "Đã giao"),
+    HOAN_TAT(5, "Hoàn tất"),
+    DA_HUY(-1, "Đã hủy")
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun OrderListScreen(navController: NavController, idCustomer: String?) {
     var selectedTabIndexItem by rememberSaveable { mutableStateOf(0) }
-    val tabs = listOf("Chờ xác nhận", "Chờ lấy hàng", "Chờ giao hàng", "Đã giao", "Hoàn tất", "Đã hủy")
+    val tabs = OrderStatus.values().map { it.displayName }
     Scaffold(
         containerColor = Color.White,
         topBar = {
@@ -83,7 +94,8 @@ fun OrderListScreen(navController: NavController, idCustomer: String?) {
                     titleContentColor = Color.White
                 ),
                 title = {
-                    Text(text = "Đơn đã mua",
+                    Text(
+                        text = "Đơn đã mua",
                         fontWeight = FontWeight.Bold,
                         modifier = Modifier.fillMaxWidth(),
                         textAlign = TextAlign.Start
@@ -113,7 +125,7 @@ fun OrderListScreen(navController: NavController, idCustomer: String?) {
                 contentColor = Color(0xFF5D9EFF),
                 containerColor = Color.White,
                 indicator = { tabPositions ->
-                    TabRowDefaults.Indicator(
+                    SecondaryIndicator(
                         modifier = Modifier
                             .tabIndicatorOffset(tabPositions[selectedTabIndexItem]),
                         color = Color(0xFF5D9EFF)
@@ -148,12 +160,12 @@ fun OrderListScreen(navController: NavController, idCustomer: String?) {
                     .fillMaxSize()
             ) {
                 when (selectedTabIndexItem) {
-                    0 -> ChoXacNhanScreen(navController,idCustomer)
-                    1 -> ChoLayHangScreen(navController,idCustomer)
+                    0 -> ChoXacNhanScreen(navController, idCustomer)
+                    1 -> ChoLayHangScreen(navController, idCustomer)
                     2 -> ChoGiaoHangScreen(navController, idCustomer)
                     3 -> DaGiaoHangScreen(navController, idCustomer)
-                    4 -> HoanTatScreen(navController,idCustomer)
-                    5 -> HuyDonHangScreen(navController,idCustomer)
+                    4 -> HoanTatScreen(navController, idCustomer)
+                    5 -> HuyDonHangScreen(navController, idCustomer)
                 }
             }
         }
@@ -161,29 +173,28 @@ fun OrderListScreen(navController: NavController, idCustomer: String?) {
 }
 
 @Composable
-fun DaGiaoHangScreen(navController: NavController, idCustomer: String?){
-    val orderViewModel:OrderViewModel = viewModel()
+fun DaGiaoHangScreen(navController: NavController, idCustomer: String?) {
+    val orderViewModel: OrderViewModel = viewModel()
     val orderDetailViewModel: OrderDetailViewModel = viewModel()
     val deviceViewModel: DeviceViewModel = viewModel()
     val listOrder by orderViewModel.listOrderOfCustomer.collectAsState()
 
-    val isLoading =  remember { mutableStateOf(false) }
-
+    val isLoading = remember { mutableStateOf(false) }
     val errorMessage = remember { mutableStateOf<String?>(null) }
 
     LaunchedEffect(key1 = idCustomer) {
         if (idCustomer != null) {
-            isLoading.value = true // Bắt đầu tải dữ liệu
+            isLoading.value = true
             errorMessage.value = null
             try {
                 orderViewModel.getOrderByCustomer(
                     idCustomer,
-                    4
+                    OrderStatus.DA_GIAO.value
                 )
             } catch (e: Exception) {
                 errorMessage.value = "Lỗi khi tải dữ liệu: ${e.message}"
             } finally {
-                isLoading.value = false // Kết thúc tải dữ liệu
+                isLoading.value = false
             }
         }
     }
@@ -224,7 +235,7 @@ fun DaGiaoHangScreen(navController: NavController, idCustomer: String?){
                         .padding(4.dp)
                 ) {
                     items(listOrder) { order ->
-                        OrderItem(order,navController, false, orderViewModel, orderDetailViewModel, deviceViewModel)
+                        OrderItem(order, navController, false, orderViewModel, orderDetailViewModel, deviceViewModel)
                     }
                 }
             }
@@ -233,29 +244,28 @@ fun DaGiaoHangScreen(navController: NavController, idCustomer: String?){
 }
 
 @Composable
-fun HoanTatScreen(navController: NavController, idCustomer: String?){
-    val orderViewModel:OrderViewModel = viewModel()
+fun HoanTatScreen(navController: NavController, idCustomer: String?) {
+    val orderViewModel: OrderViewModel = viewModel()
     val orderDetailViewModel: OrderDetailViewModel = viewModel()
     val deviceViewModel: DeviceViewModel = viewModel()
     val listOrder by orderViewModel.listOrderOfCustomer.collectAsState()
 
-    val isLoading =  remember { mutableStateOf(false) }
-
+    val isLoading = remember { mutableStateOf(false) }
     val errorMessage = remember { mutableStateOf<String?>(null) }
 
     LaunchedEffect(key1 = idCustomer) {
         if (idCustomer != null) {
-            isLoading.value = true // Bắt đầu tải dữ liệu
+            isLoading.value = true
             errorMessage.value = null
             try {
                 orderViewModel.getOrderByCustomer(
                     idCustomer,
-                    5
+                    OrderStatus.HOAN_TAT.value
                 )
             } catch (e: Exception) {
                 errorMessage.value = "Lỗi khi tải dữ liệu: ${e.message}"
             } finally {
-                isLoading.value = false // Kết thúc tải dữ liệu
+                isLoading.value = false
             }
         }
     }
@@ -283,7 +293,7 @@ fun HoanTatScreen(navController: NavController, idCustomer: String?){
 
             listOrder.isEmpty() -> {
                 Text(
-                    text = "Không có hóa đơn nào đã giao.",
+                    text = "Không có hóa đơn nào đã hoàn tất.",
                     modifier = Modifier.align(Alignment.Center),
                     textAlign = TextAlign.Center,
                 )
@@ -296,7 +306,7 @@ fun HoanTatScreen(navController: NavController, idCustomer: String?){
                         .padding(4.dp)
                 ) {
                     items(listOrder) { order ->
-                        OrderItem(order,navController, false, orderViewModel, orderDetailViewModel, deviceViewModel)
+                        OrderItem(order, navController, false, orderViewModel, orderDetailViewModel, deviceViewModel)
                     }
                 }
             }
@@ -305,29 +315,28 @@ fun HoanTatScreen(navController: NavController, idCustomer: String?){
 }
 
 @Composable
-fun ChoGiaoHangScreen(navController: NavController, idCustomer: String?){
-    val orderViewModel:OrderViewModel = viewModel()
+fun ChoGiaoHangScreen(navController: NavController, idCustomer: String?) {
+    val orderViewModel: OrderViewModel = viewModel()
     val orderDetailViewModel: OrderDetailViewModel = viewModel()
     val deviceViewModel: DeviceViewModel = viewModel()
     val listOrder by orderViewModel.listOrderOfCustomer.collectAsState()
 
-    val isLoading =  remember { mutableStateOf(false) }
-
+    val isLoading = remember { mutableStateOf(false) }
     val errorMessage = remember { mutableStateOf<String?>(null) }
 
     LaunchedEffect(key1 = idCustomer) {
         if (idCustomer != null) {
-            isLoading.value = true // Bắt đầu tải dữ liệu
+            isLoading.value = true
             errorMessage.value = null
             try {
                 orderViewModel.getOrderByCustomer(
                     idCustomer,
-                    3
+                    OrderStatus.CHO_GIAO_HANG.value
                 )
             } catch (e: Exception) {
                 errorMessage.value = "Lỗi khi tải dữ liệu: ${e.message}"
             } finally {
-                isLoading.value = false // Kết thúc tải dữ liệu
+                isLoading.value = false
             }
         }
     }
@@ -368,7 +377,7 @@ fun ChoGiaoHangScreen(navController: NavController, idCustomer: String?){
                         .padding(4.dp)
                 ) {
                     items(listOrder) { order ->
-                        OrderItem(order,navController, false, orderViewModel, orderDetailViewModel, deviceViewModel)
+                        OrderItem(order, navController, false, orderViewModel, orderDetailViewModel, deviceViewModel)
                     }
                 }
             }
@@ -376,36 +385,29 @@ fun ChoGiaoHangScreen(navController: NavController, idCustomer: String?){
     }
 }
 
-
 @Composable
-fun HuyDonHangScreen(navController: NavController,idCustomer: String?) {
-    // Lấy ViewModel
+fun HuyDonHangScreen(navController: NavController, idCustomer: String?) {
     val orderViewModel: OrderViewModel = viewModel()
     val orderDetailViewModel: OrderDetailViewModel = viewModel()
     val deviceViewModel: DeviceViewModel = viewModel()
-    // Quan sát danh sách hóa đơn thông qua StateFlow
     val listOrder by orderViewModel.listOrderOfCustomer.collectAsState()
 
-    // Trạng thái đang tải
     val isLoading = remember { mutableStateOf(false) }
-
-    // Trạng thái lỗi (nếu có)
     val errorMessage = remember { mutableStateOf<String?>(null) }
 
-    // Hàm gọi API để lấy danh sách hóa đơn
     LaunchedEffect(key1 = idCustomer) {
         if (idCustomer != null) {
-            isLoading.value = true // Bắt đầu tải dữ liệu
+            isLoading.value = true
             errorMessage.value = null
             try {
                 orderViewModel.getOrderByCustomer(
                     idCustomer,
-                    6
+                    OrderStatus.DA_HUY.value
                 )
             } catch (e: Exception) {
                 errorMessage.value = "Lỗi khi tải dữ liệu: ${e.message}"
             } finally {
-                isLoading.value = false // Kết thúc tải dữ liệu
+                isLoading.value = false
             }
         }
     }
@@ -446,7 +448,7 @@ fun HuyDonHangScreen(navController: NavController,idCustomer: String?) {
                         .padding(4.dp)
                 ) {
                     items(listOrder) { order ->
-                        OrderItem(order,navController, false, orderViewModel, orderDetailViewModel, deviceViewModel)
+                        OrderItem(order, navController, false, orderViewModel, orderDetailViewModel, deviceViewModel)
                     }
                 }
             }
@@ -454,35 +456,29 @@ fun HuyDonHangScreen(navController: NavController,idCustomer: String?) {
     }
 }
 
-
 @Composable
-fun ChoLayHangScreen(navController: NavController,idCustomer: String?) {
+fun ChoLayHangScreen(navController: NavController, idCustomer: String?) {
     val orderViewModel: OrderViewModel = viewModel()
     val orderDetailViewModel: OrderDetailViewModel = viewModel()
     val deviceViewModel: DeviceViewModel = viewModel()
-    // Quan sát danh sách hóa đơn thông qua StateFlow
     val listOrder by orderViewModel.listOrderOfCustomer.collectAsState()
 
-    // Trạng thái đang tải
     val isLoading = remember { mutableStateOf(false) }
-
-    // Trạng thái lỗi (nếu có)
     val errorMessage = remember { mutableStateOf<String?>(null) }
 
-    // Hàm gọi API để lấy danh sách hóa đơn
     LaunchedEffect(key1 = idCustomer) {
         if (idCustomer != null) {
-            isLoading.value = true // Bắt đầu tải dữ liệu
+            isLoading.value = true
             errorMessage.value = null
             try {
                 orderViewModel.getOrderByCustomer(
                     idCustomer,
-                    2
+                    OrderStatus.CHO_LAY_HANG.value
                 )
             } catch (e: Exception) {
                 errorMessage.value = "Lỗi khi tải dữ liệu: ${e.message}"
             } finally {
-                isLoading.value = false // Kết thúc tải dữ liệu
+                isLoading.value = false
             }
         }
     }
@@ -510,7 +506,7 @@ fun ChoLayHangScreen(navController: NavController,idCustomer: String?) {
 
             listOrder.isEmpty() -> {
                 Text(
-                    text = "Không có hóa đơn nào đang chờ lấy hàng.",
+                    text = "Không có hóa đơn nào đang chuẩn bị hàng",
                     modifier = Modifier.align(Alignment.Center),
                     textAlign = TextAlign.Center,
                 )
@@ -523,7 +519,7 @@ fun ChoLayHangScreen(navController: NavController,idCustomer: String?) {
                         .padding(4.dp)
                 ) {
                     items(listOrder) { order ->
-                        OrderItem(order,navController, false, orderViewModel, orderDetailViewModel, deviceViewModel)
+                        OrderItem(order, navController, false, orderViewModel, orderDetailViewModel, deviceViewModel)
                     }
                 }
             }
@@ -532,33 +528,28 @@ fun ChoLayHangScreen(navController: NavController,idCustomer: String?) {
 }
 
 @Composable
-fun ChoXacNhanScreen(navController: NavController,idCustomer: String?) {
+fun ChoXacNhanScreen(navController: NavController, idCustomer: String?) {
     val orderViewModel: OrderViewModel = viewModel()
     val orderDetailViewModel: OrderDetailViewModel = viewModel()
     val deviceViewModel: DeviceViewModel = viewModel()
-    // Quan sát danh sách hóa đơn thông qua StateFlow
     val listOrder by orderViewModel.listOrderOfCustomer.collectAsState()
 
-    // Trạng thái đang tải
     val isLoading = remember { mutableStateOf(false) }
-
-    // Trạng thái lỗi (nếu có)
     val errorMessage = remember { mutableStateOf<String?>(null) }
 
-    // Hàm gọi API để lấy danh sách hóa đơn
     LaunchedEffect(key1 = idCustomer) {
         if (idCustomer != null) {
-            isLoading.value = true // Bắt đầu tải dữ liệu
+            isLoading.value = true
             errorMessage.value = null
             try {
                 orderViewModel.getOrderByCustomer(
                     idCustomer,
-                    1 // Trạng thái "Chờ xác nhận"
+                    OrderStatus.CHO_XAC_NHAN.value
                 )
             } catch (e: Exception) {
                 errorMessage.value = "Lỗi khi tải dữ liệu: ${e.message}"
             } finally {
-                isLoading.value = false // Kết thúc tải dữ liệu
+                isLoading.value = false
             }
         }
     }
@@ -599,7 +590,7 @@ fun ChoXacNhanScreen(navController: NavController,idCustomer: String?) {
                         .padding(4.dp)
                 ) {
                     items(listOrder) { order ->
-                        OrderItem(order,navController, true, orderViewModel, orderDetailViewModel, deviceViewModel)
+                        OrderItem(order, navController, true, orderViewModel, orderDetailViewModel, deviceViewModel)
                     }
                 }
             }
@@ -607,17 +598,15 @@ fun ChoXacNhanScreen(navController: NavController,idCustomer: String?) {
     }
 }
 
-
 @Composable
 fun OrderItem(
     order: Order,
     navController: NavController,
     isCancel: Boolean,
-    orderViewModel:OrderViewModel,
+    orderViewModel: OrderViewModel,
     orderDetailViewModel: OrderDetailViewModel,
     deviceViewModel: DeviceViewModel
 ) {
-
     val reviewViewModel: ReviewViewModel = viewModel()
     val customerViewModel: CustomerViewModel = viewModel()
     val customer = customerViewModel.customer
@@ -635,14 +624,14 @@ fun OrderItem(
     val listDetail by remember(order.id) {
         derivedStateOf { orderDetailViewModel.orderDetailsByOrder[order.id] ?: emptyList() }
     }
-    // Map để lưu trạng thái đánh giá cho từng sản phẩm
+
     var reviewState by remember { mutableStateOf<Map<Int, Pair<Review?, Review?>>>(emptyMap()) }
-    // Chạy lại bất cứ khi nào `listDevice` hoặc `customer` thay đổi
+    var isReviewLoading by remember { mutableStateOf(true) }
+
     LaunchedEffect(listDevice, customer) {
         if (customer != null && listDevice.isNotEmpty()) {
             val newReviewState = mutableMapOf<Int, Pair<Review?, Review?>>()
             listDevice.forEach { device ->
-                // Khởi tạo null để Compose hiển thị loading (hoặc tránh miss key)
                 reviewViewModel.initReviewCheck(device.idDevice)
                 reviewViewModel.checkReview(customer.id, device.idDevice)
                 reviewViewModel.checkReview2(customer.id, device.idDevice)
@@ -651,8 +640,12 @@ fun OrderItem(
                 newReviewState[device.idDevice] = Pair(reviewFirst, reviewSecond)
             }
             reviewState = newReviewState
+            isReviewLoading = false
+        } else {
+            isReviewLoading = false
         }
     }
+
     Card(
         colors = CardDefaults.cardColors(
             containerColor = Color.White
@@ -674,17 +667,16 @@ fun OrderItem(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Column(
-                modifier = Modifier.weight(1f) // Cột chiếm không gian linh hoạt
+                modifier = Modifier.weight(1f)
             ) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
-                ){
+                ) {
                     Text(
                         text = "Mã đơn hàng: #HD${order.id}",
                     )
-                    // Nút Hủy
                     if (isCancel) {
                         Box(
                             modifier = Modifier
@@ -697,7 +689,7 @@ fun OrderItem(
                                     containerColor = Color(0xFF5D9EFF)
                                 ),
                                 shape = RoundedCornerShape(5.dp),
-                                onClick =  {
+                                onClick = {
                                     val orderNew = Order(
                                         order.id,
                                         order.idCustomer,
@@ -713,7 +705,8 @@ fun OrderItem(
                                         order.updated_at,
                                         order.accept_at,
                                         order.idEmployee,
-                                        6)
+                                        OrderStatus.DA_HUY.value
+                                    )
                                     orderViewModel.updateOrder(orderNew)
                                 }
                             ) {
@@ -723,7 +716,7 @@ fun OrderItem(
                     }
                 }
 
-                Column() {
+                Column {
                     listDevice.forEach { device ->
                         Row(
                             modifier = Modifier.fillMaxWidth(),
@@ -751,7 +744,7 @@ fun OrderItem(
                                         modifier = Modifier.fillMaxWidth(),
                                         horizontalArrangement = Arrangement.SpaceBetween,
                                         verticalAlignment = Alignment.CenterVertically
-                                    ){
+                                    ) {
                                         Row(
                                             verticalAlignment = Alignment.CenterVertically
                                         ) {
@@ -771,25 +764,23 @@ fun OrderItem(
                                                 }
                                             }
                                         }
-                                        if (order.status == 5) {
+                                        if (order.status == OrderStatus.HOAN_TAT.value && !isReviewLoading) {
                                             val (reviewFirst, reviewSecond) = reviewState[device.idDevice] ?: Pair(null, null)
                                             val isSecondOrLaterPurchase = reviewFirst != null
                                             val hasReview = if (isSecondOrLaterPurchase) {
-                                                reviewSecond != null // Chỉ coi là có đánh giá nếu đã có reviewSecond
+                                                reviewSecond != null
                                             } else {
-                                                reviewFirst != null || reviewSecond != null // Mua lần đầu thì kiểm tra cả hai
+                                                reviewFirst != null || reviewSecond != null
                                             }
                                             if (!hasReview) {
                                                 Button(
                                                     onClick = {
                                                         if (isSecondOrLaterPurchase && reviewFirst != null) {
-                                                            // Mua lần thứ hai hoặc tiếp theo: điều hướng đến Update_Rating_Screen
                                                             navController.navigate(
                                                                 Screen.Update_Rating_Screen.route +
                                                                         "?idReview=${reviewFirst.idReview}&idCustomer=${customer!!.id}"
                                                             )
                                                         } else {
-                                                            // Mua lần đầu: điều hướng đến Rating_Screen
                                                             navController.navigate(
                                                                 Screen.Rating_Screen.route +
                                                                         "?idCustomer=${customer!!.id}&idDevice=${device.idDevice}"
@@ -806,14 +797,14 @@ fun OrderItem(
                                                 }
                                             } else {
                                                 val reviewToEdit = reviewSecond ?: reviewFirst
-                                                // Kiểm tra thời gian từ khi tạo đánh giá
-                                                val daysSinceReviewCreated = reviewToEdit?.created_at?.let { createdAt ->
+                                                val daysSinceReviewCreated = reviewToEdit?.created_at?.let {
+
+                                                        createdAt ->
                                                     calculateDaysSinceReceived(createdAt)
                                                 } ?: Int.MAX_VALUE
                                                 if (daysSinceReviewCreated <= 10) {
                                                     Button(
                                                         onClick = {
-                                                            val reviewToEdit = reviewSecond ?: reviewFirst
                                                             navController.navigate(
                                                                 Screen.Update_Rating_Screen.route +
                                                                         "?idReview=${reviewToEdit!!.idReview}&idCustomer=${customer!!.id}"
@@ -833,9 +824,8 @@ fun OrderItem(
                                     }
                                 }
                             }
-
                         }
-                        Divider()
+                        HorizontalDivider()
                     }
                 }
                 Spacer(modifier = Modifier.height(8.dp))

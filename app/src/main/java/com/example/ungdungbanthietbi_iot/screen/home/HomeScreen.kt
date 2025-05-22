@@ -2,7 +2,6 @@ package com.example.ungdungbanthietbi_iot.screen.home
 
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.ExperimentalAnimationApi
-import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
@@ -29,8 +28,6 @@ import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.grid.GridCells
-import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.pager.HorizontalPager
@@ -44,11 +41,9 @@ import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material.icons.filled.Home
-import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Search
-import androidx.compose.material.icons.filled.ShoppingCart
 import androidx.compose.material.icons.outlined.ShoppingCart
 import androidx.compose.material3.BottomAppBar
 import androidx.compose.material3.Card
@@ -62,13 +57,11 @@ import androidx.compose.material3.FloatingActionButtonDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalDrawerSheet
 import androidx.compose.material3.ModalNavigationDrawer
 import androidx.compose.material3.NavigationDrawerItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
@@ -86,15 +79,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.draw.scale
-import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -105,7 +95,6 @@ import androidx.navigation.NavController
 import coil.compose.AsyncImage
 import coil.compose.rememberImagePainter
 import coil.request.ImageRequest
-import com.example.ungdungbanthietbi_iot.R
 import com.example.ungdungbanthietbi_iot.data.account.Account
 import com.example.ungdungbanthietbi_iot.data.account.AccountViewModel
 import com.example.ungdungbanthietbi_iot.data.device.Device
@@ -120,7 +109,6 @@ import kotlinx.coroutines.launch
 import com.example.ungdungbanthietbi_iot.data.cart.CartViewModel
 import com.example.ungdungbanthietbi_iot.screen.notification.NotificationScreen
 import com.example.ungdungbanthietbi_iot.screen.personal.PersonalScreen
-import com.example.ungdungbanthietbi_iot.screen.signUp_signIn.LoginScreen
 import com.example.ungdungbanthietbi_iot.utils.formatGiaTien
 
 data class Category(
@@ -139,9 +127,9 @@ fun HomeScreen(
 ) {
     deviceViewModel.getAllDevice()
     deviceViewModel.getDeviceFeatured()
-    var listAllDevice: List<Device> = deviceViewModel.listAllDevice
-    var listDeviceFeatured: List<Device> = deviceViewModel.listDeviceFeatured
-    var listSlideShow = slideShowViewModel.listSlideShow
+    val listAllDevice: List<Device> = deviceViewModel.listAllDevice
+    val listDeviceFeatured: List<Device> = deviceViewModel.listDeviceFeatured
+    val listSlideShow = slideShowViewModel.listSlideShow
 
     LaunchedEffect(Unit) {
         slideShowViewModel.getAllSlideShow()
@@ -372,7 +360,7 @@ fun HomeScreen(
                     contentColor = Color.Black,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .offset(y = 16.dp) // Dịch chuyển BottomAppBar xuống 16dp
+                        //.offset(y = 16.dp) // Dịch chuyển BottomAppBar xuống 16dp
                 ) {
                     Row(
                         modifier = Modifier
@@ -520,7 +508,7 @@ fun HomeContent(
                 if (listSlideShow.isNotEmpty()) {
                     val pagerState = rememberPagerState(
                         initialPage = 0,
-                        pageCount = { listSlideShow.size } // Không cần Int.MAX_VALUE
+                        pageCount = { listSlideShow.size }
                     )
                     val coroutineScope = rememberCoroutineScope()
                     // Tự động chuyển slide
@@ -552,7 +540,7 @@ fun HomeContent(
                             val isActive = index == pagerState.currentPage
                             val animatedWidth by animateFloatAsState(
                                 targetValue = if (isActive) 24f else 8f,
-                                animationSpec = tween(300)
+                                animationSpec = tween(300), label = ""
                             )
                             Box(
                                 modifier = Modifier
@@ -564,7 +552,8 @@ fun HomeContent(
                                         ),
                                         shape = RoundedCornerShape(2.dp)
                                     )
-                                    .clickable { /* currentIndex = index */// Chuyển đến slide khi nhấp vào chấm
+                                    .clickable {
+                                        // Chuyển đến slide khi nhấp vào chấm
                                         coroutineScope.launch {
                                             pagerState.animateScrollToPage(index)
                                         }
@@ -739,7 +728,7 @@ fun NavItem(
 ) {
     val scale by animateFloatAsState(
         targetValue = if (isSelected) 1.1f else 1f,
-        animationSpec = tween(200)
+        animationSpec = tween(200), label = ""
     )
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -1032,7 +1021,7 @@ fun SlideImage(painter: Painter) {
     AnimatedContent(
         targetState = painter,
         modifier = Modifier.fillMaxSize(),
-        transitionSpec = { fadeIn() with fadeOut() }
+        transitionSpec = { fadeIn() with fadeOut() }, label = ""
     ) { targetPainter ->
         Image(
             painter = targetPainter,

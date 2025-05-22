@@ -92,11 +92,11 @@ fun OrderDetailsScreen(
     val customerViewModel: CustomerViewModel = viewModel()
     val reviewViewModel: ReviewViewModel = viewModel()
 
-    var order = orderViewModel.order
-    var address = addressViewModel.address
-    var listOrderDetail = orderDetailViewModel.listOrderDetail
-    var listDevice = deviceViewModel.listDeviceByOrder
-    var customer = customerViewModel.customer
+    val order = orderViewModel.order
+    val address = addressViewModel.address
+    val listOrderDetail = orderDetailViewModel.listOrderDetail
+    val listDevice = deviceViewModel.listDeviceByOrder
+    val customer = customerViewModel.customer
 
     // Map để lưu trạng thái đánh giá cho từng sản phẩm
     var reviewState by remember { mutableStateOf<Map<Int, Pair<Review?, Review?>>>(emptyMap()) }
@@ -177,7 +177,7 @@ fun OrderDetailsScreen(
                             orderViewModel.updateOrder(orderNew)
 
                             scope.launch {
-                                listOrderDetail?.forEach { device ->
+                                listOrderDetail.forEach { device ->
                                     val reviewFromApi = reviewViewModel.checkReviewDirect(
                                         idCustomer = customer!!.id,
                                         idDevice = device.idDevice,
@@ -238,8 +238,8 @@ fun OrderDetailsScreen(
                         Text(
                             text = when (order?.status) {
                                 1 -> "Chờ xác nhận"
-                                2 -> "Chờ lấy hàng"
-                                3 -> "Chờ giao hàng"
+                                2 -> "Đang chuẩn bị hàng"
+                                3 -> "Đang giao hàng"
                                 4 -> "Đã giao"
                                 5 -> "Hoàn tất"
                                 else -> "Đã hủy"
@@ -263,8 +263,8 @@ fun OrderDetailsScreen(
                         )
                     }
                     Card(
-                        shape = RoundedCornerShape(8.dp),
-                        elevation = CardDefaults.cardElevation(4.dp),
+                        shape = RoundedCornerShape(5.dp),
+                        elevation = CardDefaults.cardElevation(1.dp),
                         modifier = Modifier.fillMaxWidth(),
                         colors = CardDefaults.cardColors(
                             containerColor = Color.White
@@ -285,7 +285,7 @@ fun OrderDetailsScreen(
                 }
             }
             item {
-                if (listDevice != null && order != null) {
+                if (order != null) {
                     Spacer(modifier = Modifier.height(16.dp))
                     Text(
                         text = "Danh sách sản phẩm",
@@ -294,8 +294,8 @@ fun OrderDetailsScreen(
                         modifier = Modifier.padding(bottom = 8.dp)
                     )
                     Card(
-                        shape = RoundedCornerShape(8.dp),
-                        elevation = CardDefaults.cardElevation(4.dp),
+                        shape = RoundedCornerShape(5.dp),
+                        elevation = CardDefaults.cardElevation(1.dp),
                         modifier = Modifier.fillMaxWidth(),
                         colors = CardDefaults.cardColors(
                             containerColor = Color.White

@@ -3,7 +3,6 @@ package com.example.ungdungbanthietbi_iot.screen.product_detail
 
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.ExperimentalAnimationApi
-import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
@@ -11,9 +10,7 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.with
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -36,32 +33,25 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.AccountBox
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.AddShoppingCart
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material.icons.filled.Remove
 import androidx.compose.material.icons.filled.Search
-import androidx.compose.material.icons.filled.ShoppingCart
 import androidx.compose.material.icons.filled.Star
-import androidx.compose.material.icons.filled.SupportAgent
-import androidx.compose.material.icons.filled.ThumbUp
 import androidx.compose.material.icons.outlined.ShoppingCart
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.BottomAppBar
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.Divider
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Snackbar
-import androidx.compose.material3.SnackbarDefaults
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
@@ -79,7 +69,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.painter.Painter
-import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
@@ -94,7 +83,6 @@ import coil.compose.rememberImagePainter
 import com.example.ungdungbanthietbi_iot.R
 import com.example.ungdungbanthietbi_iot.data.account.AccountViewModel
 import com.example.ungdungbanthietbi_iot.data.address_book.AddressViewModel
-import com.example.ungdungbanthietbi_iot.data.cart.Cart
 import com.example.ungdungbanthietbi_iot.data.cart.CartEntity
 import com.example.ungdungbanthietbi_iot.data.cart.CartViewModel
 import com.example.ungdungbanthietbi_iot.data.customer.CustomerViewModel
@@ -109,7 +97,6 @@ import com.example.ungdungbanthietbi_iot.navigation.Screen
 import com.example.ungdungbanthietbi_iot.screen.home.CardDevice
 import com.example.ungdungbanthietbi_iot.utils.formatGiaTien
 import kotlinx.coroutines.delay
-import java.text.DecimalFormat
 import kotlin.math.roundToInt
 
 /** Giao diện màn hình Chi tiết sản phẩm(ProductDetailsScreen)
@@ -149,7 +136,7 @@ fun ProductDetailsScreen(
     }
     deviceViewModel.getDeviceBySlug(id)
     deviceViewModel.getAllDevice()
-    var listAllDevice : List<Device> = deviceViewModel.listAllDevice
+    val listAllDevice : List<Device> = deviceViewModel.listAllDevice
     device = deviceViewModel.device
 
     val customerViewModel: CustomerViewModel = viewModel()
@@ -490,7 +477,7 @@ fun ProductDetailsScreen(
                                         )
                                     },
                                     confirmButton = {
-                                        Row(){
+                                        Row {
                                             Button(
                                                 onClick = {
                                                     showDialog = false
@@ -569,7 +556,7 @@ fun ProductDetailsScreen(
                                 val isActive = index == currentIndex
                                 val animatedWidth by animateFloatAsState(
                                     targetValue = if (isActive) 24f else 8f,
-                                    animationSpec = tween(300)
+                                    animationSpec = tween(300), label = ""
                                 )
                                 Box(
                                     modifier = Modifier
@@ -756,7 +743,7 @@ fun ProductDetailsScreen(
                             color = Color.Black,
                             fontSize = 16.sp
                         )
-                        Divider()
+                        HorizontalDivider()
                     }
                 }
                 item{
@@ -807,7 +794,7 @@ fun ProductDetailsScreen(
                     }
                 }
                 items(listReview.take(2)){
-                    CardReview(review = it, isChecked = isFavorite, onlick = {
+                    CardReview(review = it, onlick = {
                         navController.navigate(Screen.Product_Reviews.route + "?idDevice=${it.idDevice}")
                     },
                         id.toInt()
@@ -856,8 +843,7 @@ fun ProductDetailsScreen(
 }
 
 @Composable
-fun CardReview(review: Review, isChecked:Boolean, onlick:() -> Unit, id:Int){
-    var currentChecked by remember { mutableStateOf(isChecked) }
+fun CardReview(review: Review, onlick:() -> Unit, id:Int){
 
     val customerViewModel:CustomerViewModel = viewModel()
     val listCustomer = customerViewModel.listCustomerReviewDevice
@@ -876,7 +862,7 @@ fun CardReview(review: Review, isChecked:Boolean, onlick:() -> Unit, id:Int){
         onClick = onlick
     )
     {
-        Divider()
+        HorizontalDivider()
         Row(modifier = Modifier
             .fillMaxWidth()
             .padding(start = 5.dp, top = 5.dp)) {
@@ -885,7 +871,7 @@ fun CardReview(review: Review, isChecked:Boolean, onlick:() -> Unit, id:Int){
                 contentDescription = "avt",
                 modifier = Modifier.size(30.dp)
             )
-            Column() {
+            Column {
                 for (customer in listCustomer){
                     if(customer.id == review.idCustomer){
                         Text(text = "${customer.surname} ${customer.lastName}")
@@ -917,7 +903,7 @@ fun SlideImage(painter: Painter) {
     AnimatedContent(
         targetState = painter,
         modifier = Modifier.fillMaxSize(),
-        transitionSpec = { fadeIn() with fadeOut() }
+        transitionSpec = { fadeIn() with fadeOut() }, label = ""
     ) { targetPainter ->
         Image(
             painter = targetPainter,
