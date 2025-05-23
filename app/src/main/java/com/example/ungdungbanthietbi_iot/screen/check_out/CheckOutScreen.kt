@@ -205,7 +205,7 @@ fun CheckoutScreen(
                                     address = idAddress,
                                     accountNumber = "NULL",
                                     phone = phone,
-                                    nameRecipient = "NULL",
+                                    nameRecipient = "${customer!!.surname} ${customer.lastName}",
                                     note = "NULL",
                                     platformOrder = "Mobile",
                                     created_at = getCurrentTimestamp(),

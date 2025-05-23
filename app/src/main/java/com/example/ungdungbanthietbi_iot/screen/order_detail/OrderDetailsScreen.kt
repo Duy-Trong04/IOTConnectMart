@@ -272,12 +272,12 @@ fun OrderDetailsScreen(
                     ) {
                         Column(modifier = Modifier.padding(8.dp)) {
                             Text(
-                                text = "Họ và tên: ${customer?.surname} ${customer?.lastName}",
+                                text = "Họ và tên: ${order!!.nameRecipient}",
                                 fontSize = 16.sp
                             )
-                            Text(text = "Số điện thoại: ${customer?.phone}", fontSize = 16.sp)
+                            Text(text = "Số điện thoại: ${order.phone}", fontSize = 16.sp)
                             Text(
-                                text = "Địa chỉ: ${order!!.address}",
+                                text = "Địa chỉ: ${order.address}",
                                 fontSize = 16.sp
                             )
                         }
