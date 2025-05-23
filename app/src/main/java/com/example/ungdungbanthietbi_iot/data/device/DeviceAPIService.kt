@@ -33,4 +33,10 @@ interface DeviceAPIService {
     suspend fun getDeviceByIdOrder(
         @Query("id") id: Int
     ): DeviceResponse
+
+    @GET("device/searchDevice.php")
+    suspend fun searchDevice(
+        @Query("name") name: String,
+        @Query("des") des: String
+    ): DeviceResponse
 }

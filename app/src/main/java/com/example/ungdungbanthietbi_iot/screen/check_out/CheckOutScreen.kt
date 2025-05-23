@@ -36,6 +36,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -57,14 +58,16 @@ import com.example.ungdungbanthietbi_iot.data.cart.CartViewModel
 import com.example.ungdungbanthietbi_iot.data.customer.CustomerViewModel
 import com.example.ungdungbanthietbi_iot.data.device.Device
 import com.example.ungdungbanthietbi_iot.data.device.DeviceViewModel
+import com.example.ungdungbanthietbi_iot.data.notice.Notice
+import com.example.ungdungbanthietbi_iot.data.notice.NoticeViewModel
 import com.example.ungdungbanthietbi_iot.data.order.Order
 import com.example.ungdungbanthietbi_iot.data.order.OrderViewModel
 import com.example.ungdungbanthietbi_iot.data.order_detail.OrderDetail
 import com.example.ungdungbanthietbi_iot.data.order_detail.OrderDetailViewModel
 import com.example.ungdungbanthietbi_iot.navigation.Screen
+import com.example.ungdungbanthietbi_iot.utils.formatGiaTien
+import com.example.ungdungbanthietbi_iot.utils.getCurrentTimestamp
 import java.text.DecimalFormat
-import java.time.LocalDate
-import java.time.format.DateTimeFormatter
 
 
 /** Giao diện màn hình thanh toán (CheckoutScreen)
@@ -86,75 +89,82 @@ import java.time.format.DateTimeFormatter
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CheckoutScreen(
-    navController:NavController,
-    selectedProducts: List<Triple<Int, Int, Int>>, // Thay đổi kiểu thành danh sách
+    navController: NavController,
+    selectedProducts: List<Triple<Int, Int, Int>>,
     tongtien: Double,
-    username:String
+    username: String
 ) {
-
-    val ngayHienTai = LocalDate.now() // Lấy ngày hiện tại
-    val formattedDate = ngayHienTai.format(DateTimeFormatter.ofPattern("yyyy/MM/dd"))
-
-    val deviceViewModel:DeviceViewModel = viewModel()
-    val cartViewModel:CartViewModel = viewModel()
-    val accountViewModel:AccountViewModel = viewModel()
-    val addressViewModel:AddressViewModel = viewModel()
-    val orderViewModel:OrderViewModel = viewModel()
-    val orderDetailViewModel:OrderDetailViewModel = viewModel()
-    val customerViewModel:CustomerViewModel = viewModel()
+    val deviceViewModel: DeviceViewModel = viewModel()
+    val cartViewModel: CartViewModel = viewModel()
+    val accountViewModel: AccountViewModel = viewModel()
+    val addressViewModel: AddressViewModel = viewModel()
+    val orderViewModel: OrderViewModel = viewModel()
+    val orderDetailViewModel: OrderDetailViewModel = viewModel()
+    val customerViewModel: CustomerViewModel = viewModel()
+    val noticeViewModel:NoticeViewModel = viewModel()
 
 
-    // State để lưu danh sách sản phẩm đã lấy thông tin
     val listDevice by deviceViewModel.listDevice.collectAsState(initial = emptyList())
-
-    // State để lưu trữ lựa chọn phương thức thanh toán
     var selectedPaymentMethod by remember { mutableStateOf("Thanh toán khi nhận hàng (COD)") }
-
-    val addressDefault = addressViewModel.address
     val account = accountViewModel.account
+    val address = addressViewModel.address
     val customer = customerViewModel.customer
 
+    // Lấy selectedAddressId từ savedStateHandle
+    val selectedAddressId by navController.currentBackStackEntry
+        ?.savedStateHandle
+        ?.getStateFlow<Int?>("selectedAddressId", null)
+        ?.collectAsState() ?: remember { mutableStateOf(null) }
+
+    // Lấy thông tin tài khoản
     LaunchedEffect(username) {
         accountViewModel.getUserByUsername(username)
     }
 
-    if (account != null) {
-        LaunchedEffect(account) {
-            addressViewModel.getAddressDefault(account.idPerson, 1)
-
+    // Lấy địa chỉ: ưu tiên địa chỉ được chọn, nếu không thì lấy mặc định
+    LaunchedEffect(account, selectedAddressId) {
+        if (account != null) {
+            if (selectedAddressId != null) {
+                addressViewModel.getAddressById(selectedAddressId!!)
+            } else {
+                addressViewModel.getAddressDefault(account.idPerson, 1)
+            }
         }
     }
 
-    if(addressDefault != null){
-        LaunchedEffect (addressDefault){
-            customerViewModel.getCustomerById(addressDefault.idCustomer)
+    // Lấy thông tin khách hàng dựa trên địa chỉ
+    LaunchedEffect(address) {
+        if (address != null) {
+            customerViewModel.getCustomerById(address.idCustomer)
         }
     }
 
-    // Lấy thông tin sản phẩm khi màn hình được tạo
+    // Lấy thông tin sản phẩm
+    val loadedDeviceIds = remember { mutableStateListOf<String>() }
     LaunchedEffect(selectedProducts) {
+        deviceViewModel.clearDevices()
         selectedProducts.forEach { triple ->
-            deviceViewModel.getdeviceById2(triple.first.toString())
+            val deviceId = triple.first.toString()
+            if (!loadedDeviceIds.contains(deviceId)) {
+                deviceViewModel.getdeviceById2(deviceId)
+                loadedDeviceIds.add(deviceId)
+            }
         }
-    }
-
-    //Hàm format tiền
-    fun formatGiaTien(gia: Double): String {
-        val formatter = DecimalFormat("#,###,###")
-        return "${formatter.format(gia)}đ"
     }
 
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Thanh toán", modifier = Modifier.fillMaxWidth(),
-                    textAlign = TextAlign.Start,
-                    fontWeight = FontWeight.Bold
-                ) },
+                title = {
+                    Text(
+                        "Thanh toán",
+                        modifier = Modifier.fillMaxWidth(),
+                        textAlign = TextAlign.Start,
+                        fontWeight = FontWeight.Bold
+                    )
+                },
                 navigationIcon = {
-                    IconButton(onClick = {
-                        navController.popBackStack()
-                    }) {
+                    IconButton(onClick = { navController.popBackStack() }) {
                         Icon(imageVector = Icons.Filled.ArrowBack, contentDescription = "Back")
                     }
                 },
@@ -166,238 +176,161 @@ fun CheckoutScreen(
             )
         },
         bottomBar = {
-            BottomAppBar (
+            BottomAppBar(
                 containerColor = Color.Transparent,
                 modifier = Modifier.fillMaxWidth().height(165.dp)
-            ){
-                // Thanh hiển thị tổng giá và nút mua hàng
+            ) {
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(10.dp)
                 ) {
-                    // Hiển thị tổng giá thanh toán
                     Text(
                         "Tổng thanh toán: ${formatGiaTien(tongtien)}",
                         style = TextStyle(color = Color.Red, fontSize = 18.sp)
                     )
                     Spacer(modifier = Modifier.height(8.dp))
-                    // Nút mua hàng
                     Button(
                         modifier = Modifier.fillMaxWidth(),
                         onClick = {
-                            if(account != null && addressDefault != null){
-                                // Lấy mã khách hàng và địa chỉ
+                            if (account != null && address != null) {
                                 val idPerson = account.idPerson ?: ""
-                                val idAddress = "${addressDefault.street}, ${addressDefault.ward}, ${addressDefault.district}, ${addressDefault.city}, Việt Nam"
+                                val idAddress = "${address.street}, ${address.ward}, ${address.district}, ${address.city}, Việt Nam"
                                 val phone = customer?.phone ?: ""
-                                // Tạo đối tượng HoaDonBan
                                 val order = Order(
-                                    0, // id sẽ được tự động tạo khi insert vào DB
-                                    idPerson,
-                                    tongtien,
-                                    selectedPaymentMethod,
-                                    idAddress,
-                                    "NULL",
-                                    phone,
-                                    "NULL",
-                                    "NULL",
-                                    "Mobile",
-                                    formattedDate,
-                                    formattedDate,
-                                    formattedDate,
-                                    "EMP000001",
-                                    1 // Trạng thái thanh toán
+                                    id = 0,
+                                    idCustomer = idPerson,
+                                    totalAmount = tongtien,
+                                    paymentMethod = selectedPaymentMethod,
+                                    address = idAddress,
+                                    accountNumber = "NULL",
+                                    phone = phone,
+                                    nameRecipient = "NULL",
+                                    note = "NULL",
+                                    platformOrder = "Mobile",
+                                    created_at = getCurrentTimestamp(),
+                                    updated_at = "NULL",
+                                    accept_at = "NULL",
+                                    idEmployee = "EMP000001",
+                                    status = 1
                                 )
 
-                                // Thêm Order trước
                                 orderViewModel.addOrder(order)
 
-                                // Sau khi Order đã được thêm, tiếp tục thêm OrderDetail
-                                selectedProducts.forEach{triple ->
-                                    listDevice.forEach { device ->
-                                        if(device.idDevice == triple.first){
-                                            // Tạo đối tượng OrderDetail
-                                            val orderDetail = OrderDetail(
-                                                0,// id sẽ được tự động tạo khi insert vào DB
-                                                0, // idOrder cần phải lấy từ bảng order sau khi insert
-                                                device.idDevice,
-                                                device.sellingPrice,
-                                                triple.second,
-                                                device.sellingPrice,
-                                                0
-                                            )
+                                val notice = Notice(
+                                    id = 0,
+                                    idUser = idPerson,
+                                    idRole = "NULL",
+                                    text = "Đơn hàng của bạn đã được đặt thành công!",
+                                    type = "Đơn hàng",
+                                    created_at = getCurrentTimestamp(),
+                                    status = 1
+                                )
+                                noticeViewModel.addNotice(notice)
 
-                                            //Thêm OrderDetail vào db
+                                selectedProducts.forEach { triple ->
+                                    listDevice.forEach { device ->
+                                        if (device.idDevice == triple.first) {
+                                            val orderDetail = OrderDetail(
+                                                id = 0,
+                                                idOrder = 0,
+                                                idDevice = device.idDevice,
+                                                price = device.sellingPrice,
+                                                stock = triple.second,
+                                                amount = device.sellingPrice,
+                                                status = 0
+                                            )
                                             orderDetailViewModel.addOrderDetail(orderDetail)
                                         }
                                     }
                                 }
-                                // Xóa các sản phẩm khỏi giỏ hàng
+
                                 selectedProducts.forEach { triple ->
-                                    cartViewModel.deleteCart(triple.third)
+                                    if (triple.third != 0) {
+                                        account.idPerson?.let {
+                                            cartViewModel.deleteCart(triple.third,
+                                                it
+                                            )
+                                        }
+                                    }
                                 }
                             }
-                            navController.navigate(Screen.CheckOutSuccess.route +"?username=${username}"){
+                            navController.navigate("${Screen.CheckOutSuccess.route}?username=${username}") {
                                 popUpTo(0) { inclusive = true }
                             }
                         },
                         shape = RoundedCornerShape(5.dp),
                         elevation = ButtonDefaults.buttonElevation(5.dp),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = Color(0xFF5D9EFF)
-                        )
+                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF5D9EFF))
                     ) {
-                        Text("ĐẶT HÀNG",
-                            fontSize = 20.sp
-                        )
+                        Text("ĐẶT HÀNG", fontSize = 20.sp)
                     }
                 }
-//                Row(
-//                    modifier = Modifier
-//                        .fillMaxWidth()
-//                        .padding(8.dp),
-//                    verticalAlignment = Alignment.CenterVertically,
-//                    horizontalArrangement = Arrangement.SpaceBetween
-//                ) {
-//                    Text(
-//                        "Tổng thanh toán: ${formatGiaTien(tongtien)}",
-//                        style = TextStyle(fontWeight = FontWeight.Bold, fontSize = 18.sp),
-//                        color = Color.Red
-//                    )
-//                    Button(
-//                        onClick = {
-//                            if(account != null && addressDefault != null){
-//                                // Lấy mã khách hàng và địa chỉ
-//                                val idPerson = account.idPerson ?: ""
-//                                val idAddress = "${addressDefault.street}, ${addressDefault.ward}, ${addressDefault.district}, ${addressDefault.city}, Việt Nam"
-//                                val phone = customer?.phone ?: ""
-//                                // Tạo đối tượng HoaDonBan
-//                                val order = Order(
-//                                    0, // id sẽ được tự động tạo khi insert vào DB
-//                                    idPerson,
-//                                    tongtien,
-//                                    selectedPaymentMethod,
-//                                    idAddress,
-//                                    "NULL",
-//                                    phone,
-//                                    "NULL",
-//                                    "NULL",
-//                                    "Mobile",
-//                                    formattedDate,
-//                                    formattedDate,
-//                                    formattedDate,
-//                                    "EMP000001",
-//                                    1 // Trạng thái thanh toán
-//                                )
-//
-//                                // Thêm Order trước
-//                               orderViewModel.addOrder(order)
-//
-//                                // Sau khi Order đã được thêm, tiếp tục thêm OrderDetail
-//                                selectedProducts.forEach{triple ->
-//                                    listDevice.forEach { device ->
-//                                        if(device.idDevice == triple.first){
-//                                            // Tạo đối tượng OrderDetail
-//                                            val orderDetail = OrderDetail(
-//                                                0,// id sẽ được tự động tạo khi insert vào DB
-//                                                0, // idOrder cần phải lấy từ bảng order sau khi insert
-//                                                device.idDevice,
-//                                                device.sellingPrice,
-//                                                triple.second,
-//                                                device.sellingPrice,
-//                                                0
-//                                            )
-//
-//                                            //Thêm OrderDetail vào db
-//                                            orderDetailViewModel.addOrderDetail(orderDetail)
-//                                        }
-//                                    }
-//                                }
-//                                // Xóa các sản phẩm khỏi giỏ hàng
-//                                selectedProducts.forEach { triple ->
-//                                    cartViewModel.deleteCart(triple.third)
-//                                }
-//                            }
-//                            navController.navigate(Screen.CheckOutSuccess.route +"?username=${username}"){
-//                                popUpTo(0) { inclusive = true }
-//                            }
-//
-//                        },
-//                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF5D9EFF)),
-//                        shape = RoundedCornerShape(5.dp),
-//                        elevation = ButtonDefaults.buttonElevation(2.dp),
-//                    ) {
-//                        Text("Đặt hàng", color = Color.White, fontSize = 18.sp)
-//                    }
-//                }
             }
         }
-    ) {
-        LazyColumn(
-            modifier = Modifier
-                .padding(it)
-                .padding(10.dp)
-        ){
+    ) { paddingValues ->
+        LazyColumn(modifier = Modifier.padding(paddingValues).padding(10.dp)) {
             item {
-                if(addressDefault != null){
+                if (address != null) {
                     Card(
                         modifier = Modifier
                             .padding(4.dp)
                             .fillMaxWidth(),
                         elevation = CardDefaults.cardElevation(1.dp),
-                        colors = CardDefaults.cardColors(containerColor = Color.White),
+                        colors = CardDefaults.cardColors(containerColor = Color.White)
                     ) {
                         Row(
-                            modifier = Modifier.padding(10.dp).fillMaxWidth(),
+                            modifier = Modifier
+                                .padding(10.dp)
+                                .fillMaxWidth(),
                             horizontalArrangement = Arrangement.Start,
                             verticalAlignment = Alignment.Top
                         ) {
-                            Column (
-                                modifier = Modifier.fillMaxHeight().padding(10.dp),
+                            Column(
+                                modifier = Modifier
+                                    .fillMaxHeight()
+                                    .padding(10.dp),
                                 verticalArrangement = Arrangement.Top
-                            ){
+                            ) {
                                 Icon(
-                                    imageVector = Icons.Filled.LocationOn, contentDescription = "",
+                                    imageVector = Icons.Filled.LocationOn,
+                                    contentDescription = "",
                                     tint = Color.Red
                                 )
                             }
                             Column {
                                 Row(
                                     modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.Start,
+                                    horizontalArrangement = Arrangement.SpaceBetween,
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {
                                     Text(
                                         text = "${customer?.surname} ${customer?.lastName}",
                                         fontWeight = FontWeight.Bold
                                     )
-//                                    Text(
-//                                        text = "Thay đổi",
-//                                        color = Color(0xFF5D9EFF),
-//                                        modifier = Modifier.clickable {
-//                                            //Nav
-//                                        }
-//                                    )
+                                    Text(
+                                        text = "Thay đổi",
+                                        color = Color(0xFF5D9EFF),
+                                        modifier = Modifier.clickable {
+                                            //navController.navigate("${Screen.Address_Selection.route}?idCustomer=${customer?.id}")
+                                            navController.navigate("${Screen.Address_Selection.route}?idCustomer=${customer?.id}&selectedAddressId=${address.id}")
+                                        }
+                                    )
                                 }
-
+                                Text(text = customer?.phone.toString())
                                 Text(
-                                    text = customer?.phone.toString()
-                                )
-
-                                Text(
-                                    text = "${addressDefault.street}, ${addressDefault.ward}, ${addressDefault.district}, ${addressDefault.city}, Việt Nam"
+                                    text = "${address.street}, ${address.ward}, ${address.district}, ${address.city}, Việt Nam"
                                 )
                             }
                         }
                     }
                 }
-
             }
-            items(listDevice) { device ->
+            items(listDevice.distinctBy { it.idDevice }) { device ->
                 selectedProducts.forEach { triple ->
-                    if (device.idDevice == triple.first)
-                        DeviceItem(device, triple.second) // triple.second là số lượng
+                    if (device.idDevice == triple.first) {
+                        DeviceItem(device, triple.second)
+                    }
                 }
             }
             item {
@@ -406,14 +339,13 @@ fun CheckoutScreen(
                         .padding(4.dp)
                         .fillMaxWidth(),
                     elevation = CardDefaults.cardElevation(1.dp),
-                    colors = CardDefaults.cardColors(containerColor = Color.White),
+                    colors = CardDefaults.cardColors(containerColor = Color.White)
                 ) {
                     Text(
                         text = "Phương thức thanh toán",
                         fontWeight = FontWeight.Bold,
                         modifier = Modifier.padding(start = 15.dp, top = 10.dp, bottom = 5.dp)
                     )
-
                     Column(
                         modifier = Modifier
                             .padding(10.dp)
@@ -431,16 +363,13 @@ fun CheckoutScreen(
                             )
                             RadioButton(
                                 selected = selectedPaymentMethod == "Thanh toán khi nhận hàng (COD)",
-                                onClick = {
-                                    selectedPaymentMethod = "Thanh toán khi nhận hàng (COD)"
-                                },
+                                onClick = { selectedPaymentMethod = "Thanh toán khi nhận hàng (COD)" },
                                 colors = RadioButtonDefaults.colors(
                                     unselectedColor = Color(0xFF5D9EFF),
                                     selectedColor = Color(0xFF5D9EFF)
                                 )
                             )
                         }
-
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             verticalAlignment = Alignment.CenterVertically,
@@ -452,9 +381,7 @@ fun CheckoutScreen(
                             )
                             RadioButton(
                                 selected = selectedPaymentMethod == "Chuyển khoản ngân hàng",
-                                onClick = {
-                                    selectedPaymentMethod = "Chuyển khoản ngân hàng"
-                                },
+                                onClick = { selectedPaymentMethod = "Chuyển khoản ngân hàng" },
                                 colors = RadioButtonDefaults.colors(
                                     unselectedColor = Color(0xFF5D9EFF),
                                     selectedColor = Color(0xFF5D9EFF)
@@ -472,9 +399,7 @@ fun CheckoutScreen(
                             )
                             RadioButton(
                                 selected = selectedPaymentMethod == "Momo",
-                                onClick = {
-                                    selectedPaymentMethod = "Momo"
-                                },
+                                onClick = { selectedPaymentMethod = "Momo" },
                                 colors = RadioButtonDefaults.colors(
                                     unselectedColor = Color(0xFF5D9EFF),
                                     selectedColor = Color(0xFF5D9EFF)
@@ -491,7 +416,7 @@ fun CheckoutScreen(
                         .fillMaxWidth()
                         .height(140.dp),
                     elevation = CardDefaults.cardElevation(1.dp),
-                    colors = CardDefaults.cardColors(containerColor = Color.White),
+                    colors = CardDefaults.cardColors(containerColor = Color.White)
                 ) {
                     Column(
                         modifier = Modifier
@@ -499,15 +424,13 @@ fun CheckoutScreen(
                             .padding(10.dp),
                         verticalArrangement = Arrangement.SpaceBetween
                     ) {
-                        Text("Chi tiết thanh toán",
-                            fontWeight = FontWeight.Bold
-                        )
+                        Text("Chi tiết thanh toán", fontWeight = FontWeight.Bold)
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
                             Text("Tổng tiền hàng")
-                            Text(text = "${formatGiaTien(tongtien)}")
+                            Text(text = formatGiaTien(tongtien))
                         }
                         Row(
                             modifier = Modifier.fillMaxWidth(),

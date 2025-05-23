@@ -26,10 +26,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import coil.compose.AsyncImage
-import com.example.ungdungbanthietbi_iot.data.Product
-import com.example.ungdungbanthietbi_iot.data.cart.CartViewModel
 import com.example.ungdungbanthietbi_iot.data.device.DeviceViewModel
-import com.example.ungdungbanthietbi_iot.data.liked.Liked
 import com.example.ungdungbanthietbi_iot.data.liked.LikedViewModel
 import com.example.ungdungbanthietbi_iot.navigation.Screen
 import java.text.DecimalFormat
@@ -93,7 +90,6 @@ fun FavoritesScreen(
                 navigationIcon = {
                     // Nút quay lại
                     IconButton(onClick = {
-                        likedViewModel.updateAllLiked()
                         navController.popBackStack()
                     }) {
                         Icon(
@@ -107,56 +103,80 @@ fun FavoritesScreen(
     ) { padding ->
         // Danh sách sản phẩm
         LazyColumn(modifier = Modifier.padding(padding)) {
-            items(listLiked) { liked ->
-                val device = deviceViewModel.listDeviceOfCustomer.find { it.idDevice == liked.idDevice }
-                if(device != null){
-                    Card(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(8.dp)
-                            .height(190.dp),
-                        elevation = CardDefaults.cardElevation(2.dp),
-                        colors = CardDefaults.cardColors(containerColor = Color.White),
-                        onClick = {
-                            navController.navigate(Screen.ProductDetailsScreen.route + "?id=${device.idDevice}")
-                        }
-                    ) {
-                        Row (
+            if(listLiked.isNotEmpty()) {
+                items(listLiked) { liked ->
+                    val device =
+                        deviceViewModel.listDeviceOfCustomer.find { it.idDevice == liked.idDevice }
+                    if (device != null) {
+                        Card(
                             modifier = Modifier
-                                .fillMaxSize()
-                                .background(Color.White, shape = RoundedCornerShape(8.dp))
-                                .padding(8.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.Start
-                        ){
-                            AsyncImage(
-                                model = device.image,
-                                contentDescription = null,
-                                modifier = Modifier
-                                    .size(150.dp),
-                                contentScale = ContentScale.Fit
-                            )
-                            Column(modifier = Modifier.weight(1f)) {
-                                // Tên sản phẩm
-                                Text(text = device.name, fontWeight = FontWeight.Bold, fontSize = 20.sp)
-                                Spacer(modifier = Modifier.height(8.dp))
-                                // Giá sản phẩm
-                                Text(text = "Giá: ${formatGiaTien(device.sellingPrice)}", color = Color.Red)
-                                Spacer(modifier = Modifier.height(8.dp))
-
+                                .fillMaxWidth()
+                                .padding(8.dp)
+                                .height(190.dp),
+                            elevation = CardDefaults.cardElevation(1.dp),
+                            shape = RoundedCornerShape(5.dp),
+                            colors = CardDefaults.cardColors(containerColor = Color.White),
+                            onClick = {
+                                navController.navigate(Screen.ProductDetailsScreen.route + "?id=${device.idDevice}")
                             }
-                            // Nút xóa sản phẩm
-                            IconButton(onClick = {
-                                likedViewModel.deleteLiked(liked.id)
-                                likedViewModel.listLiked = likedViewModel.listLiked.filter { it.id != liked.id }
-                            }) {
-                                Icon(
-                                    imageVector = Icons.Default.Delete,
-                                    contentDescription = "Remove Item"
+                        ) {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .background(Color.White, shape = RoundedCornerShape(8.dp))
+                                    .padding(8.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.Start
+                            ) {
+                                AsyncImage(
+                                    model = device.image,
+                                    contentDescription = null,
+                                    modifier = Modifier
+                                        .size(150.dp),
+                                    contentScale = ContentScale.Fit
                                 )
+                                Column(modifier = Modifier.weight(1f)) {
+                                    // Tên sản phẩm
+                                    Text(
+                                        text = device.name,
+                                        fontWeight = FontWeight.Bold,
+                                        fontSize = 20.sp
+                                    )
+                                    Spacer(modifier = Modifier.height(8.dp))
+                                    // Giá sản phẩm
+                                    Text(
+                                        text = "Giá: ${formatGiaTien(device.sellingPrice)}",
+                                        color = Color.Red
+                                    )
+                                    Spacer(modifier = Modifier.height(8.dp))
+
+                                }
+                                // Nút xóa sản phẩm
+                                IconButton(onClick = {
+                                    likedViewModel.deleteLiked(liked.id)
+                                    likedViewModel.listLiked =
+                                        likedViewModel.listLiked.filter { it.id != liked.id }
+                                }) {
+                                    Icon(
+                                        imageVector = Icons.Default.Delete,
+                                        contentDescription = "Remove Item"
+                                    )
+                                }
                             }
                         }
                     }
+                }
+            }
+            else{
+                item{
+                    Text(
+                        text = "Danh sách yêu thích đang trống!",
+                        fontSize = 20.sp,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp)
+                    )
                 }
             }
         }

@@ -23,8 +23,9 @@ class LikedViewModel:ViewModel() {
                 val response = withContext(Dispatchers.IO) {
                     RetrofitClient.likedAPIService.getLikedByIdCustomer(idCustomer)
                 }
-                listLiked = response.liked
+                listLiked = response.liked ?: emptyList()
             } catch (e: Exception) {
+                listLiked = emptyList()
                 Log.e("Liked Error", "Lỗi khi lấy Liked: ${e.message}")
             }
         }
@@ -99,11 +100,13 @@ class LikedViewModel:ViewModel() {
                 // Gọi API để thêm sản phẩm vào giỏ hàng trên server
                 val response = RetrofitClient.likedAPIService.addliked(liked)
                 likedAddResult = if (response.success) {
+                    getLikedByIdCustomer(liked.idCustomer)
                     "Cập nhật thành công: ${response.message}"
                 } else {
                     "Cập nhật thất bại: ${response.message}"
                 }
             } catch (e: Exception) {
+                likedAddResult = "Lỗi khi cập nhật giỏ hàng: ${e.message}"
                 Log.e("AddLiked", "Lỗi kết nối: ${e.message}")
             }
         }

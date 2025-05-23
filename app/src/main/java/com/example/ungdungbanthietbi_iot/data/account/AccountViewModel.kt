@@ -1,17 +1,20 @@
 package com.example.ungdungbanthietbi_iot.data.account
 
+import android.content.Context
 import android.util.Log
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.compose.runtime.State
+import androidx.datastore.preferences.core.edit
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.viewModelScope
 import com.example.ungdungbanthietbi_iot.data.RetrofitClient
 import com.example.ungdungbanthietbi_iot.data.cart.Cart
 import com.example.ungdungbanthietbi_iot.data.customer.Birthdate
+import com.example.ungdungbanthietbi_iot.dataStore
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -23,17 +26,20 @@ class AccountViewModel:ViewModel() {
     var account: Account? by mutableStateOf(null)
         private set
 
+    var accountById: Account? by mutableStateOf(null)
+        private set
+
     var accountAddResult by mutableStateOf("")
 
-    private val _loginResult = mutableStateOf<CheckLoginResponse?>(null)
-    val loginResult: State<CheckLoginResponse?> = _loginResult
+    private val _loginResult = MutableStateFlow<CheckLoginResponse?>(null)
+    val loginResult: StateFlow<CheckLoginResponse?> = _loginResult
 
 
 
     var accountUpdateResult by mutableStateOf("")
 
     var username: String? = null
-//    var idPerson: String? = null
+    var idPerson: String? = null
 
     private val _accountCheckResult = mutableStateOf<Boolean?>(null)
     val accountCheckResult: State<Boolean?> = _accountCheckResult
@@ -55,7 +61,12 @@ class AccountViewModel:ViewModel() {
             }
         }
     }
-
+    suspend fun logout(context: Context) {
+        context.dataStore.edit { preferences ->
+            preferences.clear()
+        }
+        _loginResult.value = null
+    }
 
     fun getUserByUsername(username: String) {
         this.username = username
@@ -63,7 +74,17 @@ class AccountViewModel:ViewModel() {
             try {
                 account = RetrofitClient.accountAPIService.getAccountByUsername(username)
             } catch (e: Exception) {
-                Log.e("SanPhamViewModel", "Error getting SanPham", e)
+                Log.e("AccountViewModel", "Error getting SanPham", e)
+            }
+        }
+    }
+    fun getAccountById(idPerson: String) {
+        this.idPerson = idPerson
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                accountById = RetrofitClient.accountAPIService.getAccountById(idPerson)
+            } catch (e: Exception) {
+                Log.e("AccountViewModel", "Error getting account", e)
             }
         }
     }

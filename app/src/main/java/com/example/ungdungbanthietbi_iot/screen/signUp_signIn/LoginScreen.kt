@@ -1,5 +1,6 @@
 package com.example.ungdungbanthietbi_iot.screen.signUp_signIn
 
+import android.content.Context
 import android.widget.ImageButton
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -62,7 +63,16 @@ import com.example.ungdungbanthietbi_iot.data.account.AccountViewModel
 import com.example.ungdungbanthietbi_iot.navigation.Screen
 import kotlinx.coroutines.launch
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.LocalContext
+import androidx.datastore.core.DataStore
+import androidx.datastore.preferences.core.Preferences
+import androidx.datastore.preferences.core.edit
+import androidx.datastore.preferences.core.stringPreferencesKey
+import androidx.datastore.preferences.preferencesDataStore
+import com.example.ungdungbanthietbi_iot.dataStore
+import kotlinx.coroutines.flow.first
 
 /** Giao diện màn hình đăng nhập (LoginScreen)
  * -------------------------------------------
@@ -83,24 +93,28 @@ import androidx.compose.ui.draw.clip
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-
 fun LoginScreen(navController: NavController, accountViewModel: AccountViewModel) {
+    val context = LocalContext.current
     var snackbarHostState = remember {
         SnackbarHostState()
     }
     // Biến nhận dữ liệu email từ người dùng
-    var username by remember { mutableStateOf("") }
+    var username by remember { mutableStateOf("test123") }
     // Biến nhận dữ liệu password từ người dùng
-    var password by remember { mutableStateOf("") }
+    var password by remember { mutableStateOf("test123") }
 
     var scope = rememberCoroutineScope()
-    val loginResult = accountViewModel.loginResult.value
+    //val loginResult = accountViewModel.loginResult.value
     var openDialog by remember { mutableStateOf(false) }
     accountViewModel.CheckLogin(username, password)
 
     // Biến kiểm tra trạng thái hiển thị mật khẩu
     var isPasswordVisible by remember { mutableStateOf(false) }
 
+
+    // Key cho DataStore
+    val usernameKey = stringPreferencesKey("username")
+    val passwordKey = stringPreferencesKey("password")
     Scaffold(
         modifier = Modifier.fillMaxWidth(),
         content = { padding ->
@@ -207,22 +221,46 @@ fun LoginScreen(navController: NavController, accountViewModel: AccountViewModel
                             if(username == "" || password == ""){
                                 openDialog = true
                             }
-                            accountViewModel.CheckLogin(username, password)
-                            if(loginResult != null){
-                                if(loginResult.result == true){
-                                    navController.navigate(Screen.HomeScreen.route + "?username=${username}"){
-                                        popUpTo(0) {inclusive = true}
+                            else {
+                                accountViewModel.CheckLogin(username, password)
+                                scope.launch {
+                                    // Lắng nghe kết quả từ loginResult
+                                    accountViewModel.loginResult.collect { loginResult ->
+                                        if (loginResult != null) {
+                                            if (loginResult.result == true) {
+                                                // Lưu thông tin đăng nhập vào DataStore
+                                                context.dataStore.edit { preferences ->
+                                                    preferences[usernameKey] = username
+                                                    preferences[passwordKey] = password
+                                                }
+                                                // Chuyển đến màn hình Home
+                                                navController.navigate(Screen.HomeScreen.route + "?username=$username") {
+                                                    popUpTo(0) { inclusive = true }
+                                                }
+                                            } else {
+                                                openDialog = true
+                                            }
+                                            return@collect // Thoát collect sau khi xử lý
+                                        }
                                     }
-                                    scope.launch {
-                                        snackbarHostState.showSnackbar(
-                                            message = "Đăng nhập thành công"
-                                        )
-                                    }
-                                }
-                                else{
-                                    openDialog = true
                                 }
                             }
+//                            accountViewModel.CheckLogin(username, password)
+//                            if(loginResult != null){
+//                                if(loginResult.result == true){
+//                                    navController.navigate(Screen.HomeScreen.route + "?username=${username}"){
+//                                        popUpTo(0) {inclusive = true}
+//                                    }
+//                                    scope.launch {
+//                                        snackbarHostState.showSnackbar(
+//                                            message = "Đăng nhập thành công"
+//                                        )
+//                                    }
+//                                }
+//                                else{
+//                                    openDialog = true
+//                                }
+//                            }
                         },
                         modifier = Modifier
                             .width(350.dp)
@@ -262,31 +300,53 @@ fun LoginScreen(navController: NavController, accountViewModel: AccountViewModel
                         hostState = snackbarHostState
                     )
 
-                    if (openDialog == true) {
+//                    if (openDialog == true) {
+//                        AlertDialog(
+//                            onDismissRequest = { openDialog = false }, // Đóng khi nhấn ngoài dialog
+//                            text = {
+//                                if(loginResult!=null){
+//                                    if(username == "" || password ==""){
+//                                        Text("Vui lòng nhập đầy đủ thông tin")
+//                                    }
+//                                    else if(loginResult.result == false){
+//                                        Text("Tài khoản hoặc mật khẩu không chính xác")
+//                                    }
+//                                }
+//                            },
+//                            confirmButton = {
+//                                Button(
+//                                    onClick = {
+//                                        openDialog = false
+//                                    },
+//                                    colors = ButtonDefaults.buttonColors(
+//                                        containerColor = Color(0xFF00C3FF)
+//                                    )
+//                                ) {
+//                                    Text("OK")
+//                                }
+//                            },
+//                        )
+//                    }
+                    if (openDialog) {
                         AlertDialog(
-                            onDismissRequest = { openDialog = false }, // Đóng khi nhấn ngoài dialog
+                            onDismissRequest = { openDialog = false },
                             text = {
-                                if(loginResult!=null){
-                                    if(username == "" || password ==""){
-                                        Text("Vui lòng nhập đầy đủ thông tin")
-                                    }
-                                    else if(loginResult.result == false){
-                                        Text("Tài khoản hoặc mật khẩu không chính xác")
-                                    }
+                                if (username.isEmpty() || password.isEmpty()) {
+                                    Text("Vui lòng nhập đầy đủ thông tin")
+                                } else {
+                                    Text("Tài khoản hoặc mật khẩu không chính xác")
                                 }
                             },
                             confirmButton = {
                                 Button(
-                                    onClick = {
-                                        openDialog = false
-                                    },
+                                    onClick = { openDialog = false },
                                     colors = ButtonDefaults.buttonColors(
                                         containerColor = Color(0xFF00C3FF)
                                     )
                                 ) {
                                     Text("OK")
                                 }
-                            },
+                            }
                         )
                     }
                 }

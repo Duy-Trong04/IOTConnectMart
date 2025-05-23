@@ -1,6 +1,14 @@
 package com.example.ungdungbanthietbi_iot.navigation
 
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.graphics.TransformOrigin
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
@@ -32,6 +40,7 @@ import com.example.ungdungbanthietbi_iot.screen.Setting.ChangePassword
 import com.example.ungdungbanthietbi_iot.screen.Setting.ContactScreen
 import com.example.ungdungbanthietbi_iot.screen.address.UpdateAddress
 import com.example.ungdungbanthietbi_iot.screen.check_out.CheckOutSuccessScreen
+import com.example.ungdungbanthietbi_iot.screen.notification.NotificationScreen
 import com.example.ungdungbanthietbi_iot.screen.personal.AccountSettingsScreen
 import com.example.ungdungbanthietbi_iot.screen.personal.EditEmailScreen
 import com.example.ungdungbanthietbi_iot.screen.personal.EditPhoneScreen
@@ -41,6 +50,8 @@ import com.example.ungdungbanthietbi_iot.screen.personal.OrderListScreen
 import com.example.ungdungbanthietbi_iot.screen.personal.PersonalScreen
 import com.example.ungdungbanthietbi_iot.screen.rating.ProductReviewsScreen
 import com.example.ungdungbanthietbi_iot.screen.rating.RatingHistoryScreen
+import com.example.ungdungbanthietbi_iot.screen.rating.RatingScreen
+import com.example.ungdungbanthietbi_iot.screen.rating.UpdateRatingScreen
 import com.example.ungdungbanthietbi_iot.ui.theme.parseSelectedProducts
 
 /** Chuyển hướng (NavGraph)
@@ -62,6 +73,7 @@ import com.example.ungdungbanthietbi_iot.ui.theme.parseSelectedProducts
 
 @Composable
 fun NavGraph(
+    startDestination: String, // Thêm tham số startDestination động
     navController:NavHostController,
     deviceViewModel: DeviceViewModel,
     slideShowViewModel: SlideShowViewModel,
@@ -73,18 +85,37 @@ fun NavGraph(
     NavHost(
         navController = navController,
         // Màn hình đầu tiên hiển thị
-        startDestination = Screen.HomeScreen.route
+        startDestination = startDestination,
+        enterTransition = {   // Khi màn hình mới xuất hiện
+            scaleIn(
+                initialScale = 0.8f, // màn hình bắt đầu nhỏ hơn 80% kích thước ban đầu
+                transformOrigin = TransformOrigin(0.5f, 0.5f), // hiệu ứng phóng ở trung tâm
+                animationSpec = tween(durationMillis = 300)
+            ) + fadeIn(animationSpec = tween(durationMillis = 300))
+        },
+        exitTransition = {    // Khi màn hình hiện tại rời đi
+            scaleOut(
+                targetScale = 0.8f, // thu nhỏ còn 80% trước khi biến mất
+                transformOrigin = TransformOrigin(0.5f, 0.5f), // thu nhỏ về giữa
+                animationSpec = tween(durationMillis = 300)
+            ) + fadeOut(animationSpec = tween(durationMillis = 300))
+        },
+        popEnterTransition = {    // Khi quay lại màn hình trước (pop back)
+            slideInHorizontally(
+                initialOffsetX = { fullWidth -> -fullWidth },
+                animationSpec = tween(300)
+            ) + fadeIn(animationSpec = tween(300))
+        },
+        popExitTransition = {     // Khi rời màn hình hiện tại khi quay lại (pop back)
+            slideOutHorizontally(
+                targetOffsetX = { fullWidth -> fullWidth },
+                animationSpec = tween(300)
+            ) + fadeOut(animationSpec = tween(300))
+        }
     ){
         // Màn hình IntroScreen sau khoảng thời gian quy định thì chuyển sang màn hình trang chủ HomeScreen
         composable(route = Screen.IntroScreen.route){
-            IntroScreen(onTimeout = {
-                navController.navigate("HomeScreen"){
-                    // Xóa màn hình IntroScreen khỏi ngăn xếp
-                    popUpTo(Screen.IntroScreen.route){
-                        inclusive = true
-                    }
-                }
-            })
+            IntroScreen(accountViewModel, navController)
         }
 
         //Home chưa đăng nhập
@@ -162,13 +193,27 @@ fun NavGraph(
         }
         //Màn hình chọn địa chỉ
         composable(
-            route = Screen.Address_Selection.route + "?idCustomer={idCustomer}",
+            route = "${Screen.Address_Selection.route}?idCustomer={idCustomer}&selectedAddressId={selectedAddressId}",
             arguments = listOf(
-                navArgument("idCustomer") {type = NavType.StringType }
+                navArgument("idCustomer") {
+                    type = NavType.StringType
+                    nullable = true
+                    defaultValue = null
+                },
+                navArgument("selectedAddressId") {
+                    type = NavType.StringType // Sử dụng StringType để hỗ trợ null
+                    nullable = true
+                    defaultValue = null
+                }
             )
-        ){
-            val idCustomer = it.arguments?.getString("idCustomer") ?: ""
-            AddressSelectionScreen(navController, idCustomer)
+        ) { backStackEntry ->
+            val idCustomer = backStackEntry.arguments?.getString("idCustomer")
+            val selectedAddressId = backStackEntry.arguments?.getString("selectedAddressId")?.toIntOrNull()
+            AddressSelectionScreen(
+                navController = navController,
+                idCustomer = idCustomer,
+                selectedAddressId = selectedAddressId
+            )
         }
         //Màn hình Xác nhận OTP
         composable(route = Screen.VerifyOTPScreen.route) {
@@ -205,8 +250,13 @@ fun NavGraph(
         //Màn hình giỏ hàng
         composable(route = Screen.Cart_Screen.route + "?idCustomer={idCustomer}&username={username}",
             arguments = listOf(
-                navArgument("idCustomer"){type = NavType.StringType },
-                navArgument("username") {type = NavType.StringType }
+                navArgument("idCustomer"){
+                    type = NavType.StringType
+                    defaultValue = ""},
+                navArgument("username") {
+                    type = NavType.StringType
+                    defaultValue = ""
+                }
             )
         ) {
             val idCustomer = it.arguments?.getString("idCustomer") ?: ""
@@ -222,6 +272,8 @@ fun NavGraph(
                 ProductReviewsScreen(navController, idDevice, reviewViewModel)
             }
         }
+
+        //màn hình thanh toán
         composable(
             route = Screen.CheckOutSuccess.route  + "?username={username}",
             arguments = listOf(
@@ -232,9 +284,40 @@ fun NavGraph(
             CheckOutSuccessScreen(navController, username)
         }
         //Màn hình lịch sử đánh giá, bình luận
-        composable(route = Screen.Rating_History.route) {
-            RatingHistoryScreen(navController)
+        composable(route = Screen.Rating_History.route + "?idCustomer={idCustomer}",
+            arguments = listOf(
+                navArgument("idCustomer") {type = NavType.StringType }
+            )
+        ) {
+            val idCustomer = it.arguments?.getString("idCustomer") ?: ""
+            RatingHistoryScreen(navController, idCustomer)
         }
+
+        //Màn hình thêm đánh giá, bình luận
+        composable(route = Screen.Rating_Screen.route + "?idCustomer={idCustomer}&idDevice={idDevice}",
+            arguments = listOf(
+                navArgument("idCustomer") {type = NavType.StringType },
+                navArgument("idDevice") {type = NavType.IntType }
+            )
+        ) {
+            val idCustomer = it.arguments?.getString("idCustomer") ?: ""
+            val idDevice = it.arguments?.getInt("idDevice") ?: 0
+            RatingScreen(navController, idCustomer, idDevice)
+        }
+
+        //Màn hình cập nhật đánh giá, bình luận
+        composable(route = Screen.Update_Rating_Screen.route + "?idReview={idReview}&idCustomer={idCustomer}",
+            arguments = listOf(
+                navArgument("idReview") {type = NavType.IntType },
+                navArgument("idCustomer") {type = NavType.StringType }
+            )
+        ) {
+            val idReview = it.arguments?.getInt("idReview") ?: 0
+            val idCustomer = it.arguments?.getString("idCustomer") ?: ""
+            UpdateRatingScreen(navController, idReview, idCustomer)
+        }
+
+
         //Màn hình xem chi tiết đơn hàng
         composable(
             route = Screen.Order_Detail.route + "?id={id}&totalAmount={totalAmount}",
@@ -255,21 +338,38 @@ fun NavGraph(
             )
         ){
             val username = it.arguments?.getString("username") ?: ""
-            SearchScreen(navController, deviceViewModel, username)
+            SearchScreen(navController, username)
         }
 
         //Màn hình tìm kiếm chưa có tài khoản
         composable(
             route = Screen.Search_Screen.route
         ){
-            SearchScreen(navController, deviceViewModel, null)
+            SearchScreen(navController, null)
         }
 
         //Màn hình kết quả tìm kiếm
         composable(
-            route = Screen.Search_Results.route
+            route = Screen.Search_Results.route + "?query={query}&username={username}",
+            arguments = listOf(
+                navArgument("query") {type = NavType.StringType },
+                navArgument("username") {type = NavType.StringType }
+            )
         ){
-            SearchResultsScreen(navController)
+            val query = it.arguments?.getString("query") ?: ""
+            val username = it.arguments?.getString("username") ?: ""
+            SearchResultsScreen(navController, query, username)
+        }
+
+        //Màn hình kết quả tìm kiếm chưa đăng nhập
+        composable(
+            route = Screen.Search_Results.route + "?query={query}",
+            arguments = listOf(
+                navArgument("query") {type = NavType.StringType },
+            )
+        ){
+            val query = it.arguments?.getString("query") ?: ""
+            SearchResultsScreen(navController, query, null)
         }
 
         //Màn hình sản phẩm yêu thích
@@ -304,16 +404,7 @@ fun NavGraph(
             val idCustomer = it.arguments?.getString("idCustomer") ?: ""
             OrderListScreen(navController, idCustomer)
         }
-//        //Đường dẫn đến màn hình lịch sử sản phẩm và chỉ đến tab cần đến
-//        //Ví dụ: ấn vào chờ xác nhận thì đến tab chờ xác nhận
-//        composable(Screen.OrderListScreen.route + "/{initialPage}" + "?idCustomer={idCustomer}") { backStackEntry ->
-//            val initialPage = backStackEntry.arguments?.getString("initialPage")?.toInt() ?: 0
-//            val idCustomer = backStackEntry.arguments?.getString("idCustomer") ?: ""
-//            OrderListScreen(onBack = { navController.popBackStack() }, initialPage, idCustomer)
-//        }
 
-
-        //Cac man hinh thay doi thong tin ca nhan
         //Dẫn đến màn chọn(chỉnh sửa) Username
         composable(Screen.EditUsernamScreen.route + "/{id}/{username}") {
             backStackEntry ->
@@ -354,6 +445,8 @@ fun NavGraph(
             AccountSettingsScreen(navController,onBack = { navController.popBackStack()},id,password)
             ChangePassword(onBack = { navController.popBackStack()},id,password)
         }
+
+        //màn hình thông tin cá nhân
         composable(
             Screen.PersonalScreen.route + "?username={username}",
             arguments = listOf(
@@ -362,6 +455,19 @@ fun NavGraph(
         ) {
             val username = it.arguments?.getString("username") ?: ""
             PersonalScreen(navController, username, deviceViewModel)
+        }
+
+        //màn hình thông báo
+        composable(
+            Screen.Notification_Screen.route +"?idUser={idUser}",
+            arguments = listOf(navArgument("idUser") {
+                type = NavType.StringType
+                nullable = true
+                defaultValue = ""
+            })
+        ) {
+            val idUser = it.arguments?.getString("idUser") ?: ""
+            NotificationScreen(navController, idUser)
         }
     }
 }

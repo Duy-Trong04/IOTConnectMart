@@ -1,5 +1,8 @@
 package com.example.ungdungbanthietbi_iot.screen.personal
 
+import android.net.Uri
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -27,6 +30,7 @@ import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.VerifiedUser
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
+import androidx.compose.material.icons.outlined.ShoppingCart
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -39,11 +43,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
@@ -54,34 +60,34 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+import coil.compose.AsyncImage
 import com.example.ungdungbanthietbi_iot.R
 import com.example.ungdungbanthietbi_iot.data.account.Account
 import com.example.ungdungbanthietbi_iot.data.account.AccountViewModel
+import com.example.ungdungbanthietbi_iot.data.cart.CartViewModel
 import com.example.ungdungbanthietbi_iot.data.customer.Customer
 import com.example.ungdungbanthietbi_iot.data.customer.CustomerViewModel
 import com.example.ungdungbanthietbi_iot.data.device.Device
 import com.example.ungdungbanthietbi_iot.data.device.DeviceViewModel
 import com.example.ungdungbanthietbi_iot.navigation.Screen
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import java.text.DecimalFormat
-import com.example.ungdungbanthietbi_iot.screen.home.CardAllDevice
-import com.example.ungdungbanthietbi_iot.screen.home.CardFavorites
+import java.time.LocalDate
 
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 fun PersonalScreen(
     navController: NavController,
-    username:String,
+    username: String,
     deviceViewModel: DeviceViewModel,
 ) {
-
     deviceViewModel.getAllDevice()
-    val listAllDevice : List<Device> = deviceViewModel.listAllDevice
+    val listAllDevice: List<Device> = deviceViewModel.listAllDevice
     val listDeviceLiked: List<Device> = deviceViewModel.listDeviceOfCustomer
 
     val navdrawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
-    val scope = rememberCoroutineScope() //xử lý suspending fun (mở và đóng drawer)
+    val scope = rememberCoroutineScope()
     val countries = listOf(
         "Thiết bị chiếu sáng",
         "Thiết bị cảm biến",
@@ -89,310 +95,140 @@ fun PersonalScreen(
         "Đồng hồ thông minh",
     )
 
-    // Lấy ViewModel
-    val accountViewModel:AccountViewModel = viewModel()
-
-    // Lấy thông tin tài khoản từ ViewModel
+    val cartViewModel: CartViewModel = viewModel()
+    val listCart = cartViewModel.listCart
+    val accountViewModel: AccountViewModel = viewModel()
     val account = accountViewModel.account
-
-    // Gọi API nếu taikhoan chưa được lấy
     LaunchedEffect(username) {
         if (username.isNotEmpty()) {
             accountViewModel.getUserByUsername(username)
         }
     }
-    if(account != null){
-        deviceViewModel.getDeviceByLiked(account.idPerson.toString())
-    }
-    if(account == null){
-        Text(text = "Đang tải thông tin tài khoản...")
-        return
-    }
 
-    // Biến trạng thái để sản phẩm yêu thích không
-    var isFavorite by remember { mutableStateOf(false) }
-
-    // Kiểm tra trạng thái Tab
-    var currentTab by remember { mutableStateOf("accountInfo") }
-    // Danh mục
-    ModalNavigationDrawer(
-        drawerState = navdrawerState,
-        drawerContent = {
-            ModalDrawerSheet {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .background(Color(0xFF5D9EFF))
-                        .padding(5.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-
-                    Text(
-                        text = "IOT Connect Mart",
-                        modifier = Modifier.padding(5.dp),
-                        color = Color.White,
-                        fontWeight = FontWeight.Bold
-                    )
-
-                    Icon(
-                        imageVector = Icons.Default.Close,
-                        contentDescription = "Đóng danh mục",
-                        modifier = Modifier
-                            .padding(end = 5.dp)
-                            .size(24.dp)
-                            .clickable {
-                                // thoát danh mục
-                                scope.launch {
-                                    navdrawerState.apply {
-                                        if (isClosed) open() else close()
-                                    }
-                                }
-                            },
-                        tint = Color.White
-                    )
-                }
-                HorizontalDivider()
-                Text(
-                    text = "T R A N G  C H Ủ",
-                    modifier = Modifier.padding(12.dp).clickable {
-                        navController.navigate(Screen.HomeScreen.route + "?username=${username}")
-                    },
-                    color = Color(0xFF5D9EFF),
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 18.sp
-                )
-                countries.forEach { country ->
-                    NavigationDrawerItem(
-                        label = {
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(
-                                        vertical = 5.dp,
-                                        horizontal = 5.dp
-                                    )
-                                    .drawBehind {
-                                        drawLine(
-                                            color = Color.Black,
-                                            start = Offset(0f, size.height),
-                                            end = Offset(size.width, size.height),
-                                            strokeWidth = 1.dp.toPx()
-                                        )
-                                    }
-                            ) {
-                                Text(text = country)
-                            }
-                        }, selected = false, onClick = { /* Chọn danh mục */ })
-                }
-            }
+    LaunchedEffect(account) {
+        if (account != null) {
+            deviceViewModel.getDeviceByLiked(account.idPerson.toString())
+            cartViewModel.getCartByIdCustomer(account.idPerson.toString())
         }
-    ) {
-        Scaffold(
-            topBar = {
-                TopAppBar(
-                    title = {
-                        Text("Hồ sơ cá nhân", fontWeight = FontWeight.Bold)
-                    },
-                    navigationIcon = {
+    }
+
+    var currentTab by remember { mutableStateOf("accountInfo") }
+    val snackbarHostState = remember { SnackbarHostState() } // Khai báo SnackbarHostState
+
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = {
+                    Text("Hồ sơ cá nhân", fontWeight = FontWeight.Bold)
+                        },
+                navigationIcon = {
                         IconButton(onClick = {
                             scope.launch {
-                                // mở và đóng drawer
                                 navdrawerState.apply {
                                     if (isClosed) open() else close()
                                 }
                             }
                         }) {
-                            Icon(imageVector = Icons.Default.Menu,
+                            Icon(
+                                imageVector = Icons.Default.Menu,
                                 contentDescription = "List"
                             )
+                        } },
+                actions = {
+                    Box(
+                        modifier = Modifier.size(48.dp)
+                    ) {
+                        IconButton(onClick = {
+                            if (account == null) {
+                                navController.navigate(Screen.LoginScreen.route)
+                            } else {
+                                navController.navigate(
+                                    Screen.Cart_Screen.route +
+                                            "?idCustomer=${account.idPerson}&username=${account.username}"
+                                )
+                            }
+                        }) {
+                            Icon(
+                                imageVector = Icons.Outlined.ShoppingCart,
+                                contentDescription = "Giỏ hàng",
+                                tint = Color.White
+                            )
                         }
-                    },
-                    actions = {
-                        IconButton(
-                            onClick = {
-                                navController.navigate(Screen.Cart_Screen.route +"?idCustomer=${account.idPerson}&username=${account.username}")
-                            }) {
-                            Icon(Icons.Filled.ShoppingCart, contentDescription = "Gio hang")
+                        if (listCart.isNotEmpty()) {
+                            Text(
+                                text = "${listCart.size}",
+                                color = Color(0xFF5D9EFF),
+                                fontSize = 16.sp,
+                                fontWeight = FontWeight.Bold,
+                                textAlign = TextAlign.Center,
+                                modifier = Modifier
+                                    .align(Alignment.TopEnd)
+                                    .size(24.dp)
+                                    .offset(x = (-2).dp, y = (-2).dp)
+                                    .background(color = Color.White, CircleShape)
+                                    .clip(CircleShape)
+                                    .wrapContentSize(align = Alignment.Center)
+                            )
                         }
-                    },
-                    colors = TopAppBarDefaults.topAppBarColors(
-                        containerColor = Color(0xFF5F9EFF),
-                        titleContentColor = Color.White,
-                        navigationIconContentColor = Color.White,
-                        actionIconContentColor = Color.White
-                    )
+                    } },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = Color(0xFF5F9EFF),
+                    titleContentColor = Color.White,
+                    navigationIconContentColor = Color.White,
+                    actionIconContentColor = Color.White
                 )
-            },
-            bottomBar = {
-                BottomAppBar(
+            ) },
+        bottomBar = {
+            BottomAppBar (
+                containerColor = Color.White,
+                contentColor = Color.Black,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .offset(y = 16.dp) // Dịch chuyển BottomAppBar xuống 16dp
+            ){}
+        },
+        snackbarHost = {
+            SnackbarHost(hostState = snackbarHostState) { data ->
+                Snackbar(
+                    modifier = Modifier.padding(16.dp),
+                    action = {
+                        TextButton(onClick = { snackbarHostState.currentSnackbarData?.dismiss() }) {
+                            Text(text = "Đóng", color = Color.Black)
+                        }
+                    },
                     containerColor = Color.White,
-                    contentColor = Color.Black,
+                    contentColor = Color.Black
+                ) {
+                    Text(data.visuals.message)
+                }
+            }
+        }
+    ) {
+        LazyColumn(
+            modifier = Modifier
+                .padding(it)
+                .fillMaxSize()
+                .background(Color(0xFFF2F2F2))
+        ) {
+            item {
+                Column(
                     modifier = Modifier
-                        .fillMaxWidth()
-                    //.border(1.dp, Color.Black)
-                ){
-                    Row(modifier = Modifier.fillMaxWidth()
-                        .padding(start = 25.dp, end = 25.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ){
-                        Column(
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            modifier = Modifier.size(70.dp)
-                        ) {
-                            Box (
-                                modifier = Modifier.size(50.dp)
-                                    .clip(CircleShape)
-                                    .clickable { navController.navigate(Screen.HomeScreen.route + "?username=${username}") },
-                                contentAlignment = Alignment.Center,
-
-                                ){
-                                Icon(
-                                    imageVector = Icons.Default.Home,
-                                    contentDescription = "Trang chủ",
-                                    //modifier = Modifier.weight(1f),
-                                    modifier = Modifier.size(25.dp),
-                                    tint = Color.Black
-                                )
-                            }
-                            Text(
-                                text = "Trang chủ",
-                                fontSize = 14.sp,
-                                color = Color.Black
-                            )
-                        }
-                        Column(
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            modifier = Modifier.size(70.dp)
-                        ) {
-                            Box (
-                                modifier = Modifier.size(50.dp)
-                                    .clip(CircleShape)
-                                    .clickable {
-                                        scope.launch {
-                                            // mở và đóng drawer
-                                            navdrawerState.apply {
-                                                if (isClosed) open() else close()
-                                            }
-                                        }
-                                    },
-                                contentAlignment = Alignment.Center,
-                            ){
-                                Icon(
-                                    imageVector = Icons.Default.Category,
-                                    contentDescription = "danh mục",
-                                    //modifier = Modifier.weight(1f),
-                                    modifier = Modifier.size(25.dp),
-                                    tint = Color.Black
-                                )
-                            }
-                            Text(
-                                text = "Danh mục",
-                                fontSize = 14.sp,
-                                color = Color.Black
-                            )
-                        }
-                        Column(
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            modifier = Modifier.size(70.dp)
-                        ) {
-                            Box (
-                                modifier = Modifier.size(50.dp)
-                                    .clip(CircleShape)
-                                    .clickable {
-                                        navController.navigate(Screen.Search_Screen.route)
-                                    },
-                                contentAlignment = Alignment.Center,
-                            ){
-                                Icon(
-                                    imageVector = Icons.Default.Search,
-                                    contentDescription = "Tìm kiếm",
-                                    //modifier = Modifier.weight(1f),
-                                    modifier = Modifier.size(25.dp),
-                                    tint = Color.Black
-                                )
-                            }
-                            Text(
-                                text = "Tìm kiếm",
-                                fontSize = 14.sp,
-                                color = Color.Black
-                            )
-                        }
-                        Column(
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            modifier = Modifier.size(70.dp)
-                        ) {
-                            Box (
-                                modifier = Modifier.size(50.dp)
-                                    .clip(CircleShape)
-                                    .clickable {
-                                        //navController.popBackStack()
-                                        navController.navigate(Screen.PersonalScreen.route+ "?username=${accountViewModel.username}")
-                                    }
-                                    .background(Color(0xFF5D9EFF), RoundedCornerShape(5.dp)),
-                                contentAlignment = Alignment.Center,
-                            ){
-                                Icon(
-                                    imageVector = Icons.Default.Person,
-                                    contentDescription = "Tài khoản",
-                                    //modifier = Modifier.weight(1f),
-                                    modifier = Modifier.size(25.dp),
-                                    tint = Color.White
-                                )
-                            }
-                            Text(
-                                text = "Tôi",
-                                fontSize = 14.sp,
-                                color = Color.Black
-                            )
-                        }
+                        .padding(start = 16.dp, end = 16.dp, top = 16.dp)
+                ) {
+                    when (currentTab) {
+                        "accountInfo" -> AccountInfoSection(username, snackbarHostState)
+                        "changePassword" -> ChangePasswordSection(username, snackbarHostState)
                     }
                 }
             }
-
-        )
-        {
-            LazyColumn(
-                modifier = Modifier
-                    .padding(it)
-                    .fillMaxSize()
-                    .background(Color(0xFFF2F2F2))
-            ) {
-                item {
-                    Column(
-                        modifier = Modifier
-                            .padding(start = 16.dp, end = 16.dp, top = 16.dp)
-                    ) {
-
-                        when (currentTab) {
-                            //"duyetdonhang" -> navController.navigate(NavRoute.ADMINSCREEN.route)
-                            "accountInfo" -> AccountInfoSection(username)
-                            "cartManagement" -> LaunchedEffect(currentTab) {
-                                navController.navigate(Screen.OrderListScreen.route + "?idCustomer=${account.idPerson}")
-                            }
-                            "changePassword" -> ChangePasswordSection(username)
-                            "addresses" -> LaunchedEffect(currentTab) {
-                                navController.navigate("${Screen.Address_Selection.route}?idCustomer=${account.idPerson}")
-                            }
-                        }
-                    }
-                }
-
-                item {
-                    Spacer(modifier = Modifier.height(16.dp))
-                }
-
-                // Phần menu danh sách bên dưới
-                item {
-                    AccountOptionsSection(
-                        onOptionSelected = { selectedTab ->
-                            currentTab = selectedTab
-                        },
-                        currentTab = currentTab,
-                        navController = navController
-                    )
-                }
+            item { Spacer(modifier = Modifier.height(16.dp)) }
+            item {
+                AccountOptionsSection(
+                    onOptionSelected = { selectedTab -> currentTab = selectedTab },
+                    currentTab = currentTab,
+                    navController = navController,
+                    username = username
+                )
             }
         }
     }
@@ -400,7 +236,8 @@ fun PersonalScreen(
 
 @Composable
 fun AccountInfoSection(
-    username: String
+    username: String,
+    snackbarHostState: SnackbarHostState // Thêm tham số SnackbarHostState
 ){
     val maxLength = 10
 
@@ -412,9 +249,15 @@ fun AccountInfoSection(
 
     var isFocused by remember { mutableStateOf(false) }
     var isButtonEnabled by remember { mutableStateOf(false) }
+    var selectedImageUri by remember { mutableStateOf<Uri?>(null) } // Lưu URI ảnh được chọn
 
-    var snackbarHostState = remember {
-        SnackbarHostState()
+    // Launcher để chọn ảnh từ thư viện
+    val launcher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri: Uri? ->
+        selectedImageUri = uri // Cập nhật URI ảnh được chọn
+        // Nếu cần lưu ảnh vào backend, gọi hàm trong ViewModel tại đây
+        // ví dụ: customerViewModel.updateAvatar(uri)
     }
 
     var scope = rememberCoroutineScope()
@@ -429,31 +272,110 @@ fun AccountInfoSection(
     }
 
     Card(
-        shape = RoundedCornerShape(10.dp),
-        elevation = CardDefaults.cardElevation(2.dp),
+        shape = RoundedCornerShape(5.dp),
+        elevation = CardDefaults.cardElevation(1.dp),
         modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = Color.White)
+        colors = CardDefaults.cardColors(containerColor = Color.White),
     ){
         Column(modifier = Modifier.padding(16.dp)) {
-            Text("Thông tin tài khoản", fontWeight = FontWeight.Bold, fontSize = 20.sp)
+            //Text("Thông tin tài khoản", fontWeight = FontWeight.Bold, fontSize = 20.sp)
 
             Spacer(modifier = Modifier.height(8.dp))
             if (customer != null) {
+                //Ảnh đại diện
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.Center
+                ){
+//                    AsyncImage(
+//                        model = "",
+//                        contentDescription = "Avatar",
+//                        modifier = Modifier
+//                            .size(100.dp)
+//                            .clip(CircleShape),
+//                        contentScale = ContentScale.Crop
+//                    )
+                    Box(
+                        modifier = Modifier
+                            .size(100.dp)
+                            .clip(CircleShape)
+                            .clickable { launcher.launch("image/*") }
+                    ) {
+                        // Hiển thị ảnh được chọn hoặc ảnh mặc định
+                        if (selectedImageUri != null) {
+                            AsyncImage(
+                                model = selectedImageUri,
+                                contentDescription = "Avatar",
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .clip(CircleShape),
+                                contentScale = ContentScale.Crop
+                            )
+                        } else {
+                            Image(
+                                painter = painterResource(id = R.drawable.logo9),
+                                contentDescription = "Avatar",
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .clip(CircleShape),
+                                contentScale = ContentScale.Crop
+                            )
+                        }
+
+                        // Chữ "Sửa" mờ nhạt nằm bên dưới
+                        Text(
+                            text = "Sửa",
+                            color = Color.White.copy(alpha = 0.5f), // Màu chữ mờ nhạt
+                            fontSize = 14.sp,
+                            textAlign = TextAlign.Center,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .align(Alignment.BottomCenter) // Căn chữ ở dưới cùng
+                                .background(Color.Black.copy(alpha = 0.3f), RoundedCornerShape(4.dp)) // Nền mờ
+                                .padding(horizontal = 8.dp, vertical = 2.dp) // Khoảng cách bên trong chữ
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
+                // Xử lý ngày sinh mặc định (18 năm trước) nếu birthdate null
+                val defaultDate = remember {
+                    val now = LocalDate.now()
+                    now.minusYears(18)
+                }
+
+                val birthdate = customer.birthdate?.takeIf { it.isNotBlank() } ?: defaultDate.toString()
+
+                // Khởi tạo các giá trị ngày sinh
+                var initialDay: String
+                var initialMonth: String
+                var initialYear: String
+                try {
+                    val parts = birthdate.split("-")
+                    initialYear = parts[0]
+                    initialMonth = parts[1]
+                    initialDay = parts[2]
+                } catch (e: Exception) {
+                    initialYear = defaultDate.year.toString()
+                    initialMonth = defaultDate.monthValue.toString()
+                    initialDay = defaultDate.dayOfMonth.toString()
+                }
+
                 val surname = remember { mutableStateOf(customer.surname) }
                 val lastname = remember { mutableStateOf(customer.lastName) }
                 val phone = remember { mutableStateOf(customer.phone) }
                 val email = remember { mutableStateOf(customer.email) }
                 val gender = remember { mutableStateOf(customer.gender) }
-                val selectedDay = remember { mutableStateOf(customer.birthdate.split("-")[2]) }
-                val selectedMonth = remember { mutableStateOf(customer.birthdate.split("-")[1]) }
-                val selectedYear = remember { mutableStateOf(customer.birthdate.split("-")[0]) }
+                val selectedDay = remember { mutableStateOf(initialDay) }
+                val selectedMonth = remember { mutableStateOf(initialMonth) }
+                val selectedYear = remember { mutableStateOf(initialYear) }
 
                 val initialSurname = remember { mutableStateOf(customer.surname) }
                 val initialLastName = remember { mutableStateOf(customer.lastName) }
                 val initialPhone = remember { mutableStateOf(customer.phone) }
                 val initialEmail = remember { mutableStateOf(customer.email) }
                 val initialGender = remember { mutableStateOf(customer.gender) }
-                val initialBirthdate = remember { mutableStateOf(customer.birthdate) }
+                val initialBirthdate = remember { mutableStateOf(birthdate) }
 
                 fun checkIfChanged(): Boolean {
                     return lastname.value != initialLastName.value ||
@@ -462,7 +384,8 @@ fun AccountInfoSection(
                             gender.value != initialGender.value ||
                             selectedDay.value != initialBirthdate.value.split("-")[2] ||
                             selectedMonth.value != initialBirthdate.value.split("-")[1] ||
-                            selectedYear.value != initialBirthdate.value.split("-")[0]
+                            selectedYear.value != initialBirthdate.value.split("-")[0] ||
+                            selectedImageUri != null // Kiểm tra nếu ảnh thay đổi
                 }
 
                 LaunchedEffect(lastname.value, phone.value, email.value, gender.value, selectedDay.value, selectedMonth.value, selectedYear.value) {
@@ -596,13 +519,20 @@ fun AccountInfoSection(
                     )
                 }
                 Spacer(modifier = Modifier.height(16.dp))
-                SnackbarHost(
-                    modifier = Modifier.padding(4.dp),
-                    hostState = snackbarHostState,
-                )
 
                 Button(
                     onClick = {
+                        // Kiểm tra ngày sinh hợp lệ
+                        if (!isValidDate(selectedDay.value, selectedMonth.value, selectedYear.value)) {
+                            scope.launch {
+                                snackbarHostState.showSnackbar(
+                                    message = "Ngày sinh không hợp lệ!",
+                                    duration = SnackbarDuration.Short
+                                )
+                            }
+                            return@Button
+                        }
+
                         // Xử lý lưu dữ liệu
                         val regexName = "^[a-zA-Z\\p{L} ]+$"
                         val regexPhone = "^\\d{10}$".toRegex()
@@ -661,12 +591,18 @@ fun AccountInfoSection(
                                 status = "1"
                             )
                             customerViewModel.updateCustomer(khachHang)
+                            // Nếu có ảnh được chọn, cập nhật ảnh
+                            selectedImageUri?.let { uri ->
+                                // Gọi hàm trong ViewModel để lưu ảnh, ví dụ:
+                                // customerViewModel.updateAvatar(uri)
+                            }
                             scope.launch {
                                 snackbarHostState.showSnackbar(
                                     message = "Cập nhật thành công",
                                     duration = SnackbarDuration.Short
                                 )
                             }
+                            selectedImageUri = null // Reset ảnh sau khi lưu
                         }
                     },
                     modifier = Modifier.fillMaxWidth(),
@@ -735,18 +671,40 @@ fun DropdownMenuField(
         }
     }
 }
-
+fun isValidDate(day: String, month: String, year: String): Boolean {
+    return try {
+        val date = LocalDate.of(year.toInt(), month.toInt(), day.toInt())
+        // Kiểm tra thêm nếu ngày sinh không được lớn hơn ngày hiện tại
+        date.isBefore(LocalDate.now()) || date.isEqual(LocalDate.now())
+    } catch (e: Exception) {
+        false
+    }
+}
 @Composable
 fun AccountOptionsSection(
     onOptionSelected: (String) -> Unit,
     currentTab: String,
     navController: NavController,
+    username:String
 ) {
+    val context = LocalContext.current
     val openDialog = remember { mutableStateOf(false) }
+    val scope = rememberCoroutineScope()
+// Lấy ViewModel
+    val accountViewModel:AccountViewModel = viewModel()
 
+    // Lấy thông tin tài khoản từ ViewModel
+    val account = accountViewModel.account
+
+    // Gọi API nếu taikhoan chưa được lấy
+    LaunchedEffect(username) {
+        if (username.isNotEmpty()) {
+            accountViewModel.getUserByUsername(username)
+        }
+    }
     Card(
-        shape = RoundedCornerShape(10.dp),
-        elevation = CardDefaults.cardElevation(2.dp),
+        shape = RoundedCornerShape(5.dp),
+        elevation = CardDefaults.cardElevation(1.dp),
         modifier = Modifier
             .padding(start = 16.dp, end = 16.dp, bottom = 16.dp)
             .fillMaxWidth(),
@@ -767,13 +725,19 @@ fun AccountOptionsSection(
                 iconRes = Icons.Filled.LocationOn,
                 label = "Số địa chỉ",
                 isSelected = currentTab == "addresses",
-                onClick = { onOptionSelected("addresses") }
+                onClick = { navController.navigate(Screen.Address_Selection.route + "?idCustomer=${account?.idPerson}") }
             )
             AccountOptionItem(
                 iconRes = Icons.Filled.ShoppingCart,
-                label = "Quản lý đơn hàng",
+                label = "Theo dõi đơn hàng",
                 isSelected = currentTab == "cartManagement",
-                onClick = { onOptionSelected("cartManagement") }
+                onClick = { navController.navigate(Screen.OrderListScreen.route + "?idCustomer=${account?.idPerson}") }
+            )
+            AccountOptionItem(
+                iconRes = Icons.Filled.Star,
+                label = "Đánh giá",
+                isSelected = currentTab == "rating",
+                onClick = { navController.navigate(Screen.Rating_History.route + "?idCustomer=${account?.idPerson}") }
             )
             AccountOptionItem(
                 iconRes = Icons.Filled.Lock,
@@ -797,17 +761,38 @@ fun AccountOptionsSection(
             containerColor = Color.White,
             onDismissRequest = { openDialog.value = false },
             title = { Text("Đăng xuất") },
-            text = { Text("Đăng xuất tài khoản của bạn?", fontSize = 17.sp) },
+            text = { Text("Bạn chắc chắn muốn đăng xuất?", fontSize = 17.sp) },
             confirmButton = {
                 Button(
                     onClick = {
-                        openDialog.value = false
-                        navController.navigate(Screen.HomeScreen.route)
+//                        openDialog.value = false
+//                        navController.navigate(Screen.HomeScreen.route){
+//                            // Sau khi đăng xuất, loại bỏ các màn cũ ra khỏi back stack
+//                            popUpTo(0)
+//                        }
+                        scope.launch {
+                            try {
+                                // Gọi hàm logout để xóa dữ liệu trong DataStore
+                                accountViewModel.logout(context)
+                                // Đóng dialog
+                                openDialog.value = false
+                                // Điều hướng về IntroScreen sau khi đăng xuất
+                                navController.navigate(Screen.IntroScreen.route) {
+                                    // Xóa toàn bộ back stack để người dùng không quay lại HomeScreen
+                                    popUpTo(0) { inclusive = true }
+                                }
+                                //Log.d("AccountOptions", "Navigated to IntroScreen after logout")
+                            } catch (e: Exception) {
+                                ///Log.e("AccountOptions", "Error during logout: ${e.message}", e)
+                                openDialog.value = false
+                            }
+                        }
                     },
                     colors = ButtonDefaults.buttonColors(
                         containerColor = Color(0xFF5F9EFF),
                         contentColor = Color.White
-                    )
+                    ),
+                    shape = RoundedCornerShape(8.dp)
                 ) {
                     Text("OK", fontSize = 14.sp)
                 }
@@ -818,9 +803,10 @@ fun AccountOptionsSection(
                         openDialog.value = false
                     },
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = Color(0xFF5F9EFF),
+                        containerColor = Color.Gray,
                         contentColor = Color.White
-                    )
+                    ),
+                    shape = RoundedCornerShape(8.dp)
                 ) {
                     Text("Cancel", fontSize = 14.sp)
                 }
@@ -859,11 +845,9 @@ fun AccountOptionItem(
 
 @Composable
 fun ChangePasswordSection(
-    username: String
+    username: String,
+    snackbarHostState: SnackbarHostState // Thêm tham số SnackbarHostState
 ) {
-    var snackbarHostState = remember {
-        SnackbarHostState()
-    }
     var scope = rememberCoroutineScope()
 
     var matkhaucu by remember { mutableStateOf("") }
@@ -881,8 +865,8 @@ fun ChangePasswordSection(
     var isPasswordVisible1 by remember { mutableStateOf(false) }
     var isPasswordVisible2 by remember { mutableStateOf(false) }
     Card(
-        shape = RoundedCornerShape(16.dp),
-        elevation = CardDefaults.cardElevation(4.dp),
+        shape = RoundedCornerShape(5.dp),
+        elevation = CardDefaults.cardElevation(1.dp),
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(containerColor = Color.White)
     ) {
@@ -965,10 +949,6 @@ fun ChangePasswordSection(
                 onValueChange = { kiemtramkmoi = it }
             )
             Spacer(modifier = Modifier.height(8.dp))
-            SnackbarHost(
-                modifier = Modifier.padding(4.dp),
-                hostState = snackbarHostState
-            )
             Button(
                 onClick = {
                     if (account != null) {
@@ -1026,60 +1006,6 @@ fun ChangePasswordSection(
                                 )
                             }
                         }
-
-//                        if (username.isEmpty() || matkhaucu.isEmpty() || kiemtramkmoi.isEmpty()) {
-//                            scope.launch {
-//                                snackbarHostState.showSnackbar(
-//                                    message = "Vui lòng nhập đày đủ thông tin."
-//                                )
-//                            }
-//                        } else if (matkhaucu != password) {
-//                            scope.launch {
-//                                snackbarHostState.showSnackbar(
-//                                    message = "Mật khẩu cũ chưa đúng!"
-//                                )
-//                            }
-//                        } else if (matkhaumoi.contains(" ")) {
-//                            scope.launch {
-//                                snackbarHostState.showSnackbar(
-//                                    message = "Mật khẩu mới không được chứa khoảng trắng!"
-//                                )
-//                            }
-//                        } else if(matkhaumoi!=kiemtramkmoi){
-//                            scope.launch {
-//                                snackbarHostState.showSnackbar(
-//                                    message = "Xác nhận mật khẩu không khớp!"
-//                                )
-//                            }
-//                        } else if (matkhaumoi.contains(username)) {
-//                            scope.launch {
-//                                snackbarHostState.showSnackbar(
-//                                    message = "Password không được chứa Username!"
-//                                )
-//                            }
-//                        } else if (matkhaumoi.length < 3) {
-//                            scope.launch {
-//                                snackbarHostState.showSnackbar(
-//                                    message = "Password phải từ 8 ký tự trở lên!"
-//                                )
-//                            }
-//                        }else{
-//                            scope.launch {
-//                                snackbarHostState.showSnackbar(
-//                                    message = "Đổi mật khẩu thành công!"
-//                                )
-//                            }
-//                            val taiKhoan = Account(
-//                                idPerson = account.idPerson,
-//                                idRole = "CUS",
-//                                username = username,
-//                                password = matkhaumoi,
-//                                report = 0,
-//                                isNew = 1,
-//                                status = 1
-//                            )
-//                            accountViewModel.updateAccount(taiKhoan)
-//                        }
                     }
                 },
 
