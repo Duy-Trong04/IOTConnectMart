@@ -1,0 +1,24 @@
+package com.example.ungdungbanthietbi_iot.models
+
+import com.google.gson.annotations.SerializedName
+
+data class Account(
+    @SerializedName("idPerson") var idPerson:String?,
+    @SerializedName("idRole") var idRole:String,
+    @SerializedName("username") var username:String,
+    @SerializedName("password") var password:String,
+    @SerializedName("report") var report:Int,
+    @SerializedName("isNew") var isNew:Int,
+    @SerializedName("status") var status:Int
+)
+
+data class AddAccount(
+    @SerializedName("idPerson") var idPerson:String?,
+    @SerializedName("username") var username:String,
+    @SerializedName("password") var password:String,
+)
+
+data class UpdatePassword(
+    @SerializedName("idPerson") var idPerson:String?,
+    @SerializedName("password") var password:String,
+)

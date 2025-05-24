@@ -2,7 +2,7 @@ package com.example.ungdungbanthietbi_iot
 
 import android.app.Application
 import androidx.room.Room
-import com.example.ungdungbanthietbi_iot.data.AppDatabase
+import com.example.ungdungbanthietbi_iot.config.AppDatabase
 
 class MyApplication : Application() {
     companion object {

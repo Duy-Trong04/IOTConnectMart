@@ -14,44 +14,44 @@ import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
-import com.example.ungdungbanthietbi_iot.data.account.AccountViewModel
-import com.example.ungdungbanthietbi_iot.data.customer.CustomerViewModel
-import com.example.ungdungbanthietbi_iot.data.device.DeviceViewModel
-import com.example.ungdungbanthietbi_iot.data.image_device.ImageViewModel
-import com.example.ungdungbanthietbi_iot.data.review_device.ReviewViewModel
-import com.example.ungdungbanthietbi_iot.data.slideshow.SlideShowViewModel
-import com.example.ungdungbanthietbi_iot.screen.address.AddAddressScreen
-import com.example.ungdungbanthietbi_iot.screen.address.AddressSelectionScreen
-import com.example.ungdungbanthietbi_iot.screen.cart.CartScreen
-import com.example.ungdungbanthietbi_iot.screen.check_out.CheckoutScreen
-import com.example.ungdungbanthietbi_iot.screen.favorite.FavoritesScreen
-import com.example.ungdungbanthietbi_iot.screen.signUp_signIn.ForgotPasswordScreen
-import com.example.ungdungbanthietbi_iot.screen.home.HomeScreen
-import com.example.ungdungbanthietbi_iot.screen.signUp_signIn.IntroScreen
-import com.example.ungdungbanthietbi_iot.screen.signUp_signIn.LoginScreen
-import com.example.ungdungbanthietbi_iot.screen.order_detail.OrderDetailsScreen
-import com.example.ungdungbanthietbi_iot.screen.product_detail.ProductDetailsScreen
-import com.example.ungdungbanthietbi_iot.screen.signUp_signIn.RegisterScreen
-import com.example.ungdungbanthietbi_iot.screen.signUp_signIn.ResetPasswordScreen
-import com.example.ungdungbanthietbi_iot.screen.search.SearchResultsScreen
-import com.example.ungdungbanthietbi_iot.screen.search.SearchScreen
-import com.example.ungdungbanthietbi_iot.screen.signUp_signIn.VerifyOTPScreen
-import com.example.ungdungbanthietbi_iot.screen.Setting.ChangePassword
-import com.example.ungdungbanthietbi_iot.screen.Setting.ContactScreen
-import com.example.ungdungbanthietbi_iot.screen.address.UpdateAddress
-import com.example.ungdungbanthietbi_iot.screen.check_out.CheckOutSuccessScreen
-import com.example.ungdungbanthietbi_iot.screen.notification.NotificationScreen
-import com.example.ungdungbanthietbi_iot.screen.personal.AccountSettingsScreen
-import com.example.ungdungbanthietbi_iot.screen.personal.EditEmailScreen
-import com.example.ungdungbanthietbi_iot.screen.personal.EditPhoneScreen
-import com.example.ungdungbanthietbi_iot.screen.personal.EditProfileScreen
-import com.example.ungdungbanthietbi_iot.screen.personal.EditUsername
-import com.example.ungdungbanthietbi_iot.screen.personal.OrderListScreen
-import com.example.ungdungbanthietbi_iot.screen.personal.PersonalScreen
-import com.example.ungdungbanthietbi_iot.screen.rating.ProductReviewsScreen
-import com.example.ungdungbanthietbi_iot.screen.rating.RatingHistoryScreen
-import com.example.ungdungbanthietbi_iot.screen.rating.RatingScreen
-import com.example.ungdungbanthietbi_iot.screen.rating.UpdateRatingScreen
+import com.example.ungdungbanthietbi_iot.viewModels.AccountViewModel
+import com.example.ungdungbanthietbi_iot.viewModels.CustomerViewModel
+import com.example.ungdungbanthietbi_iot.viewModels.DeviceViewModel
+import com.example.ungdungbanthietbi_iot.viewModels.ImageViewModel
+import com.example.ungdungbanthietbi_iot.viewModels.ReviewViewModel
+import com.example.ungdungbanthietbi_iot.viewModels.SlideShowViewModel
+import com.example.ungdungbanthietbi_iot.views.address.AddAddressScreen
+import com.example.ungdungbanthietbi_iot.views.address.AddressSelectionScreen
+import com.example.ungdungbanthietbi_iot.views.cart.CartScreen
+import com.example.ungdungbanthietbi_iot.views.check_out.CheckoutScreen
+import com.example.ungdungbanthietbi_iot.views.favorite.FavoritesScreen
+import com.example.ungdungbanthietbi_iot.views.signUp_signIn.ForgotPasswordScreen
+import com.example.ungdungbanthietbi_iot.views.home.HomeScreen
+import com.example.ungdungbanthietbi_iot.views.signUp_signIn.IntroScreen
+import com.example.ungdungbanthietbi_iot.views.signUp_signIn.LoginScreen
+import com.example.ungdungbanthietbi_iot.views.order_detail.OrderDetailsScreen
+import com.example.ungdungbanthietbi_iot.views.product_detail.ProductDetailsScreen
+import com.example.ungdungbanthietbi_iot.views.signUp_signIn.RegisterScreen
+import com.example.ungdungbanthietbi_iot.views.signUp_signIn.ResetPasswordScreen
+import com.example.ungdungbanthietbi_iot.views.search.SearchResultsScreen
+import com.example.ungdungbanthietbi_iot.views.search.SearchScreen
+import com.example.ungdungbanthietbi_iot.views.signUp_signIn.VerifyOTPScreen
+import com.example.ungdungbanthietbi_iot.views.Setting.ChangePassword
+import com.example.ungdungbanthietbi_iot.views.Setting.ContactScreen
+import com.example.ungdungbanthietbi_iot.views.address.UpdateAddress
+import com.example.ungdungbanthietbi_iot.views.check_out.CheckOutSuccessScreen
+import com.example.ungdungbanthietbi_iot.views.notification.NotificationScreen
+import com.example.ungdungbanthietbi_iot.views.personal.AccountSettingsScreen
+import com.example.ungdungbanthietbi_iot.views.personal.EditEmailScreen
+import com.example.ungdungbanthietbi_iot.views.personal.EditPhoneScreen
+import com.example.ungdungbanthietbi_iot.views.personal.EditProfileScreen
+import com.example.ungdungbanthietbi_iot.views.personal.EditUsername
+import com.example.ungdungbanthietbi_iot.views.personal.OrderListScreen
+import com.example.ungdungbanthietbi_iot.views.personal.PersonalScreen
+import com.example.ungdungbanthietbi_iot.views.rating.ProductReviewsScreen
+import com.example.ungdungbanthietbi_iot.views.rating.RatingHistoryScreen
+import com.example.ungdungbanthietbi_iot.views.rating.RatingScreen
+import com.example.ungdungbanthietbi_iot.views.rating.UpdateRatingScreen
 import com.example.ungdungbanthietbi_iot.ui.theme.parseSelectedProducts
 
 /** Chuyển hướng (NavGraph)
@@ -267,7 +267,7 @@ fun NavGraph(
         composable(route = Screen.Product_Reviews.route+ "?idDevice={idDevice}",
             arguments = listOf(navArgument("idDevice"){nullable = true})
         ) {
-            var idDevice = it.arguments?.getString("idDevice")
+            val idDevice = it.arguments?.getString("idDevice")
             if(idDevice != null){
                 ProductReviewsScreen(navController, idDevice, reviewViewModel)
             }
