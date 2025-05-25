@@ -1,0 +1,41 @@
+package com.example.ungdungbanthietbi_iot.api
+
+import com.example.ungdungbanthietbi_iot.models.Device
+import retrofit2.http.GET
+import retrofit2.http.Query
+
+data class DeviceResponse(
+    val device: List<Device>
+)
+
+interface DeviceAPIService {
+    @GET ("device/read.php")
+    suspend fun getAllDevice(): List<Device>
+
+    @GET ("device/getDevicePriceThan5M.php")
+    suspend fun getDeviceFeatured(): List<Device>
+
+    @GET("device/show.php")
+    suspend fun getDeviceById(@Query("id") id: String): Device
+
+    @GET("device/getDeviceByCart.php")
+    suspend fun getDeviceByCart(
+        @Query("idCustomer") idCustomer: String
+    ): DeviceResponse
+
+    @GET("device/getDeviceByLiked.php")
+    suspend fun getDeviceByLiked(
+        @Query("idCustomer") idCustomer: String
+    ): DeviceResponse
+
+    @GET("device/getDeviceByIdOrder.php")
+    suspend fun getDeviceByIdOrder(
+        @Query("id") id: Int
+    ): DeviceResponse
+
+    @GET("device/searchDevice.php")
+    suspend fun searchDevice(
+        @Query("name") name: String,
+        @Query("des") des: String
+    ): DeviceResponse
+}
