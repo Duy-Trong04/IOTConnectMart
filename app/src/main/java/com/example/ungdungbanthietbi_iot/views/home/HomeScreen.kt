@@ -40,12 +40,18 @@ import androidx.compose.material.icons.filled.Category
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
+import androidx.compose.material.icons.filled.GridView
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.outlined.GridView
+import androidx.compose.material.icons.outlined.Home
+import androidx.compose.material.icons.outlined.Notifications
+import androidx.compose.material.icons.outlined.Person
 import androidx.compose.material.icons.outlined.ShoppingCart
-import androidx.compose.material3.BottomAppBar
+import androidx.compose.material.icons.outlined.ViewComfyAlt
+import androidx.compose.material.icons.outlined.ViewCozy
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -59,6 +65,8 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.ModalDrawerSheet
 import androidx.compose.material3.ModalNavigationDrawer
+import androidx.compose.material3.NavigationBar
+import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.NavigationDrawerItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -79,6 +87,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.draw.scale
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.painter.Painter
@@ -93,6 +102,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import coil.compose.AsyncImage
+import coil.compose.rememberAsyncImagePainter
 import coil.compose.rememberImagePainter
 import coil.request.ImageRequest
 import com.example.ungdungbanthietbi_iot.models.Account
@@ -145,13 +155,12 @@ fun HomeScreen(
         accountViewModel.getUserByUsername(username)
     }
 
-    LaunchedEffect (deviceViewModel.listDeviceOfCustomer){
+    LaunchedEffect(deviceViewModel.listDeviceOfCustomer) {
         if (account != null) {
             deviceViewModel.getDeviceByLiked(account.idPerson.toString())
             cartViewModel.getCartByIdCustomer(account.idPerson.toString())
         }
     }
-
 
     val navdrawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     val scope = rememberCoroutineScope()
@@ -258,15 +267,14 @@ fun HomeScreen(
             topBar = {
                 TopAppBar(
                     title = {
-                        if(selectedTabIndex == 3){
+                        if (selectedTabIndex == 3) {
                             Text(
                                 text = "Hồ sơ cá nhân",
                                 fontWeight = FontWeight.Bold,
                                 fontSize = 20.sp,
                                 color = Color.White
                             )
-                        }
-                        else{
+                        } else {
                             Text(
                                 text = "IOT Connect Mart",
                                 fontWeight = FontWeight.Bold,
@@ -350,17 +358,20 @@ fun HomeScreen(
                                 )
                             }
                         }
-
                     }
                 )
             },
             bottomBar = {
-                BottomAppBar(
+                NavigationBar(
                     containerColor = Color.White,
                     contentColor = Color.Black,
                     modifier = Modifier
                         .fillMaxWidth()
-                        //.offset(y = 16.dp) // Dịch chuyển BottomAppBar xuống 16dp
+                        .border(
+                            width = 1.dp,
+                            color = Color(0xFF5D9EFF),
+                            shape = RoundedCornerShape(0.dp) // Hình chữ nhật, không bo góc
+                        )
                 ) {
                     Row(
                         modifier = Modifier
@@ -369,16 +380,44 @@ fun HomeScreen(
                         horizontalArrangement = Arrangement.SpaceAround,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        NavItem(
-                            icon = Icons.Default.Home,
-                            label = "Trang chủ",
-                            isSelected = selectedTabIndex == 0,
+                        NavigationBarItem(
+                            icon = {
+                                Icon(
+                                    imageVector = if (selectedTabIndex == 0) Icons.Default.Home else Icons.Outlined.Home,
+                                    contentDescription = "Trang chủ",
+                                    modifier = Modifier.size(28.dp),
+                                    tint = if (selectedTabIndex == 0) Color(0xFF1E88E5) else Color(0xFF616161)
+                                )
+                            },
+                            label = {
+                                Text(
+                                    text = "Trang chủ",
+                                    fontSize = 12.sp,
+                                    color = if (selectedTabIndex == 0) Color(0xFF1E88E5) else Color(0xFF616161),
+                                    fontWeight = if (selectedTabIndex == 0) FontWeight.Bold else FontWeight.Normal
+                                )
+                            },
+                            selected = selectedTabIndex == 0,
                             onClick = { selectedTabIndex = 0 }
                         )
-                        NavItem(
-                            icon = Icons.Default.Category,
-                            label = "Danh mục",
-                            isSelected = selectedTabIndex == 1,
+                        NavigationBarItem(
+                            icon = {
+                                Icon(
+                                    imageVector = Icons.Outlined.GridView,
+                                    contentDescription = "Danh mục",
+                                    modifier = Modifier.size(28.dp),
+                                    tint = if (selectedTabIndex == 1) Color(0xFF1E88E5) else Color(0xFF616161)
+                                )
+                            },
+                            label = {
+                                Text(
+                                    text = "Danh mục",
+                                    fontSize = 12.sp,
+                                    color = if (selectedTabIndex == 1) Color(0xFF1E88E5) else Color(0xFF616161),
+                                    fontWeight = if (selectedTabIndex == 1) FontWeight.Bold else FontWeight.Normal
+                                )
+                            },
+                            selected = selectedTabIndex == 1,
                             onClick = {
                                 scope.launch {
                                     navdrawerState.apply {
@@ -387,18 +426,46 @@ fun HomeScreen(
                                 }
                             }
                         )
-                        NavItem(
-                            icon = Icons.Default.Notifications,
-                            label = "Thông báo",
-                            isSelected = selectedTabIndex == 2,
+                        NavigationBarItem(
+                            icon = {
+                                Icon(
+                                    imageVector = if (selectedTabIndex == 2) Icons.Default.Notifications else Icons.Outlined.Notifications,
+                                    contentDescription = "Thông báo",
+                                    modifier = Modifier.size(28.dp),
+                                    tint = if (selectedTabIndex == 2) Color(0xFF1E88E5) else Color(0xFF616161)
+                                )
+                            },
+                            label = {
+                                Text(
+                                    text = "Thông báo",
+                                    fontSize = 12.sp,
+                                    color = if (selectedTabIndex == 2) Color(0xFF1E88E5) else Color(0xFF616161),
+                                    fontWeight = if (selectedTabIndex == 2) FontWeight.Bold else FontWeight.Normal
+                                )
+                            },
+                            selected = selectedTabIndex == 2,
                             onClick = { selectedTabIndex = 2 }
                         )
-                        NavItem(
-                            icon = Icons.Default.Person,
-                            label = "Tôi",
-                            isSelected = selectedTabIndex == 3,
+                        NavigationBarItem(
+                            icon = {
+                                Icon(
+                                    imageVector = if (selectedTabIndex == 3) Icons.Default.Person else Icons.Outlined.Person,
+                                    contentDescription = "Tôi",
+                                    modifier = Modifier.size(28.dp),
+                                    tint = if (selectedTabIndex == 3) Color(0xFF1E88E5) else Color(0xFF616161)
+                                )
+                            },
+                            label = {
+                                Text(
+                                    text = "Tôi",
+                                    fontSize = 12.sp,
+                                    color = if (selectedTabIndex == 3) Color(0xFF1E88E5) else Color(0xFF616161),
+                                    fontWeight = if (selectedTabIndex == 3) FontWeight.Bold else FontWeight.Normal
+                                )
+                            },
+                            selected = selectedTabIndex == 3,
                             onClick = {
-                                if(username != null) selectedTabIndex = 3
+                                if (username != null) selectedTabIndex = 3
                                 else {
                                     navController.navigate(Screen.LoginScreen.route)
                                 }
@@ -449,10 +516,15 @@ fun HomeScreen(
                     listDeviceLiked = deviceViewModel.listDeviceOfCustomer,
                     categories = categories
                 )
-                2 -> if(account != null) NotificationScreen(navController = navController, idUser = account.idPerson)
-                    else NotificationScreen(navController = navController, idUser = "")
-                3 -> username?.let { PersonalScreen(navController = navController, username = it, deviceViewModel = deviceViewModel) }
-
+                2 -> if (account != null) NotificationScreen(navController = navController, idUser = account.idPerson)
+                else NotificationScreen(navController = navController, idUser = "")
+                3 -> username?.let {
+                    PersonalScreen(
+                        navController = navController,
+                        username = it,
+                        deviceViewModel = deviceViewModel
+                    )
+                }
             }
         }
     }
@@ -501,7 +573,8 @@ fun HomeContent(
         LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(padding),
+                .padding(padding)
+                .background(Color.White),
             state = listState
         ) {
             item {
@@ -519,46 +592,48 @@ fun HomeContent(
                             pagerState.animateScrollToPage(nextPage)
                         }
                     }
-                    HorizontalPager(
-                        state = pagerState,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(250.dp)
-                            .padding(bottom = 4.dp)
-                    ) { page ->
-                        SlideImage(
-                            painter = rememberImagePainter(data = listSlideShow[page].image),
-                        )
-                    }
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(vertical = 2.dp),
-                        horizontalArrangement = Arrangement.Center
-                    ) {
-                        listSlideShow.forEachIndexed { index, _ ->
-                            val isActive = index == pagerState.currentPage
-                            val animatedWidth by animateFloatAsState(
-                                targetValue = if (isActive) 24f else 8f,
-                                animationSpec = tween(300), label = ""
+                    Box {
+                        HorizontalPager(
+                            state = pagerState,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(200.dp)
+                                .padding(horizontal = 16.dp, vertical = 8.dp)
+                                .clip(RoundedCornerShape(16.dp))
+                                .shadow(4.dp, RoundedCornerShape(16.dp))
+                        ) { page ->
+                            SlideImage(
+                                painter = rememberAsyncImagePainter(model = listSlideShow[page].image),
                             )
-                            Box(
-                                modifier = Modifier
-                                    .padding(horizontal = 4.dp)
-                                    .size(width = animatedWidth.dp, height = 4.dp)
-                                    .background(
-                                        color = if (isActive) Color(0xFF1E88E5) else Color(
-                                            0xFFB0BEC5
-                                        ),
-                                        shape = RoundedCornerShape(2.dp)
-                                    )
-                                    .clickable {
-                                        // Chuyển đến slide khi nhấp vào chấm
-                                        coroutineScope.launch {
-                                            pagerState.animateScrollToPage(index)
+                        }
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .align(Alignment.BottomCenter) // Đặt Row ở dưới cùng của Box
+                                .padding(vertical = 15.dp), // Giảm padding để gần sát mép dưới
+                            horizontalArrangement = Arrangement.Center
+                        ) {
+                            listSlideShow.forEachIndexed { index, _ ->
+                                val isActive = index == pagerState.currentPage
+                                val animatedWidth by animateFloatAsState(
+                                    targetValue = if (isActive) 32f else 12f,
+                                    animationSpec = tween(300), label = ""
+                                )
+                                Box(
+                                    modifier = Modifier
+                                        .padding(horizontal = 6.dp)
+                                        .size(width = animatedWidth.dp, height = 6.dp)
+                                        .background(
+                                            color = if (isActive) Color(0xFF1E88E5) else Color(0xFFB0BEC5),
+                                            shape = RoundedCornerShape(3.dp)
+                                        )
+                                        .clickable {
+                                            coroutineScope.launch {
+                                                pagerState.animateScrollToPage(index)
+                                            }
                                         }
-                                    }
-                            )
+                                )
+                            }
                         }
                     }
                 } else {
@@ -753,13 +828,13 @@ fun NavItem(
 }
 
 @Composable
-fun CardFavorites(device: Device, isFavorite:Boolean, idCustomer:String?, username: String?, deviceViewModel: DeviceViewModel, navController: NavController){
-    var check  by remember { mutableStateOf(isFavorite) }
+fun CardFavorites(device: Device, isFavorite: Boolean, idCustomer: String?, username: String?, deviceViewModel: DeviceViewModel, navController: NavController) {
+    var check by remember { mutableStateOf(isFavorite) }
     val likedViewModel: LikedViewModel = viewModel()
     val listLiked = likedViewModel.listLiked
     var isLoading by remember { mutableStateOf(false) } // Thêm trạng thái tải cục bộ
     LaunchedEffect(idCustomer) {
-        if(idCustomer!=null){
+        if (idCustomer != null) {
             likedViewModel.getLikedByIdCustomer(idCustomer)
         }
     }
@@ -772,10 +847,9 @@ fun CardFavorites(device: Device, isFavorite:Boolean, idCustomer:String?, userna
             .height(250.dp)
             .padding(4.dp),
         onClick = {
-            if (username != null){
+            if (username != null) {
                 navController.navigate(Screen.ProductDetailsScreen.route + "?id=${device.idDevice}&idCustomer=${idCustomer}&username=${username}")
-            }
-            else{
+            } else {
                 navController.navigate(Screen.ProductDetailsScreen.route + "?id=${device.idDevice}&idCustomer=${idCustomer}")
             }
         },
@@ -785,7 +859,7 @@ fun CardFavorites(device: Device, isFavorite:Boolean, idCustomer:String?, userna
         elevation = CardDefaults.cardElevation(1.dp),
         shape = RoundedCornerShape(5.dp)
     ) {
-        Box(modifier = Modifier.fillMaxWidth()){
+        Box(modifier = Modifier.fillMaxWidth()) {
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -816,7 +890,8 @@ fun CardFavorites(device: Device, isFavorite:Boolean, idCustomer:String?, userna
                     fontSize = 16.sp
                 )
             }
-            IconButton(onClick = {
+            IconButton(
+                onClick = {
                     if (idCustomer == null) {
                         navController.navigate(Screen.LoginScreen.route)
                     } else if (!isLoading) {
@@ -854,7 +929,6 @@ fun CardFavorites(device: Device, isFavorite:Boolean, idCustomer:String?, userna
                 }
             }
         }
-
     }
 }
 

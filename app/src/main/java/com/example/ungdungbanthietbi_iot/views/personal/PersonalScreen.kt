@@ -12,7 +12,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ExitToApp
+import androidx.compose.material.icons.automirrored.filled.ExitToApp
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Menu
@@ -62,7 +62,7 @@ import kotlinx.coroutines.launch
 import java.time.LocalDate
 
 
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PersonalScreen(
     navController: NavController,
@@ -75,12 +75,6 @@ fun PersonalScreen(
 
     val navdrawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     val scope = rememberCoroutineScope()
-    val countries = listOf(
-        "Thiết bị chiếu sáng",
-        "Thiết bị cảm biến",
-        "Thiết bị điện tử thông minh",
-        "Đồng hồ thông minh",
-    )
 
     val cartViewModel: CartViewModel = viewModel()
     val listCart = cartViewModel.listCart
@@ -195,13 +189,12 @@ fun PersonalScreen(
             modifier = Modifier
                 .padding(it)
                 .fillMaxSize()
-                .background(Color(0xFFF2F2F2))
+                .background(Color.White)
         ) {
             item {
                 Column(
-                    modifier = Modifier
-                        .padding(start = 16.dp, end = 16.dp, top = 16.dp)
-                ) {
+                    modifier = Modifier.padding(start = 16.dp, end = 16.dp, top = 16.dp)
+                ){
                     when (currentTab) {
                         "accountInfo" -> AccountInfoSection(username, snackbarHostState)
                         "changePassword" -> ChangePasswordSection(username, snackbarHostState)
@@ -228,8 +221,8 @@ fun AccountInfoSection(
 ){
     val maxLength = 10
 
-    var accountViewModel: AccountViewModel = viewModel()
-    var customerViewModel: CustomerViewModel = viewModel()
+    val accountViewModel: AccountViewModel = viewModel()
+    val customerViewModel: CustomerViewModel = viewModel()
 
     val account = accountViewModel.account
     val customer = customerViewModel.customer
@@ -247,7 +240,7 @@ fun AccountInfoSection(
         // ví dụ: customerViewModel.updateAvatar(uri)
     }
 
-    var scope = rememberCoroutineScope()
+    val scope = rememberCoroutineScope()
     LaunchedEffect(username) {
         if (username.isNotEmpty()) {
             accountViewModel.getUserByUsername(username)
@@ -331,7 +324,7 @@ fun AccountInfoSection(
                     now.minusYears(18)
                 }
 
-                val birthdate = customer.birthdate?.takeIf { it.isNotBlank() } ?: defaultDate.toString()
+                val birthdate = customer.birthdate.takeIf { it.isNotBlank() } ?: defaultDate.toString()
 
                 // Khởi tạo các giá trị ngày sinh
                 var initialDay: String
@@ -579,7 +572,7 @@ fun AccountInfoSection(
                             )
                             customerViewModel.updateCustomer(khachHang)
                             // Nếu có ảnh được chọn, cập nhật ảnh
-                            selectedImageUri?.let { uri ->
+                            selectedImageUri?.let {
                                 // Gọi hàm trong ViewModel để lưu ảnh, ví dụ:
                                 // customerViewModel.updateAvatar(uri)
                             }
@@ -593,7 +586,7 @@ fun AccountInfoSection(
                         }
                     },
                     modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(5.dp),// Bo góc nút
+                    shape = RoundedCornerShape(10.dp),// Bo góc nút
                     colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF5F9EFF))
                 ) {
                     Text("LƯU THAY ĐỔI", color = Color.White, fontSize = 16.sp)
@@ -732,10 +725,9 @@ fun AccountOptionsSection(
                 isSelected = currentTab == "changePassword",
                 onClick = { onOptionSelected("changePassword") }
             )
-            AccountOptionItem(
-                iconRes = Icons.Filled.ExitToApp,
+            AccountOptionLogOut(
+                iconRes = Icons.AutoMirrored.Filled.ExitToApp,
                 label = "Đăng xuất",
-                isSelected = false, // Không cần trạng thái cho mục đăng xuất
                 onClick = {
                     openDialog.value = true
                 }
@@ -743,7 +735,7 @@ fun AccountOptionsSection(
         }
     }
 
-    if (openDialog.value == true) {
+    if (openDialog.value) {
         AlertDialog(
             containerColor = Color.White,
             onDismissRequest = { openDialog.value = false },
@@ -776,12 +768,12 @@ fun AccountOptionsSection(
                         }
                     },
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = Color(0xFF5F9EFF),
+                        containerColor = Color.Red,
                         contentColor = Color.White
                     ),
-                    shape = RoundedCornerShape(8.dp)
+                    shape = RoundedCornerShape(10.dp)
                 ) {
-                    Text("OK", fontSize = 14.sp)
+                    Text("Đăng xuất", fontSize = 14.sp)
                 }
             },
             dismissButton = {
@@ -790,12 +782,12 @@ fun AccountOptionsSection(
                         openDialog.value = false
                     },
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = Color.Gray,
+                        containerColor = Color.LightGray,
                         contentColor = Color.White
                     ),
-                    shape = RoundedCornerShape(8.dp)
+                    shape = RoundedCornerShape(10.dp)
                 ) {
-                    Text("Cancel", fontSize = 14.sp)
+                    Text("Hủy", fontSize = 14.sp)
                 }
             }
         )
@@ -831,22 +823,49 @@ fun AccountOptionItem(
 }
 
 @Composable
+fun AccountOptionLogOut(
+    iconRes: ImageVector,
+    label: String,
+    onClick: () -> Unit
+) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable { onClick() }
+            .padding(vertical = 8.dp)
+    ) {
+        Icon(
+            imageVector = iconRes,
+            contentDescription = label,
+            tint = Color.Red
+        )
+        Spacer(modifier = Modifier.width(16.dp))
+        Text(
+            text = label,
+            color = Color.Red,
+            fontWeight = FontWeight.Normal
+        )
+    }
+}
+
+@Composable
 fun ChangePasswordSection(
     username: String,
     snackbarHostState: SnackbarHostState // Thêm tham số SnackbarHostState
 ) {
-    var scope = rememberCoroutineScope()
+    val scope = rememberCoroutineScope()
 
     var matkhaucu by remember { mutableStateOf("") }
     var matkhaumoi by remember { mutableStateOf("") }
     var kiemtramkmoi by remember { mutableStateOf("") }
 
-    var accountViewModel: AccountViewModel = viewModel()
+    val accountViewModel: AccountViewModel = viewModel()
 
-    var account = accountViewModel.account
+    val account = accountViewModel.account
 
     accountViewModel.getUserByUsername(username)
-    var password by remember { mutableStateOf(account?.password) }
+    val password by remember { mutableStateOf(account?.password) }
 
     var isPasswordVisible by remember { mutableStateOf(false) }
     var isPasswordVisible1 by remember { mutableStateOf(false) }

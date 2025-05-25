@@ -1,5 +1,6 @@
 package com.example.ungdungbanthietbi_iot.views.check_out
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -177,7 +178,7 @@ fun CheckoutScreen(
         },
         bottomBar = {
             BottomAppBar(
-                containerColor = Color.Transparent,
+                containerColor = Color.White,
                 modifier = Modifier.fillMaxWidth().height(165.dp)
             ) {
                 Column(
@@ -189,7 +190,7 @@ fun CheckoutScreen(
                         "Tổng thanh toán: ${formatGiaTien(tongtien)}",
                         style = TextStyle(color = Color.Red, fontSize = 18.sp)
                     )
-                    Spacer(modifier = Modifier.height(8.dp))
+                    Spacer(modifier = Modifier.height(4.dp))
                     Button(
                         modifier = Modifier.fillMaxWidth(),
                         onClick = {
@@ -259,8 +260,8 @@ fun CheckoutScreen(
                                 popUpTo(0) { inclusive = true }
                             }
                         },
-                        shape = RoundedCornerShape(5.dp),
-                        elevation = ButtonDefaults.buttonElevation(5.dp),
+                        shape = RoundedCornerShape(10.dp),
+                        elevation = ButtonDefaults.buttonElevation(2.dp),
                         colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF5D9EFF))
                     ) {
                         Text("ĐẶT HÀNG", fontSize = 20.sp)
@@ -269,7 +270,12 @@ fun CheckoutScreen(
             }
         }
     ) { paddingValues ->
-        LazyColumn(modifier = Modifier.padding(paddingValues).padding(10.dp)) {
+        LazyColumn(
+            modifier = Modifier
+                .padding(paddingValues)
+                .fillMaxSize()
+                .background(Color.White)
+        ) {
             item {
                 if (address != null) {
                     Card(
@@ -475,11 +481,6 @@ fun DeviceItem(
     device: Device,
     stock:Int
 ) {
-    //Hàm format tiền
-    fun formatGiaTien(gia: Double): String {
-        val formatter = DecimalFormat("#,###,###")
-        return "${formatter.format(gia)}đ"
-    }
     Card(
         modifier = Modifier
             .padding(4.dp)
