@@ -1,22 +1,49 @@
 package com.example.ungdungbanthietbi_iot.models
 
+import com.google.gson.annotations.SerializedName
+
 data class Device(
-    val idDevice: Int, // Kiểu Int cho ID thiết bị
-    val name: String, // Kiểu String cho tên thiết bị
-    val slug: String, // Kiểu String cho đường dẫn (slug)
-    val description: String, // Kiểu String cho mô tả HTML
-    val descriptionNormal: String, // Kiểu String cho mô tả thông thường
-    val image: String, // Kiểu String cho tên ảnh
-    val sellingPrice: Double, // Kiểu Double cho giá bán (có phần thập phân)
-    val idCategory: Int, // Kiểu Int cho ID danh mục
-    val created_at: String, // Kiểu String cho ngày tạo (định dạng ngày giờ)
-    val update_at: String, // Kiểu String cho ngày cập nhật (định dạng ngày giờ)
-    val isHide: Int, // Kiểu Int (0 hoặc 1) biểu thị trạng thái ẩn/hiện
-    val status: Int // Kiểu Int (0 hoặc 1) biểu thị trạng thái hoạt động
+    @SerializedName("id") val idDevice: Int,
+    val name: String,
+    val slug: String,
+    val description: String,
+    @SerializedName("description_normal") val descriptionNormal: String,
+    @SerializedName("selling_price") val sellingPrice: Double,
+    val sold: Int,
+    val views: Int,
+    val status: Int,
+    @SerializedName("is_hide") val isHide: Int,
+    @SerializedName("category_id") val categoryId: Int,
+    val categories: String,
+    @SerializedName("unit_id") val unitId: Int,
+    @SerializedName("unit_name") val unitName: String,
+    val stock: Int,
+    @SerializedName("average_rating") val averageRating: String,
+    @SerializedName("total_liked") val totalLiked: String,
+    @SerializedName("total_review") val totalReview: String,
+    val created_at: String,
+    val updated_at: String?,
+    val deleted_at: String?,
+    val reviews: List<Review>,
+    val images: List<Images>,
+    val image: String,
+    val specifications: List<Specification>
 )
 
-
-data class CategoryDevice(
+data class Specification(
     val id: Int,
-    val nameCategory: String
+    val name: String,
+    val attributes: List<Attribute>
+)
+
+data class Attribute(
+    val id: Int,
+    val name: String,
+    val value: String
+)
+
+data class Images(
+    val id: Int,
+    val product_id: Int,
+    @SerializedName("image") val image: String
 )

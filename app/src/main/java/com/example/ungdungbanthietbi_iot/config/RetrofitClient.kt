@@ -18,7 +18,7 @@ import retrofit2.converter.gson.GsonConverterFactory
 
 
 object Constant{
-    const val BASE_URL = "http://10.0.2.2/IOT_ConnectMart_API/api/"
+    const val BASE_URL = "http://10.0.2.2:8081/api/"
 }
 
 object RetrofitClient {

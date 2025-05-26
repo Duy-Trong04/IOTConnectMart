@@ -73,17 +73,16 @@ class MainActivity : ComponentActivity() {
 
                     if (!savedUsername.isNullOrEmpty() && !savedPassword.isNullOrEmpty()) {
                         // Thực hiện đăng nhập tự động
-                        accountViewModel.CheckLogin(savedUsername, savedPassword)
-                        accountViewModel.loginResult.collect { loginResult ->
-                            if (loginResult != null) {
-                                startDestination = if (loginResult.result == true) {
-                                    "${Screen.HomeScreen.route}?username=$savedUsername"
-                                } else {
-                                    Screen.IntroScreen.route
-                                }
-                                isChecking = false
-                                return@collect
+                        accountViewModel.checkLogin(savedUsername, savedPassword)
+                        accountViewModel.loginUiState.collect { loginState ->
+                            if (loginState.isLoading) return@collect
+                            startDestination = if (loginState.result == true) {
+                                "${Screen.HomeScreen.route}?username=$savedUsername"
+                            } else {
+                                Screen.IntroScreen.route
                             }
+                            isChecking = false
+                            return@collect
                         }
                     } else {
                         // Nếu không có thông tin đăng nhập, điều hướng đến IntroScreen

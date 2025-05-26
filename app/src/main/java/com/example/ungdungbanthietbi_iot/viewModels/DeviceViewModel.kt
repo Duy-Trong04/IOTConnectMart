@@ -1,5 +1,8 @@
 package com.example.ungdungbanthietbi_iot.viewModels
 
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
+import android.util.Base64
 import android.util.Log
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateMapOf
@@ -15,6 +18,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import java.io.ByteArrayInputStream
 
 class DeviceViewModel:ViewModel() {
 
@@ -22,7 +26,8 @@ class DeviceViewModel:ViewModel() {
 
     var listDeviceFeatured: List<Device> by mutableStateOf(emptyList())
 
-    var device: Device by mutableStateOf(Device (0, "", "", "","", "", 0.0, 0, "", "", 0,0))
+    private val _device = MutableStateFlow<Device?>(null)
+    val device: StateFlow<Device?> get() = _device
 
     var listDeviceOfCustomer by mutableStateOf<List<Device>>(emptyList())
         private set
@@ -46,7 +51,7 @@ class DeviceViewModel:ViewModel() {
     fun getDeviceBySlug2(id: String) {
         viewModelScope.launch(Dispatchers.IO) {
             try {
-                val fetchedDevice = RetrofitClient.deviceAPIService.getDeviceById(id)
+                val fetchedDevice = RetrofitClient.deviceAPIService.getDeviceById1(id)
                 deviceMap[id] = fetchedDevice  // Lưu riêng từng sản phẩm
             } catch (e: Exception) {
                 Log.e("DeviceViewModel", "Error getting device", e)
@@ -59,7 +64,7 @@ class DeviceViewModel:ViewModel() {
                 val response = withContext(Dispatchers.IO) {
                     RetrofitClient.deviceAPIService.getDeviceByCart(idCustomer)
                 }
-                listDeviceOfCustomer = response.device
+                listDeviceOfCustomer = response.data.data
             } catch (e: Exception) {
                 Log.e("Device Error", "Lỗi khi lấy device: ${e.message}")
             }
@@ -77,7 +82,7 @@ class DeviceViewModel:ViewModel() {
                 }
                 // Cập nhật vào map
                 devicesByOrder = devicesByOrder.toMutableMap().apply {
-                    put(orderId, response.device)
+                    put(orderId, response.data.data)
                 }
             } catch (e: Exception) {
                 Log.e("DeviceViewModel", "Lỗi khi lấy thiết bị: ${e.message}")
@@ -90,7 +95,7 @@ class DeviceViewModel:ViewModel() {
                 val response = withContext(Dispatchers.IO) {
                     RetrofitClient.deviceAPIService.getDeviceByIdOrder(id)
                 }
-                listDeviceByOrder = response.device
+                listDeviceByOrder = response.data.data
             } catch (e: Exception) {
                 Log.e("Device Error", "Lỗi khi lấy Device")
             }
@@ -103,7 +108,7 @@ class DeviceViewModel:ViewModel() {
                     RetrofitClient.deviceAPIService.getDeviceByLiked(idCustomer)
                 }
                 // Giả sử API trả về một trường như `devices` hoặc `data`
-                val devices = response.device // Điều chỉnh dựa trên cấu trúc API
+                val devices = response.data.data // Điều chỉnh dựa trên cấu trúc API
                 if (devices.isNotEmpty()) {
                     listDeviceOfCustomer = devices
                     Log.d("Device Success", "Lấy sản phẩm thành công: ${listDeviceOfCustomer.size} sản phẩm - Dữ liệu: $listDeviceOfCustomer")
@@ -121,7 +126,7 @@ class DeviceViewModel:ViewModel() {
         viewModelScope.launch(Dispatchers.IO) {
             try {
                 val response = RetrofitClient.deviceAPIService.getAllDevice()
-                listAllDevice = response
+                listAllDevice = response.data.data
             } catch (e: Exception) {
                 listAllDevice = emptyList()
                 e.printStackTrace() // Xử lý lỗi
@@ -139,12 +144,20 @@ class DeviceViewModel:ViewModel() {
         }
     }
 
-    fun getDeviceBySlug(id:String){
-        viewModelScope.launch (Dispatchers.IO){
+    fun getDeviceBySlug(id: Int){
+        viewModelScope.launch{
             try {
-                device = RetrofitClient.deviceAPIService.getDeviceById(id)
+                val response = RetrofitClient.deviceAPIService.getDeviceById(id)
+                Log.d("DeviceViewModel","Failed to fetch device: ${response}")
+                if (response.statusCode == 200) {
+                    _device.value = response.data.data.firstOrNull()
+                    Log.d("DeviceViewModel","Fetched device: ${_device.value?.name}")
+                } else {
+                    Log.e("DeviceViewModel","Failed to fetch device: ${response}")
+                }
             }
             catch (e:Exception){
+                _device.value = null
                 Log.e("DeviceViewModel", "Error getting device", e)
             }
         }
@@ -156,9 +169,9 @@ class DeviceViewModel:ViewModel() {
                 val response = withContext(Dispatchers.IO) {
                     RetrofitClient.deviceAPIService.searchDevice(name, des)
                 }
-                if (response.device.isNotEmpty()) {
-                    _listDeviceSearch.value = response.device
-                    Log.d("Search Success", "Tìm kiếm thành công: ${response.device.size} thiết bị")
+                if (response.data.data.isNotEmpty()) {
+                    _listDeviceSearch.value = response.data.data
+                    Log.d("Search Success", "Tìm kiếm thành công: ${response.data.data.size} thiết bị")
                 } else {
                     _listDeviceSearch.value = emptyList()
                     Log.e("Search Error", "Không tìm thấy thiết bị phù hợp")
@@ -178,7 +191,7 @@ class DeviceViewModel:ViewModel() {
     fun getdeviceById2(id: String) {
         viewModelScope.launch(Dispatchers.IO) {
             try {
-                val device = RetrofitClient.deviceAPIService.getDeviceById(id)
+                val device = RetrofitClient.deviceAPIService.getDeviceById1(id)
                 _listDevice.update { currentList ->
                     // Chỉ thêm thiết bị nếu chưa tồn tại
                     if (currentList.none { it.idDevice == device.idDevice }) {
@@ -195,5 +208,36 @@ class DeviceViewModel:ViewModel() {
     // Hàm để xóa danh sách thiết bị
     fun clearDevices() {
         _listDevice.value = emptyList()
+    }
+
+    private fun decodeBase64ToBitmap(base64String: String?): Bitmap? {
+        if (base64String.isNullOrEmpty()) {
+            Log.d("DeviceViewModel", "Chuỗi Base64 rỗng hoặc null")
+            return null
+        }
+        return try {
+            val pureBase64 = if (base64String.contains(",")) base64String.split(",")[1] else base64String
+            val decodedBytes = Base64.decode(pureBase64, Base64.DEFAULT)
+            val inputStream = ByteArrayInputStream(decodedBytes)
+            BitmapFactory.decodeStream(inputStream)
+        } catch (e: Exception) {
+            Log.e("DeviceViewModel", "Lỗi giải mã Base64: $base64String", e)
+            null
+        }
+    }
+
+    suspend fun getDeviceImageBitmap(device: Device): Bitmap? {
+        return withContext(Dispatchers.IO) {
+            decodeBase64ToBitmap(device.image)
+        }
+    }
+
+    // Hàm để lấy danh sách bitmap cho tất cả hình ảnh trong device.images
+    suspend fun getDeviceImagesBitmap(device: Device): List<Bitmap> {
+        return withContext(Dispatchers.IO) {
+            device.images.mapNotNull { image ->
+                decodeBase64ToBitmap(image.image)
+            } ?: emptyList()
+        }
     }
 }

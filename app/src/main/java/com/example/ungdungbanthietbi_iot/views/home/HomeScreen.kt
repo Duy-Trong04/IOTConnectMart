@@ -1,5 +1,6 @@
 package com.example.ungdungbanthietbi_iot.views.home
 
+import android.graphics.Bitmap
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.animation.core.animateFloatAsState
@@ -17,6 +18,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -90,6 +92,7 @@ import androidx.compose.ui.draw.scale
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
@@ -795,39 +798,6 @@ fun SectionTitle(text: String) {
 }
 
 @Composable
-fun NavItem(
-    icon: ImageVector,
-    label: String,
-    isSelected: Boolean,
-    onClick: () -> Unit
-) {
-    val scale by animateFloatAsState(
-        targetValue = if (isSelected) 1.1f else 1f,
-        animationSpec = tween(200), label = ""
-    )
-    Column(
-        horizontalAlignment = Alignment.CenterHorizontally,
-        modifier = Modifier
-            .size(70.dp)
-            .clickable(onClick = onClick)
-            .scale(scale)
-    ) {
-        Icon(
-            imageVector = icon,
-            contentDescription = label,
-            modifier = Modifier.size(28.dp),
-            tint = if (isSelected) Color(0xFF1E88E5) else Color(0xFF616161)
-        )
-        Text(
-            text = label,
-            fontSize = 12.sp,
-            color = if (isSelected) Color(0xFF1E88E5) else Color(0xFF616161),
-            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
-        )
-    }
-}
-
-@Composable
 fun CardFavorites(device: Device, isFavorite: Boolean, idCustomer: String?, username: String?, deviceViewModel: DeviceViewModel, navController: NavController) {
     var check by remember { mutableStateOf(isFavorite) }
     val likedViewModel: LikedViewModel = viewModel()
@@ -941,6 +911,12 @@ fun CardDevice(
     deviceViewModel: DeviceViewModel,
     navController: NavController
 ) {
+    var bitmap by remember { mutableStateOf<Bitmap?>(null) }
+
+    // Tải hình ảnh bất đồng bộ
+    LaunchedEffect(device) {
+        bitmap = deviceViewModel.getDeviceImageBitmap(device)
+    }
     var check by remember { mutableStateOf(isFavorite) }
     val likedViewModel: LikedViewModel = viewModel()
     val listLiked = likedViewModel.listLiked
@@ -972,19 +948,37 @@ fun CardDevice(
         elevation = CardDefaults.cardElevation(1.dp),
         shape = RoundedCornerShape(5.dp)
     ) {
-        Box(modifier = Modifier.fillMaxWidth()) {
+        Box {
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(4.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                AsyncImage(
-                    model = device.image,
-                    contentDescription = null,
-                    modifier = Modifier.fillMaxWidth().height(130.dp)
-                )
-                Spacer(modifier = Modifier.height(4.dp))
+                bitmap?.let {
+                    Image(
+                        bitmap = it.asImageBitmap(),
+                        contentDescription = device.name.ifEmpty { "Hình ảnh sản phẩm" },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .aspectRatio(1f) // Giữ tỷ lệ 1:1 để hình ảnh không bị méo
+                            .clip(RoundedCornerShape(topStart = 5.dp, topEnd = 5.dp)), // Bo góc trên cùng của hình ảnh
+                        contentScale = ContentScale.Fit
+                    )
+                } ?: run {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .aspectRatio(1f),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(24.dp),
+                            color = Color(0xFF5D9EFF)
+                        )
+                    }
+                }
+                Spacer(modifier = Modifier.height(2.dp)) // Giảm padding từ 4.dp xuống 2.dp
                 Text(
                     text = device.name,
                     modifier = Modifier.fillMaxWidth(),
@@ -1022,7 +1016,7 @@ fun CardDevice(
                         isLoading = false // Kết thúc tải
                     }
                 },
-                enabled = !isLoading, // Vô hiệu hóa khi đang tải
+                enabled = !isLoading,
                 modifier = Modifier
                     .size(24.dp)
                     .align(Alignment.TopEnd)

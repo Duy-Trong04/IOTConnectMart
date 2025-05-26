@@ -14,6 +14,8 @@ import com.example.ungdungbanthietbi_iot.api.CheckLoginResponse
 import com.example.ungdungbanthietbi_iot.dataStore
 import com.example.ungdungbanthietbi_iot.models.Account
 import com.example.ungdungbanthietbi_iot.models.AddAccount
+import com.example.ungdungbanthietbi_iot.models.LoginRequest
+import com.example.ungdungbanthietbi_iot.models.LoginResponse
 import com.example.ungdungbanthietbi_iot.models.UpdatePassword
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -150,4 +152,49 @@ class AccountViewModel:ViewModel() {
             }
         }
     }
+    private val _loginUiState = MutableStateFlow(LoginUiState())
+    val loginUiState: StateFlow<LoginUiState> = _loginUiState
+
+    fun checkLogin(username: String, password: String) {
+        viewModelScope.launch {
+            _loginUiState.value = LoginUiState(isLoading = true)
+            try {
+                val request = LoginRequest(
+                    username = username,
+                    password = password,
+                    type = "CUSTOMER"
+                )
+                val response: LoginResponse = RetrofitClient.accountAPIService.login(request)
+                if (response.status_code == 200) {
+                    _loginUiState.value = LoginUiState(
+                        isLoading = false,
+                        accessToken = response.data.accessToken,
+                        error = null,
+                        result = true
+                    )
+                } else {
+                    _loginUiState.value = LoginUiState(
+                        isLoading = false,
+                        accessToken = null,
+                        error = "Đăng nhập thất bại: Mã trạng thái ${response.status_code}",
+                        result = false
+                    )
+                }
+            } catch (e: Exception) {
+                _loginUiState.value = LoginUiState(
+                    isLoading = false,
+                    accessToken = null,
+                    error = e.message ?: "Đã xảy ra lỗi khi đăng nhập",
+                    result = false
+                )
+            }
+        }
+    }
 }
+
+data class LoginUiState(
+    val isLoading: Boolean = false,
+    val accessToken: String? = null,
+    val error: String? = null,
+    val result: Boolean? = null
+)

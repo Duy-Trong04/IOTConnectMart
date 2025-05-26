@@ -17,6 +17,7 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.AlertDialog
@@ -55,6 +56,7 @@ import com.example.ungdungbanthietbi_iot.viewModels.AccountViewModel
 import com.example.ungdungbanthietbi_iot.navigation.Screen
 import kotlinx.coroutines.launch
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
 import androidx.datastore.preferences.core.edit
@@ -82,18 +84,19 @@ import com.example.ungdungbanthietbi_iot.dataStore
 @Composable
 fun LoginScreen(navController: NavController, accountViewModel: AccountViewModel) {
     val context = LocalContext.current
-    var snackbarHostState = remember {
+    val snackbarHostState = remember {
         SnackbarHostState()
     }
     // Biến nhận dữ liệu email từ người dùng
-    var username by remember { mutableStateOf("test123") }
+    var username by remember { mutableStateOf("ptthang") }
     // Biến nhận dữ liệu password từ người dùng
-    var password by remember { mutableStateOf("test123") }
+    var password by remember { mutableStateOf("123456") }
 
-    var scope = rememberCoroutineScope()
+    val scope = rememberCoroutineScope()
     //val loginResult = accountViewModel.loginResult.value
     var openDialog by remember { mutableStateOf(false) }
-    accountViewModel.CheckLogin(username, password)
+    val loginUiState by accountViewModel.loginUiState.collectAsState()
+    //accountViewModel.CheckLogin(username, password)
 
     // Biến kiểm tra trạng thái hiển thị mật khẩu
     var isPasswordVisible by remember { mutableStateOf(false) }
@@ -108,7 +111,6 @@ fun LoginScreen(navController: NavController, accountViewModel: AccountViewModel
             LazyColumn(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(16.dp)
                     .background(Color.White),
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
@@ -129,13 +131,6 @@ fun LoginScreen(navController: NavController, accountViewModel: AccountViewModel
                         contentDescription = "Logo",
                         modifier = Modifier.size(240.dp).clip(CircleShape) // Đặt hình dạng là hình tròn
                     )
-//                    Text(
-//                        text = "IOT Connect Mart",
-//                        fontSize = 27.sp,
-//                        color = Color(0xFF085979),
-//                        fontWeight = FontWeight.Bold
-//                    )
-
                     Spacer(modifier = Modifier.height(16.dp))
                     //email
                     TextField(
@@ -144,7 +139,7 @@ fun LoginScreen(navController: NavController, accountViewModel: AccountViewModel
                         modifier = Modifier.width(350.dp).padding(4.dp),
                         placeholder = { Text(text = "Username") },
                         leadingIcon = {
-                            Icon(imageVector = Icons.Default.Email,
+                            Icon(imageVector = Icons.Default.Person,
                                 contentDescription = "username"
                             )
                         },
@@ -205,49 +200,30 @@ fun LoginScreen(navController: NavController, accountViewModel: AccountViewModel
                     Button(
                         onClick = {
                             /* Chuyển sang màn hình trang chủ(HomeScreen) */
-                            if(username == "" || password == ""){
+                            if(username.isEmpty() || password.isEmpty()){
                                 openDialog = true
                             }
                             else {
-                                accountViewModel.CheckLogin(username, password)
+                                accountViewModel.checkLogin(username, password)
                                 scope.launch {
                                     // Lắng nghe kết quả từ loginResult
-                                    accountViewModel.loginResult.collect { loginResult ->
-                                        if (loginResult != null) {
-                                            if (loginResult.result == true) {
-                                                // Lưu thông tin đăng nhập vào DataStore
-                                                context.dataStore.edit { preferences ->
-                                                    preferences[usernameKey] = username
-                                                    preferences[passwordKey] = password
-                                                }
-                                                // Chuyển đến màn hình Home
-                                                navController.navigate(Screen.HomeScreen.route + "?username=$username") {
-                                                    popUpTo(0) { inclusive = true }
-                                                }
-                                            } else {
-                                                openDialog = true
+                                    accountViewModel.loginUiState.collect { state ->
+                                        if (state.isLoading) return@collect
+                                        if (state.result == true) {
+                                            context.dataStore.edit { preferences ->
+                                                preferences[usernameKey] = username
+                                                preferences[passwordKey] = password
                                             }
-                                            return@collect // Thoát collect sau khi xử lý
+                                            navController.navigate(Screen.HomeScreen.route + "?username=$username") {
+                                                popUpTo(0) { inclusive = true }
+                                            }
+                                        } else if (state.result == false) {
+                                            openDialog = true
                                         }
+                                        return@collect
                                     }
                                 }
                             }
-//                            accountViewModel.CheckLogin(username, password)
-//                            if(loginResult != null){
-//                                if(loginResult.result == true){
-//                                    navController.navigate(Screen.HomeScreen.route + "?username=${username}"){
-//                                        popUpTo(0) {inclusive = true}
-//                                    }
-//                                    scope.launch {
-//                                        snackbarHostState.showSnackbar(
-//                                            message = "Đăng nhập thành công"
-//                                        )
-//                                    }
-//                                }
-//                                else{
-//                                    openDialog = true
-//                                }
-//                            }
                         },
                         modifier = Modifier
                             .width(350.dp)

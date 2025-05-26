@@ -2,6 +2,8 @@ package com.example.ungdungbanthietbi_iot.api
 
 import com.example.ungdungbanthietbi_iot.models.Account
 import com.example.ungdungbanthietbi_iot.models.AddAccount
+import com.example.ungdungbanthietbi_iot.models.LoginRequest
+import com.example.ungdungbanthietbi_iot.models.LoginResponse
 import com.example.ungdungbanthietbi_iot.models.UpdatePassword
 import retrofit2.http.Body
 import retrofit2.http.GET
@@ -30,7 +32,9 @@ interface AccuntAPIService {
         @Query("username") username: String,
         @Query("password") password: String
     ): CheckLoginResponse
-    
+
+    @POST("/api/auth/login")
+    suspend fun login(@Body request: LoginRequest): LoginResponse
 
     @POST("account/check_Dk.php")
     suspend fun checkAccount_Dk(
