@@ -39,6 +39,7 @@ import com.example.ungdungbanthietbi_iot.navigation.NavGraph
 import com.example.ungdungbanthietbi_iot.navigation.Screen
 import com.example.ungdungbanthietbi_iot.ui.theme.UngDungBanThietBi_IOTTheme
 import kotlinx.coroutines.flow.first
+import kotlin.math.log
 
 // Đảm bảo DataStore được định nghĩa ở cấp cao nhất
 val Context.dataStore: DataStore<Preferences> by preferencesDataStore(name = "user_prefs")
@@ -76,10 +77,10 @@ class MainActivity : ComponentActivity() {
                         accountViewModel.checkLogin(savedUsername, savedPassword)
                         accountViewModel.loginUiState.collect { loginState ->
                             if (loginState.isLoading) return@collect
-                            startDestination = if (loginState.result == true) {
-                                "${Screen.HomeScreen.route}?username=$savedUsername"
+                            startDestination = if (loginState.result == true && loginState.customer_id != null) {
+                                "${Screen.HomeScreen.route}?username=$savedUsername&id=${loginState.customer_id}"
                             } else {
-                                Screen.IntroScreen.route
+                                Screen.LoginScreen.route
                             }
                             isChecking = false
                             return@collect

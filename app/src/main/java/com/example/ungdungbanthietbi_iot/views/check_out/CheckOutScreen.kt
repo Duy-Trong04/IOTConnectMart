@@ -206,7 +206,7 @@ fun CheckoutScreen(
                                     address = idAddress,
                                     accountNumber = "NULL",
                                     phone = phone,
-                                    nameRecipient = "${customer!!.surname} ${customer.lastName}",
+                                    nameRecipient = "${customer!!.surname} ${customer.lastname}",
                                     note = "NULL",
                                     platformOrder = "Mobile",
                                     created_at = getCurrentTimestamp(),
@@ -311,7 +311,7 @@ fun CheckoutScreen(
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {
                                     Text(
-                                        text = "${customer?.surname} ${customer?.lastName}",
+                                        text = "${customer?.surname} ${customer?.lastname}",
                                         fontWeight = FontWeight.Bold
                                     )
                                     Text(

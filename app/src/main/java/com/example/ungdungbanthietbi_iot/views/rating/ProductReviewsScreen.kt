@@ -180,7 +180,7 @@ fun ReviewCard(review: Review, isUseful:Boolean, id:Int) {
                 for (customer in listCustomer){
                     if(customer.id == review.idCustomer){
                         Text(
-                            text = "${customer.surname} ${customer.lastName}",
+                            text = "${customer.surname} ${customer.lastname}",
                             fontWeight = FontWeight.Bold,
                             fontSize = 18.sp
                         )

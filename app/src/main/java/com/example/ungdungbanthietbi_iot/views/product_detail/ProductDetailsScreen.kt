@@ -139,13 +139,13 @@ fun ProductDetailsScreen(
     val listAllDevice : List<Device> = deviceViewModel.listAllDevice
     val device = deviceViewModel.device.collectAsState().value
 
-    val customerViewModel: CustomerViewModel = viewModel()
-    val customer = customerViewModel.customer
-    if(idCustomer != null){
-        LaunchedEffect (idCustomer){
-            customerViewModel.getCustomerById(idCustomer)
-        }
-    }
+//    val customerViewModel: CustomerViewModel = viewModel()
+//    val customer = customerViewModel.customer
+//    if(idCustomer != null){
+//        LaunchedEffect (idCustomer){
+//            customerViewModel.getCustomerById(idCustomer)
+//        }
+//    }
 
 //    val likedViewModel: LikedViewModel = viewModel()
 //    val listLiked = likedViewModel.listLiked
@@ -287,7 +287,7 @@ fun ProductDetailsScreen(
                         // Icon Tìm kiếm
                         IconButton(onClick = {
                             if(username != null){
-                                navController.navigate(Screen.Search_Screen.route + "?username=${accountViewModel.username}")
+                                navController.navigate(Screen.Search_Screen.route + "?username=${username}")
                             }
                             else{
                                 navController.navigate(Screen.Search_Screen.route)
@@ -306,11 +306,11 @@ fun ProductDetailsScreen(
                             // Icon giỏ hàng
                             IconButton(onClick = {
                                 // vào màn hình giỏ hàng nếu chưa đăng nhập thì vào màn hình đăng nhập(LoginScreen)
-                                if(account == null){
+                                if(username == null){
                                     navController.navigate(Screen.LoginScreen.route)
                                 }
                                 else{
-                                    navController.navigate(Screen.Cart_Screen.route +"?idCustomer=${account.idPerson}&username=${account.username}")
+                                    navController.navigate(Screen.Cart_Screen.route +"?idCustomer=${idCustomer}&username=${username}")
                                 }
                             }) {
                                 Icon(
@@ -387,10 +387,12 @@ fun ProductDetailsScreen(
                                                 )
                                             }
                                             Spacer(modifier = Modifier.height(8.dp))
-                                            Text(
-                                                text = "Kho: ${100 - quantity}",
-                                                modifier = Modifier.padding(start = 16.dp)
-                                            )
+                                            if (device != null) {
+                                                Text(
+                                                    text = "Tồn kho: ${device.stock - quantity}",
+                                                    modifier = Modifier.padding(start = 16.dp)
+                                                )
+                                            }
                                         }
                                     }
                                     Row(
@@ -864,7 +866,7 @@ fun ProductDetailsScreen(
                                 fontWeight = FontWeight.Bold,
                                 fontSize = 18.sp,
                                 modifier = Modifier.clickable {
-                                    navController.navigate(Screen.Product_Reviews.route + "?idDevice=${id}")
+                                    navController.navigate(Screen.Product_Reviews.route + "?idDevice=${idCustomer}")
                                 }
                             )
                         }
@@ -912,11 +914,11 @@ fun ProductDetailsScreen(
                         horizontalArrangement = Arrangement.Start
                     ) {
                         items(listAllDevice){
-                            if(account != null){
+                            if(username != null){
                                 CardDevice(device = it,
                                     isFavorite = isFavorite,
-                                    account.idPerson,
-                                    account.username,
+                                    idCustomer,
+                                    username,
                                     deviceViewModel = deviceViewModel,
                                     navController
                                 )
@@ -970,7 +972,7 @@ fun CardReview(review: Review, onlick:() -> Unit, id:Int){
             Column {
                 for (customer in listCustomer){
                     if(customer.id == review.idCustomer){
-                        Text(text = "${customer.surname} ${customer.lastName}")
+                        Text(text = "${customer.surname} ${customer.lastname}")
                     }
                 }
                 Row(modifier = Modifier.padding(start = 5.dp))

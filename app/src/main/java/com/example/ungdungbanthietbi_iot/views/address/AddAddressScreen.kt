@@ -85,7 +85,7 @@ fun AddAddressScreen(
         }
     }
     // Biến trạng thái lưu thông tin nhập vào
-    var hoten by remember { mutableStateOf("${customer?.surname} ${customer?.lastName}") }// Tên đầy đủ
+    var hoten by remember { mutableStateOf("${customer?.surname} ${customer?.lastname}") }// Tên đầy đủ
     var phone by remember { mutableStateOf("${customer?.phone}") }// Số điện thoại
     var district by remember { mutableStateOf("") }// Tỉnh/Thành phố
     var city by remember { mutableStateOf("") }// Quận/Huyện

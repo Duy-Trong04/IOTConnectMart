@@ -120,17 +120,19 @@ fun NavGraph(
 
         //Home chưa đăng nhập
         composable(route = Screen.HomeScreen.route){
-            HomeScreen(navController, deviceViewModel, slideShowViewModel, null)
+            HomeScreen(navController, deviceViewModel, slideShowViewModel, null, null)
         }
 
         //Home đã có tài khoản đăng nhập
-        composable(route = Screen.HomeScreen.route + "?username={username}",
+        composable(route = Screen.HomeScreen.route + "?username={username}&id={id}",
             arguments = listOf(
-                navArgument("username"){type = NavType.StringType }
+                navArgument("username"){type = NavType.StringType },
+                navArgument("id"){type = NavType.StringType }
             )
         ){
             val username = it.arguments?.getString("username")
-            HomeScreen(navController, deviceViewModel, slideShowViewModel, username)
+            val id = it.arguments?.getString("id")
+            HomeScreen(navController, deviceViewModel, slideShowViewModel, username, id)
         }
 
         //Màn hình đăng nhập
@@ -448,13 +450,15 @@ fun NavGraph(
 
         //màn hình thông tin cá nhân
         composable(
-            Screen.PersonalScreen.route + "?username={username}",
+            Screen.PersonalScreen.route + "?username={username}&id={id}",
             arguments = listOf(
-                navArgument("username") {type = NavType.StringType }
+                navArgument("username") {type = NavType.StringType },
+                navArgument("id") {type = NavType.StringType }
             )
         ) {
             val username = it.arguments?.getString("username") ?: ""
-            PersonalScreen(navController, username, deviceViewModel)
+            val id = it.arguments?.getString("id") ?: ""
+            PersonalScreen(navController, username, id, deviceViewModel)
         }
 
         //màn hình thông báo

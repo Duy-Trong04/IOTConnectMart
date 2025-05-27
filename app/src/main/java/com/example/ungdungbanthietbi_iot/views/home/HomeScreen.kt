@@ -137,6 +137,7 @@ fun HomeScreen(
     deviceViewModel: DeviceViewModel,
     slideShowViewModel: SlideShowViewModel,
     username: String?,
+    id: String?
 ) {
     deviceViewModel.getAllDevice()
     deviceViewModel.getDeviceFeatured()
@@ -151,19 +152,19 @@ fun HomeScreen(
     val cartViewModel: CartViewModel = viewModel()
     val listCart = cartViewModel.listCart
 
-    val accountViewModel: AccountViewModel = viewModel()
-    val account = accountViewModel.account
-
-    if (username != null) {
-        accountViewModel.getUserByUsername(username)
-    }
-
-    LaunchedEffect(deviceViewModel.listDeviceOfCustomer) {
-        if (account != null) {
-            deviceViewModel.getDeviceByLiked(account.idPerson.toString())
-            cartViewModel.getCartByIdCustomer(account.idPerson.toString())
-        }
-    }
+//    val accountViewModel: AccountViewModel = viewModel()
+//    val account = accountViewModel.account
+//
+//    if (username != null) {
+//        accountViewModel.getUserByUsername(username)
+//    }
+//
+//    LaunchedEffect(deviceViewModel.listDeviceOfCustomer) {
+//        if (account != null) {
+//            deviceViewModel.getDeviceByLiked(account.idPerson.toString())
+//            cartViewModel.getCartByIdCustomer(account.idPerson.toString())
+//        }
+//    }
 
     val navdrawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     val scope = rememberCoroutineScope()
@@ -291,7 +292,7 @@ fun HomeScreen(
                         titleContentColor = Color.White
                     ),
                     navigationIcon = {
-                        if (account != null) {
+                        if (username != null) {
                             IconButton(onClick = {
                                 selectedTabIndex = 3
                             }) {
@@ -302,7 +303,7 @@ fun HomeScreen(
                                     contentAlignment = Alignment.Center
                                 ) {
                                     Text(
-                                        text = account.username.first().toString().uppercase(),
+                                        text = username.first().toString().uppercase(),
                                         color = Color(0xFF5D9EFF),
                                         fontWeight = FontWeight.Bold
                                     )
@@ -329,12 +330,12 @@ fun HomeScreen(
                                 .padding(end = 4.dp)
                         ) {
                             IconButton(onClick = {
-                                if (account == null) {
+                                if (username == null) {
                                     navController.navigate(Screen.LoginScreen.route)
                                 } else {
                                     navController.navigate(
                                         Screen.Cart_Screen.route +
-                                                "?idCustomer=${account.idPerson}&username=${account.username}"
+                                                "?idCustomer=${id}&username=${username}"
                                     )
                                 }
                             }) {
@@ -468,7 +469,7 @@ fun HomeScreen(
                             },
                             selected = selectedTabIndex == 3,
                             onClick = {
-                                if (username != null) selectedTabIndex = 3
+                                if (id != null) selectedTabIndex = 3
                                 else {
                                     navController.navigate(Screen.LoginScreen.route)
                                 }
@@ -510,24 +511,25 @@ fun HomeScreen(
                     listState = listState,
                     listSlideShow = listSlideShow,
                     deviceViewModel = deviceViewModel,
-                    account = account,
                     navController = navController,
                     username = username,
+                    id = id,
                     isFavorite = isFavorite,
                     listAllDevice = listAllDevice,
                     listDeviceFeatured = listDeviceFeatured,
                     listDeviceLiked = deviceViewModel.listDeviceOfCustomer,
                     categories = categories
                 )
-                2 -> if (account != null) NotificationScreen(navController = navController, idUser = account.idPerson)
+                2 -> if (username != null) NotificationScreen(navController = navController, idUser = id)
                 else NotificationScreen(navController = navController, idUser = "")
-                3 -> username?.let {
+                3 -> if(username != null && id != null)
                     PersonalScreen(
                         navController = navController,
-                        username = it,
+                        username = username,
+                        id = id,
                         deviceViewModel = deviceViewModel
                     )
-                }
+
             }
         }
     }
@@ -540,9 +542,9 @@ fun HomeContent(
     listState: LazyListState,
     listSlideShow: List<SlideShow>,
     deviceViewModel: DeviceViewModel,
-    account: Account?,
     navController: NavController,
     username: String?,
+    id: String?,
     isFavorite: Boolean,
     listAllDevice: List<Device>,
     listDeviceFeatured: List<Device>,
@@ -558,10 +560,10 @@ fun HomeContent(
         coroutineScope.launch {
             // Load lại dữ liệu
             deviceViewModel.getAllDevice()
-            deviceViewModel.getDeviceFeatured()
-            if (account != null) {
-                deviceViewModel.getDeviceByLiked(account.idPerson.toString())
-            }
+//            deviceViewModel.getDeviceFeatured()
+//            if (account != null) {
+//                deviceViewModel.getDeviceByLiked(account.idPerson.toString())
+//            }
             // Giả lập thời gian load (có thể bỏ nếu API nhanh)
             delay(1000)
             isRefreshing = false
@@ -683,7 +685,7 @@ fun HomeContent(
                         CardDevice(
                             device = device,
                             isFavorite = isFavorite,
-                            idCustomer = account?.idPerson,
+                            idCustomer = id,
                             username = username,
                             deviceViewModel = deviceViewModel,
                             navController = navController
@@ -706,12 +708,12 @@ fun HomeContent(
                         fontWeight = FontWeight.SemiBold,
                         modifier = Modifier
                             .clickable {
-                                if (account == null) {
+                                if (username == null) {
                                     navController.navigate(Screen.LoginScreen.route)
                                 } else {
                                     navController.navigate(
                                         Screen.Favorites_Screen.route +
-                                                "?idCustomer=${account.idPerson}&username=${account.username}"
+                                                "?idCustomer=${id}&username=${username}"
                                     )
                                 }
                             }
@@ -736,12 +738,12 @@ fun HomeContent(
                         horizontalArrangement = Arrangement.spacedBy(16.dp)
                     ) {
                         items(listDeviceLiked) { device ->
-                            if (account != null) {
+                            if (username != null) {
                                 CardFavorites(
                                     device = device,
                                     isFavorite = isFavorite,
-                                    idCustomer = account.idPerson,
-                                    username = account.username,
+                                    idCustomer = id,
+                                    username = username,
                                     deviceViewModel = deviceViewModel,
                                     navController = navController
                                 )
@@ -769,7 +771,7 @@ fun HomeContent(
                             CardDevice(
                                 device = device,
                                 isFavorite = isFavorite,
-                                idCustomer = account?.idPerson,
+                                idCustomer = id,
                                 username = username,
                                 deviceViewModel = deviceViewModel,
                                 navController = navController

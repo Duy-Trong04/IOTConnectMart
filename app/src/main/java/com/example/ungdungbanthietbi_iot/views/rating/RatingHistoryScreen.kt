@@ -185,7 +185,7 @@ fun ReviewItem(review: Review, idCustomer: String?, idDevice: Int?, navControlle
                 horizontalArrangement = Arrangement.SpaceBetween
             ){
                 Text(
-                    text = "${customer?.surname} ${customer?.lastName}",
+                    text = "${customer?.surname} ${customer?.lastname}",
                     fontSize = 18.sp,
                     fontWeight = FontWeight.Bold
                 )

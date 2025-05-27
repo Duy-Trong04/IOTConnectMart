@@ -32,41 +32,45 @@ class AccountViewModel:ViewModel() {
 
     private var accountAddResult by mutableStateOf("")
 
-    private val _loginResult = MutableStateFlow<CheckLoginResponse?>(null)
-    val loginResult: StateFlow<CheckLoginResponse?> = _loginResult
-
-
 
     private var accountUpdateResult by mutableStateOf("")
 
     var username: String? = null
     var idPerson: String? = null
 
+    private val _loginUiState = MutableStateFlow(LoginUiState())
+    val loginUiState: StateFlow<LoginUiState> = _loginUiState
+
     private val _accountCheckResult = mutableStateOf<Boolean?>(null)
     val accountCheckResult: State<Boolean?> = _accountCheckResult
 
-
-    fun CheckLogin(username: String, password: String) {
-        viewModelScope.launch {
-            try {
-                // Thực hiện yêu cầu API
-                val response = withContext(Dispatchers.IO) {
-                    RetrofitClient.accountAPIService.check_Login(username, password)
-                }
-                // Cập nhật kết quả API vào state
-                _loginResult.value = response
-            } catch (e: Exception) {
-                // Xử lý lỗi nếu có
-                Log.e("TaiKhoanViewModel", "Đã xảy ra lỗi: ${e.message}")
-                _loginResult.value = CheckLoginResponse(result = false, message = e.message)
-            }
-        }
-    }
     suspend fun logout(context: Context) {
-        context.dataStore.edit { preferences ->
-            preferences.clear()
+        try {
+            // Xóa toàn bộ dữ liệu trong DataStore
+            context.dataStore.edit { preferences ->
+                preferences.clear()
+            }
+            // Đặt lại trạng thái loginUiState
+            _loginUiState.value = LoginUiState(
+                isLoading = false,
+                accessToken = null,
+                customer_id = null,
+                error = null,
+                result = false
+            )
+            // Ghi log để debug
+            Log.d("AccountViewModel", "Đăng xuất thành công")
+        } catch (e: Exception) {
+            _loginUiState.value = LoginUiState(
+                isLoading = false,
+                accessToken = null,
+                customer_id = null,
+                error = "Lỗi khi đăng xuất: ${e.message}",
+                result = false
+            )
+            Log.e("AccountViewModel", "Lỗi khi đăng xuất: ${e.message}", e)
         }
-        _loginResult.value = null
+
     }
 
     fun getUserByUsername(username: String) {
@@ -152,8 +156,7 @@ class AccountViewModel:ViewModel() {
             }
         }
     }
-    private val _loginUiState = MutableStateFlow(LoginUiState())
-    val loginUiState: StateFlow<LoginUiState> = _loginUiState
+
 
     fun checkLogin(username: String, password: String) {
         viewModelScope.launch {
@@ -169,6 +172,7 @@ class AccountViewModel:ViewModel() {
                     _loginUiState.value = LoginUiState(
                         isLoading = false,
                         accessToken = response.data.accessToken,
+                        customer_id = response.data.data.customer_id,
                         error = null,
                         result = true
                     )
@@ -176,6 +180,7 @@ class AccountViewModel:ViewModel() {
                     _loginUiState.value = LoginUiState(
                         isLoading = false,
                         accessToken = null,
+                        customer_id = null,
                         error = "Đăng nhập thất bại: Mã trạng thái ${response.status_code}",
                         result = false
                     )
@@ -184,6 +189,7 @@ class AccountViewModel:ViewModel() {
                 _loginUiState.value = LoginUiState(
                     isLoading = false,
                     accessToken = null,
+                    customer_id = null,
                     error = e.message ?: "Đã xảy ra lỗi khi đăng nhập",
                     result = false
                 )
@@ -195,6 +201,7 @@ class AccountViewModel:ViewModel() {
 data class LoginUiState(
     val isLoading: Boolean = false,
     val accessToken: String? = null,
+    val customer_id: String? = null,
     val error: String? = null,
     val result: Boolean? = null
 )

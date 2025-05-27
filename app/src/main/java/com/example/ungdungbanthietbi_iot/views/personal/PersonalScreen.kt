@@ -25,6 +25,7 @@ import androidx.compose.material.icons.outlined.ShoppingCart
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.getValue
@@ -58,6 +59,8 @@ import com.example.ungdungbanthietbi_iot.viewModels.CustomerViewModel
 import com.example.ungdungbanthietbi_iot.models.Device
 import com.example.ungdungbanthietbi_iot.viewModels.DeviceViewModel
 import com.example.ungdungbanthietbi_iot.navigation.Screen
+import com.example.ungdungbanthietbi_iot.utils.getCurrentTimestamp
+import com.example.ungdungbanthietbi_iot.viewModels.CustomerState
 import kotlinx.coroutines.launch
 import java.time.LocalDate
 
@@ -67,6 +70,7 @@ import java.time.LocalDate
 fun PersonalScreen(
     navController: NavController,
     username: String,
+    id: String,
     deviceViewModel: DeviceViewModel,
 ) {
     deviceViewModel.getAllDevice()
@@ -196,7 +200,7 @@ fun PersonalScreen(
                     modifier = Modifier.padding(start = 16.dp, end = 16.dp, top = 16.dp)
                 ){
                     when (currentTab) {
-                        "accountInfo" -> AccountInfoSection(username, snackbarHostState)
+                        "accountInfo" -> AccountInfoSection(id, username, snackbarHostState)
                         "changePassword" -> ChangePasswordSection(username, snackbarHostState)
                     }
                 }
@@ -207,7 +211,7 @@ fun PersonalScreen(
                     onOptionSelected = { selectedTab -> currentTab = selectedTab },
                     currentTab = currentTab,
                     navController = navController,
-                    username = username
+                    username = username,
                 )
             }
         }
@@ -216,20 +220,21 @@ fun PersonalScreen(
 
 @Composable
 fun AccountInfoSection(
+    id: String?,
     username: String,
     snackbarHostState: SnackbarHostState // Thêm tham số SnackbarHostState
 ){
     val maxLength = 10
 
-    val accountViewModel: AccountViewModel = viewModel()
     val customerViewModel: CustomerViewModel = viewModel()
 
-    val account = accountViewModel.account
-    val customer = customerViewModel.customer
+    val customerState by customerViewModel.customerState.collectAsState()
+    val updateCustomer by customerViewModel.updateCustomerUiState.collectAsState()
 
     var isFocused by remember { mutableStateOf(false) }
     var isButtonEnabled by remember { mutableStateOf(false) }
     var selectedImageUri by remember { mutableStateOf<Uri?>(null) } // Lưu URI ảnh được chọn
+    var isUpdating by remember { mutableStateOf(false) } // Trạng thái loading
 
     // Launcher để chọn ảnh từ thư viện
     val launcher = rememberLauncherForActivityResult(
@@ -238,17 +243,18 @@ fun AccountInfoSection(
         selectedImageUri = uri // Cập nhật URI ảnh được chọn
         // Nếu cần lưu ảnh vào backend, gọi hàm trong ViewModel tại đây
         // ví dụ: customerViewModel.updateAvatar(uri)
+        isButtonEnabled = true // Bật nút khi chọn ảnh
     }
 
     val scope = rememberCoroutineScope()
-    LaunchedEffect(username) {
-        if (username.isNotEmpty()) {
-            accountViewModel.getUserByUsername(username)
-        }
-    }
 
-    if (account != null) {
-        customerViewModel.getCustomerById(account.idPerson.toString())
+    LaunchedEffect(id) {
+        if (id.isNullOrBlank()) {
+            customerViewModel.setErrorState("Lỗi: ID khách hàng không hợp lệ")
+        }
+        else{
+            customerViewModel.getCustomerById9(id)
+        }
     }
 
     Card(
@@ -258,339 +264,445 @@ fun AccountInfoSection(
         colors = CardDefaults.cardColors(containerColor = Color.White),
     ){
         Column(modifier = Modifier.padding(16.dp)) {
-            //Text("Thông tin tài khoản", fontWeight = FontWeight.Bold, fontSize = 20.sp)
-
-            Spacer(modifier = Modifier.height(8.dp))
-            if (customer != null) {
-                //Ảnh đại diện
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.Center
-                ){
-//                    AsyncImage(
-//                        model = "",
-//                        contentDescription = "Avatar",
-//                        modifier = Modifier
-//                            .size(100.dp)
-//                            .clip(CircleShape),
-//                        contentScale = ContentScale.Crop
-//                    )
-                    Box(
-                        modifier = Modifier
-                            .size(100.dp)
-                            .clip(CircleShape)
-                            .clickable { launcher.launch("image/*") }
-                    ) {
-                        // Hiển thị ảnh được chọn hoặc ảnh mặc định
-                        if (selectedImageUri != null) {
-                            AsyncImage(
-                                model = selectedImageUri,
-                                contentDescription = "Avatar",
-                                modifier = Modifier
-                                    .fillMaxSize()
-                                    .clip(CircleShape),
-                                contentScale = ContentScale.Crop
-                            )
-                        } else {
-                            Image(
-                                painter = painterResource(id = R.drawable.logo9),
-                                contentDescription = "Avatar",
-                                modifier = Modifier
-                                    .fillMaxSize()
-                                    .clip(CircleShape),
-                                contentScale = ContentScale.Crop
-                            )
-                        }
-
-                        // Chữ "Sửa" mờ nhạt nằm bên dưới
-                        Text(
-                            text = "Sửa",
-                            color = Color.White.copy(alpha = 0.5f), // Màu chữ mờ nhạt
-                            fontSize = 14.sp,
-                            textAlign = TextAlign.Center,
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .align(Alignment.BottomCenter) // Căn chữ ở dưới cùng
-                                .background(Color.Black.copy(alpha = 0.3f), RoundedCornerShape(4.dp)) // Nền mờ
-                                .padding(horizontal = 8.dp, vertical = 2.dp) // Khoảng cách bên trong chữ
+            when (val state = customerState) {
+                is CustomerState.Loading -> {
+                    Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+                        CircularProgressIndicator(
+                            color = Color(0xFF5F9EFF)
                         )
                     }
                 }
 
-                Spacer(modifier = Modifier.height(16.dp))
-                // Xử lý ngày sinh mặc định (18 năm trước) nếu birthdate null
-                val defaultDate = remember {
-                    val now = LocalDate.now()
-                    now.minusYears(18)
-                }
+                is CustomerState.Success -> {
+                    val customer = state.customer
 
-                val birthdate = customer.birthdate.takeIf { it.isNotBlank() } ?: defaultDate.toString()
-
-                // Khởi tạo các giá trị ngày sinh
-                var initialDay: String
-                var initialMonth: String
-                var initialYear: String
-                try {
-                    val parts = birthdate.split("-")
-                    initialYear = parts[0]
-                    initialMonth = parts[1]
-                    initialDay = parts[2]
-                } catch (e: Exception) {
-                    initialYear = defaultDate.year.toString()
-                    initialMonth = defaultDate.monthValue.toString()
-                    initialDay = defaultDate.dayOfMonth.toString()
-                }
-
-                val surname = remember { mutableStateOf(customer.surname) }
-                val lastname = remember { mutableStateOf(customer.lastName) }
-                val phone = remember { mutableStateOf(customer.phone) }
-                val email = remember { mutableStateOf(customer.email) }
-                val gender = remember { mutableStateOf(customer.gender) }
-                val selectedDay = remember { mutableStateOf(initialDay) }
-                val selectedMonth = remember { mutableStateOf(initialMonth) }
-                val selectedYear = remember { mutableStateOf(initialYear) }
-
-                val initialSurname = remember { mutableStateOf(customer.surname) }
-                val initialLastName = remember { mutableStateOf(customer.lastName) }
-                val initialPhone = remember { mutableStateOf(customer.phone) }
-                val initialEmail = remember { mutableStateOf(customer.email) }
-                val initialGender = remember { mutableStateOf(customer.gender) }
-                val initialBirthdate = remember { mutableStateOf(birthdate) }
-
-                fun checkIfChanged(): Boolean {
-                    return lastname.value != initialLastName.value ||
-                            phone.value != initialPhone.value ||
-                            email.value != initialEmail.value ||
-                            gender.value != initialGender.value ||
-                            selectedDay.value != initialBirthdate.value.split("-")[2] ||
-                            selectedMonth.value != initialBirthdate.value.split("-")[1] ||
-                            selectedYear.value != initialBirthdate.value.split("-")[0] ||
-                            selectedImageUri != null // Kiểm tra nếu ảnh thay đổi
-                }
-
-                LaunchedEffect(lastname.value, phone.value, email.value, gender.value, selectedDay.value, selectedMonth.value, selectedYear.value) {
-                    isButtonEnabled = checkIfChanged()
-                }
-
-                val fullName = remember { mutableStateOf("${customer.surname} ${customer.lastName}".trim()) }
-
-                // Họ tên
-                Text("Họ Tên: ", fontWeight = FontWeight.Bold)
-                OutlinedTextField(
-                    value = fullName.value,
-                    onValueChange = {
-                        fullName.value = it.trimStart()
-                        isButtonEnabled = checkIfChanged()
-                    },
-                    modifier = Modifier.fillMaxWidth().onFocusChanged {
-                        if (it.isFocused) isFocused = true
-                    },
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = Color(0xFF5F9EFF),
-                        unfocusedBorderColor = Color(0xFF5F9EFF),
-                        focusedLabelColor = Color(0xFF5F9EFF)
-                    ),
-                    shape = RoundedCornerShape(17.dp),
-                )
-                Spacer(modifier = Modifier.height(8.dp))
-                val genderList = listOf("Nam", "Nữ")
-
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text("Giới tính: ", fontWeight = FontWeight.Bold)
-                    Spacer(modifier = Modifier.width(16.dp))
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        genderList.forEachIndexed { index, label ->
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                RadioButton(
-                                    selected = gender.value == index,
-                                    onClick = { gender.value = index },
-                                    colors = RadioButtonDefaults.colors(
-                                        selectedColor = Color(0xFF5F9EFF)
-                                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    //Ảnh đại diện
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.Center
+                    ){
+    //                    AsyncImage(
+    //                        model = "",
+    //                        contentDescription = "Avatar",
+    //                        modifier = Modifier
+    //                            .size(100.dp)
+    //                            .clip(CircleShape),
+    //                        contentScale = ContentScale.Crop
+    //                    )
+                        Box(
+                            modifier = Modifier
+                                .size(100.dp)
+                                .clip(CircleShape)
+                                .clickable { launcher.launch("image/*") }
+                        ) {
+                            // Hiển thị ảnh được chọn hoặc ảnh mặc định
+                            if (selectedImageUri != null) {
+                                AsyncImage(
+                                    model = selectedImageUri,
+                                    contentDescription = "Avatar",
+                                    modifier = Modifier
+                                        .fillMaxSize()
+                                        .clip(CircleShape),
+                                    contentScale = ContentScale.Crop
                                 )
-                                Text(text = label)
-                                Spacer(modifier = Modifier.width(8.dp)) // Thêm khoảng cách giữa 2 cái
+                            } else if (customer.image != null) {
+
+                                AsyncImage(
+                                    model = customer.image,
+                                    contentDescription = "Avatar",
+                                    modifier = Modifier
+                                        .fillMaxSize()
+                                        .clip(CircleShape),
+                                    contentScale = ContentScale.Crop
+                                )
                             }
+                            else{
+                                Image(
+                                    painter = painterResource(id = R.drawable.logo9),
+                                    contentDescription = "Avatar",
+                                    modifier = Modifier
+                                        .fillMaxSize()
+                                        .clip(CircleShape),
+                                    contentScale = ContentScale.Crop
+                                )
+                            }
+
+                            // Chữ "Sửa" mờ nhạt nằm bên dưới
+                            Text(
+                                text = "Sửa",
+                                color = Color.White.copy(alpha = 0.5f), // Màu chữ mờ nhạt
+                                fontSize = 14.sp,
+                                textAlign = TextAlign.Center,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .align(Alignment.BottomCenter) // Căn chữ ở dưới cùng
+                                    .background(Color.Black.copy(alpha = 0.3f), RoundedCornerShape(4.dp)) // Nền mờ
+                                    .padding(horizontal = 8.dp, vertical = 2.dp) // Khoảng cách bên trong chữ
+                            )
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(16.dp))
+                    // Xử lý ngày sinh mặc định (18 năm trước) nếu birthdate null
+                    val defaultDate = remember {
+                        LocalDate.now().minusYears(18)
+                    }
+
+                    val birthdate = customer.birthdate.takeIf { !it.isNullOrBlank() } ?: defaultDate.toString()
+
+                    // Khởi tạo các giá trị ngày sinh
+                    var initialDay: String
+                    var initialMonth: String
+                    var initialYear: String
+                    try {
+                        val parts = birthdate.split("-")
+                        initialYear = parts[0]
+                        initialMonth = parts[1].padStart(2, '0')
+                        initialDay = parts[2]
+                    } catch (e: Exception) {
+                        initialYear = defaultDate.year.toString()
+                        initialMonth = defaultDate.monthValue.toString().padStart(2, '0')
+                        initialDay = defaultDate.dayOfMonth.toString()
+                    }
+
+                    val phone = remember { mutableStateOf(customer.phone) }
+                    val email = remember { mutableStateOf(customer.email) }
+                    val gender = remember { mutableStateOf(customer.gender) }
+                    val selectedDay = remember { mutableStateOf(initialDay) }
+                    val selectedMonth = remember { mutableStateOf(initialMonth) }
+                    val selectedYear = remember { mutableStateOf(initialYear) }
+
+                    val initialPhone = remember { mutableStateOf(customer.phone) }
+                    val initialEmail = remember { mutableStateOf(customer.email) }
+                    val initialGender = remember { mutableStateOf(customer.gender) }
+                    val initialBirthdate = remember { mutableStateOf(birthdate) }
+
+                    val fullName = remember { mutableStateOf("${customer.surname} ${customer.lastname}".trim()) }
+                    val initialFullName = remember { mutableStateOf("${customer.surname} ${customer.lastname}".trim()) }
+
+                    fun checkIfChanged(): Boolean {
+                        return fullName.value != initialFullName.value ||
+                                phone.value != initialPhone.value ||
+                                email.value != initialEmail.value ||
+                                gender.value != initialGender.value ||
+                                selectedDay.value != initialBirthdate.value.split("-")[2] ||
+                                selectedMonth.value != initialBirthdate.value.split("-")[1].padStart(2, '0') ||
+                                selectedYear.value != initialBirthdate.value.split("-")[0] ||
+                                selectedImageUri != null // Kiểm tra nếu ảnh thay đổi
+                    }
+
+                    LaunchedEffect(fullName.value, phone.value, email.value, gender.value, selectedDay.value, selectedMonth.value, selectedYear.value) {
+                        isButtonEnabled = checkIfChanged()
+                    }
+
+
+
+                    // Họ tên
+                    Text("Họ Tên: ", fontWeight = FontWeight.Bold)
+                    OutlinedTextField(
+                        value = fullName.value,
+                        onValueChange = {
+                            fullName.value = it.trimStart()
+                            isButtonEnabled = checkIfChanged()
+                        },
+                        modifier = Modifier.fillMaxWidth().onFocusChanged {
+                            if (it.isFocused) isFocused = true
+                        },
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = Color(0xFF5F9EFF),
+                            unfocusedBorderColor = Color(0xFF5F9EFF),
+                            focusedLabelColor = Color(0xFF5F9EFF)
+                        ),
+                        shape = RoundedCornerShape(17.dp),
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    // Define the gender options as pairs of label and Boolean value
+                    val genderOptions = listOf(
+                        "Nam" to true,
+                        "Nữ" to false
+                    )
+
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text("Giới tính: ", fontWeight = FontWeight.Bold)
+                        Spacer(modifier = Modifier.width(16.dp))
+
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            genderOptions.forEach { (label, value) ->
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    RadioButton(
+                                        selected = gender.value == value,
+                                        onClick = { gender.value = value },
+                                        colors = RadioButtonDefaults.colors(
+                                            selectedColor = Color(0xFF5F9EFF)
+                                        )
+                                    )
+                                    Text(text = label)
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                }
+                            }
+                        }
+                    }
+
+                    // Số điện thoại
+                    Text("Số điện thoại: ", fontWeight = FontWeight.Bold)
+                    OutlinedTextField(
+                        value = phone.value,
+                        onValueChange = {
+                            if(it.length <=maxLength){
+                                phone.value = it
+                                isButtonEnabled = checkIfChanged()
+                            }
+                        },
+                        keyboardOptions = KeyboardOptions.Default.copy(keyboardType = KeyboardType.Phone),
+                        modifier = Modifier.fillMaxWidth().onFocusChanged {
+                            if (it.isFocused) isFocused = true
+                        },
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = Color(0xFF5F9EFF),
+                            unfocusedBorderColor = Color(0xFF5F9EFF),
+                            focusedLabelColor = Color(0xFF5F9EFF)
+                        ),
+                        shape = RoundedCornerShape(17.dp),
+                    )
+
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    // Email
+                    Text("Email: ", fontWeight = FontWeight.Bold)
+                    OutlinedTextField(
+                        value = email.value,
+                        onValueChange = {
+                            email.value = it
+                            isButtonEnabled = checkIfChanged()},
+                        keyboardOptions = KeyboardOptions.Default.copy(keyboardType = KeyboardType.Email),
+                        modifier = Modifier.fillMaxWidth().onFocusChanged {
+                            if (it.isFocused) isFocused = true
+                        },
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = Color(0xFF5F9EFF),
+                            unfocusedBorderColor = Color(0xFF5F9EFF),
+                            focusedLabelColor = Color(0xFF5F9EFF)
+                        ),
+                        shape = RoundedCornerShape(17.dp),
+                    )
+
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    // Ngày sinh
+                    Text("Ngày sinh: ", fontWeight = FontWeight.Bold)
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        DropdownMenuField(
+                            label = "Ngày",
+                            items = (1..31).map { it.toString().padStart(2, '0') },
+                            selectedValue = selectedDay.value.padStart(2, '0'),
+                            onValueChange = { selectedDay.value = it },
+                            modifier = Modifier
+                                .weight(1.15f)
+                                .padding(end = 0.5.dp)
+                        )
+                        Spacer(modifier = Modifier.width(4.dp))
+
+                        DropdownMenuField(
+                            label = "Tháng",
+                            items = (1..12).map { it.toString().padStart(2, '0') },
+                            selectedValue = selectedMonth.value,
+                            onValueChange = { selectedMonth.value = it },
+                            modifier = Modifier
+                                .weight(1.2f)
+                                .padding(horizontal = 0.5.dp)
+                        )
+                        Spacer(modifier = Modifier.width(4.dp))
+
+                        DropdownMenuField(
+                            label = "Năm",
+                            items = (1900..2025).map { it.toString() }.reversed(),
+                            selectedValue = selectedYear.value,
+                            onValueChange = { selectedYear.value = it },
+                            modifier = Modifier
+                                .weight(1.4f)
+                                .padding(start = 0.5.dp)
+                        )
+                    }
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Box(
+                        modifier = Modifier.fillMaxWidth(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Button(
+                            onClick = {
+                                // Kiểm tra ngày sinh hợp lệ
+                                if (!isValidDate(
+                                        selectedDay.value,
+                                        selectedMonth.value,
+                                        selectedYear.value
+                                    )
+                                ) {
+                                    scope.launch {
+                                        snackbarHostState.showSnackbar(
+                                            message = "Ngày sinh không hợp lệ!",
+                                            duration = SnackbarDuration.Short
+                                        )
+                                    }
+                                    return@Button
+                                }
+
+                                // Xử lý lưu dữ liệu
+                                val regexName = "^[a-zA-Z\\p{L} ]+$"
+                                val regexPhone = "^\\d{10}$".toRegex()
+
+                                if (fullName.value.isBlank() || !fullName.value.matches(
+                                        Regex(
+                                            regexName
+                                        )
+                                    )
+                                ) {
+                                    scope.launch {
+                                        snackbarHostState.showSnackbar(
+                                            message = "Họ và tên không hợp lệ",
+                                            duration = SnackbarDuration.Short
+                                        )
+                                    }
+                                    return@Button
+                                } else if (!regexPhone.matches(phone.value)) {
+                                    scope.launch {
+                                        snackbarHostState.showSnackbar(
+                                            message = "Số điện thoại phải có 10 số."
+                                        )
+                                    }
+                                    return@Button
+                                } else if (email.value.isBlank()) {
+                                    scope.launch {
+                                        snackbarHostState.showSnackbar(
+                                            message = "Email không được để trống.",
+                                            duration = SnackbarDuration.Short
+                                        )
+                                    }
+                                    return@Button
+                                } else if (!email.value.contains("@")) {
+                                    scope.launch {
+                                        snackbarHostState.showSnackbar(
+                                            message = "Email phải chứa ký tự '@'.",
+                                            duration = SnackbarDuration.Short
+                                        )
+                                    }
+                                    return@Button
+                                } else {
+                                    // Tách họ và tên từ fullName
+                                    val nameParts = fullName.value.trim().split("\\s+".toRegex())
+                                    val surnameValue: String
+                                    val lastnameValue: String
+
+                                    when (nameParts.size) {
+                                        1 -> {
+                                            surnameValue = ""
+                                            lastnameValue = nameParts[0]
+                                        }
+
+                                        2 -> {
+                                            surnameValue = nameParts[0]
+                                            lastnameValue = nameParts[1]
+                                        }
+
+                                        else -> { // 3 chữ trở lên
+                                            surnameValue = nameParts.take(2).joinToString(" ")
+                                            lastnameValue = nameParts.drop(2).joinToString(" ")
+                                        }
+                                    }
+
+                                    val khachHang = Customer(
+                                        id = customer.id,
+                                        surname = surnameValue,
+                                        lastname = lastnameValue,
+                                        image = "Chưa làm image", // TODO: Sau chuyển ảnh thành base64 (chưa làm)
+                                        email = email.value,
+                                        email_verified = customer.email_verified,
+                                        phone = phone.value,
+                                        birthdate = "${selectedYear.value}-${selectedMonth.value}-${selectedDay.value}",
+                                        gender = gender.value,
+                                        created_at = "",
+                                        update_at = getCurrentTimestamp(),
+                                        delete_at = "",
+                                        account = customer.account,
+                                        fullname = customer.fullname
+                                    )
+                                    // Gọi API và chờ kết quả
+                                    scope.launch {
+                                        isUpdating = true
+                                        customerViewModel.updateCustomer(khachHang)
+                                        // Theo dõi trạng thái cập nhật
+                                        customerViewModel.updateCustomerUiState.collect { state ->
+                                            if (!state.isLoading) {
+                                                isUpdating = false
+                                                if (state.isSuccess) {
+                                                    snackbarHostState.showSnackbar(
+                                                        message = "Cập nhật thông tin thành công",
+                                                        duration = SnackbarDuration.Short
+                                                    )
+                                                    selectedImageUri = null
+                                                    if (id != null) {
+                                                        customerViewModel.getCustomerById9(id)
+                                                    }
+                                                }
+                                                customerViewModel.resetUpdateState()
+                                                return@collect // Thoát collect sau khi xử lý
+                                            }
+                                        }
+                                    }
+//                                selectedImageUri?.let {
+//                                    // TODO: Gọi hàm trong ViewModel để lưu ảnh, ví dụ:
+//                                    // customerViewModel.updateAvatar(uri)
+//                                }
+//                                selectedImageUri = null // Reset ảnh sau khi lưu
+                                }
+                            },
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = RoundedCornerShape(10.dp),// Bo góc nút
+                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF5F9EFF)),
+                            enabled = isButtonEnabled && !isUpdating// Chỉ bật nút khi có thay đổi
+                        ) {
+                            Text("LƯU THAY ĐỔI", color = Color.White, fontSize = 16.sp)
+                        }
+                        if (isUpdating) {
+                            CircularProgressIndicator(
+                                modifier = Modifier
+                                    .size(24.dp)
+                                    .align(Alignment.CenterEnd)
+                                    .padding(end = 16.dp),
+                                color = Color(0xFF5F9EFF),
+                                strokeWidth = 2.dp
+                            )
+                        }
+                    }
+                }
+                is CustomerState.Error -> {
+                    Column(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Text(
+                            text = state.message,
+                            color = MaterialTheme.colorScheme.error,
+                            fontSize = 16.sp
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Button(
+                            onClick = {
+                                if (id != null) {
+                                    customerViewModel.getCustomerById9(id)
+                                }
+                            },
+                            shape = RoundedCornerShape(10.dp),
+                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF5F9EFF))
+                        ) {
+                            Text("Thử lại", color = Color.White)
                         }
                     }
                 }
 
-                // Số điện thoại
-                Text("Số điện thoại: ", fontWeight = FontWeight.Bold)
-                OutlinedTextField(
-                    value = phone.value,
-                    onValueChange = {
-                        if(it.length <=maxLength){
-                            phone.value = it
-                            isButtonEnabled = checkIfChanged()
-                        }
-                    },
-                    keyboardOptions = KeyboardOptions.Default.copy(keyboardType = KeyboardType.Phone),
-                    modifier = Modifier.fillMaxWidth().onFocusChanged {
-                        if (it.isFocused) isFocused = true
-                    },
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = Color(0xFF5F9EFF),
-                        unfocusedBorderColor = Color(0xFF5F9EFF),
-                        focusedLabelColor = Color(0xFF5F9EFF)
-                    ),
-                    shape = RoundedCornerShape(17.dp),
-                )
-
-                Spacer(modifier = Modifier.height(8.dp))
-
-                // Email
-                Text("Email: ", fontWeight = FontWeight.Bold)
-                OutlinedTextField(
-                    value = email.value,
-                    onValueChange = {
-                        email.value = it
-                        isButtonEnabled = checkIfChanged()},
-                    keyboardOptions = KeyboardOptions.Default.copy(keyboardType = KeyboardType.Email),
-                    modifier = Modifier.fillMaxWidth().onFocusChanged {
-                        if (it.isFocused) isFocused = true
-                    },
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = Color(0xFF5F9EFF),
-                        unfocusedBorderColor = Color(0xFF5F9EFF),
-                        focusedLabelColor = Color(0xFF5F9EFF)
-                    ),
-                    shape = RoundedCornerShape(17.dp),
-                )
-
-                Spacer(modifier = Modifier.height(8.dp))
-
-                // Ngày sinh
-                Text("Ngày sinh: ", fontWeight = FontWeight.Bold)
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    DropdownMenuField(
-                        label = "Ngày",
-                        items = (1..31).map { it.toString() },
-                        selectedValue = selectedDay.value,
-                        onValueChange = { selectedDay.value = it },
-                        modifier = Modifier
-                            .weight(1.15f)
-                            .padding(end = 0.5.dp)
-                    )
-                    Spacer(modifier = Modifier.width(4.dp))
-
-                    DropdownMenuField(
-                        label = "Tháng",
-                        items = (1..12).map { it.toString() },
-                        selectedValue = selectedMonth.value,
-                        onValueChange = { selectedMonth.value = it },
-                        modifier = Modifier
-                            .weight(1.2f)
-                            .padding(horizontal = 0.5.dp)
-                    )
-                    Spacer(modifier = Modifier.width(4.dp))
-
-                    DropdownMenuField(
-                        label = "Năm",
-                        items = (1900..2025).map { it.toString() }.reversed(),
-                        selectedValue = selectedYear.value,
-                        onValueChange = { selectedYear.value = it },
-                        modifier = Modifier
-                            .weight(1.4f)
-                            .padding(start = 0.5.dp)
-                    )
-                }
-                Spacer(modifier = Modifier.height(16.dp))
-
-                Button(
-                    onClick = {
-                        // Kiểm tra ngày sinh hợp lệ
-                        if (!isValidDate(selectedDay.value, selectedMonth.value, selectedYear.value)) {
-                            scope.launch {
-                                snackbarHostState.showSnackbar(
-                                    message = "Ngày sinh không hợp lệ!",
-                                    duration = SnackbarDuration.Short
-                                )
-                            }
-                            return@Button
-                        }
-
-                        // Xử lý lưu dữ liệu
-                        val regexName = "^[a-zA-Z\\p{L} ]+$"
-                        val regexPhone = "^\\d{10}$".toRegex()
-
-                        if (lastname.value.isBlank() || !lastname.value.matches(Regex(regexName))) {
-                            scope.launch {
-                                snackbarHostState.showSnackbar(
-                                    message = "Họ và tên không hợp lệ",
-                                    duration = SnackbarDuration.Short
-                                )
-                            }
-                        } else if (!regexPhone.matches(phone.value)) {
-                            scope.launch {
-                                snackbarHostState.showSnackbar(
-                                    message = "Số điện thoại phải có 10 số."
-                                )
-                            }
-                        } else if (email.value.isBlank()) {
-                            scope.launch {
-                                snackbarHostState.showSnackbar(
-                                    message = "Email không được để trống.",
-                                    duration = SnackbarDuration.Short
-                                )
-                            }
-                        } else if (!email.value.contains("@")) {
-                            scope.launch {
-                                snackbarHostState.showSnackbar(
-                                    message = "Email phải chứa ký tự '@'.",
-                                    duration = SnackbarDuration.Short
-                                )
-                            }
-                        } else {
-                            // Tách họ và tên từ fullName
-                            val nameParts = fullName.value.trim().split("\\s+".toRegex())
-                            val surnameValue: String
-                            val lastNameValue: String
-
-                            if (nameParts.size >= 2) {
-                                surnameValue = nameParts[0]                             // Lấy chữ đầu làm Họ
-                                lastNameValue = nameParts.drop(1).joinToString(" ")     // Phần còn lại làm Tên
-                            } else {
-                                surnameValue = ""
-                                lastNameValue = nameParts[0]
-                            }
-
-                            val khachHang = Customer(
-                                id = customer.id,
-                                surname = surnameValue,
-                                lastName = lastNameValue,
-                                email = email.value,
-                                phone = phone.value,
-                                birthdate = "${selectedYear.value}-${selectedMonth.value}-${selectedDay.value}",
-                                gender = gender.value,
-                                created_at = "",
-                                update_at = "",
-                                status = "1"
-                            )
-                            customerViewModel.updateCustomer(khachHang)
-                            // Nếu có ảnh được chọn, cập nhật ảnh
-                            selectedImageUri?.let {
-                                // Gọi hàm trong ViewModel để lưu ảnh, ví dụ:
-                                // customerViewModel.updateAvatar(uri)
-                            }
-                            scope.launch {
-                                snackbarHostState.showSnackbar(
-                                    message = "Cập nhật thành công",
-                                    duration = SnackbarDuration.Short
-                                )
-                            }
-                            selectedImageUri = null // Reset ảnh sau khi lưu
-                        }
-                    },
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(10.dp),// Bo góc nút
-                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF5F9EFF))
-                ) {
-                    Text("LƯU THAY ĐỔI", color = Color.White, fontSize = 16.sp)
-                }
             }
         }
     }
@@ -665,7 +777,7 @@ fun AccountOptionsSection(
     onOptionSelected: (String) -> Unit,
     currentTab: String,
     navController: NavController,
-    username:String
+    username:String,
 ) {
     val context = LocalContext.current
     val openDialog = remember { mutableStateOf(false) }

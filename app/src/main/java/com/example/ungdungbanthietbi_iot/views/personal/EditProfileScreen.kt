@@ -146,11 +146,11 @@ fun EditProfileScreen(navController: NavHostController, username:String) {
                     }
                 }
                 item {
-                    var name = "${customer?.surname} ${customer?.lastName}"
+                    var name = "${customer?.surname} ${customer?.lastname}"
                     BoxEditProfile(label = "Tên người dùng", value = name, onClick = { /*Chuyển trang đổi user name*/navController.navigate(Screen.EditUsernamScreen.route+"/${customer?.id}/${name}") })
                 }
                 item {
-                    BoxEditProfile(label = "Giới tính", value = if (customer?.gender == 0) "Nam" else "Nữ", onClick = { /*Chuyển trang đổi giới tính*/ showGenderDialog=true})
+                    BoxEditProfile(label = "Giới tính", value = if (customer?.gender == true) "Nam" else "Nữ", onClick = { /*Chuyển trang đổi giới tính*/ showGenderDialog=true})
                 }
                 item {
                     BoxEditProfile(label = "Ngày sinh", value = customer?.birthdate.toString(), onClick = { /*Chuyển trang đổi ngày sinh*/ showCalendarDialog = true})

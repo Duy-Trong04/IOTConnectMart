@@ -7,11 +7,13 @@ import com.example.ungdungbanthietbi_iot.models.Email
 import com.example.ungdungbanthietbi_iot.models.Gender
 import com.example.ungdungbanthietbi_iot.models.Phone
 import com.example.ungdungbanthietbi_iot.models.Username
+import com.google.gson.annotations.SerializedName
 import retrofit2.Call
 import retrofit2.http.Body
 import retrofit2.http.GET
 import retrofit2.http.POST
 import retrofit2.http.PUT
+import retrofit2.http.Path
 import retrofit2.http.Query
 
 data class CustomerResponse(
@@ -28,10 +30,22 @@ data class CustomerUpdateResponse(
     val message: String
 )
 
+data class ResponseCustomer(
+    @SerializedName("status_code") val statusCode: Int,
+    @SerializedName("data") val data: Customer
+)
+
 interface CustomerAPIService {
     // Lấy tất cả khách hàng
-    @GET("customer/read.php")
-    fun getAllCustomer(): Call<CustomerResponse>
+    @GET("customer/{id}")
+    suspend fun getCustomerById9(
+        @Path("id") id: String
+    ): ResponseCustomer
+
+    @PUT("customer/")
+    suspend fun updateCustomer(
+        @Body customer: Customer
+    ): ResponseCustomer
 
     @GET("customer/show.php")
     suspend fun getCustomerById(
@@ -83,7 +97,9 @@ interface CustomerAPIService {
     ): Boolean
 
     @PUT("customer/update.php")
-    suspend fun updateCustomer(
+    suspend fun updateCustomer1(
         @Body customer: Customer
     ): CustomerUpdateResponse
+
+
 }

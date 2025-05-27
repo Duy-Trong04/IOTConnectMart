@@ -224,7 +224,7 @@ fun AddressItem(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = "Người nhận: ${customer?.surname} ${customer?.lastName}",
+                        text = "Người nhận: ${customer?.surname} ${customer?.lastname}",
                         fontSize = 18.sp,
                         fontWeight = FontWeight.Bold
                     )
