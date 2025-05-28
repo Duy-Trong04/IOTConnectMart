@@ -1,6 +1,15 @@
 package com.example.ungdungbanthietbi_iot.views.cart
 
+import android.graphics.Bitmap
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
+import androidx.compose.animation.togetherWith
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -14,11 +23,15 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -56,8 +69,10 @@ enum class DeleteAction {
 
 @Composable
 fun CartItem(
-    cart: CartEntity, // Assuming Cart is the data class for cart items
-    sanPham: Device, // Assuming Device is the data class for products
+    cart: CartEntity,
+    sanPham: Device,
+    idCustomer: String,
+    username: String,
     selectedItems: MutableMap<Int, Boolean>,
     selectedProducts: MutableList<Triple<Int, Int, Int>>,
     cartViewModel: CartViewModel,
@@ -65,23 +80,73 @@ fun CartItem(
     onCalculateTotalPrice: () -> Unit,
     onShowDeleteDialog: (Int, DeleteAction) -> Unit
 ) {
+    val deviceViewModel: DeviceViewModel = viewModel()
+    var bitmap by remember { mutableStateOf<Bitmap?>(null) }
+
+    // Tải hình ảnh bất đồng bộ
+    LaunchedEffect(sanPham) {
+        bitmap = deviceViewModel.getDeviceImageBitmap(sanPham)
+    }
+
+    // Lấy thông tin cấu hình màn hình
+    val configuration = LocalConfiguration.current
+    val screenWidth = configuration.screenWidthDp.dp
+    val isSmallScreen = screenWidth < 360.dp
+    val isLargeScreen = screenWidth > 600.dp
+
+    // Điều chỉnh kích thước dựa trên màn hình
+    val imageSize = when {
+        isLargeScreen -> 180.dp
+        isSmallScreen -> 100.dp
+        else -> 150.dp
+    }
+    val fontSizeTitle = when {
+        isLargeScreen -> 18.sp
+        isSmallScreen -> 14.sp
+        else -> 16.sp
+    }
+    val fontSizePrice = when {
+        isLargeScreen -> 16.sp
+        isSmallScreen -> 12.sp
+        else -> 14.sp
+    }
+    val buttonSize = when {
+        isLargeScreen -> 40.dp
+        isSmallScreen -> 24.dp
+        else -> 32.dp
+    }
+    val quantityButtonSize = when {
+        isLargeScreen -> 36.dp
+        isSmallScreen -> 24.dp
+        else -> 28.dp
+    }
+    val paddingValue = when {
+        isLargeScreen -> 8.dp
+        isSmallScreen -> 4.dp
+        else -> 6.dp
+    }
+
     var soLuong by remember { mutableIntStateOf(cart.stock) }
 
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(4.dp)
-            .height(150.dp),
+            .padding(paddingValue)
+            .height(120.dp),
         elevation = CardDefaults.cardElevation(1.dp),
-        shape = RoundedCornerShape(5.dp),
+        shape = RoundedCornerShape(8.dp),
         colors = CardDefaults.cardColors(containerColor = Color.White),
         onClick = {
-            navController.navigate(Screen.ProductDetailsScreen.route + "?id=${sanPham.idDevice}")
+            navController.navigate(
+                Screen.ProductDetailsScreen.route +
+                        "?id=${sanPham.idDevice}&idCustomer=${idCustomer}&username=${username}"
+            )
         }
     ) {
         Row(
             modifier = Modifier
-                .padding(2.dp),
+                .fillMaxWidth()
+                .padding(paddingValue),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.Start
         ) {
@@ -94,112 +159,158 @@ fun CartItem(
                 ),
                 onCheckedChange = { isChecked ->
                     selectedItems[cart.id] = isChecked
-
                     if (isChecked) {
-                        // Thêm sản phẩm vào danh sách selectedProducts cùng với MaGioHang
-                        selectedProducts.add(
-                            Triple(
-                                cart.idDevice,
-                                cart.stock,
-                                cart.id
-                            )
-                        )
+                        selectedProducts.add(Triple(cart.idDevice, cart.stock, cart.id))
                     } else {
-                        // Loại bỏ sản phẩm khỏi danh sách
                         selectedProducts.removeAll { it.first == cart.idDevice }
                     }
-                    // Tính lại tổng tiền sau khi thay đổi trạng thái checkbox
                     onCalculateTotalPrice()
                 },
+                modifier = Modifier.size(buttonSize)
             )
+
             // Hình ảnh sản phẩm
-            AsyncImage(
-                model = sanPham.image,
-                contentDescription = null,
+            bitmap?.let {
+                Image(
+                    bitmap = it.asImageBitmap(),
+                    contentDescription = sanPham.name.ifEmpty { "Hình ảnh sản phẩm" },
+                    modifier = Modifier
+                        .size(imageSize)
+                        .padding(start = paddingValue),
+                    contentScale = ContentScale.Fit
+                )
+            } ?: run {
+                Box(
+                    modifier = Modifier
+                        .size(imageSize)
+                        .padding(start = paddingValue),
+                    contentAlignment = Alignment.Center
+                ) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(imageSize),
+                        color = Color(0xFF5D9EFF)
+                    )
+                }
+            }
+
+            // Cột chứa thông tin sản phẩm
+            Column(
                 modifier = Modifier
-                    .size(150.dp),
-                contentScale = ContentScale.Fit
-            )
-            Column(modifier = Modifier.weight(1f)) {
+                    .weight(1f)
+                    .padding(start = paddingValue)
+            ) {
                 // Tên sản phẩm
                 Text(
                     text = sanPham.name,
                     fontWeight = FontWeight.Bold,
-                    fontSize = 16.sp
+                    fontSize = fontSizeTitle,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis
                 )
-                Spacer(modifier = Modifier.height(5.dp))
+                Spacer(modifier = Modifier.height(paddingValue))
+
                 // Giá sản phẩm
+                Text(
+                    text = formatGiaTien(sanPham.sellingPrice),
+                    color = Color.Red,
+                    fontSize = fontSizePrice,
+                    fontWeight = FontWeight.SemiBold
+                )
+
+                // Bộ điều khiển số lượng (nằm dưới giá)
                 Row(
-                    verticalAlignment = Alignment.CenterVertically
-                ){
-                    Text(
-                        text = formatGiaTien(sanPham.sellingPrice),
-                        color = Color.Red
-                    )
-
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        // Nút giảm số lượng
-                        IconButton(onClick = {
-                            if (soLuong > 1) {
-                                soLuong-- // Giảm số lượng
-                                cart.stock = soLuong
-                                cartViewModel.updateCart(cart)
-
-                                // Cập nhật lại số lượng trong selectedProducts
-                                val index = selectedProducts.indexOfFirst { it.first == cart.idDevice }
-                                if (index != -1) {
-                                    selectedProducts[index] = Triple(cart.idDevice, soLuong, cart.id)
-                                }
-
-                                onCalculateTotalPrice() // Tính lại tổng tiền
-                            }
-                        }) {
-                            Icon(
-                                imageVector = Icons.Filled.Remove,
-                                contentDescription = "Decrease Quantity"
-                            )
-                        }
-                        // Hiển thị số lượng
-                        Text(
-                            text = soLuong.toString(),
-                            modifier = Modifier.padding(horizontal = 8.dp),
-                            fontSize = 16.sp
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier
+                        .background(
+                            color = Color.Transparent,
+                            shape = RoundedCornerShape(8.dp)
                         )
-                        // Nút tăng số lượng
-                        IconButton(onClick = {
-                            if (soLuong < 500 /* 500 là số lượng tồn kho*/) {
-                                soLuong++ // Tăng số lượng
+                        .border(
+                            width = 1.dp,
+                            color = Color(0xFFE0E0E0),
+                            shape = RoundedCornerShape(8.dp)
+                        )
+                        .padding(end = paddingValue)
+                ) {
+                    // Nút giảm số lượng
+                    IconButton(
+                        onClick = {
+                            if (soLuong > 1) {
+                                soLuong--
                                 cart.stock = soLuong
                                 cartViewModel.updateCart(cart)
-
-                                // Cập nhật lại số lượng trong selectedProducts
                                 val index = selectedProducts.indexOfFirst { it.first == cart.idDevice }
                                 if (index != -1) {
                                     selectedProducts[index] = Triple(cart.idDevice, soLuong, cart.id)
                                 }
-
-                                onCalculateTotalPrice() // Tính lại tổng tiền
+                                onCalculateTotalPrice()
                             }
-                        }) {
-                            Icon(
-                                imageVector = Icons.Filled.Add,
-                                contentDescription = "Increase Quantity"
+                        },
+                        modifier = Modifier
+                            .size(quantityButtonSize)
+                            .background(
+                                color = Color.Transparent,
+                                shape = RoundedCornerShape(6.dp)
                             )
+                    ) {
+                        Icon(
+                            imageVector = Icons.Filled.Remove,
+                            contentDescription = "Decrease Quantity",
+                            modifier = Modifier.size(quantityButtonSize * 0.7f),
+                        )
+                    }
+
+                    // Hiển thị số lượng
+                    AnimatedContent(
+                        targetState = soLuong,
+                        transitionSpec = {
+                            (slideInVertically { height -> height } + fadeIn()) togetherWith
+                                    (slideOutVertically { height -> -height } + fadeOut())
                         }
+                    ) { targetCount ->
+                        Text(
+                            text = targetCount.toString(),
+                            modifier = Modifier
+                                .padding(horizontal = paddingValue)
+                                .width(quantityButtonSize)
+                                .background(Color.White, RoundedCornerShape(4.dp))
+                                .border(1.dp, Color.Transparent, RoundedCornerShape(4.dp)),
+                            fontSize = fontSizePrice,
+                            fontWeight = FontWeight.Bold,
+                            textAlign = TextAlign.Center,
+                            color = Color.Black
+                        )
+                    }
+
+                    // Nút tăng số lượng
+                    IconButton(
+                        onClick = {
+                            if (soLuong < 500) {
+                                soLuong++
+                                cart.stock = soLuong
+                                cartViewModel.updateCart(cart)
+                                val index = selectedProducts.indexOfFirst { it.first == cart.idDevice }
+                                if (index != -1) {
+                                    selectedProducts[index] = Triple(cart.idDevice, soLuong, cart.id)
+                                }
+                                onCalculateTotalPrice()
+                            }
+                        },
+                        modifier = Modifier
+                            .size(quantityButtonSize)
+                            .background(
+                                color = Color.Transparent,
+                                shape = RoundedCornerShape(6.dp)
+                            )
+                    ) {
+                        Icon(
+                            imageVector = Icons.Filled.Add,
+                            contentDescription = "Increase Quantity",
+                            modifier = Modifier.size(quantityButtonSize * 0.7f),
+                        )
                     }
                 }
-
             }
-
-//            // Nút xóa sản phẩm
-//            IconButton(onClick = {
-//                onShowDeleteDialog(cart.id, DeleteAction.SINGLE)
-//            }) {
-//                Icon(
-//                    imageVector = Icons.Default.Delete,
-//                    contentDescription = "Remove Item"
-//                )
-//            }
         }
     }
 }
@@ -450,7 +561,8 @@ fun CartScreen(
                         onClick = { showDialog = false },
                         colors = ButtonDefaults.buttonColors(
                             containerColor = Color(0xFF5D9EFF)
-                        )
+                        ),
+                        shape = RoundedCornerShape(10.dp)
                     ) {
                         Text("OK")
                     }
@@ -467,7 +579,8 @@ fun CartScreen(
                         onClick = { showDialogDelete = false },
                         colors = ButtonDefaults.buttonColors(
                             containerColor = Color(0xFF5D9EFF)
-                        )
+                        ),
+                        shape = RoundedCornerShape(10.dp)
                     ) {
                         Text("OK")
                     }
@@ -516,7 +629,8 @@ fun CartScreen(
                         },
                         colors = ButtonDefaults.buttonColors(
                             containerColor = Color(0xFF5D9EFF)
-                        )
+                        ),
+                        shape = RoundedCornerShape(10.dp)
                     ) {
                         Text("Xóa")
                     }
@@ -529,8 +643,9 @@ fun CartScreen(
                             cartIdToDelete = null
                         },
                         colors = ButtonDefaults.buttonColors(
-                            containerColor = Color.Gray
-                        )
+                            containerColor = Color.LightGray
+                        ),
+                        shape = RoundedCornerShape(10.dp)
                     ) {
                         Text("Hủy")
                     }
@@ -576,6 +691,8 @@ fun CartScreen(
                         CartItem(
                             cart = cart,
                             sanPham = sanPham,
+                            idCustomer = idCustomer,
+                            username = username,
                             selectedItems = selectedItems,
                             selectedProducts = selectedProducts,
                             cartViewModel = cartViewModel,

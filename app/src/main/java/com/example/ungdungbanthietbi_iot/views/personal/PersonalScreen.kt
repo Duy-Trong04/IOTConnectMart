@@ -349,7 +349,9 @@ fun AccountInfoSection(
                         LocalDate.now().minusYears(18)
                     }
 
-                    val birthdate = customer.birthdate.takeIf { !it.isNullOrBlank() } ?: defaultDate.toString()
+                    val birthdate = customer.birthdate.takeIf { !it.isNullOrBlank() }?.let {
+                        it.substring(0, 10) // Cắt thành "2004-01-06"
+                    } ?: defaultDate.toString()
 
                     // Khởi tạo các giá trị ngày sinh
                     var initialDay: String
