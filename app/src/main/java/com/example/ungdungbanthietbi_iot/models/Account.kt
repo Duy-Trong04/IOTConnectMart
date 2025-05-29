@@ -13,9 +13,22 @@ data class Account(
 )
 
 data class AddAccount(
-    @SerializedName("idPerson") var idPerson:String?,
-    @SerializedName("username") var username:String,
-    @SerializedName("password") var password:String,
+    @SerializedName("account_id") val accountId: String?,
+    @SerializedName("customer_id") val customerId: String?,
+    @SerializedName("employee_id") val employeeId: String?,
+    @SerializedName("role_id") val roleId: String?,
+    @SerializedName("username") val username: String,
+    @SerializedName("password") val password: String,
+    @SerializedName("verification_code") val verificationCode: String?,
+    @SerializedName("verification_expiry") val verificationExpiry: String?,
+    @SerializedName("report") val report: Int,
+    @SerializedName("is_new") val isNew: String?,
+    @SerializedName("status") val status: String?,
+    @SerializedName("created_at") val createdAt: String?,
+    @SerializedName("updated_at") val updatedAt: String?,
+    @SerializedName("deleted_at") val deletedAt: String?,
+    @SerializedName("is_locked") val isLocked: Boolean,
+    @SerializedName("locked_at") val lockedAt: String?
 )
 
 data class UpdatePassword(

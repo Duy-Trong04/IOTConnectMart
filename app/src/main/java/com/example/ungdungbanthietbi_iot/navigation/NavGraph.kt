@@ -188,8 +188,8 @@ fun NavGraph(
         }
 
         //Màn hình Reset Pass
-        composable(route = Screen.ResetPasswordScreen.route) {
-            ResetPasswordScreen(navController)
+        composable(route = Screen.ResetPasswordScreen.route + "?email={email}",) {
+            ResetPasswordScreen(navController, accountViewModel, email = it.arguments?.getString("email"))
         }
         //Màn hình chọn địa chỉ
         composable(
@@ -216,12 +216,12 @@ fun NavGraph(
             )
         }
         //Màn hình Xác nhận OTP
-        composable(route = Screen.VerifyOTPScreen.route) {
-            VerifyOTPScreen(navController)
+        composable(route = Screen.VerifyOTPScreen.route + "?email={email}",) {
+            VerifyOTPScreen(navController, accountViewModel, email = it.arguments?.getString("email"))
         }
         //Màn hình quên mật khẩu
         composable(route = Screen.ForgotPasswordScreen.route) {
-            ForgotPasswordScreen(navController)
+            ForgotPasswordScreen(navController, accountViewModel)
         }
         //Màn hình chi tiêt sản phẩm
         composable(

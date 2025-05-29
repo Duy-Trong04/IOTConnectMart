@@ -18,7 +18,7 @@ import retrofit2.converter.gson.GsonConverterFactory
 
 
 object Constant{
-    const val BASE_URL = "http://10.0.2.2/IOT_ConnectMart_API/api/"
+    const val BASE_URL = "http://10.0.2.2:8081/api/"
 }
 
 object RetrofitClient {
@@ -109,4 +109,29 @@ object RetrofitClient {
             .build()
             .create(NoticeAPIService::class.java)
     }
+
+    val verifyOtp: AccuntAPIService by lazy {
+        Retrofit.Builder()
+            .baseUrl(Constant.BASE_URL)
+            .addConverterFactory(GsonConverterFactory.create(GsonBuilder().create()))
+            .build()
+            .create(AccuntAPIService::class.java)
+    }
+
+    val authApiService: AccuntAPIService by lazy {
+        Retrofit.Builder()
+            .baseUrl(Constant.BASE_URL)
+            .addConverterFactory(GsonConverterFactory.create(GsonBuilder().create()))
+            .build()
+            .create(AccuntAPIService::class.java)
+    }
+
+    val resetPassword: AccuntAPIService by lazy {
+        Retrofit.Builder()
+            .baseUrl(Constant.BASE_URL)
+            .addConverterFactory(GsonConverterFactory.create(GsonBuilder().create()))
+            .build()
+            .create(AccuntAPIService::class.java)
+    }
+
 }
