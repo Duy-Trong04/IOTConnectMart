@@ -75,14 +75,12 @@ fun AddAddressScreen(
 
     val addressViewModel: AddressViewModel = viewModel()
     var listAddress = addressViewModel.listAddress
-    addressViewModel.getAddressByIdCustomer(idCustomer)
+    //addressViewModel.getAddressByIdCustomer(idCustomer)
 
     val customerViewModel: CustomerViewModel = viewModel()
     val customer = customerViewModel.customer
-    if(idCustomer != null){
-        LaunchedEffect (idCustomer){
-            customerViewModel.getCustomerById(idCustomer)
-        }
+    LaunchedEffect (idCustomer){
+        customerViewModel.getCustomerById(idCustomer)
     }
     // Biến trạng thái lưu thông tin nhập vào
     var hoten by remember { mutableStateOf("${customer?.surname} ${customer?.lastname}") }// Tên đầy đủ
@@ -160,18 +158,18 @@ fun AddAddressScreen(
                                 /* Thêm logic thêm địa chỉ */
                                 if(isDefault){
                                     for(address in listAddress){
-                                        if(address.isDefault == 1){
-                                            var address = Address(
-                                                address.id,
-                                                address.idCustomer,
-                                                address.district,
-                                                address.city,
-                                                address.ward,
-                                                address.street,
-                                                0
-                                            )
-                                            addressViewModel.updateAddress(address)
-                                        }
+//                                        if(address.is_default == 1){
+//                                            var address = Address(
+//                                                address.id,
+//                                                address.,
+//                                                address.district,
+//                                                address.city,
+//                                                address.ward,
+//                                                address.street,
+//                                                0
+//                                            )
+//                                            //addressViewModel.updateAddress(address)
+//                                        }
                                     }
                                 }
                                 if(idCustomer != null){
@@ -184,7 +182,7 @@ fun AddAddressScreen(
                                         street,
                                         if(isDefault) 1 else 0
                                     )
-                                    addressViewModel.addAddress(address)
+                                    //addressViewModel.addAddress(address)
                                 }
                                 navController.popBackStack()
                             }

@@ -16,7 +16,7 @@ data class UpdateResponse(
     val message: String
 )
 
-data class ApiResponse(
+data class ApiResponse1(
     val message: String
 )
 
@@ -47,12 +47,12 @@ interface LikedAPIService {
     @POST("liked/delete.php")
     suspend fun deleteLiked(
         @Body deleteRequest: DeleteRequest
-    ): Response<ApiResponse>
+    ): Response<ApiResponse1>
 
     @POST("liked/deleteLikedByCustomer.php")
     suspend fun deleteLikedByCustomer(
         @Body deleteRequest: DeleteidDeviceResponse
-    ): Response<ApiResponse>
+    ): Response<ApiResponse1>
 
     @POST("liked/create.php")
     suspend fun addliked(

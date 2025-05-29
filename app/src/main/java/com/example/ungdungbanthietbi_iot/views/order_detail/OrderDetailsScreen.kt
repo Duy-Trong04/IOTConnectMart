@@ -106,7 +106,7 @@ fun OrderDetailsScreen(
     }
     if (order != null) {
         LaunchedEffect(idOrder) {
-            addressViewModel.getAddressByIdOrder(idOrder)
+            //addressViewModel.getAddressByIdOrder(idOrder)
             customerViewModel.getCustomerByIdOrder(idOrder)
         }
     }

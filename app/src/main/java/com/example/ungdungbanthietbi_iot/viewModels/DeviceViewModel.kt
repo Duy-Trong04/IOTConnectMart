@@ -15,6 +15,7 @@ import com.example.ungdungbanthietbi_iot.models.Device
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -37,7 +38,7 @@ class DeviceViewModel:ViewModel() {
 
 
     private val _listDevice = MutableStateFlow<List<Device>>(emptyList())
-    val listDevice: StateFlow<List<Device>> get() = _listDevice
+    val listDevice: StateFlow<List<Device>> get() = _listDevice.asStateFlow()
 
 
     var deviceMap = mutableStateMapOf<String, Device>()
@@ -188,20 +189,30 @@ class DeviceViewModel:ViewModel() {
         _searchQuery.value = query
     }
 
-    fun getdeviceById2(id: String) {
-        viewModelScope.launch(Dispatchers.IO) {
+    fun getDeviceCheckOut(id: Int) {
+        viewModelScope.launch {
             try {
-                val device = RetrofitClient.deviceAPIService.getDeviceById1(id)
-                _listDevice.update { currentList ->
-                    // Chỉ thêm thiết bị nếu chưa tồn tại
-                    if (currentList.none { it.idDevice == device.idDevice }) {
-                        currentList + device
+                val response = RetrofitClient.deviceAPIService.getDeviceById(id)
+                Log.d("DeviceViewModel", "Lấy thiết bị theo ID: Phản hồi = $response")
+                if (response.statusCode == 200) {
+                    val device = response.data.data.firstOrNull()
+                    if (device != null) {
+                        _listDevice.update { currentList ->
+                            if (currentList.none { it.idDevice == device.idDevice }) {
+                                currentList + device
+                            } else {
+                                currentList // Giữ danh sách hiện tại nếu thiết bị đã tồn tại
+                            }
+                        }
+                        Log.d("DeviceViewModel", "Thêm thiết bị vào danh sách: ${device.name}")
                     } else {
-                        currentList // Giữ nguyên danh sách nếu thiết bị đã tồn tại
+                        Log.e("DeviceViewModel", "Không tìm thấy thiết bị trong phản hồi cho ID: $id")
                     }
+                } else {
+                    Log.e("DeviceViewModel", "Lỗi khi lấy thiết bị: StatusCode = ${response.statusCode}")
                 }
             } catch (e: Exception) {
-                Log.e("DeviceViewModel", "Error getting Device", e)
+                Log.e("DeviceViewModel", "Lỗi khi lấy thiết bị theo ID", e)
             }
         }
     }

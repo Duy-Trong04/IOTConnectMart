@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
@@ -17,11 +18,15 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AddCircleOutline
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.RadioButtonDefaults
 import androidx.compose.material3.Scaffold
@@ -31,6 +36,7 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -45,9 +51,11 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.example.ungdungbanthietbi_iot.models.Address
+import com.example.ungdungbanthietbi_iot.models.AddressBook
 import com.example.ungdungbanthietbi_iot.viewModels.AddressViewModel
 import com.example.ungdungbanthietbi_iot.viewModels.CustomerViewModel
 import com.example.ungdungbanthietbi_iot.navigation.Screen
+import com.example.ungdungbanthietbi_iot.viewModels.CustomerState
 
 /** Giao diện màn hình chọn địa chỉ (AddressSelectionScreen)
  * -------------------------------------------
@@ -73,12 +81,14 @@ fun AddressSelectionScreen(
     selectedAddressId: Int? // Thêm tham số này
 ) {
     val addressViewModel: AddressViewModel = viewModel()
-    val listAddress by addressViewModel::listAddress
+    val listAddress by addressViewModel::addressDatas
     // Khởi tạo trạng thái chọn với selectedAddressId từ CheckoutScreen
     var currentSelectedAddressId by remember { mutableStateOf(selectedAddressId) }
 
     LaunchedEffect(Unit) {
-        addressViewModel.getAddressByIdCustomer(idCustomer)
+        if (idCustomer != null) {
+            addressViewModel.getCustomerAddressBook(idCustomer)
+        }
     }
 
     // Hàm xử lý khi chọn địa chỉ
@@ -119,13 +129,18 @@ fun AddressSelectionScreen(
                 .padding(paddingValues)
         ) {
             LazyColumn(modifier = Modifier.weight(1f).padding(5.dp)) {
-                items(listAddress) { address ->
-                    AddressItem(
-                        address = address,
-                        navController = navController,
-                        selectedAddressId = currentSelectedAddressId,
-                        onSelectClick = { addressId -> selectAddress(addressId) }
-                    )
+                listAddress?.address_books?.let {
+                    items(listAddress!!.address_books) { address ->
+                        if (idCustomer != null) {
+                            AddressItem(
+                                address = address,
+                                idCustomer = idCustomer,
+                                navController = navController,
+                                selectedAddressId = currentSelectedAddressId,
+                                onSelectClick = { addressId -> selectAddress(addressId) }
+                            )
+                        }
+                    }
                 }
                 item {
                     Box(
@@ -173,101 +188,137 @@ fun AddressSelectionScreen(
  */
 @Composable
 fun AddressItem(
-    address: Address,
+    address: AddressBook,
+    idCustomer: String,
     navController: NavController,
     selectedAddressId: Int?, // ID của địa chỉ đang được chọn
     onSelectClick: (Int) -> Unit // Callback khi chọn địa chỉ
 ) {
     val customerViewModel: CustomerViewModel = viewModel()
-    val customer = customerViewModel.customer
+    val customerState by customerViewModel.customerState.collectAsState()
 
     LaunchedEffect(address) {
-        customerViewModel.getCustomerById(address.idCustomer)
+        customerViewModel.getCustomerById9(idCustomer)
     }
-
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(5.dp)
-            .clickable { if (selectedAddressId != null) onSelectClick(address.id)
-                       else { navController.navigate("${Screen.Update_Address.route}?idCustomer=${address.idCustomer}&id=${address.id}") }}, // Nhấn vào Card để chọn
-        colors = CardDefaults.cardColors(containerColor = Color.White),
-        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
-        shape = RoundedCornerShape(5.dp)
-    ) {
-        Row(
-            modifier = Modifier
-                .padding(12.dp)
-                .fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            // Hiển thị RadioButton chỉ khi selectedAddressId != null
-            if (selectedAddressId != null) {
-                RadioButton(
-                    selected = selectedAddressId == address.id,
-                    onClick = { onSelectClick(address.id) },
-                    colors = RadioButtonDefaults.colors(
-                        selectedColor = Color(0xFF5D9EFF),
-                        unselectedColor = Color.Gray
-                    )
+    when (val state = customerState) {
+        is CustomerState.Loading -> {
+            Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+                CircularProgressIndicator(
+                    color = Color(0xFF5F9EFF)
                 )
-            } else {
-                Spacer(modifier = Modifier.width(8.dp)) // Giữ khoảng cách khi không có RadioButton
             }
-            // Nội dung địa chỉ
-            Column(
-                modifier = Modifier.weight(1f)
+        }
+        is CustomerState.Success -> {
+            val customer = state.customer
+
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(5.dp)
+                    .clickable { if (selectedAddressId != null) onSelectClick(address.id)
+                    else { navController.navigate("${Screen.Update_Address.route}?idCustomer=${idCustomer}&id=${address.id}") }}, // Nhấn vào Card để chọn
+                colors = CardDefaults.cardColors(containerColor = Color.White),
+                elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+                shape = RoundedCornerShape(5.dp)
             ) {
                 Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
+                    modifier = Modifier
+                        .padding(12.dp)
+                        .fillMaxWidth(),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text(
-                        text = "Người nhận: ${customer?.surname} ${customer?.lastname}",
-                        fontSize = 18.sp,
-                        fontWeight = FontWeight.Bold
-                    )
+                    // Hiển thị RadioButton chỉ khi selectedAddressId != null
                     if (selectedAddressId != null) {
-                        TextButton(
-                            shape = RoundedCornerShape(10.dp),
-                            onClick = {
-                                navController.navigate("${Screen.Update_Address.route}?idCustomer=${address.idCustomer}&id=${address.id}")
-                            }
+                        RadioButton(
+                            selected = selectedAddressId == address.id,
+                            onClick = { onSelectClick(address.id) },
+                            colors = RadioButtonDefaults.colors(
+                                selectedColor = Color(0xFF5D9EFF),
+                                unselectedColor = Color.Gray
+                            )
+                        )
+                    } else {
+                        Spacer(modifier = Modifier.width(8.dp)) // Giữ khoảng cách khi không có RadioButton
+                    }
+                    // Nội dung địa chỉ
+                    Column(
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
                         ) {
                             Text(
-                                text = "Sửa",
-                                fontSize = 16.sp,
-                                fontWeight = FontWeight.W500,
+                                text = "Người nhận: ${customer?.surname} ${customer?.lastname}",
+                                fontSize = 18.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                            if (selectedAddressId != null) {
+                                TextButton(
+                                    shape = RoundedCornerShape(10.dp),
+                                    onClick = {
+                                        navController.navigate("${Screen.Update_Address.route}?idCustomer=${idCustomer}&id=${address.id}")
+                                    }
+                                ) {
+                                    Text(
+                                        text = "Sửa",
+                                        fontSize = 16.sp,
+                                        fontWeight = FontWeight.W500,
+                                        color = Color(0xFF5D9EFF)
+                                    )
+                                }
+                            }
+                            else {
+                                Spacer(modifier = Modifier.width(8.dp)) // Giữ khoảng cách khi không có RadioButton
+                            }
+                        }
+                        Text(
+                            text = "Số điện thoại: ${customer?.phone}",
+                            fontSize = 18.sp,
+                            modifier = Modifier.padding(bottom = 8.dp)
+                        )
+                        Text(
+                            text = "Địa chỉ: ${address.street}, ${address.ward}, ${address.district}, ${address.city}",
+                            modifier = Modifier.padding(bottom = 8.dp),
+                            fontSize = 18.sp
+                        )
+                        if (address.is_default == 1) {
+                            Text(
+                                text = "Mặc định",
+                                fontSize = 13.sp,
+                                modifier = Modifier
+                                    .border(1.dp, Color(0xFF5D9EFF), shape = RoundedCornerShape(10.dp))
+                                    .padding(3.dp),
                                 color = Color(0xFF5D9EFF)
                             )
                         }
                     }
-                    else {
-                        Spacer(modifier = Modifier.width(8.dp)) // Giữ khoảng cách khi không có RadioButton
-                    }
                 }
+            }
+        }
+        is CustomerState.Error -> {
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
                 Text(
-                    text = "Số điện thoại: ${customer?.phone}",
-                    fontSize = 18.sp,
-                    modifier = Modifier.padding(bottom = 8.dp)
+                    text = state.message,
+                    color = MaterialTheme.colorScheme.error,
+                    fontSize = 16.sp
                 )
-                Text(
-                    text = "Địa chỉ: ${address.street}, ${address.ward}, ${address.district}, ${address.city}",
-                    modifier = Modifier.padding(bottom = 8.dp),
-                    fontSize = 18.sp
-                )
-                if (address.isDefault == 1) {
-                    Text(
-                        text = "Mặc định",
-                        fontSize = 13.sp,
-                        modifier = Modifier
-                            .border(1.dp, Color(0xFF5D9EFF), shape = RoundedCornerShape(10.dp))
-                            .padding(3.dp),
-                        color = Color(0xFF5D9EFF)
-                    )
+                Spacer(modifier = Modifier.height(8.dp))
+                Button(
+                    onClick = {
+                        customerViewModel.getCustomerById9(idCustomer)
+                    },
+                    shape = RoundedCornerShape(10.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF5F9EFF))
+                ) {
+                    Text("Thử lại", color = Color.White)
                 }
             }
         }
     }
+
 }

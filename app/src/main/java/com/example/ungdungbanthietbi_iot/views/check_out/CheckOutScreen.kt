@@ -1,8 +1,10 @@
 package com.example.ungdungbanthietbi_iot.views.check_out
 
+import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -24,6 +26,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -93,11 +96,11 @@ fun CheckoutScreen(
     navController: NavController,
     selectedProducts: List<Triple<Int, Int, Int>>,
     tongtien: Double,
-    username: String
+    username: String,
+    idCustomer: String
 ) {
     val deviceViewModel: DeviceViewModel = viewModel()
     val cartViewModel: CartViewModel = viewModel()
-    val accountViewModel: AccountViewModel = viewModel()
     val addressViewModel: AddressViewModel = viewModel()
     val orderViewModel: OrderViewModel = viewModel()
     val orderDetailViewModel: OrderDetailViewModel = viewModel()
@@ -107,9 +110,14 @@ fun CheckoutScreen(
 
     val listDevice by deviceViewModel.listDevice.collectAsState(initial = emptyList())
     var selectedPaymentMethod by remember { mutableStateOf("Thanh toán khi nhận hàng (COD)") }
-    val account = accountViewModel.account
     val address = addressViewModel.address
+    val listAddress = addressViewModel.listAddress
     val customer = customerViewModel.customer
+    val isLoadingAddress = addressViewModel.isLoading
+    val errorMessage = addressViewModel.errorMessage
+
+    // State để theo dõi việc loading sản phẩm
+    var isLoadingProducts by remember { mutableStateOf(true) }
 
     // Lấy selectedAddressId từ savedStateHandle
     val selectedAddressId by navController.currentBackStackEntry
@@ -117,39 +125,47 @@ fun CheckoutScreen(
         ?.getStateFlow<Int?>("selectedAddressId", null)
         ?.collectAsState() ?: remember { mutableStateOf(null) }
 
-    // Lấy thông tin tài khoản
-    LaunchedEffect(username) {
-        accountViewModel.getUserByUsername(username)
-    }
-
     // Lấy địa chỉ: ưu tiên địa chỉ được chọn, nếu không thì lấy mặc định
-    LaunchedEffect(account, selectedAddressId) {
-        if (account != null) {
-            if (selectedAddressId != null) {
-                addressViewModel.getAddressById(selectedAddressId!!)
-            } else {
-                addressViewModel.getAddressDefault(account.idPerson, 1)
-            }
+    LaunchedEffect(username, selectedAddressId) {
+        Log.d("CheckoutScreen", "idCustomer: $idCustomer, selectedAddressId: $selectedAddressId")
+        if (idCustomer.isEmpty()) {
+            addressViewModel.updateErrorMessage("ID khách hàng không hợp lệ")
+            addressViewModel.isLoading = false
+            Log.d("CheckoutScreen", "Đã đặt errorMessage và isLoading = false do idCustomer rỗng")
+            return@LaunchedEffect
+        }
+        if (selectedAddressId != null) {
+            addressViewModel.getAddressById(selectedAddressId!!)
+            Log.d("CheckoutScreen", "Gọi getAddressById với id: ${selectedAddressId}")
+        } else {
+            addressViewModel.getAddressDefault(idCustomer)
+            Log.d("CheckoutScreen", "Gọi getAddressDefault với customerId: $idCustomer")
         }
     }
-
-    // Lấy thông tin khách hàng dựa trên địa chỉ
-    LaunchedEffect(address) {
-        if (address != null) {
-            customerViewModel.getCustomerById(address.idCustomer)
-        }
-    }
-
     // Lấy thông tin sản phẩm
     val loadedDeviceIds = remember { mutableStateListOf<String>() }
     LaunchedEffect(selectedProducts) {
         deviceViewModel.clearDevices()
         selectedProducts.forEach { triple ->
-            val deviceId = triple.first.toString()
-            if (!loadedDeviceIds.contains(deviceId)) {
-                deviceViewModel.getdeviceById2(deviceId)
-                loadedDeviceIds.add(deviceId)
+            val deviceId = triple.first
+            if (!loadedDeviceIds.contains(deviceId.toString())) {
+                deviceViewModel.getDeviceCheckOut(deviceId)
+                loadedDeviceIds.add(deviceId.toString())
             }
+        }
+    }
+    // Theo dõi khi nào các sản phẩm đã load xong
+    LaunchedEffect(listDevice, selectedProducts) {
+        if (selectedProducts.isNotEmpty()) {
+            val loadedDeviceCount = listDevice.distinctBy { it.idDevice }.size
+            val expectedDeviceCount = selectedProducts.distinctBy { it.first }.size
+
+            if (loadedDeviceCount >= expectedDeviceCount) {
+                isLoadingProducts = false
+                Log.d("CheckoutScreen", "Đã load xong tất cả sản phẩm: $loadedDeviceCount/$expectedDeviceCount")
+            }
+        } else {
+            isLoadingProducts = false
         }
     }
 
@@ -194,16 +210,15 @@ fun CheckoutScreen(
                     Button(
                         modifier = Modifier.fillMaxWidth(),
                         onClick = {
-                            if (account != null && address != null) {
-                                val idPerson = account.idPerson ?: ""
-                                val idAddress = "${address.street}, ${address.ward}, ${address.district}, ${address.city}, Việt Nam"
-                                val phone = customer?.phone ?: ""
+                            if (address != null) {
+
+                                val phone = address.phone
                                 val order = Order(
                                     id = 0,
-                                    idCustomer = idPerson,
+                                    idCustomer = idCustomer,
                                     totalAmount = tongtien,
                                     paymentMethod = selectedPaymentMethod,
-                                    address = idAddress,
+                                    address = address.getFormattedAddress(),
                                     accountNumber = "NULL",
                                     phone = phone,
                                     nameRecipient = "${customer!!.surname} ${customer.lastname}",
@@ -220,7 +235,7 @@ fun CheckoutScreen(
 
                                 val notice = Notice(
                                     id = 0,
-                                    idUser = idPerson,
+                                    idUser = idCustomer,
                                     idRole = "NULL",
                                     text = "Đơn hàng của bạn đã được đặt thành công!",
                                     type = "Đơn hàng",
@@ -248,11 +263,11 @@ fun CheckoutScreen(
 
                                 selectedProducts.forEach { triple ->
                                     if (triple.third != 0) {
-                                        account.idPerson?.let {
+
                                             cartViewModel.deleteCart(triple.third,
-                                                it
+                                                idCustomer
                                             )
-                                        }
+
                                     }
                                 }
                             }
@@ -270,14 +285,123 @@ fun CheckoutScreen(
             }
         }
     ) { paddingValues ->
-        LazyColumn(
-            modifier = Modifier
-                .padding(paddingValues)
-                .fillMaxSize()
-                .background(Color.White)
-        ) {
-            item {
-                if (address != null) {
+        if (isLoadingAddress || isLoadingProducts) {
+            Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center
+            ) {
+                CircularProgressIndicator(
+                    color = Color(0xFF5D9EFF),
+                )
+            }
+        }else if (errorMessage != null) {
+            Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = errorMessage ?: "Lỗi không xác định",
+                    color = Color.Red,
+                    textAlign = TextAlign.Center
+                )
+            }
+        } else {
+            LazyColumn(
+                modifier = Modifier
+                    .padding(paddingValues)
+                    .fillMaxSize()
+                    .background(Color.White)
+            ) {
+                item {
+                    if (address != null) {
+                        Card(
+                            modifier = Modifier
+                                .padding(4.dp)
+                                .fillMaxWidth(),
+                            elevation = CardDefaults.cardElevation(1.dp),
+                            colors = CardDefaults.cardColors(containerColor = Color.White)
+                        ) {
+                            Row(
+                                modifier = Modifier
+                                    .padding(10.dp)
+                                    .fillMaxWidth(),
+                                horizontalArrangement = Arrangement.Start,
+                                verticalAlignment = Alignment.Top
+                            ) {
+                                Column(
+                                    modifier = Modifier
+                                        .fillMaxHeight()
+                                        .padding(10.dp),
+                                    verticalArrangement = Arrangement.Top
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Filled.LocationOn,
+                                        contentDescription = "",
+                                        tint = Color.Red
+                                    )
+                                }
+                                Column {
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.SpaceBetween,
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Text(
+                                            text = address.receiver_name,
+                                            fontWeight = FontWeight.Bold
+                                        )
+                                        Text(
+                                            text = "Thay đổi",
+                                            color = Color(0xFF5D9EFF),
+                                            modifier = Modifier.clickable {
+                                                //navController.navigate("${Screen.Address_Selection.route}?idCustomer=${customer?.id}")
+                                                navController.navigate("${Screen.Address_Selection.route}?idCustomer=${customer?.id}&selectedAddressId=${address.id}")
+                                            }
+                                        )
+                                    }
+                                    Text(text = address.phone)
+                                    Text(
+                                        text = address.getFormattedAddress()
+                                    )
+                                }
+                            }
+                        }
+                    } else {
+                        Card(
+                            modifier = Modifier
+                                .padding(4.dp)
+                                .fillMaxWidth(),
+                            elevation = CardDefaults.cardElevation(1.dp),
+                            colors = CardDefaults.cardColors(containerColor = Color.White)
+                        ) {
+                            Column(
+                                modifier = Modifier.padding(10.dp),
+                                horizontalAlignment = Alignment.CenterHorizontally
+                            ) {
+                                Text(
+                                    text = "Không có địa chỉ mặc định",
+                                    color = Color.Red,
+                                    fontWeight = FontWeight.Bold
+                                )
+                                Text(
+                                    text = "Thêm địa chỉ",
+                                    color = Color(0xFF5D9EFF),
+                                    modifier = Modifier.clickable {
+                                        navController.navigate("${Screen.Address_Selection.route}?idCustomer=${customer?.id}")
+                                    }
+                                )
+                            }
+                        }
+                    }
+                }
+                items(listDevice.distinctBy { it.idDevice }) { device ->
+                    selectedProducts.forEach { triple ->
+                        if (device.idDevice == triple.first) {
+                            DeviceItem(device, triple.second)
+                        }
+                    }
+                }
+                item {
                     Card(
                         modifier = Modifier
                             .padding(4.dp)
@@ -285,172 +409,113 @@ fun CheckoutScreen(
                         elevation = CardDefaults.cardElevation(1.dp),
                         colors = CardDefaults.cardColors(containerColor = Color.White)
                     ) {
-                        Row(
+                        Text(
+                            text = "Phương thức thanh toán",
+                            fontWeight = FontWeight.Bold,
+                            modifier = Modifier.padding(start = 15.dp, top = 10.dp, bottom = 5.dp)
+                        )
+                        Column(
                             modifier = Modifier
                                 .padding(10.dp)
-                                .fillMaxWidth(),
-                            horizontalArrangement = Arrangement.Start,
-                            verticalAlignment = Alignment.Top
+                                .fillMaxWidth()
+                                .fillMaxHeight()
                         ) {
-                            Column(
-                                modifier = Modifier
-                                    .fillMaxHeight()
-                                    .padding(10.dp),
-                                verticalArrangement = Arrangement.Top
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.SpaceBetween
                             ) {
-                                Icon(
-                                    imageVector = Icons.Filled.LocationOn,
-                                    contentDescription = "",
-                                    tint = Color.Red
-                                )
-                            }
-                            Column {
-                                Row(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.SpaceBetween,
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
-                                    Text(
-                                        text = "${customer?.surname} ${customer?.lastname}",
-                                        fontWeight = FontWeight.Bold
-                                    )
-                                    Text(
-                                        text = "Thay đổi",
-                                        color = Color(0xFF5D9EFF),
-                                        modifier = Modifier.clickable {
-                                            //navController.navigate("${Screen.Address_Selection.route}?idCustomer=${customer?.id}")
-                                            navController.navigate("${Screen.Address_Selection.route}?idCustomer=${customer?.id}&selectedAddressId=${address.id}")
-                                        }
-                                    )
-                                }
-                                Text(text = customer?.phone.toString())
                                 Text(
-                                    text = "${address.street}, ${address.ward}, ${address.district}, ${address.city}, Việt Nam"
+                                    text = "Thanh toán khi nhận hàng (COD)",
+                                    modifier = Modifier.padding(start = 25.dp)
+                                )
+                                RadioButton(
+                                    selected = selectedPaymentMethod == "Thanh toán khi nhận hàng (COD)",
+                                    onClick = {
+                                        selectedPaymentMethod = "Thanh toán khi nhận hàng (COD)"
+                                    },
+                                    colors = RadioButtonDefaults.colors(
+                                        unselectedColor = Color(0xFF5D9EFF),
+                                        selectedColor = Color(0xFF5D9EFF)
+                                    )
+                                )
+                            }
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Text(
+                                    text = "Chuyển khoản ngân hàng",
+                                    modifier = Modifier.padding(start = 25.dp)
+                                )
+                                RadioButton(
+                                    selected = selectedPaymentMethod == "Chuyển khoản ngân hàng",
+                                    onClick = { selectedPaymentMethod = "Chuyển khoản ngân hàng" },
+                                    colors = RadioButtonDefaults.colors(
+                                        unselectedColor = Color(0xFF5D9EFF),
+                                        selectedColor = Color(0xFF5D9EFF)
+                                    )
+                                )
+                            }
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Text(
+                                    text = "Momo",
+                                    modifier = Modifier.padding(start = 25.dp)
+                                )
+                                RadioButton(
+                                    selected = selectedPaymentMethod == "Momo",
+                                    onClick = { selectedPaymentMethod = "Momo" },
+                                    colors = RadioButtonDefaults.colors(
+                                        unselectedColor = Color(0xFF5D9EFF),
+                                        selectedColor = Color(0xFF5D9EFF)
+                                    )
                                 )
                             }
                         }
                     }
                 }
-            }
-            items(listDevice.distinctBy { it.idDevice }) { device ->
-                selectedProducts.forEach { triple ->
-                    if (device.idDevice == triple.first) {
-                        DeviceItem(device, triple.second)
-                    }
-                }
-            }
-            item {
-                Card(
-                    modifier = Modifier
-                        .padding(4.dp)
-                        .fillMaxWidth(),
-                    elevation = CardDefaults.cardElevation(1.dp),
-                    colors = CardDefaults.cardColors(containerColor = Color.White)
-                ) {
-                    Text(
-                        text = "Phương thức thanh toán",
-                        fontWeight = FontWeight.Bold,
-                        modifier = Modifier.padding(start = 15.dp, top = 10.dp, bottom = 5.dp)
-                    )
-                    Column(
+                item {
+                    Card(
                         modifier = Modifier
-                            .padding(10.dp)
+                            .padding(4.dp)
                             .fillMaxWidth()
-                            .fillMaxHeight()
+                            .height(140.dp),
+                        elevation = CardDefaults.cardElevation(1.dp),
+                        colors = CardDefaults.cardColors(containerColor = Color.White)
                     ) {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.SpaceBetween
+                        Column(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .padding(10.dp),
+                            verticalArrangement = Arrangement.SpaceBetween
                         ) {
-                            Text(
-                                text = "Thanh toán khi nhận hàng (COD)",
-                                modifier = Modifier.padding(start = 25.dp)
-                            )
-                            RadioButton(
-                                selected = selectedPaymentMethod == "Thanh toán khi nhận hàng (COD)",
-                                onClick = { selectedPaymentMethod = "Thanh toán khi nhận hàng (COD)" },
-                                colors = RadioButtonDefaults.colors(
-                                    unselectedColor = Color(0xFF5D9EFF),
-                                    selectedColor = Color(0xFF5D9EFF)
-                                )
-                            )
-                        }
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.SpaceBetween
-                        ) {
-                            Text(
-                                text = "Chuyển khoản ngân hàng",
-                                modifier = Modifier.padding(start = 25.dp)
-                            )
-                            RadioButton(
-                                selected = selectedPaymentMethod == "Chuyển khoản ngân hàng",
-                                onClick = { selectedPaymentMethod = "Chuyển khoản ngân hàng" },
-                                colors = RadioButtonDefaults.colors(
-                                    unselectedColor = Color(0xFF5D9EFF),
-                                    selectedColor = Color(0xFF5D9EFF)
-                                )
-                            )
-                        }
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.SpaceBetween
-                        ) {
-                            Text(
-                                text = "Momo",
-                                modifier = Modifier.padding(start = 25.dp)
-                            )
-                            RadioButton(
-                                selected = selectedPaymentMethod == "Momo",
-                                onClick = { selectedPaymentMethod = "Momo" },
-                                colors = RadioButtonDefaults.colors(
-                                    unselectedColor = Color(0xFF5D9EFF),
-                                    selectedColor = Color(0xFF5D9EFF)
-                                )
-                            )
-                        }
-                    }
-                }
-            }
-            item {
-                Card(
-                    modifier = Modifier
-                        .padding(4.dp)
-                        .fillMaxWidth()
-                        .height(140.dp),
-                    elevation = CardDefaults.cardElevation(1.dp),
-                    colors = CardDefaults.cardColors(containerColor = Color.White)
-                ) {
-                    Column(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .padding(10.dp),
-                        verticalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        Text("Chi tiết thanh toán", fontWeight = FontWeight.Bold)
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween
-                        ) {
-                            Text("Tổng tiền hàng")
-                            Text(text = formatGiaTien(tongtien))
-                        }
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween
-                        ) {
-                            Text("Tổng tiền vận chuyển")
-                            Text("0đ")
-                        }
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween
-                        ) {
-                            Text("Tổng thanh toán")
-                            Text(text = formatGiaTien(tongtien))
+                            Text("Chi tiết thanh toán", fontWeight = FontWeight.Bold)
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Text("Tổng tiền hàng")
+                                Text(text = formatGiaTien(tongtien))
+                            }
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Text("Tổng tiền vận chuyển")
+                                Text("0đ")
+                            }
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Text("Tổng thanh toán")
+                                Text(text = formatGiaTien(tongtien))
+                            }
                         }
                     }
                 }

@@ -76,7 +76,7 @@ fun UpdateAddress(
     val addressViewModel: AddressViewModel = viewModel()
     var listAddress = addressViewModel.listAddress
     var address = addressViewModel.address
-    addressViewModel.getAddressByIdCustomer(idCustomer)
+    //addressViewModel.getAddressByIdCustomer(idCustomer)
     addressViewModel.getAddressById(idAddress)
 
 
@@ -104,7 +104,7 @@ fun UpdateAddress(
         city = address.city
         ward = address.ward
         street = address.street
-        isDefault = if(address.isDefault == 1) true else false
+        //isDefault = if(address.isDefault == 1) true else false
     }
     Scaffold (
         topBar = {
@@ -156,12 +156,12 @@ fun UpdateAddress(
                             fontSize = 18.sp
                         )
                         if(address != null){
-                            if(address.isDefault == 1){
-                                stateSwitch = false
-                            }
-                            else{
-                                stateSwitch = true
-                            }
+//                            if(address.isDefault == 1){
+//                                stateSwitch = false
+//                            }
+//                            else{
+//                                stateSwitch = true
+//                            }
                         }
                         Switch(
                             checked = isDefault,
@@ -184,12 +184,12 @@ fun UpdateAddress(
                             modifier = Modifier.padding(2.dp),
                             onClick = {
                                 if(address != null){
-                                    if(address.isDefault == 1){
-                                        openDialog = true
-                                    }
-                                    else{
-                                        openDialog = true
-                                    }
+//                                    if(address.isDefault == 1){
+//                                        openDialog = true
+//                                    }
+//                                    else{
+//                                        openDialog = true
+//                                    }
                                 }
                             },
                             colors = ButtonDefaults.buttonColors(
@@ -205,18 +205,18 @@ fun UpdateAddress(
                             onClick = {
                                 if(isDefault){
                                     for(address in listAddress){
-                                        if(address.isDefault == 1){
-                                            var address = Address(
-                                                address.id,
-                                                address.idCustomer,
-                                                address.district,
-                                                address.city,
-                                                address.ward,
-                                                address.street,
-                                                0
-                                            )
-                                            addressViewModel.updateAddress(address)
-                                        }
+//                                        if(address.isDefault == 1){
+//                                            var address = Address(
+//                                                address.id,
+//                                                address.idCustomer,
+//                                                address.district,
+//                                                address.city,
+//                                                address.ward,
+//                                                address.street,
+//                                                0
+//                                            )
+//                                            //addressViewModel.updateAddress(address)
+//                                        }
                                     }
                                 }
                                 if(idCustomer != null){
@@ -229,7 +229,7 @@ fun UpdateAddress(
                                         street,
                                         if(isDefault) 1 else 0
                                     )
-                                    addressViewModel.updateAddress(address)
+                                    //addressViewModel.updateAddress(address)
                                 }
                                 navController.popBackStack()
                             },
@@ -249,18 +249,18 @@ fun UpdateAddress(
                             onDismissRequest = { openDialog = false },
                             text = {
                                 if (address != null) {
-                                    if (address.isDefault == 1) {
-                                        Text(
-                                            "Bạn không thể xóa địa chỉ mặc định!",
-                                            fontSize = 17.sp
-                                        )
-                                    }
-                                    else{
-                                        Text(
-                                            "Bạn muốn xóa địa chỉ?",
-                                            fontSize = 17.sp,
-                                        )
-                                    }
+//                                    if (address.isDefault == 1) {
+//                                        Text(
+//                                            "Bạn không thể xóa địa chỉ mặc định!",
+//                                            fontSize = 17.sp
+//                                        )
+//                                    }
+//                                    else{
+//                                        Text(
+//                                            "Bạn muốn xóa địa chỉ?",
+//                                            fontSize = 17.sp,
+//                                        )
+//                                    }
                                 }
                             },
                             title = {
@@ -270,14 +270,14 @@ fun UpdateAddress(
                                 Button(
                                     onClick = {
                                         if (address != null) {
-                                            if (address.isDefault == 1) {
-                                                openDialog = false
-                                            }
-                                            else{
-                                                openDialog = false
-                                                addressViewModel.deleteAddress(idAddress)
-                                                navController.popBackStack()
-                                            }
+//                                            if (address.isDefault == 1) {
+//                                                openDialog = false
+//                                            }
+//                                            else{
+//                                                openDialog = false
+//                                                addressViewModel.deleteAddress(idAddress)
+//                                                navController.popBackStack()
+//                                            }
                                         }
                                     },
                                     colors = ButtonDefaults.buttonColors(

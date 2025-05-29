@@ -1,11 +1,13 @@
 package com.example.ungdungbanthietbi_iot.api
 
 import com.example.ungdungbanthietbi_iot.models.Address
+import com.example.ungdungbanthietbi_iot.models.AddressBook
 import retrofit2.Response
 import retrofit2.http.Body
 import retrofit2.http.GET
 import retrofit2.http.POST
 import retrofit2.http.PUT
+import retrofit2.http.Path
 import retrofit2.http.Query
 
 data class AddressResponse(
@@ -21,11 +23,44 @@ data class addAddressResponse(
 data class deleteAddressRequest(
     val id: Int
 )
+
+data class ApiResponse(
+    val status_code: Int,
+    val data: ResponseData
+)
+
+data class ResponseData(
+    val data: CustomerData,
+    val total_page: Int
+)
+
+data class CustomerData(
+    val customer: Customer,
+    val address_books: List<AddressBook>
+)
+
+data class Customer(
+    val id: String,
+    val name: String,
+    val phone: String,
+    val email: String
+)
+
+data class AddressDetailRES(
+    val status_code: Int,
+    val data: AddressBook
+)
+
+
 interface AddressAPIService {
-    @GET("address_book/show.php")
+
+    @GET("address-book/customer/{id}")
+    suspend fun getCustomerAddressBook(@Path("id") id: String): ApiResponse
+
+    @GET("address-book/detail/{id}")
     suspend fun getAddressById(
-        @Query("id") id: Int
-    ): Address
+        @Path("id") id: Int
+    ): AddressDetailRES
 
     @POST("address_book/create.php")
     suspend fun addAddress(
@@ -37,7 +72,7 @@ interface AddressAPIService {
         @Body address: Address
     ): addAddressResponse
 
-    @GET("address_book/getAddressByIdCustomer.php")
+    @GET("customer/{id}")
     suspend fun getAddressByIdCustomer(
         @Query("idCustomer") idCustomer: String?
     ): AddressResponse
@@ -56,7 +91,7 @@ interface AddressAPIService {
     @POST("address_book/delete.php")
     suspend fun deleteAddress(
         @Body id: deleteAddressRequest
-    ): Response<ApiResponse>
+    ): Response<ApiResponse1>
 
     @GET("address_book/getAddressByIdOrder.php")
     suspend fun getAddressByIdOrder(

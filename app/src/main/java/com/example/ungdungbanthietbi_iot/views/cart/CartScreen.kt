@@ -360,7 +360,7 @@ fun CartScreen(
     LaunchedEffect(idCustomer) {
         cartViewModel.getCartByIdCustomer(idCustomer)
         deviceViewModel.getAllDevice()
-        addressViewModel.getAddressByIdCustomer(idCustomer)
+        //addressViewModel.getAddressByIdCustomer(idCustomer)
     }
 
     // Khởi tạo selectedItems khi listCart thay đổi

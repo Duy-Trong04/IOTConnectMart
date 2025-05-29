@@ -142,11 +142,12 @@ fun NavGraph(
 
         //Màn hình thanh toán
         composable(
-            route = Screen.Check_Out.route + "?selectedProducts={selectedProducts}&tongtien={tongtien}&username={username}",
+            route = Screen.Check_Out.route + "?selectedProducts={selectedProducts}&tongtien={tongtien}&username={username}&id={id}",
             arguments = listOf(
                 navArgument("selectedProducts") {type = NavType.StringType },
                 navArgument("tongtien") { type = NavType.StringType},
-                navArgument("username") {type = NavType.StringType }
+                navArgument("username") {type = NavType.StringType },
+                navArgument("id") {type = NavType.StringType }
             )
         ){ backStackEntry ->
             // Lấy chuỗi selectedProducts từ tham số điều hướng
@@ -158,8 +159,9 @@ fun NavGraph(
             // Chuyển đổi tongtien từ String sang Int, nếu không có giá trị thì mặc định là 0
             val tongtien = backStackEntry.arguments?.getString("tongtien")?.toDoubleOrNull() ?: 0.0
             val username = backStackEntry.arguments?.getString("username") ?: ""
+            val id = backStackEntry.arguments?.getString("id") ?: ""
 
-            CheckoutScreen(navController, selectedProducts, tongtien = tongtien, username = username)
+            CheckoutScreen(navController, selectedProducts, tongtien = tongtien, username = username, idCustomer = id)
         }
         //Màn hình đăng ký
         composable(route = Screen.RegisterScreen.route){
