@@ -17,10 +17,10 @@ import kotlinx.coroutines.withContext
 
 class AddressViewModel : ViewModel() {
     var listAddress by mutableStateOf<List<AddressBook>>(emptyList())
-
+        private set
 
     var address by mutableStateOf<AddressBook?>(null)
-
+        private set
 
     private var addressAddResult by mutableStateOf("")
 

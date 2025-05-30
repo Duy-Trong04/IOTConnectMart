@@ -41,7 +41,7 @@ class OrderDetailViewModel:ViewModel() {
         viewModelScope.launch {
             try {
                 val response = withContext(Dispatchers.IO) {
-                    RetrofitClient.orderDetailAPIService.getOrderDetailByIdOrder(orderId)
+                    RetrofitClient.orderDetailAPIService.getOrderDetailByIdOrder(orderId.toString())
                 }
                 // Cập nhật vào map
                 orderDetailsByOrder = orderDetailsByOrder.toMutableMap().apply {
@@ -56,7 +56,7 @@ class OrderDetailViewModel:ViewModel() {
         viewModelScope.launch {
             try {
                 val response = withContext(Dispatchers.IO) {
-                    RetrofitClient.orderDetailAPIService.getOrderDetailByIdOrder(idOrder)
+                    RetrofitClient.orderDetailAPIService.getOrderDetailByIdOrder(idOrder.toString())
                 }
                 listOrderDetail = response.order
             } catch (e: Exception) {

@@ -279,13 +279,21 @@ fun NavGraph(
 
         //màn hình thanh toán
         composable(
-            route = Screen.CheckOutSuccess.route  + "?username={username}",
+            route = Screen.CheckOutSuccess.route  + "?username={username}&id={id}&orderId={orderId}&totalMoney={totalMoney}&createdAt={createdAt}",
             arguments = listOf(
-                navArgument("username") {type = NavType.StringType}
+                navArgument("username") {type = NavType.StringType},
+                navArgument("id") {type = NavType.StringType},
+                navArgument("orderId") {type = NavType.StringType},
+                navArgument("totalMoney") {type = NavType.IntType},
+                navArgument("createdAt") {type = NavType.StringType}
             )
         ){
             val username = it.arguments?.getString("username") ?: ""
-            CheckOutSuccessScreen(navController, username)
+            val id = it.arguments?.getString("id") ?: ""
+            val orderId = it.arguments?.getString("orderId") ?: ""
+            val totalMoney = it.arguments?.getInt("totalMoney") ?: 0
+            val createdAt = it.arguments?.getString("createdAt") ?: ""
+            CheckOutSuccessScreen(navController, username, id, orderId, totalMoney, createdAt)
         }
         //Màn hình lịch sử đánh giá, bình luận
         composable(route = Screen.Rating_History.route + "?idCustomer={idCustomer}",

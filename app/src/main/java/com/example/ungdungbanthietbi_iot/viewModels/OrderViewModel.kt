@@ -15,10 +15,23 @@ import kotlinx.coroutines.withContext
 import android.content.Context
 import android.content.SharedPreferences
 import androidx.compose.runtime.mutableIntStateOf
+import com.example.ungdungbanthietbi_iot.api.CheckoutResponse
+import com.example.ungdungbanthietbi_iot.api.OrderData
+import com.example.ungdungbanthietbi_iot.api.OrderDataCheckOut
+import com.example.ungdungbanthietbi_iot.api.OrderResponse
+import com.example.ungdungbanthietbi_iot.models.CheckoutRequest
 import com.example.ungdungbanthietbi_iot.models.Notice
 import com.example.ungdungbanthietbi_iot.models.Order
 import com.example.ungdungbanthietbi_iot.utils.getCurrentTimestamp
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.asStateFlow
+
+sealed class CheckoutState {
+    object Idle : CheckoutState()
+    object Loading : CheckoutState()
+    data class Success(val orderData: OrderDataCheckOut) : CheckoutState()
+    data class Error(val message: String) : CheckoutState()
+}
 
 class OrderViewModel:ViewModel() {
     private var orderAddResult by mutableStateOf("")
@@ -102,6 +115,51 @@ class OrderViewModel:ViewModel() {
                 order = RetrofitClient.orderAPIService.getOrderById(id)
             } catch (e: Exception) {
                 Log.e("OrderViewModel", "Error getting Order", e)
+            }
+        }
+    }
+
+    private val _listOrders = MutableStateFlow<OrderResponse?>(null)
+    val listOrders: StateFlow<OrderResponse?> = _listOrders.asStateFlow()
+
+    fun getOrdersByCustomer(idCustomer: String) {
+        viewModelScope.launch {
+            try {
+                val response = withContext(Dispatchers.IO) {
+                    RetrofitClient.orderAPIService.getOrdersByCustomer(idCustomer)
+                }
+                _listOrders.value = response
+            } catch (e: Exception) {
+                Log.e("Order Error", "Lỗi khi lấy order: ${e.message}")
+                _listOrders.value = OrderResponse(
+                    status_code = 500,
+                    data = OrderData(data = emptyList(), total_page = 0)
+                )
+            }
+        }
+    }
+
+    private val _checkoutState = MutableStateFlow<CheckoutState>(CheckoutState.Idle)
+    val checkoutState: StateFlow<CheckoutState> = _checkoutState
+
+    fun createOrder(checkoutRequest: CheckoutRequest) {
+        viewModelScope.launch {
+            _checkoutState.value = CheckoutState.Loading
+            try {
+                val response: CheckoutResponse = RetrofitClient.orderAPIService.createOrder(checkoutRequest)
+                Log.d("OrderViewModel", "API Response: $response")
+                if (response.status_code == 200) {
+                    if (response.error_code == 0) {
+                        _checkoutState.value = CheckoutState.Success(response.data)
+                    } else {
+                        _checkoutState.value = CheckoutState.Error("API error: ${response.error_code}")
+                    }
+                } else {
+                    _checkoutState.value = CheckoutState.Error("API call failed: ${response.status_code}")
+                }
+            } catch (e: Exception) {
+                Log.e("OrderViewModel", "Error creating order: ${e.message}")
+                _checkoutState.value = CheckoutState.Error("Error: ${e.message}")
             }
         }
     }

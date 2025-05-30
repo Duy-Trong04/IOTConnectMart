@@ -22,7 +22,7 @@ interface OrderDetailAPIService {
 
     @GET("order_detail/getOrderDetailByIdOrder.php")
     suspend fun getOrderDetailByIdOrder(
-        @Query("idOrder") idOrder: Int,
+        @Query("idOrder") idOrder: String,
     ): OrderDetailResponse
 
     @GET("order_detail/getOrderDetailByStatus.php")

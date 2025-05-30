@@ -607,16 +607,16 @@ fun OrderItem(
 
     LaunchedEffect(key1 = order.id) {
         deviceViewModel.getDeviceByIdOrder2(order.id)
-        orderDetailViewModel.getOrderDetailByIdOrder2(order.id)
-        customerViewModel.getCustomerByIdOrder(order.id)
+        orderDetailViewModel.getOrderDetailByIdOrder2(order.id.toInt())
+        customerViewModel.getCustomerByIdOrder(order.id.toInt())
     }
 
     val listDevice by remember(order.id) {
-        derivedStateOf { deviceViewModel.devicesByOrder[order.id] ?: emptyList() }
+        derivedStateOf { deviceViewModel.devicesByOrder[order.id.toInt()] ?: emptyList() }
     }
 
     val listDetail by remember(order.id) {
-        derivedStateOf { orderDetailViewModel.orderDetailsByOrder[order.id] ?: emptyList() }
+        derivedStateOf { orderDetailViewModel.orderDetailsByOrder[order.id.toInt()] ?: emptyList() }
     }
 
     var reviewState by remember { mutableStateOf<Map<Int, Pair<Review?, Review?>>>(emptyMap()) }
@@ -684,24 +684,24 @@ fun OrderItem(
                                 ),
                                 shape = RoundedCornerShape(5.dp),
                                 onClick = {
-                                    val orderNew = Order(
-                                        order.id,
-                                        order.idCustomer,
-                                        order.totalAmount,
-                                        order.paymentMethod,
-                                        order.address,
-                                        order.accountNumber,
-                                        order.phone,
-                                        order.nameRecipient,
-                                        order.note,
-                                        order.platformOrder,
-                                        order.created_at,
-                                        order.updated_at,
-                                        order.accept_at,
-                                        order.idEmployee,
-                                        OrderStatus.DA_HUY.value
-                                    )
-                                    orderViewModel.updateOrder(orderNew)
+//                                    val orderNew = Order(
+//                                        order.id,
+//                                        order.idCustomer,
+//                                        order.totalAmount,
+//                                        order.paymentMethod,
+//                                        order.address,
+//                                        order.accountNumber,
+//                                        order.phone,
+//                                        order.nameRecipient,
+//                                        order.note,
+//                                        order.platformOrder,
+//                                        order.created_at,
+//                                        order.updated_at,
+//                                        order.accept_at,
+//                                        order.idEmployee,
+//                                        OrderStatus.DA_HUY.value
+//                                    )
+//                                    orderViewModel.updateOrder(orderNew)
                                 }
                             ) {
                                 Text("Hủy")

@@ -170,7 +170,7 @@ fun OrderDetailsScreen(
                         onClick = {
                             val orderNew = order.copy(
                                 updated_at = getCurrentTimestamp(),
-                                accept_at = getCurrentTimestamp(),
+                                //accept_at = getCurrentTimestamp(),
                                 status = 5
                             )
                             orderViewModel.updateOrder(orderNew)

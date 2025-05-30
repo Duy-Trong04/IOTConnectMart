@@ -56,6 +56,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import coil.compose.AsyncImage
+import com.example.ungdungbanthietbi_iot.models.CheckoutRequest
 import com.example.ungdungbanthietbi_iot.viewModels.AccountViewModel
 import com.example.ungdungbanthietbi_iot.viewModels.AddressViewModel
 import com.example.ungdungbanthietbi_iot.viewModels.CartViewModel
@@ -67,10 +68,17 @@ import com.example.ungdungbanthietbi_iot.viewModels.NoticeViewModel
 import com.example.ungdungbanthietbi_iot.models.Order
 import com.example.ungdungbanthietbi_iot.viewModels.OrderViewModel
 import com.example.ungdungbanthietbi_iot.models.OrderDetail
+import com.example.ungdungbanthietbi_iot.models.OrderRequest
+import com.example.ungdungbanthietbi_iot.models.Payment
+import com.example.ungdungbanthietbi_iot.models.Product
+import com.example.ungdungbanthietbi_iot.models.Shipping
 import com.example.ungdungbanthietbi_iot.viewModels.OrderDetailViewModel
 import com.example.ungdungbanthietbi_iot.navigation.Screen
 import com.example.ungdungbanthietbi_iot.utils.formatGiaTien
 import com.example.ungdungbanthietbi_iot.utils.getCurrentTimestamp
+import com.example.ungdungbanthietbi_iot.utils.getCurrentTimestampEX
+import com.example.ungdungbanthietbi_iot.viewModels.CheckoutState
+import java.net.URLEncoder
 import java.text.DecimalFormat
 
 
@@ -111,14 +119,13 @@ fun CheckoutScreen(
     val listDevice by deviceViewModel.listDevice.collectAsState(initial = emptyList())
     var selectedPaymentMethod by remember { mutableStateOf("Thanh toán khi nhận hàng (COD)") }
     val address = addressViewModel.address
-    val listAddress = addressViewModel.listAddress
-    val customer = customerViewModel.customer
     val isLoadingAddress = addressViewModel.isLoading
     val errorMessage = addressViewModel.errorMessage
 
     // State để theo dõi việc loading sản phẩm
     var isLoadingProducts by remember { mutableStateOf(true) }
-
+    // State để kích hoạt cuộc gọi API
+    var triggerCheckout by remember { mutableStateOf<CheckoutRequest?>(null) }
     // Lấy selectedAddressId từ savedStateHandle
     val selectedAddressId by navController.currentBackStackEntry
         ?.savedStateHandle
@@ -169,6 +176,59 @@ fun CheckoutScreen(
         }
     }
 
+    // Theo dõi trạng thái API
+    LaunchedEffect(Unit) {
+        orderViewModel.checkoutState.collect { state ->
+            when (state) {
+                is CheckoutState.Success -> {
+
+                    // Xóa giỏ hàng
+                    selectedProducts.forEach { triple ->
+                        if (triple.third != 0) {
+                            cartViewModel.deleteCart(triple.third, idCustomer)
+                        }
+                    }
+
+                    // Chuyển hướng đến màn hình thành công
+                    val orderData = state.orderData
+                    val encodedOrderId = orderData.orderId.let { URLEncoder.encode(it, "UTF-8") } ?: ""
+                    val encodedUsername = username.let { URLEncoder.encode(it, "UTF-8") } ?: ""
+                    val encodedIdCustomer = idCustomer.let { URLEncoder.encode(it, "UTF-8") } ?: ""
+                    val encodedCreatedAt = orderData.createdAt?.let { URLEncoder.encode(it, "UTF-8") } ?: ""
+                    navController.navigate(
+                        "${Screen.CheckOutSuccess.route}?" +
+                                "username=$username&" +
+                                "id=$idCustomer&" +
+                                "orderId=$encodedOrderId&" +
+                                "totalMoney=${orderData.totalMoney}&" +
+                                "createdAt=$encodedCreatedAt"
+                    ) {
+                        popUpTo(0) { inclusive = true }
+                    }
+                }
+                is CheckoutState.Error -> {
+                    // Hiển thị thông báo lỗi
+                    //noticeViewModel.setNotice(Notice("Lỗi", state.message, true))
+                    Log.e("CheckoutScreen", "API Error: ${state.message}")
+                }
+                is CheckoutState.Loading -> {
+                    Log.d("CheckoutScreen", "Đang gọi API...")
+                }
+                is CheckoutState.Idle -> {
+                    // Không làm gì khi ở trạng thái Idle
+                }
+            }
+        }
+    }
+
+    // Gọi API khi triggerCheckout thay đổi
+    LaunchedEffect(triggerCheckout) {
+        triggerCheckout?.let { request ->
+            orderViewModel.createOrder(request)
+            triggerCheckout = null // Reset trigger để tránh gọi lại
+        }
+    }
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -208,75 +268,60 @@ fun CheckoutScreen(
                     )
                     Spacer(modifier = Modifier.height(4.dp))
                     Button(
-                        modifier = Modifier.fillMaxWidth(),
                         onClick = {
                             if (address != null) {
-
-                                val phone = address.phone
-                                val order = Order(
-                                    id = 0,
-                                    idCustomer = idCustomer,
-                                    totalAmount = tongtien,
-                                    paymentMethod = selectedPaymentMethod,
-                                    address = address.getFormattedAddress(),
-                                    accountNumber = "NULL",
-                                    phone = phone,
-                                    nameRecipient = "${customer!!.surname} ${customer.lastname}",
-                                    note = "NULL",
-                                    platformOrder = "Mobile",
-                                    created_at = getCurrentTimestamp(),
-                                    updated_at = "NULL",
-                                    accept_at = "NULL",
-                                    idEmployee = "EMP000001",
-                                    status = 1
-                                )
-
-                                orderViewModel.addOrder(order)
-
-                                val notice = Notice(
-                                    id = 0,
-                                    idUser = idCustomer,
-                                    idRole = "NULL",
-                                    text = "Đơn hàng của bạn đã được đặt thành công!",
-                                    type = "Đơn hàng",
-                                    created_at = getCurrentTimestamp(),
-                                    status = 1
-                                )
-                                noticeViewModel.addNotice(notice)
-
-                                selectedProducts.forEach { triple ->
-                                    listDevice.forEach { device ->
-                                        if (device.idDevice == triple.first) {
-                                            val orderDetail = OrderDetail(
-                                                id = 0,
-                                                idOrder = 0,
-                                                idDevice = device.idDevice,
-                                                price = device.sellingPrice,
-                                                stock = triple.second,
-                                                amount = device.sellingPrice,
-                                                status = 0
-                                            )
-                                            orderDetailViewModel.addOrderDetail(orderDetail)
-                                        }
-                                    }
+                                Log.d("CheckoutScreen", "ListDevice: $listDevice")
+                                listDevice.forEach { device ->
+                                    Log.d("CheckoutScreen", "Device ID: ${device.idDevice}, Name: ${device.name}, Price: ${device.sellingPrice}")
                                 }
-
-                                selectedProducts.forEach { triple ->
-                                    if (triple.third != 0) {
-
-                                            cartViewModel.deleteCart(triple.third,
-                                                idCustomer
-                                            )
-
-                                    }
-                                }
-                            }
-                            navController.navigate("${Screen.CheckOutSuccess.route}?username=${username}") {
-                                popUpTo(0) { inclusive = true }
+                                val checkoutRequest = CheckoutRequest(
+                                    shipping = Shipping(
+                                        addressType = "saved",
+                                        savedAddressId = address.id.toString(),
+                                        fullName = address.receiver_name,
+                                        phone = address.phone,
+                                        email = "ikungfu777@gmail.com",
+                                        address = "a",
+                                        city = address.city,
+                                        district = address.district,
+                                        ward = address.ward,
+                                        shippingMethod = "standard",
+                                        note = ""
+                                    ),
+                                    payment = Payment(
+                                        paymentMethod = "cod",
+                                        sameAsShipping = true,
+                                        cardNumber = "",
+                                        cardName = "",
+                                        cardExpiry = "",
+                                        cardCvc = ""
+                                    ),
+                                    products = selectedProducts.map { triple ->
+                                        val device = listDevice.find { it.idDevice == triple.first }
+                                        Product(
+                                            id = triple.first,
+                                            name = device?.name ?: "Unknown Product",
+                                            price = device?.sellingPrice ?: 0.0,
+                                            quantity = triple.second,
+                                            selected = true
+                                        )
+                                    },
+                                    order = OrderRequest(
+                                        customer_id = idCustomer,
+                                        export_date = getCurrentTimestampEX(),
+                                        total_money = tongtien.toInt(),
+                                        discount = 0,
+                                        vat = 0,
+                                        amount = tongtien.toInt() + 30000,
+                                        status = 0
+                                    )
+                                )
+                                Log.d("CheckoutScreen", "CheckoutRequest: $checkoutRequest")
+                                triggerCheckout = checkoutRequest
                             }
                         },
                         shape = RoundedCornerShape(10.dp),
-                        elevation = ButtonDefaults.buttonElevation(2.dp),
+                        elevation = ButtonDefaults.buttonElevation(1.dp),
                         colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF5D9EFF))
                     ) {
                         Text("ĐẶT HÀNG", fontSize = 20.sp)
@@ -287,7 +332,7 @@ fun CheckoutScreen(
     ) { paddingValues ->
         if (isLoadingAddress || isLoadingProducts) {
             Box(
-                modifier = Modifier.fillMaxSize(),
+                modifier = Modifier.fillMaxSize().background(Color.White),
                 contentAlignment = Alignment.Center
             ) {
                 CircularProgressIndicator(
@@ -355,7 +400,7 @@ fun CheckoutScreen(
                                             color = Color(0xFF5D9EFF),
                                             modifier = Modifier.clickable {
                                                 //navController.navigate("${Screen.Address_Selection.route}?idCustomer=${customer?.id}")
-                                                navController.navigate("${Screen.Address_Selection.route}?idCustomer=${customer?.id}&selectedAddressId=${address.id}")
+                                                navController.navigate("${Screen.Address_Selection.route}?idCustomer=${idCustomer}&selectedAddressId=${address.id}")
                                             }
                                         )
                                     }
@@ -387,7 +432,7 @@ fun CheckoutScreen(
                                     text = "Thêm địa chỉ",
                                     color = Color(0xFF5D9EFF),
                                     modifier = Modifier.clickable {
-                                        navController.navigate("${Screen.Address_Selection.route}?idCustomer=${customer?.id}")
+                                        navController.navigate("${Screen.Address_Selection.route}?idCustomer=${idCustomer}")
                                     }
                                 )
                             }

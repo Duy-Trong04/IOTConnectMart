@@ -75,15 +75,15 @@ class DeviceViewModel:ViewModel() {
     var devicesByOrder by mutableStateOf<Map<Int, List<Device>>>(emptyMap())
         private set
 
-    fun getDeviceByIdOrder2(orderId: Int) {
+    fun getDeviceByIdOrder2(orderId: String) {
         viewModelScope.launch {
             try {
                 val response = withContext(Dispatchers.IO) {
-                    RetrofitClient.deviceAPIService.getDeviceByIdOrder(orderId)
+                    RetrofitClient.deviceAPIService.getDeviceByIdOrder(orderId.toInt())
                 }
                 // Cập nhật vào map
                 devicesByOrder = devicesByOrder.toMutableMap().apply {
-                    put(orderId, response.data.data)
+                    put(orderId.toInt(), response.data.data)
                 }
             } catch (e: Exception) {
                 Log.e("DeviceViewModel", "Lỗi khi lấy thiết bị: ${e.message}")
@@ -149,12 +149,12 @@ class DeviceViewModel:ViewModel() {
         viewModelScope.launch{
             try {
                 val response = RetrofitClient.deviceAPIService.getDeviceById(id)
-                Log.d("DeviceViewModel","Failed to fetch device: ${response}")
+                Log.d("DeviceViewModel","Failed to fetch device: $response")
                 if (response.statusCode == 200) {
                     _device.value = response.data.data.firstOrNull()
                     Log.d("DeviceViewModel","Fetched device: ${_device.value?.name}")
                 } else {
-                    Log.e("DeviceViewModel","Failed to fetch device: ${response}")
+                    Log.e("DeviceViewModel","Failed to fetch device: $response")
                 }
             }
             catch (e:Exception){
