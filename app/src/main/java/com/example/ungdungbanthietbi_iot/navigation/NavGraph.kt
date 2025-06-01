@@ -332,15 +332,17 @@ fun NavGraph(
 
         //Màn hình xem chi tiết đơn hàng
         composable(
-            route = Screen.Order_Detail.route + "?id={id}&totalAmount={totalAmount}",
+            route = Screen.Order_Detail.route + "?id={id}&totalAmount={totalAmount}&idCustomer={idCustomer}",
             arguments = listOf(
-                navArgument("id") {type = NavType.IntType},
-                navArgument("totalAmount") {type = NavType.StringType}
+                navArgument("id") {type = NavType.StringType},
+                navArgument("totalAmount") {type = NavType.StringType},
+                navArgument("idCustomer") {type = NavType.StringType}
             )
         ){
-            val id = it.arguments?.getInt("id") ?: 0
+            val id = it.arguments?.getString("id") ?: ""
+            val idCustomer = it.arguments?.getString("idCustomer") ?: ""
             val totalAmount = it.arguments?.getString("totalAmount")?.toDoubleOrNull() ?: 0.0
-            OrderDetailsScreen(navController, id, totalAmount)
+            OrderDetailsScreen(navController, id, totalAmount, idCustomer)
         }
         //Màn hinh tìm kiếm đã đăng nhập
         composable(

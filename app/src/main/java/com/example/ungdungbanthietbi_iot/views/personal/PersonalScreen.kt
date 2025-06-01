@@ -212,6 +212,7 @@ fun PersonalScreen(
                     currentTab = currentTab,
                     navController = navController,
                     username = username,
+                    idCustomer = id
                 )
             }
         }
@@ -780,6 +781,7 @@ fun AccountOptionsSection(
     currentTab: String,
     navController: NavController,
     username:String,
+    idCustomer: String
 ) {
     val context = LocalContext.current
     val openDialog = remember { mutableStateOf(false) }
@@ -819,19 +821,19 @@ fun AccountOptionsSection(
                 iconRes = Icons.Filled.LocationOn,
                 label = "Số địa chỉ",
                 isSelected = currentTab == "addresses",
-                onClick = { navController.navigate(Screen.Address_Selection.route + "?idCustomer=${account?.idPerson}") }
+                onClick = { navController.navigate(Screen.Address_Selection.route + "?idCustomer=${idCustomer}") }
             )
             AccountOptionItem(
                 iconRes = Icons.Filled.ShoppingCart,
                 label = "Theo dõi đơn hàng",
                 isSelected = currentTab == "cartManagement",
-                onClick = { navController.navigate(Screen.OrderListScreen.route + "?idCustomer=${account?.idPerson}") }
+                onClick = { navController.navigate(Screen.OrderListScreen.route + "?idCustomer=${idCustomer}") }
             )
             AccountOptionItem(
                 iconRes = Icons.Filled.Star,
                 label = "Đánh giá",
                 isSelected = currentTab == "rating",
-                onClick = { navController.navigate(Screen.Rating_History.route + "?idCustomer=${account?.idPerson}") }
+                onClick = { navController.navigate(Screen.Rating_History.route + "?idCustomer=${idCustomer}") }
             )
             AccountOptionItem(
                 iconRes = Icons.Filled.Lock,

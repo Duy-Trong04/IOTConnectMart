@@ -3,6 +3,7 @@ package com.example.ungdungbanthietbi_iot.config
 import com.example.ungdungbanthietbi_iot.api.AccuntAPIService
 import com.example.ungdungbanthietbi_iot.api.AddressAPIService
 import com.example.ungdungbanthietbi_iot.api.CartAPIService
+import com.example.ungdungbanthietbi_iot.api.CategoryApi
 import com.example.ungdungbanthietbi_iot.api.CustomerAPIService
 import com.example.ungdungbanthietbi_iot.api.DeviceAPIService
 import com.example.ungdungbanthietbi_iot.api.ImageAPIService
@@ -108,5 +109,12 @@ object RetrofitClient {
             .addConverterFactory(GsonConverterFactory.create(GsonBuilder().create()))
             .build()
             .create(NoticeAPIService::class.java)
+    }
+    val categoryAPIService: CategoryApi by lazy {
+        Retrofit.Builder()
+            .baseUrl(Constant.BASE_URL)
+            .addConverterFactory(GsonConverterFactory.create(GsonBuilder().create()))
+            .build()
+            .create(CategoryApi::class.java)
     }
 }

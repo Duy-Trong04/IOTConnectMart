@@ -44,6 +44,8 @@ import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material.icons.filled.GridView
 import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.Laptop
+import androidx.compose.material.icons.filled.LightMode
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Search
@@ -78,6 +80,7 @@ import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -109,6 +112,7 @@ import coil.compose.rememberAsyncImagePainter
 import coil.compose.rememberImagePainter
 import coil.request.ImageRequest
 import com.example.ungdungbanthietbi_iot.models.Account
+import com.example.ungdungbanthietbi_iot.models.Category
 import com.example.ungdungbanthietbi_iot.viewModels.AccountViewModel
 import com.example.ungdungbanthietbi_iot.models.Device
 import com.example.ungdungbanthietbi_iot.viewModels.DeviceViewModel
@@ -123,15 +127,20 @@ import com.example.ungdungbanthietbi_iot.viewModels.CartViewModel
 import com.example.ungdungbanthietbi_iot.views.notification.NotificationScreen
 import com.example.ungdungbanthietbi_iot.views.personal.PersonalScreen
 import com.example.ungdungbanthietbi_iot.utils.formatGiaTien
+import com.example.ungdungbanthietbi_iot.viewModels.CategoryViewModel
 import com.example.ungdungbanthietbi_iot.views.components.AnimatedNavigationBar
 import com.example.ungdungbanthietbi_iot.views.components.ButtonData
 
-data class Category(
-    val id: Int,
-    val name: String,
-    val imageUrl: String
-)
-
+@Composable
+fun getCategoryIcon(categoryName: String): ImageVector {
+    return when (categoryName) {
+        "Laptop" -> Icons.Filled.Laptop
+        "Công tắc thông minh" -> Icons.Filled.Category
+        "Đèn thông minh" -> Icons.Filled.LightMode
+        "Ổ cắm thông minh" -> Icons.Filled.Category
+        else -> Icons.Filled.Category // Biểu tượng mặc định
+    }
+}
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(
@@ -141,18 +150,23 @@ fun HomeScreen(
     username: String?,
     id: String?
 ) {
-    deviceViewModel.getAllDevice()
-    deviceViewModel.getDeviceFeatured()
+    val categoryViewModel:CategoryViewModel = viewModel()
     val listAllDevice: List<Device> = deviceViewModel.listAllDevice
     val listDeviceFeatured: List<Device> = deviceViewModel.listDeviceFeatured
+    val listCategories by categoryViewModel.listCategories.collectAsState()
     val listSlideShow = slideShowViewModel.listSlideShow
 
     LaunchedEffect(Unit) {
         slideShowViewModel.getAllSlideShow()
+        deviceViewModel.getAllDevice()
+        deviceViewModel.getDeviceFeatured()
+        categoryViewModel.getCategories()
     }
 
     val cartViewModel: CartViewModel = viewModel()
     val listCart = cartViewModel.listCart
+
+
 
 //    val accountViewModel: AccountViewModel = viewModel()
 //    val account = accountViewModel.account
@@ -170,12 +184,6 @@ fun HomeScreen(
 
     val navdrawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     val scope = rememberCoroutineScope()
-    val countries = listOf(
-        "Thiết bị chiếu sáng",
-        "Thiết bị cảm biến",
-        "Thiết bị điện tử thông minh",
-        "Đồng hồ thông minh",
-    )
 
     val listState = rememberLazyListState()
     val coroutineScope = rememberCoroutineScope()
@@ -185,12 +193,6 @@ fun HomeScreen(
     LaunchedEffect(listState.isScrollInProgress) {
         isScrolling = listState.isScrollInProgress
     }
-    val categories = listOf(
-        Category(1, "Thiết bị chiếu sáng", "https://m.media-amazon.com/images/I/71cH4xU1L4L._AC_UF1000,1000_QL80_.jpg"),
-        Category(2, "Thiết bị cảm biến", "https://m.media-amazon.com/images/I/61+WBqaGHEL._AC_UF1000,1000_QL80_.jpg"),
-        Category(3, "Thiết bị điện tử thông minh", "https://static-ecapac.acer.com/media/catalog/product/cache/a17a77e026ef2eddd3ecae104c32cc71/h/e/hero_chromebook_plus_514_cha_backlit_1.png"),
-        Category(4, "Đồng hồ thông minh", "https://cdn2.cellphones.com.vn/insecure/rs:fill:358:358/q:90/plain/https://cellphones.com.vn/media/catalog/product/a/p/apple-watch-se-2023-lte-40mm.png")
-    )
 
     var selectedTabIndex by rememberSaveable { mutableStateOf(0) }
 
@@ -245,25 +247,44 @@ fun HomeScreen(
                     fontWeight = FontWeight.Bold,
                     fontSize = 18.sp
                 )
-                countries.forEach { country ->
+                listCategories.forEach { category ->
                     NavigationDrawerItem(
+                        icon = {
+                            Icon(
+                                imageVector = getCategoryIcon(category.name),
+                                contentDescription = category.name,
+                                tint = Color(0xFF5D9EFF)
+                            )
+                        },
                         label = {
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(vertical = 3.dp, horizontal = 3.dp)
-                                    .drawBehind {
-                                        drawLine(
-                                            color = Color.Black,
-                                            start = Offset(0f, size.height),
-                                            end = Offset(size.width, size.height),
-                                            strokeWidth = 1.dp.toPx()
-                                        )
-                                    }
-                            ) {
-                                Text(text = country)
+                            Text(
+                                text = category.name,
+                                color = Color.Black,
+                                fontSize = 16.sp,
+                                fontWeight = FontWeight.Medium
+                            )
+                        },
+                        selected = false,
+                        onClick = {
+                            scope.launch {
+                                navdrawerState.close()
+                                val route = if (username != null)
+                                    Screen.Search_Screen.route + "?category=${category.name}&username=${username}"
+                                else
+                                    Screen.Search_Screen.route + "?category=${category.name}"
+                                navController.navigate(route)
                             }
-                        }, selected = false, onClick = { /* Chọn danh mục */ }
+                        },
+                        modifier = Modifier
+                            .padding(horizontal = 16.dp, vertical = 4.dp)
+                            .drawBehind {
+                                drawLine(
+                                    color = Color(0xFFE0E0E0),
+                                    start = Offset(0f, size.height),
+                                    end = Offset(size.width, size.height),
+                                    strokeWidth = 1.dp.toPx()
+                                )
+                            }
                     )
                 }
             }
@@ -546,7 +567,7 @@ fun HomeScreen(
                     listAllDevice = listAllDevice,
                     listDeviceFeatured = listDeviceFeatured,
                     listDeviceLiked = deviceViewModel.listDeviceOfCustomer,
-                    categories = categories
+                    categories = listCategories
                 )
                 2 -> if (username != null) NotificationScreen(navController = navController, idUser = id)
                 else NotificationScreen(navController = navController, idUser = "")
@@ -696,7 +717,8 @@ fun HomeContent(
                         CategoryItem(
                             category = category,
                             navController = navController,
-                            username = username
+                            username = username,
+                            idCustomer = id
                         )
                     }
                 }
@@ -1069,7 +1091,13 @@ fun CardDevice(
 }
 
 @Composable
-fun CategoryItem(category: Category, navController: NavController, username: String?) {
+fun CategoryItem(category: Category, navController: NavController, username: String?, idCustomer: String?) {
+    val imageUrl = category.image ?: when (category.name) {
+        "Cảm biến" -> "https://m.media-amazon.com/images/I/61+WBqaGHEL._AC_UF1000,1000_QL80_.jpg"
+        "Công tắc thông min" -> "https://static-ecapac.acer.com/media/catalog/product/cache/a17a77e026ef2eddd3ecae104c32cc71/h/e/hero_chromebook_plus_514_cha_backlit_1.png"
+        "Đèn thông minh" -> "https://cdn2.cellphones.com.vn/insecure/rs:fill:358:358/q:90/plain/https://cellphones.com.vn/media/catalog/product/a/p/apple-watch-se-2023-lte-40mm.png"
+        else -> "https://via.placeholder.com/150" // Ảnh mặc định
+    }
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = Modifier
@@ -1093,7 +1121,7 @@ fun CategoryItem(category: Category, navController: NavController, username: Str
         ) {
             AsyncImage(
                 model = ImageRequest.Builder(LocalContext.current)
-                    .data(category.imageUrl)
+                    .data(imageUrl)
                     .crossfade(true)
                     .build(),
                 contentDescription = category.name,

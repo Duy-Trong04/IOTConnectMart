@@ -1,10 +1,14 @@
 package com.example.ungdungbanthietbi_iot.views.order_detail
 
 import android.util.Log
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -30,6 +34,7 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -38,6 +43,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.graphics.painter.BitmapPainter
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -54,9 +61,11 @@ import com.example.ungdungbanthietbi_iot.viewModels.OrderDetailViewModel
 import com.example.ungdungbanthietbi_iot.models.Review
 import com.example.ungdungbanthietbi_iot.viewModels.ReviewViewModel
 import com.example.ungdungbanthietbi_iot.navigation.Screen
+import com.example.ungdungbanthietbi_iot.utils.base64ToBitmap
 import com.example.ungdungbanthietbi_iot.utils.formatGiaTien
 import com.example.ungdungbanthietbi_iot.utils.getCurrentTimestamp
 import kotlinx.coroutines.launch
+import java.net.URLDecoder
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -81,56 +90,37 @@ import java.util.*
 @Composable
 fun OrderDetailsScreen(
     navController: NavController,
-    idOrder: Int,
-    totalAmount: Double
+    idOrder: String,
+    totalAmount: Double,
+    idCustomer: String
 ) {
     val orderViewModel: OrderViewModel = viewModel()
-    val orderDetailViewModel: OrderDetailViewModel = viewModel()
-    val addressViewModel: AddressViewModel = viewModel()
-    val deviceViewModel: DeviceViewModel = viewModel()
-    val customerViewModel: CustomerViewModel = viewModel()
-    val reviewViewModel: ReviewViewModel = viewModel()
-
-    val order = orderViewModel.order
-    val address = addressViewModel.address
-    val listOrderDetail = orderDetailViewModel.listOrderDetail
-    val listDevice = deviceViewModel.listDeviceByOrder
-    val customer = customerViewModel.customer
-
-    // Map để lưu trạng thái đánh giá cho từng sản phẩm
-    var reviewState by remember { mutableStateOf<Map<Int, Pair<Review?, Review?>>>(emptyMap()) }
-
-    LaunchedEffect(idOrder) {
-        orderViewModel.getOrderById(idOrder)
-        deviceViewModel.getDeviceByIdOrder(idOrder)
+    val listOrder by orderViewModel.listOrders.collectAsState()
+    // Decode idOrder to match order.id
+    val decodedId = try {
+        URLDecoder.decode(idOrder, "UTF-8")
+    } catch (e: Exception) {
+        Log.e("OrderDetailsScreen", "Error decoding idOrder: $idOrder", e)
+        idOrder
     }
-    if (order != null) {
-        LaunchedEffect(idOrder) {
-            //addressViewModel.getAddressByIdOrder(idOrder)
-            customerViewModel.getCustomerByIdOrder(idOrder)
-        }
+    // Load orders for customer
+    LaunchedEffect(idCustomer) {
+        Log.d("OrderDetailsScreen", "Loading orders for customer: $idCustomer")
+        orderViewModel.getOrdersByCustomer(idCustomer) // Replace with actual customer ID
     }
-    LaunchedEffect(idOrder) {
-        orderDetailViewModel.getOrderDetailByIdOrder(idOrder)
+    // Tìm đơn hàng từ listOrder dựa trên idOrder
+    val order = listOrder?.data?.data?.find { it.id == decodedId }
+    // Debug log
+    LaunchedEffect(idOrder, listOrder) {
+        Log.d(
+            "OrderDetailsScreen",
+            "idOrder: $idOrder, decodedId: $decodedId, order: ${order?.id}, " +
+                    "listOrder size: ${listOrder?.data?.data?.size ?: 0}, " +
+                    "listOrder ids: ${listOrder?.data?.data?.map { it.id } ?: "empty"}, " +
+                    "idCustomer: $idCustomer"
+        )
     }
 
-    // Cập nhật trạng thái đánh giá cho từng sản phẩm
-    LaunchedEffect(listDevice, customer) {
-        if (customer != null && listDevice.isNotEmpty()) {
-            val newReviewState = mutableMapOf<Int, Pair<Review?, Review?>>()
-            listDevice.forEach { device ->
-                reviewViewModel.initReviewCheck(device.idDevice)
-                reviewViewModel.checkReview(customer.id, device.idDevice)
-                reviewViewModel.checkReview2(customer.id, device.idDevice)
-                val reviewFirst = reviewViewModel.checkReviewDirect(customer.id, device.idDevice, 2)
-                val reviewSecond = reviewViewModel.checkReviewDirect(customer.id, device.idDevice, 1)
-                newReviewState[device.idDevice] = Pair(reviewFirst, reviewSecond)
-            }
-            reviewState = newReviewState
-        }
-    }
-
-    val scope = rememberCoroutineScope()
     Scaffold(
         topBar = {
             TopAppBar(
@@ -161,44 +151,23 @@ fun OrderDetailsScreen(
             )
         },
         bottomBar = {
-            if (order?.status == 4) {
-                BottomAppBar(
-                    containerColor = Color.Transparent,
-                    modifier = Modifier.fillMaxWidth().height(100.dp)
-                ) {
+            BottomAppBar(
+                containerColor = Color.White,
+                modifier = Modifier.fillMaxWidth().height(100.dp)
+            ) {
+                if (order != null) {
                     Button(
                         onClick = {
-                            val orderNew = order.copy(
-                                updated_at = getCurrentTimestamp(),
-                                //accept_at = getCurrentTimestamp(),
-                                status = 5
-                            )
-                            orderViewModel.updateOrder(orderNew)
-
-                            scope.launch {
-                                listOrderDetail.forEach { device ->
-                                    val reviewFromApi = reviewViewModel.checkReviewDirect(
-                                        idCustomer = customer!!.id,
-                                        idDevice = device.idDevice,
-                                        status = 1
-                                    )
-                                    Log.e("Review", "reviewFromApi = $reviewFromApi")
-
-                                    if (reviewFromApi != null) {
-                                        val reviewUpdate = reviewFromApi.copy(
-                                            status = 2
-                                        )
-                                        reviewViewModel.updateReview(reviewUpdate)
-                                    }
-                                }
-                                navController.popBackStack()
-                            }
+                            // Vô hiệu hóa logic API, chỉ log hành động
+                            Log.d("OrderDetailsScreen", "Xác nhận đã nhận hàng: ${order.id}")
+                            navController.popBackStack()
                         },
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(5.dp),
                         colors = ButtonDefaults.buttonColors(
                             containerColor = Color(0xFF5D9EFF)
                         ),
+                        enabled = if(order.status == 3) true else false,
                         elevation = ButtonDefaults.buttonElevation(2.dp)
                     ) {
                         Text(
@@ -208,19 +177,42 @@ fun OrderDetailsScreen(
                         )
                     }
                 }
-            } else {
-                BottomAppBar(
-                    containerColor = Color.Transparent,
-                    modifier = Modifier.fillMaxWidth().height(100.dp)
-                ) {}
             }
         }
     ) { padding ->
-        LazyColumn(
-            modifier = Modifier.padding(padding).padding(16.dp)
-        ) {
-            item {
-                if (address != null) {
+        if (order == null) {
+
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(padding),
+                contentAlignment = Alignment.Center
+            ) {
+                CircularProgressIndicator(color = Color(0xFF5D9EFF))
+            }
+        } else if(listOrder?.data?.data?.isEmpty() == true){
+            // Loading state
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(padding),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = "Không tìm thấy đơn hàng",
+                    fontSize = 16.sp,
+                    textAlign = TextAlign.Center
+                )
+            }
+        } else {
+            LazyColumn(
+                modifier = Modifier
+                    .padding(padding)
+                    .padding(10.dp)
+                    .fillMaxSize()
+                    .background(Color.White)
+            ) {
+                item {
                     Text(
                         text = "Mã đơn hàng: #${idOrder}",
                         fontWeight = FontWeight.Bold,
@@ -235,12 +227,12 @@ fun OrderDetailsScreen(
                         modifier = Modifier.fillMaxWidth()
                     ) {
                         Text(
-                            text = when (order?.status) {
-                                1 -> "Chờ xác nhận"
-                                2 -> "Đang chuẩn bị hàng"
-                                3 -> "Đang giao hàng"
-                                4 -> "Đã giao"
-                                5 -> "Hoàn tất"
+                            text = when (order.status) {
+                                0 -> "Chờ xác nhận"
+                                1 -> "Đang chuẩn bị hàng"
+                                2 -> "Đang giao hàng"
+                                3 -> "Đã giao"
+                                4 -> "Hoàn tất"
                                 else -> "Đã hủy"
                             },
                             fontSize = 16.sp,
@@ -249,18 +241,12 @@ fun OrderDetailsScreen(
                         )
                     }
                     Spacer(modifier = Modifier.height(16.dp))
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text(
-                            text = "Thông tin người nhận",
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 20.sp,
-                            modifier = Modifier.padding(bottom = 8.dp)
-                        )
-                    }
+                    Text(
+                        text = "Thông tin người nhận",
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 20.sp,
+                        modifier = Modifier.padding(bottom = 8.dp)
+                    )
                     Card(
                         shape = RoundedCornerShape(5.dp),
                         elevation = CardDefaults.cardElevation(1.dp),
@@ -271,20 +257,19 @@ fun OrderDetailsScreen(
                     ) {
                         Column(modifier = Modifier.padding(8.dp)) {
                             Text(
-                                text = "Họ và tên: ${order!!.nameRecipient}",
+                                text = "Họ và tên: ${order.nameRecipient ?: "Không có thông tin"}",
                                 fontSize = 16.sp
                             )
-                            Text(text = "Số điện thoại: ${order.phone}", fontSize = 16.sp)
+                            Text(
+                                text = "Số điện thoại: ${order.phone ?: "Không có thông tin"}",
+                                fontSize = 16.sp
+                            )
                             Text(
                                 text = "Địa chỉ: ${order.address}",
                                 fontSize = 16.sp
                             )
                         }
                     }
-                }
-            }
-            item {
-                if (order != null) {
                     Spacer(modifier = Modifier.height(16.dp))
                     Text(
                         text = "Danh sách sản phẩm",
@@ -301,9 +286,11 @@ fun OrderDetailsScreen(
                         )
                     ) {
                         Column(modifier = Modifier.padding(8.dp)) {
-                            listDevice.forEach { device ->
+                            order.details.forEach { detail ->
                                 Row(
-                                    modifier = Modifier.fillMaxWidth().padding(4.dp),
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(4.dp),
                                     horizontalArrangement = Arrangement.SpaceBetween,
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {
@@ -311,96 +298,37 @@ fun OrderDetailsScreen(
                                         modifier = Modifier.weight(1f),
                                         verticalAlignment = Alignment.CenterVertically
                                     ) {
-                                        AsyncImage(
-                                            model = device.image,
-                                            contentDescription = null,
-                                            modifier = Modifier
-                                                .size(80.dp)
-                                                .padding(end = 8.dp),
-                                            contentScale = ContentScale.Fit
-                                        )
+                                        // Hiển thị hình ảnh từ Base64
+                                        val bitmap = base64ToBitmap(detail.image)
+                                        if (bitmap != null) {
+                                            Image(
+                                                painter = BitmapPainter(bitmap.asImageBitmap()),
+                                                contentDescription = "Hình ảnh sản phẩm",
+                                                modifier = Modifier
+                                                    .size(80.dp)
+                                                    .padding(end = 8.dp),
+                                                contentScale = ContentScale.Fit
+                                            )
+                                        }
                                         Column {
                                             Text(
-                                                text = device.name,
+                                                text = detail.product_name,
                                                 fontSize = 16.sp
                                             )
                                             Row(
                                                 verticalAlignment = Alignment.CenterVertically
                                             ) {
                                                 Text(
-                                                    text = formatGiaTien(device.sellingPrice),
+                                                    text = formatGiaTien(detail.price),
                                                     fontSize = 14.sp,
                                                     color = Color.Red
                                                 )
                                                 Spacer(modifier = Modifier.width(8.dp))
-                                                for (detail in listOrderDetail) {
-                                                    if (detail.idDevice == device.idDevice) {
-                                                        Text(
-                                                            text = "x${detail.stock}",
-                                                            fontSize = 14.sp,
-                                                            fontWeight = FontWeight.Bold
-                                                        )
-                                                    }
-                                                }
-                                            }
-                                        }
-                                    }
-                                    if (order.status == 5) {
-                                        val (reviewFirst, reviewSecond) = reviewState[device.idDevice] ?: Pair(null, null)
-                                        val isSecondOrLaterPurchase = reviewFirst != null
-                                        val hasReview = if (isSecondOrLaterPurchase) {
-                                            reviewSecond != null // Chỉ coi là có đánh giá nếu đã có reviewSecond
-                                        } else {
-                                            reviewFirst != null || reviewSecond != null // Mua lần đầu thì kiểm tra cả hai
-                                        }
-                                        if (!hasReview) {
-                                            Button(
-                                                onClick = {
-                                                    if (isSecondOrLaterPurchase && reviewFirst != null) {
-                                                        // Mua lần thứ hai hoặc tiếp theo: điều hướng đến Update_Rating_Screen
-                                                        navController.navigate(
-                                                            Screen.Update_Rating_Screen.route +
-                                                                    "?idReview=${reviewFirst.idReview}&idCustomer=${customer!!.id}"
-                                                        )
-                                                    } else {
-                                                        // Mua lần đầu: điều hướng đến Rating_Screen
-                                                        navController.navigate(
-                                                            Screen.Rating_Screen.route +
-                                                                    "?idCustomer=${customer!!.id}&idDevice=${device.idDevice}"
-                                                        )
-                                                    }
-                                                },
-                                                shape = RoundedCornerShape(8.dp),
-                                                colors = ButtonDefaults.buttonColors(
-                                                    containerColor = Color(0xFF5D9EFF),
-                                                    contentColor = Color.White
+                                                Text(
+                                                    text = "x${detail.quantity}",
+                                                    fontSize = 14.sp,
+                                                    fontWeight = FontWeight.Bold
                                                 )
-                                            ) {
-                                                Text("Đánh giá")
-                                            }
-                                        } else {
-                                            val reviewToEdit = reviewSecond ?: reviewFirst
-                                            // Kiểm tra thời gian từ khi tạo đánh giá
-                                            val daysSinceReviewCreated = reviewToEdit?.created_at?.let { createdAt ->
-                                                calculateDaysSinceReceived(createdAt)
-                                            } ?: Int.MAX_VALUE
-                                            if (daysSinceReviewCreated <= 10) {
-                                                Button(
-                                                    onClick = {
-                                                        val reviewToEdit = reviewSecond ?: reviewFirst
-                                                        navController.navigate(
-                                                            Screen.Update_Rating_Screen.route +
-                                                                    "?idReview=${reviewToEdit!!.idReview}&idCustomer=${customer!!.id}"
-                                                        )
-                                                    },
-                                                    shape = RoundedCornerShape(8.dp),
-                                                    colors = ButtonDefaults.buttonColors(
-                                                        containerColor = Color(0xFF5D9EFF),
-                                                        contentColor = Color.White
-                                                    )
-                                                ) {
-                                                    Text("Chỉnh sửa")
-                                                }
                                             }
                                         }
                                     }
@@ -408,7 +336,9 @@ fun OrderDetailsScreen(
                             }
                             Divider()
                             Row(
-                                modifier = Modifier.fillMaxWidth().padding(top = 10.dp),
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(top = 10.dp),
                                 horizontalArrangement = Arrangement.SpaceBetween,
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
@@ -424,7 +354,9 @@ fun OrderDetailsScreen(
                                 )
                             }
                             Row(
-                                modifier = Modifier.fillMaxWidth().padding(top = 10.dp),
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(top = 10.dp),
                                 horizontalArrangement = Arrangement.SpaceBetween,
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
@@ -440,7 +372,9 @@ fun OrderDetailsScreen(
                                 )
                             }
                             Row(
-                                modifier = Modifier.fillMaxWidth().padding(top = 10.dp),
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(top = 10.dp),
                                 horizontalArrangement = Arrangement.SpaceBetween,
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
@@ -458,13 +392,6 @@ fun OrderDetailsScreen(
                             }
                         }
                     }
-                } else {
-                    CircularProgressIndicator(
-                        modifier = Modifier
-                            .size(50.dp)
-                            .padding(16.dp),
-                        color = Color(0xFF5D9EFF)
-                    )
                 }
             }
         }

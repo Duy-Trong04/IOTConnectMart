@@ -192,8 +192,6 @@ fun CheckoutScreen(
                     // Chuyển hướng đến màn hình thành công
                     val orderData = state.orderData
                     val encodedOrderId = orderData.orderId.let { URLEncoder.encode(it, "UTF-8") } ?: ""
-                    val encodedUsername = username.let { URLEncoder.encode(it, "UTF-8") } ?: ""
-                    val encodedIdCustomer = idCustomer.let { URLEncoder.encode(it, "UTF-8") } ?: ""
                     val encodedCreatedAt = orderData.createdAt?.let { URLEncoder.encode(it, "UTF-8") } ?: ""
                     navController.navigate(
                         "${Screen.CheckOutSuccess.route}?" +
@@ -281,7 +279,7 @@ fun CheckoutScreen(
                                         fullName = address.receiver_name,
                                         phone = address.phone,
                                         email = "ikungfu777@gmail.com",
-                                        address = "a",
+                                        address = "${address.detail}, ${address.street}",
                                         city = address.city,
                                         district = address.district,
                                         ward = address.ward,

@@ -25,6 +25,6 @@ data class AddressBook(
     val deleted_at: String?
 ){
     fun getFormattedAddress(): String {
-        return "$street, $ward, $district, $city, Việt Nam"
+        return "$detail $street, $ward, $district, $city, Việt Nam"
     }
 }

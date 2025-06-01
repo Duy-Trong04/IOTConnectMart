@@ -124,13 +124,15 @@ class OrderViewModel:ViewModel() {
 
     fun getOrdersByCustomer(idCustomer: String) {
         viewModelScope.launch {
+            Log.i("OrderViewModel", "Starting to fetch orders for customer: $idCustomer")
             try {
                 val response = withContext(Dispatchers.IO) {
                     RetrofitClient.orderAPIService.getOrdersByCustomer(idCustomer)
                 }
+                Log.d("OrderViewModel", "Lấy được ${response.data.data.size} đơn hàng: ${response.data.data.map { it.id to it.status }}")
                 _listOrders.value = response
             } catch (e: Exception) {
-                Log.e("Order Error", "Lỗi khi lấy order: ${e.message}")
+                Log.e("OrderViewModel", "Error fetching orders: ${e.stackTraceToString()}")
                 _listOrders.value = OrderResponse(
                     status_code = 500,
                     data = OrderData(data = emptyList(), total_page = 0)
