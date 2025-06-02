@@ -47,15 +47,6 @@ fun EditProfileScreen(navController: NavHostController, username:String) {
     val accountViewModel: AccountViewModel = viewModel()
     val account = accountViewModel.account
     val customer = customerViewModel.customer
-    LaunchedEffect(username) {
-        if (username.isNotEmpty()) {
-            accountViewModel.getUserByUsername(username)
-        }
-    }
-
-    if (account != null) {
-        customerViewModel.getCustomerById(account.idPerson.toString())
-    }
 
     var userName = remember { mutableStateOf("ABC") }
     var gender by remember { mutableStateOf("Nam") }

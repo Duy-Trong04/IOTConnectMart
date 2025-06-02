@@ -19,8 +19,12 @@ class CategoryViewModel: ViewModel() {
     // Optional: StateFlow for error messages
     private val _errorMessage = MutableStateFlow<String?>(null)
     val errorMessage: StateFlow<String?> = _errorMessage.asStateFlow()
+    // StateFlow for loading state
+    private val _isLoading = MutableStateFlow(false)
+    val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
     fun getCategories() {
         viewModelScope.launch {
+            _isLoading.value = true // Bắt đầu tải
             try {
                 val response: Response<CategoryResponse> = RetrofitClient.categoryAPIService.getCategories()
                 if (response.isSuccessful && response.body() != null) {
@@ -39,6 +43,8 @@ class CategoryViewModel: ViewModel() {
             } catch (e: Exception) {
                 _listCategories.value = emptyList()
                 _errorMessage.value = "Exception: ${e.message}"
+            } finally {
+                _isLoading.value = false // Kết thúc tải
             }
         }
     }

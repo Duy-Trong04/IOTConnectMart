@@ -15,7 +15,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Visibility
@@ -96,7 +95,6 @@ fun LoginScreen(navController: NavController, accountViewModel: AccountViewModel
     //val loginResult = accountViewModel.loginResult.value
     var openDialog by remember { mutableStateOf(false) }
     val loginUiState by accountViewModel.loginUiState.collectAsState()
-    //accountViewModel.CheckLogin(username, password)
 
     // Biến kiểm tra trạng thái hiển thị mật khẩu
     var isPasswordVisible by remember { mutableStateOf(false) }

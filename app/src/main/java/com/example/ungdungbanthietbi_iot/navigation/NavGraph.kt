@@ -53,6 +53,7 @@ import com.example.ungdungbanthietbi_iot.views.rating.RatingHistoryScreen
 import com.example.ungdungbanthietbi_iot.views.rating.RatingScreen
 import com.example.ungdungbanthietbi_iot.views.rating.UpdateRatingScreen
 import com.example.ungdungbanthietbi_iot.ui.theme.parseSelectedProducts
+import com.example.ungdungbanthietbi_iot.views.search.CategoriesScreen
 
 /** Chuyển hướng (NavGraph)
  * -------------------------------------------
@@ -484,6 +485,21 @@ fun NavGraph(
         ) {
             val idUser = it.arguments?.getString("idUser") ?: ""
             NotificationScreen(navController, idUser)
+        }
+
+        //màn hình danh mục
+        composable(
+            Screen.Category_Screen.route +"?category={category}&username={username}&idCustomer={idCustomer}",
+            arguments = listOf(
+                navArgument("category") { type = NavType.StringType; nullable = true },
+                navArgument("username") { type = NavType.StringType; nullable = true },
+                navArgument("idCustomer") { type = NavType.StringType; nullable = true }
+            )
+        ) { backStackEntry ->
+            val category = backStackEntry.arguments?.getString("category")
+            val username = backStackEntry.arguments?.getString("username")
+            val idCustomer = backStackEntry.arguments?.getString("idCustomer")
+            CategoriesScreen(navController, deviceViewModel, category, username, idCustomer)
         }
     }
 }

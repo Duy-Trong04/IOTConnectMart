@@ -7,6 +7,7 @@ import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.animation.togetherWith
 import androidx.compose.animation.with
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -26,6 +27,7 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
@@ -154,6 +156,8 @@ fun HomeScreen(
     val listAllDevice: List<Device> = deviceViewModel.listAllDevice
     val listDeviceFeatured: List<Device> = deviceViewModel.listDeviceFeatured
     val listCategories by categoryViewModel.listCategories.collectAsState()
+    val isLoadingCategories by categoryViewModel.isLoading.collectAsState()
+    val errorMessage by categoryViewModel.errorMessage.collectAsState()
     val listSlideShow = slideShowViewModel.listSlideShow
 
     LaunchedEffect(Unit) {
@@ -165,30 +169,13 @@ fun HomeScreen(
 
     val cartViewModel: CartViewModel = viewModel()
     val listCart = cartViewModel.listCart
-
-
-
-//    val accountViewModel: AccountViewModel = viewModel()
-//    val account = accountViewModel.account
-//
-//    if (username != null) {
-//        accountViewModel.getUserByUsername(username)
-//    }
-//
-//    LaunchedEffect(deviceViewModel.listDeviceOfCustomer) {
-//        if (account != null) {
-//            deviceViewModel.getDeviceByLiked(account.idPerson.toString())
-//            cartViewModel.getCartByIdCustomer(account.idPerson.toString())
-//        }
-//    }
-
     val navdrawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     val scope = rememberCoroutineScope()
 
     val listState = rememberLazyListState()
     val coroutineScope = rememberCoroutineScope()
     var isScrolling by remember { mutableStateOf(false) }
-    var isFavorite by remember { mutableStateOf(false) }
+    val isFavorite by remember { mutableStateOf(false) }
 
     LaunchedEffect(listState.isScrollInProgress) {
         isScrolling = listState.isScrollInProgress
@@ -200,92 +187,146 @@ fun HomeScreen(
         drawerState = navdrawerState,
         drawerContent = {
             ModalDrawerSheet {
+                // Header của sidemenu
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
                         .background(Color(0xFF5D9EFF))
-                        .padding(3.dp),
+                        .padding(12.dp),
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = "IOT Connect Mart",
-                        modifier = Modifier.padding(3.dp),
+                        text = "Danh mục sản phẩm",
                         color = Color.White,
                         fontSize = 22.sp,
                         fontWeight = FontWeight.Bold
                     )
-                    Icon(
-                        imageVector = Icons.Default.Close,
-                        contentDescription = "Đóng danh mục",
-                        modifier = Modifier
-                            .padding(end = 3.dp)
-                            .size(24.dp)
-                            .clickable {
-                                scope.launch {
-                                    navdrawerState.apply {
-                                        if (isClosed) open() else close()
-                                    }
-                                }
-                            },
-                        tint = Color.White
-                    )
+                    IconButton(onClick = { scope.launch { navdrawerState.close() } }) {
+                        Icon(
+                            imageVector = Icons.Default.Close,
+                            contentDescription = "Đóng danh mục",
+                            tint = Color.White
+                        )
+                    }
                 }
-                HorizontalDivider()
-                Text(
-                    text = "T R A N G  C H Ủ",
-                    modifier = Modifier
-                        .padding(8.dp)
-                        .clickable {
-                            if (username == null) {
-                                navController.navigate(Screen.HomeScreen.route)
-                            } else {
-                                navController.navigate(Screen.HomeScreen.route + "?username=${username}")
-                            }
-                        },
-                    color = Color(0xFF5D9EFF),
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 18.sp
-                )
-                listCategories.forEach { category ->
-                    NavigationDrawerItem(
-                        icon = {
-                            Icon(
-                                imageVector = getCategoryIcon(category.name),
-                                contentDescription = category.name,
-                                tint = Color(0xFF5D9EFF)
+                HorizontalDivider(color = Color(0xFFE0E0E0))
+
+                // Xử lý trạng thái tải và lỗi
+                when {
+                    isLoadingCategories -> {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(16.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            CircularProgressIndicator(
+                                color = Color(0xFF5D9EFF),
+                                modifier = Modifier.size(48.dp)
                             )
-                        },
-                        label = {
-                            Text(
-                                text = category.name,
-                                color = Color.Black,
-                                fontSize = 16.sp,
-                                fontWeight = FontWeight.Medium
-                            )
-                        },
-                        selected = false,
-                        onClick = {
-                            scope.launch {
-                                navdrawerState.close()
-                                val route = if (username != null)
-                                    Screen.Search_Screen.route + "?category=${category.name}&username=${username}"
-                                else
-                                    Screen.Search_Screen.route + "?category=${category.name}"
-                                navController.navigate(route)
-                            }
-                        },
-                        modifier = Modifier
-                            .padding(horizontal = 16.dp, vertical = 4.dp)
-                            .drawBehind {
-                                drawLine(
-                                    color = Color(0xFFE0E0E0),
-                                    start = Offset(0f, size.height),
-                                    end = Offset(size.width, size.height),
-                                    strokeWidth = 1.dp.toPx()
+                        }
+                    }
+                    errorMessage != null -> {
+                        Text(
+                            text = errorMessage ?: "Lỗi không xác định",
+                            color = Color.Red,
+                            fontSize = 16.sp,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(16.dp),
+                            textAlign = TextAlign.Center
+                        )
+                    }
+                    listCategories.isEmpty() -> {
+                        Text(
+                            text = "Không có danh mục nào",
+                            color = Color(0xFF616161),
+                            fontSize = 16.sp,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(16.dp),
+                            textAlign = TextAlign.Center
+                        )
+                    }
+                    else -> {
+                        LazyColumn(
+                            modifier = Modifier.fillMaxWidth(),
+                            contentPadding = PaddingValues(vertical = 8.dp)
+                        ) {
+                            item {
+                                NavigationDrawerItem(
+                                    icon = {
+                                        Icon(
+                                            imageVector = Icons.Default.Home,
+                                            contentDescription = "Trang chủ",
+                                            tint = Color(0xFF5D9EFF)
+                                        )
+                                    },
+                                    label = {
+                                        Text(
+                                            text = "Trang chủ",
+                                            color = Color.Black,
+                                            fontSize = 16.sp,
+                                            fontWeight = FontWeight.Medium
+                                        )
+                                    },
+                                    selected = false,
+                                    onClick = {
+                                        scope.launch {
+                                            navdrawerState.close()
+                                            val route = if (username != null)
+                                                Screen.HomeScreen.route + "?username=${username}&id=$id"
+                                            else
+                                                Screen.HomeScreen.route
+                                            navController.navigate(route)
+                                        }
+                                    },
+                                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp)
                                 )
                             }
-                    )
+                            items(listCategories) { category ->
+                                NavigationDrawerItem(
+                                    icon = {
+                                        Icon(
+                                            imageVector = getCategoryIcon(category.name),
+                                            contentDescription = category.name,
+                                            tint = Color(0xFF5D9EFF)
+                                        )
+                                    },
+                                    label = {
+                                        Text(
+                                            text = category.name,
+                                            color = Color.Black,
+                                            fontSize = 16.sp,
+                                            fontWeight = FontWeight.Medium
+                                        )
+                                    },
+                                    selected = false,
+                                    onClick = {
+                                        scope.launch {
+                                            navdrawerState.close()
+                                            val route = if (username != null)
+                                                Screen.Category_Screen.route + "?category=${category.name}&username=${username}&idCustomer=$id"
+                                            else
+                                                Screen.Category_Screen.route + "?category=${category.name}"
+                                            navController.navigate(route)
+                                        }
+                                    },
+                                    modifier = Modifier
+                                        .padding(horizontal = 16.dp, vertical = 4.dp)
+                                        .drawBehind {
+                                            drawLine(
+                                                color = Color(0xFFE0E0E0),
+                                                start = Offset(0f, size.height),
+                                                end = Offset(size.width, size.height),
+                                                strokeWidth = 1.dp.toPx()
+                                            )
+                                        }
+                                )
+                            }
+                        }
+                    }
                 }
             }
         }
@@ -964,32 +1005,37 @@ fun CardDevice(
     navController: NavController
 ) {
     var bitmap by remember { mutableStateOf<Bitmap?>(null) }
+    var check by remember { mutableStateOf(isFavorite) }
+    val likedViewModel: LikedViewModel = viewModel()
+    val listLiked = likedViewModel.listLiked
+    var isLoading by remember { mutableStateOf(false) }
 
     // Tải hình ảnh bất đồng bộ
     LaunchedEffect(device) {
         bitmap = deviceViewModel.getDeviceImageBitmap(device)
     }
-    var check by remember { mutableStateOf(isFavorite) }
-    val likedViewModel: LikedViewModel = viewModel()
-    val listLiked = likedViewModel.listLiked
-    var isLoading by remember { mutableStateOf(false) } // Thêm trạng thái tải cục bộ
 
     LaunchedEffect(idCustomer) {
         if (idCustomer != null) {
             likedViewModel.getLikedByIdCustomer(idCustomer)
         }
     }
+
     LaunchedEffect(listLiked) {
         check = listLiked.any { it.idDevice == device.idDevice }
     }
+
     Card(
         modifier = Modifier
             .width(200.dp)
             .height(250.dp)
-            .padding(4.dp),
+            .padding(4.dp), // Tăng padding để tạo khoảng cách giữa các card
         onClick = {
             if (username != null) {
-                navController.navigate(Screen.ProductDetailsScreen.route + "?id=${device.idDevice}&idCustomer=${idCustomer}&username=${username}")
+                navController.navigate(
+                    Screen.ProductDetailsScreen.route +
+                            "?id=${device.idDevice}&idCustomer=${idCustomer}&username=${username}"
+                )
             } else {
                 navController.navigate(Screen.ProductDetailsScreen.route + "?id=${device.idDevice}")
             }
@@ -997,95 +1043,114 @@ fun CardDevice(
         colors = CardDefaults.cardColors(
             containerColor = Color.White
         ),
-        elevation = CardDefaults.cardElevation(1.dp),
-        shape = RoundedCornerShape(5.dp)
+        elevation = CardDefaults.cardElevation(
+            defaultElevation = 1.dp // Tăng bóng nhẹ để card nổi bật hơn
+        ),
+        shape = RoundedCornerShape(12.dp) // Bo góc lớn hơn cho cảm giác mềm mại
     ) {
-        Box {
-            Column(
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(8.dp), // Padding bên trong card đồng đều
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(4.dp),
-                horizontalAlignment = Alignment.CenterHorizontally
+                    .aspectRatio(1.2f) // Tỷ lệ 1:1 cho hình ảnh
+                    .clip(RoundedCornerShape(12.dp)) // Bo góc hình ảnh đồng bộ với card
+                    .background(Color(0xFFF5F5F5)) // Màu nền nhẹ khi chưa có hình
             ) {
                 bitmap?.let {
                     Image(
                         bitmap = it.asImageBitmap(),
                         contentDescription = device.name.ifEmpty { "Hình ảnh sản phẩm" },
                         modifier = Modifier
-                            .fillMaxWidth()
-                            .aspectRatio(1f) // Giữ tỷ lệ 1:1 để hình ảnh không bị méo
-                            .clip(RoundedCornerShape(topStart = 5.dp, topEnd = 5.dp)), // Bo góc trên cùng của hình ảnh
-                        contentScale = ContentScale.Fit
+                            .fillMaxSize(),
+                        contentScale = ContentScale.Crop // Crop để hình ảnh lấp đầy khung
                     )
                 } ?: run {
                     Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .aspectRatio(1f),
+                        modifier = Modifier.fillMaxSize(),
                         contentAlignment = Alignment.Center
                     ) {
                         CircularProgressIndicator(
-                            modifier = Modifier.size(24.dp),
-                            color = Color(0xFF5D9EFF)
+                            modifier = Modifier.size(24.dp), // Tăng kích thước để dễ nhìn
+                            color = Color(0xFF5D9EFF),
+                            strokeWidth = 3.dp // Đường nét mỏng hơn
                         )
                     }
                 }
-                Spacer(modifier = Modifier.height(2.dp)) // Giảm padding từ 4.dp xuống 2.dp
-                Text(
-                    text = device.name,
-                    modifier = Modifier.fillMaxWidth(),
-                    textAlign = TextAlign.Center,
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 15.sp
-                )
-                Spacer(modifier = Modifier.height(4.dp))
-                Text(
-                    text = formatGiaTien(device.sellingPrice),
-                    color = Color.Red,
-                    modifier = Modifier.fillMaxWidth(),
-                    textAlign = TextAlign.Center,
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 16.sp
-                )
-            }
-            IconButton(
-                onClick = {
-                    if (idCustomer == null) {
-                        navController.navigate(Screen.LoginScreen.route)
-                    } else if (!isLoading) {
-                        isLoading = true // Bắt đầu tải
-                        if (!check) {
-                            val likedNew = Liked(0, idCustomer, device.idDevice)
-                            likedViewModel.addLiked(likedNew)
-                            check = true // Cập nhật cục bộ
-                        } else {
-                            likedViewModel.deleteLikedByCustomer(idCustomer, device.idDevice)
-                            check = false // Cập nhật cục bộ
+                // Nút yêu thích ở góc trên bên phải
+                IconButton(
+                    onClick = {
+                        if (idCustomer == null) {
+                            navController.navigate(Screen.LoginScreen.route)
+                        } else if (!isLoading) {
+                            isLoading = true
+                            if (!check) {
+                                val likedNew = Liked(0, idCustomer, device.idDevice)
+                                likedViewModel.addLiked(likedNew)
+                                check = true
+                            } else {
+                                likedViewModel.deleteLikedByCustomer(idCustomer, device.idDevice)
+                                check = false
+                            }
+                            likedViewModel.getLikedByIdCustomer(idCustomer)
+                            deviceViewModel.getDeviceByLiked(idCustomer)
+                            isLoading = false
                         }
-                        // Làm mới danh sách yêu thích
-                        likedViewModel.getLikedByIdCustomer(idCustomer)
-                        deviceViewModel.getDeviceByLiked(idCustomer)
-                        isLoading = false // Kết thúc tải
+                    },
+                    enabled = !isLoading,
+                    modifier = Modifier
+                        .size(32.dp) // Tăng kích thước nút
+                        .align(Alignment.TopEnd)
+                        .padding(4.dp) // Padding để nút không sát viền
+                        .background(
+                            color = Color.White.copy(alpha = 0.8f), // Nền trắng mờ
+                            shape = CircleShape
+                        )
+                ) {
+                    if (isLoading) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(20.dp),
+                            color = Color.Red,
+                            strokeWidth = 2.dp
+                        )
+                    } else {
+                        Icon(
+                            imageVector = if (check) Icons.Filled.Favorite else Icons.Filled.FavoriteBorder,
+                            contentDescription = "Favorite",
+                            tint = Color.Red,
+                            modifier = Modifier.size(20.dp)
+                        )
                     }
-                },
-                enabled = !isLoading,
-                modifier = Modifier
-                    .size(24.dp)
-                    .align(Alignment.TopEnd)
-            ) {
-                if (isLoading) {
-                    CircularProgressIndicator(
-                        modifier = Modifier.size(24.dp),
-                        color = Color.Red
-                    )
-                } else {
-                    Icon(
-                        imageVector = if (check) Icons.Filled.Favorite else Icons.Filled.FavoriteBorder,
-                        contentDescription = "Favorite",
-                        tint = Color.Red
-                    )
                 }
             }
+            Spacer(modifier = Modifier.height(8.dp)) // Khoảng cách lớn hơn một chút
+            Text(
+                text = device.name,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 4.dp),
+                textAlign = TextAlign.Center,
+                fontWeight = FontWeight.SemiBold, // Giảm độ đậm để tinh tế hơn
+                fontSize = 14.sp, // Giảm kích thước chữ
+                maxLines = 2, // Giới hạn 2 dòng để tránh tràn
+                overflow = TextOverflow.Ellipsis
+            )
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(
+                text = formatGiaTien(device.sellingPrice),
+                color = Color(0xFFE91E63), // Màu hồng đậm hơn để nổi bật
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 4.dp),
+                textAlign = TextAlign.Center,
+                fontWeight = FontWeight.Bold,
+                fontSize = 16.sp
+            )
+            //Spacer(modifier = Modifier.height(8.dp)) // Khoảng cách dưới cùng
         }
     }
 }
@@ -1103,10 +1168,10 @@ fun CategoryItem(category: Category, navController: NavController, username: Str
         modifier = Modifier
             .width(100.dp)
             .clickable {
-                val route = if (username != null)
-                    Screen.Search_Screen.route + "?category=${category.name}&username=${username}"
+                val route = if (username != null && idCustomer != null)
+                    Screen.Category_Screen.route + "?category=${category.name}&username=${username}&idCustomer=$idCustomer"
                 else
-                    Screen.Search_Screen.route + "?category=${category.name}"
+                    Screen.Category_Screen.route + "?category=${category.name}"
                 navController.navigate(route)
             }
     ) {
@@ -1147,7 +1212,7 @@ fun SlideImage(painter: Painter) {
     AnimatedContent(
         targetState = painter,
         modifier = Modifier.fillMaxSize(),
-        transitionSpec = { fadeIn() with fadeOut() }, label = ""
+        transitionSpec = { fadeIn() togetherWith fadeOut() }, label = ""
     ) { targetPainter ->
         Image(
             painter = targetPainter,

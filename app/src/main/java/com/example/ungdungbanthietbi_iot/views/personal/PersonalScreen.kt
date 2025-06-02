@@ -73,28 +73,13 @@ fun PersonalScreen(
     id: String,
     deviceViewModel: DeviceViewModel,
 ) {
-    deviceViewModel.getAllDevice()
-    val listAllDevice: List<Device> = deviceViewModel.listAllDevice
-    val listDeviceLiked: List<Device> = deviceViewModel.listDeviceOfCustomer
 
     val navdrawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     val scope = rememberCoroutineScope()
-
     val cartViewModel: CartViewModel = viewModel()
     val listCart = cartViewModel.listCart
-    val accountViewModel: AccountViewModel = viewModel()
-    val account = accountViewModel.account
     LaunchedEffect(username) {
-        if (username.isNotEmpty()) {
-            accountViewModel.getUserByUsername(username)
-        }
-    }
-
-    LaunchedEffect(account) {
-        if (account != null) {
-            deviceViewModel.getDeviceByLiked(account.idPerson.toString())
-            cartViewModel.getCartByIdCustomer(account.idPerson.toString())
-        }
+        cartViewModel.getCartByIdCustomer(id)
     }
 
     var currentTab by remember { mutableStateOf("accountInfo") }
@@ -124,14 +109,10 @@ fun PersonalScreen(
                         modifier = Modifier.size(48.dp)
                     ) {
                         IconButton(onClick = {
-                            if (account == null) {
-                                navController.navigate(Screen.LoginScreen.route)
-                            } else {
-                                navController.navigate(
-                                    Screen.Cart_Screen.route +
-                                            "?idCustomer=${account.idPerson}&username=${account.username}"
-                                )
-                            }
+                            navController.navigate(
+                                Screen.Cart_Screen.route +
+                                        "?idCustomer=${id}&username=${username}"
+                            )
                         }) {
                             Icon(
                                 imageVector = Icons.Outlined.ShoppingCart,
@@ -350,9 +331,9 @@ fun AccountInfoSection(
                         LocalDate.now().minusYears(18)
                     }
 
-                    val birthdate = customer.birthdate.takeIf { !it.isNullOrBlank() }?.let {
-                        it.substring(0, 10) // Cắt thành "2004-01-06"
-                    } ?: defaultDate.toString()
+                    val birthdate = customer.birthdate.takeIf { !it.isNullOrBlank() }
+                        ?.substring(0, 10)
+                        ?: defaultDate.toString()
 
                     // Khởi tạo các giá trị ngày sinh
                     var initialDay: String
@@ -786,13 +767,9 @@ fun AccountOptionsSection(
     val context = LocalContext.current
     val openDialog = remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
-// Lấy ViewModel
+    // Lấy ViewModel
     val accountViewModel: AccountViewModel = viewModel()
 
-    // Lấy thông tin tài khoản từ ViewModel
-    val account = accountViewModel.account
-
-    // Gọi API nếu taikhoan chưa được lấy
     LaunchedEffect(username) {
         if (username.isNotEmpty()) {
             accountViewModel.getUserByUsername(username)
@@ -860,11 +837,6 @@ fun AccountOptionsSection(
             confirmButton = {
                 Button(
                     onClick = {
-//                        openDialog.value = false
-//                        navController.navigate(Screen.HomeScreen.route){
-//                            // Sau khi đăng xuất, loại bỏ các màn cũ ra khỏi back stack
-//                            popUpTo(0)
-//                        }
                         scope.launch {
                             try {
                                 // Gọi hàm logout để xóa dữ liệu trong DataStore
@@ -878,7 +850,7 @@ fun AccountOptionsSection(
                                 }
                                 //Log.d("AccountOptions", "Navigated to IntroScreen after logout")
                             } catch (e: Exception) {
-                                ///Log.e("AccountOptions", "Error during logout: ${e.message}", e)
+                                //Log.e("AccountOptions", "Error during logout: ${e.message}", e)
                                 openDialog.value = false
                             }
                         }

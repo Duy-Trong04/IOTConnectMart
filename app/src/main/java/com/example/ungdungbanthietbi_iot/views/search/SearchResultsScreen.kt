@@ -58,12 +58,6 @@ fun SearchResultsScreen(
     // Trạng thái sắp xếp giá
     var isPriceAscending by remember { mutableStateOf(false) }
 
-    LaunchedEffect(username) {
-        if (!username.isNullOrEmpty()) {
-            accountViewModel.getUserByUsername(username)
-        }
-    }
-
     LaunchedEffect(query) {
         if (!query.isNullOrEmpty()) {
             deviceViewModel.updateSearchQuery(query)
