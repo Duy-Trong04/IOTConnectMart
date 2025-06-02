@@ -1,6 +1,7 @@
 package com.example.ungdungbanthietbi_iot.views.home
 
 import android.graphics.Bitmap
+import android.util.Log
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.animation.core.animateFloatAsState
@@ -46,6 +47,7 @@ import androidx.compose.material.icons.filled.GridView
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.Place
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.outlined.GridView
 import androidx.compose.material.icons.outlined.Home
@@ -139,7 +141,8 @@ fun HomeScreen(
     deviceViewModel: DeviceViewModel,
     slideShowViewModel: SlideShowViewModel,
     username: String?,
-    id: String?
+    id: String?,
+    password: String?
 ) {
     deviceViewModel.getAllDevice()
     deviceViewModel.getDeviceFeatured()
@@ -193,31 +196,40 @@ fun HomeScreen(
     )
 
     var selectedTabIndex by rememberSaveable { mutableStateOf(0) }
-
+    //Log.d("Thành công", "Đổi mật khẩu thành công ${username}va ${password}")
     ModalNavigationDrawer(
         drawerState = navdrawerState,
         drawerContent = {
             ModalDrawerSheet {
+                // Header
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
                         .background(Color(0xFF5D9EFF))
-                        .padding(3.dp),
+                        .padding(12.dp),
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text(
-                        text = "IOT Connect Mart",
-                        modifier = Modifier.padding(3.dp),
-                        color = Color.White,
-                        fontSize = 22.sp,
-                        fontWeight = FontWeight.Bold
-                    )
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(
+                            imageVector = Icons.Default.Home,
+                            contentDescription = null,
+                            tint = Color.White,
+                            modifier = Modifier.size(28.dp)
+                        )
+                        Text(
+                            text = "IOT Connect Mart",
+                            color = Color.White,
+                            fontSize = 20.sp,
+                            fontWeight = FontWeight.Bold,
+                            modifier = Modifier.padding(start = 8.dp)
+                        )
+                    }
                     Icon(
                         imageVector = Icons.Default.Close,
                         contentDescription = "Đóng danh mục",
+                        tint = Color.White,
                         modifier = Modifier
-                            .padding(end = 3.dp)
                             .size(24.dp)
                             .clickable {
                                 scope.launch {
@@ -225,50 +237,82 @@ fun HomeScreen(
                                         if (isClosed) open() else close()
                                     }
                                 }
-                            },
-                        tint = Color.White
+                            }
                     )
                 }
+
+                Spacer(modifier = Modifier.height(8.dp))
                 HorizontalDivider()
-                Text(
-                    text = "T R A N G  C H Ủ",
-                    modifier = Modifier
-                        .padding(8.dp)
-                        .clickable {
-                            if (username == null) {
-                                navController.navigate(Screen.HomeScreen.route)
-                            } else {
-                                navController.navigate(Screen.HomeScreen.route + "?username=${username}")
-                            }
-                        },
-                    color = Color(0xFF5D9EFF),
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 18.sp
+
+                // Home Item
+                NavigationDrawerItem(
+                    label = {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Home,
+                                contentDescription = null,
+                                tint = Color(0xFF5D9EFF), // màu xanh đồng nhất với header
+                                modifier = Modifier.size(20.dp)
+                            )
+                            Text(
+                                text = "Trang chủ",
+                                fontSize = 18.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = Color(0xFF5D9EFF),
+                                modifier = Modifier.padding(start = 8.dp)
+                            )
+                        }
+                    },
+                    selected = false,
+                    onClick = {
+                        if (username == null) {
+                            navController.navigate(Screen.HomeScreen.route)
+                        } else {
+                            navController.navigate(Screen.HomeScreen.route + "?username=${username}")
+                        }
+                    }
                 )
+
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                // Danh mục
                 countries.forEach { country ->
-                    NavigationDrawerItem(
-                        label = {
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(vertical = 3.dp, horizontal = 3.dp)
-                                    .drawBehind {
-                                        drawLine(
-                                            color = Color.Black,
-                                            start = Offset(0f, size.height),
-                                            end = Offset(size.width, size.height),
-                                            strokeWidth = 1.dp.toPx()
-                                        )
-                                    }
-                            ) {
-                                Text(text = country)
-                            }
-                        }, selected = false, onClick = { /* Chọn danh mục */ }
-                    )
+                    Card(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 12.dp, vertical = 4.dp)
+                            .clickable { /* Xử lý chọn danh mục */ },
+                        shape = RoundedCornerShape(8.dp),
+                        elevation = CardDefaults.cardElevation(4.dp),
+                        colors = CardDefaults.cardColors(containerColor = Color(0xFFE3F2FD))
+                    ) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(12.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Place,
+                                contentDescription = null,
+                                tint = Color(0xFF5D9EFF),
+                                modifier = Modifier.size(20.dp)
+                            )
+                            Text(
+                                text = country,
+                                modifier = Modifier.padding(start = 8.dp),
+                                fontSize = 16.sp
+                            )
+                        }
+                    }
                 }
             }
         }
-    ) {
+    )
+    {
         Scaffold(
             topBar = {
                 TopAppBar(
@@ -555,9 +599,9 @@ fun HomeScreen(
                         navController = navController,
                         username = username,
                         id = id,
-                        deviceViewModel = deviceViewModel
+                        deviceViewModel = deviceViewModel,
+                        password = password
                     )
-
             }
         }
     }

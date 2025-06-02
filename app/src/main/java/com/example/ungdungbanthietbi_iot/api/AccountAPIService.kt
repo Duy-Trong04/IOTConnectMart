@@ -5,8 +5,11 @@ import com.example.ungdungbanthietbi_iot.models.AddAccount
 import com.example.ungdungbanthietbi_iot.models.LoginRequest
 import com.example.ungdungbanthietbi_iot.models.LoginResponse
 import com.example.ungdungbanthietbi_iot.models.UpdatePassword
+import com.google.gson.annotations.SerializedName
+import retrofit2.Response
 import retrofit2.http.Body
 import retrofit2.http.GET
+import retrofit2.http.PATCH
 import retrofit2.http.POST
 import retrofit2.http.PUT
 import retrofit2.http.Query
@@ -24,6 +27,27 @@ data class AddAccountResponse(
 data class accountUpdateResponse(
     val success: Boolean,
     val message: String
+)
+
+// ChangePasswordRequest.kt
+data class ChangePasswordRequest(
+    val username: String,
+    val password: String,
+    val newPassword: String,
+    val confirmPassword: String
+)
+
+// ChangePasswordResponse.kt
+data class ChangePasswordResponse(
+    val status_code: Int
+)
+
+// ChangePasswordUiState.kt
+data class ChangePasswordUiState(
+    val isLoading: Boolean = false,
+    val statusCode: Int? = null,
+    val error: String? = null,
+    val result: Boolean? = null
 )
 
 interface AccuntAPIService {
@@ -65,4 +89,9 @@ interface AccuntAPIService {
     suspend fun updateAccount(
         @Body account: Account
     ): accountUpdateResponse
+
+    @PATCH("auth/account/changed-password")
+    suspend fun changePassword(
+        @Body request: ChangePasswordRequest
+    ): Response<ChangePasswordResponse>
 }

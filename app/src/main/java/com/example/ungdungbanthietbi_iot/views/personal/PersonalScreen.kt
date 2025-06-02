@@ -79,6 +79,7 @@ fun PersonalScreen(
     username: String,
     id: String,
     deviceViewModel: DeviceViewModel,
+    password: String?
 ) {
     deviceViewModel.getAllDevice()
     val listAllDevice: List<Device> = deviceViewModel.listAllDevice
@@ -208,7 +209,12 @@ fun PersonalScreen(
                 ){
                     when (currentTab) {
                         "accountInfo" -> AccountInfoSection(id, username, snackbarHostState)
-                        "changePassword" -> ChangePasswordSection(username, snackbarHostState)
+                        "changePassword" -> ChangePasswordSection(
+                            username = username,
+                            snackbarHostState = snackbarHostState,
+                            password = password,
+                            onPasswordChanged = { currentTab = "accountInfo" }
+                        )
                     }
                 }
             }
@@ -1047,7 +1053,9 @@ fun AccountOptionLogOut(
 @Composable
 fun ChangePasswordSection(
     username: String,
-    snackbarHostState: SnackbarHostState // Thêm tham số SnackbarHostState
+    snackbarHostState: SnackbarHostState, // Thêm tham số SnackbarHostState
+    password: String?,
+    onPasswordChanged: () -> Unit // Callback để chuyển tab
 ) {
     val scope = rememberCoroutineScope()
 
@@ -1059,8 +1067,8 @@ fun ChangePasswordSection(
 
     val account = accountViewModel.account
 
-    accountViewModel.getUserByUsername(username)
-    val password by remember { mutableStateOf(account?.password) }
+//    accountViewModel.getUserByUsername(username)
+//    val password by remember { mutableStateOf(account?.password) }
 
     var isPasswordVisible by remember { mutableStateOf(false) }
     var isPasswordVisible1 by remember { mutableStateOf(false) }
@@ -1122,7 +1130,10 @@ fun ChangePasswordSection(
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
                 visualTransformation = if (isPasswordVisible1) VisualTransformation.None else PasswordVisualTransformation(),
                 shape = RoundedCornerShape(17.dp),
-                onValueChange = { matkhaumoi = it }
+                onValueChange = {
+                    matkhaumoi = it
+                    //Log.d("Thành công", "Cập nhật mật khẩu mới: $it")
+                }
             )
             Spacer(modifier = Modifier.height(8.dp))
 
@@ -1147,12 +1158,15 @@ fun ChangePasswordSection(
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
                 visualTransformation = if (isPasswordVisible2) VisualTransformation.None else PasswordVisualTransformation(),
                 shape = RoundedCornerShape(17.dp),
-                onValueChange = { kiemtramkmoi = it }
+                onValueChange = {
+                    kiemtramkmoi = it
+                    //Log.d("Thành công", "Cập nhật mật khẩu mới: $it")
+                }
             )
             Spacer(modifier = Modifier.height(8.dp))
+            //Log.d("Thành công", "trướt BUTTON${password} va ${username} va ${kiemtramkmoi}")
             Button(
                 onClick = {
-                    if (account != null) {
                         if(matkhaucu == password){
                             if(matkhaumoi.isEmpty() || kiemtramkmoi.isEmpty()){
                                 scope.launch {
@@ -1188,16 +1202,19 @@ fun ChangePasswordSection(
                                         message = "Đổi mật khẩu thành công!"
                                     )
                                 }
-                                val taiKhoan = Account(
-                                    idPerson = account.idPerson,
-                                    idRole = "CUS",
-                                    username = username,
-                                    password = matkhaumoi,
-                                    report = 0,
-                                    isNew = 1,
-                                    status = 1
-                                )
-                                accountViewModel.updateAccount(taiKhoan)
+                                accountViewModel.changePassword(username, matkhaucu, matkhaumoi, kiemtramkmoi)
+                                onPasswordChanged()
+//                                val taiKhoan = Account(
+//                                    idPerson = account.idPerson,
+//                                    idRole = "CUS",
+//                                    username = username,
+//                                    password = matkhaumoi,
+//                                    report = 0,
+//                                    isNew = 1,
+//                                    status = 1
+//                                )
+//                                accountViewModel.updateAccount(taiKhoan)
+                                //Log.d("Thành công", "Trong BUTTON ${matkhaucu} va ${username} va ${kiemtramkmoi} va ${matkhaumoi}")
                             }
                         }
                         else{
@@ -1207,7 +1224,6 @@ fun ChangePasswordSection(
                                 )
                             }
                         }
-                    }
                 },
 
                 colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF5F9EFF)),
