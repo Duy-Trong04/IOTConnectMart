@@ -50,13 +50,6 @@ fun NotificationScreen(navController: NavController, idUser: String?) {
     // Biến để làm mới danh sách thông báo khi quay lại
     var refreshKey by remember { mutableStateOf(0) }
 
-    LaunchedEffect(Unit) {
-        // Khởi tạo SharedPreferences cho OrderViewModel
-        orderViewModel.initialize(context)
-        noticeViewModel.getNoticeByIdCustomer(idUser)
-        orderViewModel.getAllOrderByCustomer(idUser ?: "")
-        orderViewModel.startOrderStatusCheck(idUser ?: "")
-    }
     // Lắng nghe sự kiện quay lại từ màn hình chi tiết
     LaunchedEffect(navController) {
         navController.currentBackStackEntry?.savedStateHandle?.getLiveData<String>("refresh")

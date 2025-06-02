@@ -163,11 +163,11 @@ fun OrderDetailsScreen(
                             navController.popBackStack()
                         },
                         modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(5.dp),
+                        shape = RoundedCornerShape(10.dp),
                         colors = ButtonDefaults.buttonColors(
                             containerColor = Color(0xFF5D9EFF)
                         ),
-                        enabled = if(order.status == 3) true else false,
+                        enabled = order.status == 3,
                         elevation = ButtonDefaults.buttonElevation(2.dp)
                     ) {
                         Text(
@@ -185,6 +185,7 @@ fun OrderDetailsScreen(
             Box(
                 modifier = Modifier
                     .fillMaxSize()
+                    .background(Color.White)
                     .padding(padding),
                 contentAlignment = Alignment.Center
             ) {
@@ -205,190 +206,194 @@ fun OrderDetailsScreen(
                 )
             }
         } else {
-            LazyColumn(
-                modifier = Modifier
-                    .padding(padding)
-                    .padding(10.dp)
-                    .fillMaxSize()
+            Box(
+                modifier = Modifier.fillMaxSize()
                     .background(Color.White)
             ) {
-                item {
-                    Text(
-                        text = "Mã đơn hàng: #${idOrder}",
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 20.sp,
-                        modifier = Modifier.padding(bottom = 8.dp)
-                    )
-                    Card(
-                        shape = RoundedCornerShape(8.dp),
-                        colors = CardDefaults.cardColors(
-                            containerColor = Color(0xFFE0F7FA)
-                        ),
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
+                LazyColumn(
+                    modifier = Modifier
+                        .padding(padding)
+                        .padding(10.dp)
+                        .background(Color.White)
+                ) {
+                    item {
                         Text(
-                            text = when (order.status) {
-                                0 -> "Chờ xác nhận"
-                                1 -> "Đang chuẩn bị hàng"
-                                2 -> "Đang giao hàng"
-                                3 -> "Đã giao"
-                                4 -> "Hoàn tất"
-                                else -> "Đã hủy"
-                            },
-                            fontSize = 16.sp,
-                            color = Color(0xFF00796B),
-                            modifier = Modifier.padding(8.dp)
+                            text = "Mã đơn hàng: #${idOrder}",
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 20.sp,
+                            modifier = Modifier.padding(bottom = 8.dp)
                         )
-                    }
-                    Spacer(modifier = Modifier.height(16.dp))
-                    Text(
-                        text = "Thông tin người nhận",
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 20.sp,
-                        modifier = Modifier.padding(bottom = 8.dp)
-                    )
-                    Card(
-                        shape = RoundedCornerShape(5.dp),
-                        elevation = CardDefaults.cardElevation(1.dp),
-                        modifier = Modifier.fillMaxWidth(),
-                        colors = CardDefaults.cardColors(
-                            containerColor = Color.White
-                        )
-                    ) {
-                        Column(modifier = Modifier.padding(8.dp)) {
+                        Card(
+                            shape = RoundedCornerShape(8.dp),
+                            colors = CardDefaults.cardColors(
+                                containerColor = Color(0xFFE0F7FA)
+                            ),
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
                             Text(
-                                text = "Họ và tên: ${order.nameRecipient ?: "Không có thông tin"}",
-                                fontSize = 16.sp
-                            )
-                            Text(
-                                text = "Số điện thoại: ${order.phone ?: "Không có thông tin"}",
-                                fontSize = 16.sp
-                            )
-                            Text(
-                                text = "Địa chỉ: ${order.address}",
-                                fontSize = 16.sp
+                                text = when (order.status) {
+                                    0 -> "Chờ xác nhận"
+                                    1 -> "Đang chuẩn bị hàng"
+                                    2 -> "Đang giao hàng"
+                                    3 -> "Đã giao"
+                                    4 -> "Hoàn tất"
+                                    else -> "Đã hủy"
+                                },
+                                fontSize = 16.sp,
+                                color = Color(0xFF00796B),
+                                modifier = Modifier.padding(8.dp)
                             )
                         }
-                    }
-                    Spacer(modifier = Modifier.height(16.dp))
-                    Text(
-                        text = "Danh sách sản phẩm",
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 20.sp,
-                        modifier = Modifier.padding(bottom = 8.dp)
-                    )
-                    Card(
-                        shape = RoundedCornerShape(5.dp),
-                        elevation = CardDefaults.cardElevation(1.dp),
-                        modifier = Modifier.fillMaxWidth(),
-                        colors = CardDefaults.cardColors(
-                            containerColor = Color.White
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Text(
+                            text = "Thông tin người nhận",
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 20.sp,
+                            modifier = Modifier.padding(bottom = 8.dp)
                         )
-                    ) {
-                        Column(modifier = Modifier.padding(8.dp)) {
-                            order.details.forEach { detail ->
-                                Row(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .padding(4.dp),
-                                    horizontalArrangement = Arrangement.SpaceBetween,
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
+                        Card(
+                            shape = RoundedCornerShape(5.dp),
+                            elevation = CardDefaults.cardElevation(1.dp),
+                            modifier = Modifier.fillMaxWidth(),
+                            colors = CardDefaults.cardColors(
+                                containerColor = Color.White
+                            )
+                        ) {
+                            Column(modifier = Modifier.padding(8.dp)) {
+                                Text(
+                                    text = "Họ và tên: ${order.nameRecipient ?: "Không có thông tin"}",
+                                    fontSize = 16.sp
+                                )
+                                Text(
+                                    text = "Số điện thoại: ${order.phone ?: "Không có thông tin"}",
+                                    fontSize = 16.sp
+                                )
+                                Text(
+                                    text = "Địa chỉ: ${order.address}",
+                                    fontSize = 16.sp
+                                )
+                            }
+                        }
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Text(
+                            text = "Danh sách sản phẩm",
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 20.sp,
+                            modifier = Modifier.padding(bottom = 8.dp)
+                        )
+                        Card(
+                            shape = RoundedCornerShape(5.dp),
+                            elevation = CardDefaults.cardElevation(1.dp),
+                            modifier = Modifier.fillMaxWidth(),
+                            colors = CardDefaults.cardColors(
+                                containerColor = Color.White
+                            )
+                        ) {
+                            Column(modifier = Modifier.padding(8.dp)) {
+                                order.details.forEach { detail ->
                                     Row(
-                                        modifier = Modifier.weight(1f),
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .padding(4.dp),
+                                        horizontalArrangement = Arrangement.SpaceBetween,
                                         verticalAlignment = Alignment.CenterVertically
                                     ) {
-                                        // Hiển thị hình ảnh từ Base64
-                                        val bitmap = base64ToBitmap(detail.image)
-                                        if (bitmap != null) {
-                                            Image(
-                                                painter = BitmapPainter(bitmap.asImageBitmap()),
-                                                contentDescription = "Hình ảnh sản phẩm",
-                                                modifier = Modifier
-                                                    .size(80.dp)
-                                                    .padding(end = 8.dp),
-                                                contentScale = ContentScale.Fit
-                                            )
-                                        }
-                                        Column {
-                                            Text(
-                                                text = detail.product_name,
-                                                fontSize = 16.sp
-                                            )
-                                            Row(
-                                                verticalAlignment = Alignment.CenterVertically
-                                            ) {
-                                                Text(
-                                                    text = formatGiaTien(detail.price),
-                                                    fontSize = 14.sp,
-                                                    color = Color.Red
+                                        Row(
+                                            modifier = Modifier.weight(1f),
+                                            verticalAlignment = Alignment.CenterVertically
+                                        ) {
+                                            // Hiển thị hình ảnh từ Base64
+                                            val bitmap = base64ToBitmap(detail.image)
+                                            if (bitmap != null) {
+                                                Image(
+                                                    painter = BitmapPainter(bitmap.asImageBitmap()),
+                                                    contentDescription = "Hình ảnh sản phẩm",
+                                                    modifier = Modifier
+                                                        .size(80.dp)
+                                                        .padding(end = 8.dp),
+                                                    contentScale = ContentScale.Fit
                                                 )
-                                                Spacer(modifier = Modifier.width(8.dp))
+                                            }
+                                            Column {
                                                 Text(
-                                                    text = "x${detail.quantity}",
-                                                    fontSize = 14.sp,
-                                                    fontWeight = FontWeight.Bold
+                                                    text = detail.product_name,
+                                                    fontSize = 16.sp
                                                 )
+                                                Row(
+                                                    verticalAlignment = Alignment.CenterVertically
+                                                ) {
+                                                    Text(
+                                                        text = formatGiaTien(detail.price),
+                                                        fontSize = 14.sp,
+                                                        color = Color.Red
+                                                    )
+                                                    Spacer(modifier = Modifier.width(8.dp))
+                                                    Text(
+                                                        text = "x${detail.quantity}",
+                                                        fontSize = 14.sp,
+                                                        fontWeight = FontWeight.Bold
+                                                    )
+                                                }
                                             }
                                         }
                                     }
                                 }
-                            }
-                            Divider()
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(top = 10.dp),
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Text(
-                                    text = "Tổng tiền hàng",
-                                    fontWeight = FontWeight.Bold,
-                                    fontSize = 18.sp
-                                )
-                                Text(
-                                    text = formatGiaTien(totalAmount),
-                                    fontWeight = FontWeight.Bold,
-                                    fontSize = 18.sp
-                                )
-                            }
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(top = 10.dp),
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Text(
-                                    text = "Tổng tiền vận chuyển",
-                                    fontWeight = FontWeight.Bold,
-                                    fontSize = 18.sp
-                                )
-                                Text(
-                                    text = "0 VNĐ",
-                                    fontWeight = FontWeight.Bold,
-                                    fontSize = 18.sp
-                                )
-                            }
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(top = 10.dp),
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Text(
-                                    text = "Thành tiền",
-                                    fontWeight = FontWeight.Bold,
-                                    fontSize = 18.sp
-                                )
-                                Text(
-                                    text = formatGiaTien(totalAmount),
-                                    fontWeight = FontWeight.Bold,
-                                    fontSize = 18.sp,
-                                    color = Color.Red
-                                )
+                                Divider()
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(top = 10.dp),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Text(
+                                        text = "Tổng tiền hàng",
+                                        fontWeight = FontWeight.Bold,
+                                        fontSize = 18.sp
+                                    )
+                                    Text(
+                                        text = formatGiaTien(totalAmount),
+                                        fontWeight = FontWeight.Bold,
+                                        fontSize = 18.sp
+                                    )
+                                }
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(top = 10.dp),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Text(
+                                        text = "Tổng tiền vận chuyển",
+                                        fontWeight = FontWeight.Bold,
+                                        fontSize = 18.sp
+                                    )
+                                    Text(
+                                        text = "0 VNĐ",
+                                        fontWeight = FontWeight.Bold,
+                                        fontSize = 18.sp
+                                    )
+                                }
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(top = 10.dp),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Text(
+                                        text = "Thành tiền",
+                                        fontWeight = FontWeight.Bold,
+                                        fontSize = 18.sp
+                                    )
+                                    Text(
+                                        text = formatGiaTien(totalAmount),
+                                        fontWeight = FontWeight.Bold,
+                                        fontSize = 18.sp,
+                                        color = Color.Red
+                                    )
+                                }
                             }
                         }
                     }

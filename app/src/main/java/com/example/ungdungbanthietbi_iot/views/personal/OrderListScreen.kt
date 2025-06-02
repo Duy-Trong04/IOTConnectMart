@@ -61,6 +61,7 @@ import com.example.ungdungbanthietbi_iot.navigation.Screen
 import com.example.ungdungbanthietbi_iot.utils.base64ToBitmap
 import com.example.ungdungbanthietbi_iot.utils.formatDateTimeZone
 import com.example.ungdungbanthietbi_iot.utils.formatGiaTien
+import com.example.ungdungbanthietbi_iot.utils.getCurrentTimestampEX
 import java.net.URLEncoder
 
 enum class OrderStatus(val value: Int, val displayName: String) {
@@ -259,7 +260,7 @@ fun DaGiaoHangScreen(navController: NavController, idCustomer: String?) {
                                     OrderItem(
                                         order,
                                         navController,
-                                        true,
+                                        false,
                                         idCustomer,
                                     )
                                 }
@@ -366,7 +367,7 @@ fun HoanTatScreen(navController: NavController, idCustomer: String?) {
                                     OrderItem(
                                         order,
                                         navController,
-                                        true,
+                                        false,
                                         idCustomer,
                                     )
                                 }
@@ -473,7 +474,7 @@ fun ChoGiaoHangScreen(navController: NavController, idCustomer: String?) {
                                     OrderItem(
                                         order,
                                         navController,
-                                        true,
+                                        false,
                                         idCustomer,
                                     )
                                 }
@@ -582,7 +583,7 @@ fun HuyDonHangScreen(navController: NavController, idCustomer: String?) {
                                     OrderItem(
                                         order,
                                         navController,
-                                        true,
+                                        false,
                                         idCustomer,
                                     )
                                 }
@@ -691,7 +692,7 @@ fun ChoLayHangScreen(navController: NavController, idCustomer: String?) {
                                     OrderItem(
                                         order,
                                         navController,
-                                        true,
+                                        false,
                                         idCustomer,
                                     )
                                 }
@@ -824,9 +825,16 @@ fun OrderItem(
     isCancel: Boolean,
     idCustomer: String,
 ) {
+    val orderViewModel: OrderViewModel = viewModel()
     val listDetail = order.details // Lấy từ JSON của order
     val encodedOrderId = order.id.let { URLEncoder.encode(it, "UTF-8") } ?: ""
-
+    val shouldRefresh by orderViewModel.shouldRefresh
+    LaunchedEffect(shouldRefresh) {
+        if (shouldRefresh) {
+            orderViewModel.getOrdersByCustomer(idCustomer) // Làm mới danh sách từ server
+            orderViewModel.resetRefresh() // Reset state
+        }
+    }
     Card(
         colors = CardDefaults.cardColors(
             containerColor = Color.White
@@ -872,24 +880,7 @@ fun OrderItem(
                                 ),
                                 shape = RoundedCornerShape(5.dp),
                                 onClick = {
-//                                    val orderNew = Order(
-//                                        order.id,
-//                                        order.idCustomer,
-//                                        order.totalAmount,
-//                                        order.paymentMethod,
-//                                        order.address,
-//                                        order.accountNumber,
-//                                        order.phone,
-//                                        order.nameRecipient,
-//                                        order.note,
-//                                        order.platformOrder,
-//                                        order.created_at,
-//                                        order.updated_at,
-//                                        order.accept_at,
-//                                        order.idEmployee,
-//                                        OrderStatus.DA_HUY.value
-//                                    )
-//                                    orderViewModel.updateOrder(orderNew)
+                                    orderViewModel.cancelOrder(order.id)
                                 }
                             ) {
                                 Text("Hủy")

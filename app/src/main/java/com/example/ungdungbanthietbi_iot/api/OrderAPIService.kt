@@ -12,19 +12,6 @@ import retrofit2.http.PUT
 import retrofit2.http.Path
 import retrofit2.http.Query
 
-data class addOrderResponse(
-    val success: Boolean,
-    val message: String
-)
-
-data class OrderResponse1(
-    val order: List<Order>? // Có thể API trả về null nếu không có dữ liệu
-)
-
-data class orderDeleteRequest(
-    val id: Int
-)
-
 data class OrderResponse(
     val status_code: Int,
     val data: OrderData,
@@ -39,6 +26,7 @@ data class CheckoutResponse(
     val status_code: Int,
     val data: OrderDataCheckOut
 )
+data class OrderRequestCancel(val id: String)
 
 data class OrderDataCheckOut(
     @SerializedName("order_id") val orderId: String,
@@ -54,29 +42,8 @@ interface OrderAPIService {
     @GET("order/customer/{customerId}")
     suspend fun getOrdersByCustomer(@Path("customerId") customerId: String): OrderResponse
 
-    @POST("order/create.php")
-    suspend fun addOrder(
-        @Body order: Order
-    ): addOrderResponse
-
-    @GET("order/getOrderByCustomer.php")
-    suspend fun getOrderByCustomer(
-        @Query("idCustomer") idCustomer: String,
-        @Query("status") status: Int
-    ): OrderResponse1
-
-    @GET("order/getAllOrder.php")
-    suspend fun getAllOrderByCustomer(
-        @Query("idCustomer") idCustomer: String,
-    ): OrderResponse1
-
-    @PUT("order/update.php")
-    suspend fun updateOrder(
-        @Body order: Order
-    ): addOrderResponse
-
-    @GET("order/show.php")
-    suspend fun getOrderById(
-        @Query("id") id: Int
-    ): Order
+    @PUT("order/customer")
+    suspend fun cancelOrder(
+        @Body request: OrderRequestCancel
+    ): Response<Unit>
 }
