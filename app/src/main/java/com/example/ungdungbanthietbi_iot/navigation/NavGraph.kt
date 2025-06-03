@@ -297,13 +297,15 @@ fun NavGraph(
             CheckOutSuccessScreen(navController, username, id, orderId, totalMoney, createdAt)
         }
         //Màn hình lịch sử đánh giá, bình luận
-        composable(route = Screen.Rating_History.route + "?idCustomer={idCustomer}",
+        composable(route = Screen.Rating_History.route + "?idCustomer={idCustomer}&username={username}",
             arguments = listOf(
-                navArgument("idCustomer") {type = NavType.StringType }
+                navArgument("idCustomer") {type = NavType.StringType },
+                navArgument("username") {type = NavType.StringType }
             )
         ) {
             val idCustomer = it.arguments?.getString("idCustomer") ?: ""
-            RatingHistoryScreen(navController, idCustomer)
+            val username = it.arguments?.getString("username") ?: ""
+            RatingHistoryScreen(navController, idCustomer, username)
         }
 
         //Màn hình thêm đánh giá, bình luận

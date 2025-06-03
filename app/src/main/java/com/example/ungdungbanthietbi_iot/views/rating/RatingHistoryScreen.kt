@@ -1,5 +1,7 @@
 package com.example.ungdungbanthietbi_iot.views.rating
 
+import android.util.Log
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -11,10 +13,15 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.graphics.painter.BitmapPainter
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -29,10 +36,13 @@ import com.example.ungdungbanthietbi_iot.viewModels.AccountViewModel
 import com.example.ungdungbanthietbi_iot.viewModels.CustomerViewModel
 import com.example.ungdungbanthietbi_iot.viewModels.DeviceViewModel
 import com.example.ungdungbanthietbi_iot.models.Review
+import com.example.ungdungbanthietbi_iot.models.Reviews
 import com.example.ungdungbanthietbi_iot.viewModels.ReviewViewModel
 import com.example.ungdungbanthietbi_iot.navigation.Screen
+import com.example.ungdungbanthietbi_iot.utils.base64ToBitmap
 import com.example.ungdungbanthietbi_iot.views.order_detail.calculateDaysSinceReceived
 import com.example.ungdungbanthietbi_iot.utils.formatDate
+import com.example.ungdungbanthietbi_iot.utils.formatDateTimeZone
 
 /** Giao diện màn hình lịch sử đánh giá (RatingHistoryScreen)
  * -------------------------------------------
@@ -52,31 +62,20 @@ import com.example.ungdungbanthietbi_iot.utils.formatDate
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun RatingHistoryScreen(navController: NavController, idCustomer: String?) {
+fun RatingHistoryScreen(navController: NavController, idCustomer: String, username: String) {
 
     val reviewViewModel: ReviewViewModel = viewModel()
-    // 1) Lần đầu load
-    LaunchedEffect(idCustomer) {
-        idCustomer?.let {
-            reviewViewModel.getReviewByIdCustomerDaDanhGia(it)
-        }
-    }
-    // 2) Reload mỗi khi screen quay lại (ON_RESUME)
-    val lifecycleOwner = LocalLifecycleOwner.current
-    DisposableEffect(lifecycleOwner) {
-        val obs = LifecycleEventObserver { _, event ->
-            if (event == Lifecycle.Event.ON_RESUME) {
-                idCustomer?.let {
-                    reviewViewModel.getReviewByIdCustomerDaDanhGia(it)
-                }
-            }
-        }
-        lifecycleOwner.lifecycle.addObserver(obs)
-        onDispose { lifecycleOwner.lifecycle.removeObserver(obs) }
+    val listReviews by reviewViewModel.listAllReviews.collectAsState()
+    val isLoading by reviewViewModel.isLoading.collectAsState()
+    LaunchedEffect (Unit){
+        Log.d("RatingHistoryScreen", "Fetching reviews for idCustomer: $idCustomer")
+        reviewViewModel.getAllReviews()
     }
 
-    val all = (reviewViewModel.listReviewDaDanhGia)
-        .distinctBy { it.idReview }
+    val reviewsOfCustomer = listReviews
+        .filter { it.idCustomer == idCustomer }
+    Log.d("RatingHistoryScreen", "Filtered reviews count: ${reviewsOfCustomer.size}")
+
     Scaffold (
         containerColor = Color.White,
         topBar = {
@@ -87,7 +86,7 @@ fun RatingHistoryScreen(navController: NavController, idCustomer: String?) {
                     titleContentColor = Color.White
                 ),
                 title = {
-                    Text(text = "Đánh giá của tôi (${all.size})",
+                    Text(text = "Đánh giá của tôi (${reviewsOfCustomer.size})",
                         fontWeight = FontWeight.Bold,
                         modifier = Modifier.fillMaxWidth(),
                         textAlign = TextAlign.Start
@@ -116,58 +115,62 @@ fun RatingHistoryScreen(navController: NavController, idCustomer: String?) {
                     .fillMaxSize()
             ) {
 
-                if(all.isEmpty()) {
-                    Box(
-                        contentAlignment = Alignment.Center,
-                        modifier = Modifier.fillMaxSize()
-                    ) {
-                        Text(
-                            "Bạn chưa có đánh giá nào!",
-                            fontSize = 16.sp,
-                            textAlign = TextAlign.Center,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
+                when {
+                    isLoading -> {
+                        Box(
+                            contentAlignment = Alignment.Center,
+                            modifier = Modifier.fillMaxSize()
+                        ) {
+                            CircularProgressIndicator()
+                        }
                     }
-                }
-                else{
-                    LazyColumn(modifier = Modifier.padding(8.dp)) {
-                        items(all) { review ->
-                            ReviewItem(review = review, idCustomer = idCustomer, idDevice = review.idDevice, navController)
-                            Spacer(modifier = Modifier.height(8.dp)) // Khoảng cách giữa các mục
+                    reviewsOfCustomer.isEmpty() -> {
+                        Box(
+                            contentAlignment = Alignment.Center,
+                            modifier = Modifier.fillMaxSize()
+                        ) {
+                            Text(
+                                text = "Bạn chưa có đánh giá nào!",
+                                fontSize = 16.sp,
+                                textAlign = TextAlign.Center,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    }
+                    else -> {
+                        LazyColumn(modifier = Modifier.padding(8.dp)) {
+                            items(reviewsOfCustomer) { review ->
+                                ReviewItem(
+                                    review = review,
+                                    idCustomer = idCustomer,
+                                    idDevice = review.idDevice,
+                                    username = username,
+                                    navController = navController
+                                )
+                                Spacer(modifier = Modifier.height(8.dp))
+                            }
                         }
                     }
                 }
             }
         }
     }
-
 }
 
 @Composable
-fun ReviewItem(review: Review, idCustomer: String?, idDevice: Int?, navController: NavController) {
-    val customerViewModel: CustomerViewModel = viewModel()
-    val accountViewModel: AccountViewModel = viewModel()
-    val customer = customerViewModel.customer
-    val account = accountViewModel.accountById
+fun ReviewItem(review: Reviews, idCustomer: String, idDevice: Int, username:String, navController: NavController) {
 
     val deviceViewModel: DeviceViewModel = viewModel()
-    val device = deviceViewModel.deviceMap[idDevice.toString()] // Lấy thiết bị theo ID
+    val device = deviceViewModel.deviceMap[idDevice] // Lấy thiết bị theo ID
     // Gọi API lấy device khi idDevice thay đổi
     LaunchedEffect(idDevice) {
-        if (idDevice != null && device == null) {
-            deviceViewModel.getDeviceBySlug2(idDevice.toString())
+        if (device == null) {
+            deviceViewModel.getDeviceBySlug2(idDevice)
         }
-    }
-
-    LaunchedEffect (idCustomer){
-        customerViewModel.getCustomerById(idCustomer.toString())
-        accountViewModel.getAccountById(idCustomer.toString())
     }
     // Tính số ngày kể từ khi tạo đánh giá
     val daysSinceReviewCreated = remember(review.created_at) {
-        review.created_at?.let { createdAt ->
-            calculateDaysSinceReceived(createdAt)
-        } ?: Int.MAX_VALUE
+        calculateDaysSinceReceived(review.created_at) ?: Int.MAX_VALUE
     }
 
     Card(
@@ -185,11 +188,11 @@ fun ReviewItem(review: Review, idCustomer: String?, idDevice: Int?, navControlle
                 horizontalArrangement = Arrangement.SpaceBetween
             ){
                 Text(
-                    text = "${customer?.surname} ${customer?.lastname}",
+                    text = "${review.surname} ${review.lastname}",
                     fontSize = 18.sp,
                     fontWeight = FontWeight.Bold
                 )
-                if(daysSinceReviewCreated <= 10){
+                if(daysSinceReviewCreated <= 7){
                     Button(
                         onClick = {
                             navController.navigate(Screen.Update_Rating_Screen.route + "?idReview=${review.idReview}&idCustomer=${idCustomer}")
@@ -213,41 +216,49 @@ fun ReviewItem(review: Review, idCustomer: String?, idDevice: Int?, navControlle
             RatingBar(rating = review.rating)
             Spacer(modifier = Modifier.height(8.dp))
             // Bình luận
-            Text(
-                text = review.comment,
-                fontSize = 14.sp
-            )
+            review.comment?.let {
+                Text(
+                    text = it,
+                    fontSize = 14.sp
+                )
+            }
             Spacer(modifier = Modifier.height(4.dp))
             // Ngày đánh giá
             Text(
-                text = formatDate(review.created_at),
+                text = formatDateTimeZone(review.created_at),
                 fontSize = 12.sp,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
-            device?.let {
+
                 Row(
                     modifier = Modifier.fillMaxWidth().clickable {
-                        navController.navigate(Screen.ProductDetailsScreen.route + "?id=${idDevice}&idCustomer=${idCustomer}&username=${account!!.username}")
+                        navController.navigate(Screen.ProductDetailsScreen.route + "?id=${idDevice}&idCustomer=${idCustomer}&username=${username}")
                     },
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    AsyncImage(
-                        model = it.image,
-                        contentDescription = null,
-                        modifier = Modifier
-                            .width(50.dp)
-                            .height(50.dp)
-                    )
+                    val bitmap = base64ToBitmap(device?.image)
+                    if (bitmap != null) {
+                        Image(
+                            painter = BitmapPainter(bitmap.asImageBitmap()),
+                            contentDescription = "Hình ảnh sản phẩm",
+                            modifier = Modifier
+                                .width(50.dp)
+                                .height(50.dp),
+                            contentScale = ContentScale.Fit
+                        )
+                    }
 
                     Spacer(modifier = Modifier.width(8.dp))
 
-                    Text(
-                        text = it.name,
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 16.sp
-                    )
+                    if (device != null) {
+                        Text(
+                            text = device.name,
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 16.sp
+                        )
+                    }
                 }
-            }
+
         }
     }
 }

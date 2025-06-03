@@ -10,12 +10,26 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.ungdungbanthietbi_iot.config.RetrofitClient
 import com.example.ungdungbanthietbi_iot.models.Review
+import com.example.ungdungbanthietbi_iot.models.Reviews
+import com.example.ungdungbanthietbi_iot.models.SlideShow
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import java.time.Instant
 
 class ReviewViewModel:ViewModel() {
-    var listReview: List<Review> by mutableStateOf(emptyList())
+    private val _listReviews = MutableStateFlow<List<Reviews>>(emptyList())
+    // Public StateFlow for UI to observe
+    val listReviews: StateFlow<List<Reviews>> = _listReviews.asStateFlow()
+
+    private val _listAllReviews = MutableStateFlow<List<Reviews>>(emptyList())
+    // Public StateFlow for UI to observe
+    val listAllReviews: StateFlow<List<Reviews>> = _listAllReviews.asStateFlow()
+    private val _isLoading = MutableStateFlow(false)
+    val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
 
     var listReviewDaDanhGia by mutableStateOf<List<Review>>(emptyList())
         private set
@@ -25,12 +39,6 @@ class ReviewViewModel:ViewModel() {
 
     var review by mutableStateOf<Review?>(null)
         private set
-
-    private val _reviewExistsMap = mutableStateMapOf<Int, Boolean?>()
-    val reviewExistsMap: SnapshotStateMap<Int, Boolean?> = _reviewExistsMap
-
-    private val _reviewExistsMap2 = mutableStateMapOf<Int, Boolean?>()
-    val reviewExistsMap2: SnapshotStateMap<Int, Boolean?> = _reviewExistsMap2
 
     fun getReviewById(id: Int) {
         viewModelScope.launch {
@@ -42,82 +50,44 @@ class ReviewViewModel:ViewModel() {
             }
         }
     }
-    // Khởi tạo key với giá trị null
-    fun initReviewCheck(idDevice: Int) {
-        _reviewExistsMap[idDevice] = null
-    }
-    fun checkReview(idCustomer: String, idDevice: Int) {
+
+    fun getAllReviews(){
         viewModelScope.launch {
+            _isLoading.value = true
             try {
-                val response = RetrofitClient.reviewAPIService.checkReview2(idCustomer, idDevice, 1)
-                if (response.success) {
-                    _reviewExistsMap[idDevice] = response.review_exists
+                val response = RetrofitClient.reviewAPIService.getAllReviews()
+                Log.d("ReviewViewModel", "API response: $response")
+                if (response.status_code == 200) {
+                    _listAllReviews.value = response.data.data.sortedByDescending { review ->
+                        try {
+                            Instant.parse(review.created_at)
+                        } catch (e: Exception) {
+                            Instant.EPOCH
+                        }
+                    }
+                    Log.d("ReviewViewModel", "Fetched and sorted reviews: ${_listAllReviews.value.size}")
                 } else {
-                    _reviewExistsMap[idDevice] = false
-                    Log.e("CheckReview", "Phản hồi không thành công hoặc body rỗng.")
+                    _listAllReviews.value = emptyList()
+                    Log.e("ReviewViewModel", "Failed to fetch reviews, status: ${response.status_code}")
                 }
             } catch (e: Exception) {
-                _reviewExistsMap[idDevice] = false
-                Log.e("CheckReview", "Lỗi khi gọi API: ${e.message}", e)
-            }
-        }
-    }
-    fun checkReview2(idCustomer: String, idDevice: Int) {
-        viewModelScope.launch {
-            try {
-                val response = RetrofitClient.reviewAPIService.checkReview2(idCustomer, idDevice, 2)
-                if (response.success) {
-                    _reviewExistsMap2[idDevice] = response.review_exists
-                } else {
-                    _reviewExistsMap2[idDevice] = false
-                    Log.e("CheckReview", "Phản hồi không thành công hoặc body rỗng.")
-                }
-            } catch (e: Exception) {
-                _reviewExistsMap2[idDevice] = false
-                Log.e("CheckReview", "Lỗi khi gọi API: ${e.message}", e)
+                _listAllReviews.value = emptyList()
+                Log.e("ReviewViewModel", "Error fetching reviews", e)
+            } finally {
+                _isLoading.value = false
             }
         }
     }
 
-    // Hàm suspend trả về kết quả trực tiếp
-    suspend fun checkReviewDirect(idCustomer: String, idDevice: Int, status: Int): Review? {
-        return try {
-            val response = RetrofitClient.reviewAPIService.checkReview(idCustomer, idDevice, status)
-            if (response.success) {
-                // Nếu thành công, trả về đối tượng review (có thể null nếu chưa có review)
-                response.review
-            } else {
-                null
-            }
-        } catch (e: Exception) {
-            Log.e("ReviewViewModel", "Lỗi checkReviewDirect: ${e.message}")
-            null
-        }
-    }
-
-
-
-    fun getReviewByIdDevice(idDevice:String){
+    fun getReviewByIdDevice(id:String){
         viewModelScope.launch(Dispatchers.IO){
             try{
-                listReview = RetrofitClient.reviewAPIService.getReviewByIdDevice(idDevice)
+                val response = RetrofitClient.reviewAPIService.getReviewByIdDevice(id)
+                _listReviews.value = response.data.data
             }
             catch (e:Exception){
-                Log.e("DeviceViewModel", "Error getting image", e)
-            }
-        }
-    }
-
-    fun getReviewByIdCustomerDaDanhGia(idCustomer: String) {
-        viewModelScope.launch(Dispatchers.IO) {
-            try {
-                val resp = RetrofitClient.reviewAPIService.getReviewByIdCustomer(idCustomer, 1)
-                // CLEAR trước khi gán
-                withContext(Dispatchers.Main) {
-                    listReviewDaDanhGia = resp
-                }
-            } catch (e: Exception) {
-                Log.e("ReviewVM", "Error getting reviews (1):", e)
+                _listReviews.value = emptyList()
+                Log.e("ReviewViewModel", "Error getting reviews", e)
             }
         }
     }

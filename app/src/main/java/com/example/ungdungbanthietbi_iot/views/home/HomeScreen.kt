@@ -81,6 +81,7 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -96,6 +97,7 @@ import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.painter.Painter
@@ -123,6 +125,7 @@ import com.example.ungdungbanthietbi_iot.viewModels.LikedViewModel
 import com.example.ungdungbanthietbi_iot.models.SlideShow
 import com.example.ungdungbanthietbi_iot.viewModels.SlideShowViewModel
 import com.example.ungdungbanthietbi_iot.navigation.Screen
+import com.example.ungdungbanthietbi_iot.utils.base64ToBitmap
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import com.example.ungdungbanthietbi_iot.viewModels.CartViewModel
@@ -158,7 +161,7 @@ fun HomeScreen(
     val listCategories by categoryViewModel.listCategories.collectAsState()
     val isLoadingCategories by categoryViewModel.isLoading.collectAsState()
     val errorMessage by categoryViewModel.errorMessage.collectAsState()
-    val listSlideShow = slideShowViewModel.listSlideShow
+    val listSlideShow by slideShowViewModel.listSlideShows.collectAsState()
 
     LaunchedEffect(Unit) {
         slideShowViewModel.getAllSlideShow()
@@ -673,76 +676,114 @@ fun HomeContent(
             state = listState
         ) {
             item {
-                if (listSlideShow.isNotEmpty()) {
-                    val pagerState = rememberPagerState(
-                        initialPage = 0,
-                        pageCount = { listSlideShow.size }
-                    )
-                    val coroutineScope = rememberCoroutineScope()
-                    // Tự động chuyển slide
-                    LaunchedEffect(Unit) {
-                        while (true) {
-                            delay(3000)
-                            val nextPage = (pagerState.currentPage + 1) % listSlideShow.size
-                            pagerState.animateScrollToPage(nextPage)
-                        }
-                    }
-                    Box {
-                        HorizontalPager(
-                            state = pagerState,
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(200.dp)
-                                .padding(horizontal = 16.dp, vertical = 8.dp)
-                                .clip(RoundedCornerShape(16.dp))
-                                .shadow(4.dp, RoundedCornerShape(16.dp))
-                        ) { page ->
-                            SlideImage(
-                                painter = rememberAsyncImagePainter(model = listSlideShow[page].image),
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .wrapContentHeight()
+                        .background(
+                            brush = Brush.verticalGradient(
+                                colors = listOf(
+                                    Color(0xFF5D9EFF), // Màu xanh của TopAppBar
+                                    Color(0xFF5D9EFF), // Giữ màu xanh đậm lâu hơn
+                                    Color(0xFF5D9EFF).copy(alpha = 0.5f), // Nhạt dần
+                                    Color(0xFF5D9EFF).copy(alpha = 0.3f),
+                                    Color(0xFF5D9EFF).copy(alpha = 0.1f)// Nhạt hơn nữa
+                                    //Color.Transparent // Trong suốt ở dưới
+                                ),
+                                startY = 0f,
+                                endY = 350f // Kéo dài qua slideshow
+                            ),
+                            shape = RoundedCornerShape(
+                                bottomStart = 25.dp,
+                                bottomEnd = 25.dp
                             )
-                        }
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .align(Alignment.BottomCenter) // Đặt Row ở dưới cùng của Box
-                                .padding(vertical = 15.dp), // Giảm padding để gần sát mép dưới
-                            horizontalArrangement = Arrangement.Center
-                        ) {
-                            listSlideShow.forEachIndexed { index, _ ->
-                                val isActive = index == pagerState.currentPage
-                                val animatedWidth by animateFloatAsState(
-                                    targetValue = if (isActive) 32f else 12f,
-                                    animationSpec = tween(300), label = ""
-                                )
-                                Box(
-                                    modifier = Modifier
-                                        .padding(horizontal = 6.dp)
-                                        .size(width = animatedWidth.dp, height = 6.dp)
-                                        .background(
-                                            color = if (isActive) Color(0xFF1E88E5) else Color(0xFFB0BEC5),
-                                            shape = RoundedCornerShape(3.dp)
-                                        )
-                                        .clickable {
-                                            coroutineScope.launch {
-                                                pagerState.animateScrollToPage(index)
-                                            }
-                                        }
-                                )
+                        )
+                        .padding(bottom = 8.dp) // Đảm bảo không ảnh hưởng đến nội dung bên dưới
+                ) {
+                    if (listSlideShow.isNotEmpty()) {
+                        val realPageCount = listSlideShow.size
+                        val fakePageCount = Int.MAX_VALUE
+                        val initialPage = fakePageCount / 2 - (fakePageCount / 2 % realPageCount)
+                        val pagerState = rememberPagerState(
+                            initialPage = initialPage,
+                            pageCount = { fakePageCount }
+                        )
+                        val coroutineScope = rememberCoroutineScope()
+
+                        // Tự động chuyển slide
+                        DisposableEffect(Unit) {
+                            val job = coroutineScope.launch {
+                                while (true) {
+                                    delay(3000)
+                                    val nextPage = pagerState.currentPage + 1
+                                    pagerState.animateScrollToPage(nextPage)
+                                }
+                            }
+                            onDispose {
+                                job.cancel() // Hủy job khi composable bị hủy
                             }
                         }
-                    }
-                } else {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(16.dp),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        CircularProgressIndicator(
-                            color = Color(0xFF5D9EFF),
-                            strokeWidth = 4.dp,
-                            modifier = Modifier.size(48.dp)
-                        )
+
+                        Box {
+                            HorizontalPager(
+                                state = pagerState,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(200.dp)
+                                    .padding(horizontal = 16.dp, vertical = 8.dp)
+                                    .clip(RoundedCornerShape(16.dp))
+                                    .shadow(4.dp, RoundedCornerShape(16.dp))
+                            ) { page ->
+                                val realIndex = page % realPageCount
+                                SlideImage(base64String = listSlideShow[realIndex].image)
+                            }
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .align(Alignment.BottomCenter)
+                                    .padding(vertical = 15.dp),
+                                horizontalArrangement = Arrangement.Center
+                            ) {
+                                listSlideShow.forEachIndexed { index, _ ->
+                                    val isActive = index == (pagerState.currentPage % realPageCount)
+                                    val animatedWidth by animateFloatAsState(
+                                        targetValue = if (isActive) 32f else 12f,
+                                        animationSpec = tween(300), label = ""
+                                    )
+                                    Box(
+                                        modifier = Modifier
+                                            .padding(horizontal = 6.dp)
+                                            .size(width = animatedWidth.dp, height = 6.dp)
+                                            .background(
+                                                color = if (isActive) Color(0xFF1E88E5) else Color(
+                                                    0xFFB0BEC5
+                                                ),
+                                                shape = RoundedCornerShape(3.dp)
+                                            )
+                                            .clickable {
+                                                coroutineScope.launch {
+                                                    val targetPage =
+                                                        (pagerState.currentPage / realPageCount) * realPageCount + index
+                                                    pagerState.animateScrollToPage(targetPage)
+                                                }
+                                            }
+                                    )
+                                }
+                            }
+                        }
+                    } else {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(16.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            CircularProgressIndicator(
+                                color = Color(0xFF5D9EFF),
+                                strokeWidth = 4.dp,
+                                modifier = Modifier.size(48.dp)
+                            )
+                        }
                     }
                 }
             }
@@ -1208,14 +1249,15 @@ fun CategoryItem(category: Category, navController: NavController, username: Str
 
 @OptIn(ExperimentalAnimationApi::class)
 @Composable
-fun SlideImage(painter: Painter) {
+fun SlideImage(base64String: String) {
+    val bitmap = base64ToBitmap(base64String)
     AnimatedContent(
-        targetState = painter,
+        targetState = bitmap,
         modifier = Modifier.fillMaxSize(),
         transitionSpec = { fadeIn() togetherWith fadeOut() }, label = ""
-    ) { targetPainter ->
+    ) { targetBitmap ->
         Image(
-            painter = targetPainter,
+            painter = rememberAsyncImagePainter(model = targetBitmap),
             contentDescription = null,
             modifier = Modifier.size(360.dp),
             contentScale = ContentScale.Crop

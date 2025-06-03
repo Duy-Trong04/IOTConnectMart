@@ -67,6 +67,8 @@ import com.example.ungdungbanthietbi_iot.utils.getCurrentTimestamp
 import kotlinx.coroutines.launch
 import java.net.URLDecoder
 import java.text.SimpleDateFormat
+import java.time.Instant
+import java.time.temporal.ChronoUnit
 import java.util.*
 
 /** Giao diện màn hình chi tiết đơn hàng (OrderDetailsScreen)
@@ -408,15 +410,24 @@ fun calculateDaysSinceReceived(receivedDate: String?): Int {
         if (receivedDate.isNullOrEmpty()) {
             Log.e("CalculateDays", "receivedDate is null or empty")
             0
+        }
+        // Parse định dạng ISO 8601 (ví dụ: 2025-05-07T15:27:53.000Z)
+        val pastInstant = Instant.parse(receivedDate)
+        val currentInstant = Instant.now()
+
+        // Tính số ngày giữa hai thời điểm
+        val days = ChronoUnit.DAYS.between(pastInstant, currentInstant).toInt()
+
+        // Đảm bảo không trả về số âm
+        if (days < 0) {
+            Log.w("CalculateDays", "Negative days calculated for receivedDate: $receivedDate")
+            return 0
         } else {
-            val formatter = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault())
-            val pastDate = formatter.parse(receivedDate)
-            val currentTime = Calendar.getInstance().time
-            val diffInMillis = currentTime.time - pastDate.time
-            (diffInMillis / (1000 * 60 * 60 * 24)).toInt()
+            Log.d("CalculateDays", "Days since $receivedDate: $days")
+            return days
         }
     } catch (e: Exception) {
         Log.e("CalculateDays", "Invalid receivedDate format: $receivedDate", e)
-        0
+        return 0
     }
 }

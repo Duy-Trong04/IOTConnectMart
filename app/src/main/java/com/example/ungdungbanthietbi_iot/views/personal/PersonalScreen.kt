@@ -810,7 +810,7 @@ fun AccountOptionsSection(
                 iconRes = Icons.Filled.Star,
                 label = "Đánh giá",
                 isSelected = currentTab == "rating",
-                onClick = { navController.navigate(Screen.Rating_History.route + "?idCustomer=${idCustomer}") }
+                onClick = { navController.navigate(Screen.Rating_History.route + "?idCustomer=${idCustomer}&username=$username") }
             )
             AccountOptionItem(
                 iconRes = Icons.Filled.Lock,

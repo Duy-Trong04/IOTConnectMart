@@ -95,8 +95,10 @@ import com.example.ungdungbanthietbi_iot.viewModels.ImageViewModel
 import com.example.ungdungbanthietbi_iot.models.Liked
 import com.example.ungdungbanthietbi_iot.viewModels.LikedViewModel
 import com.example.ungdungbanthietbi_iot.models.Review
+import com.example.ungdungbanthietbi_iot.models.Reviews
 import com.example.ungdungbanthietbi_iot.viewModels.ReviewViewModel
 import com.example.ungdungbanthietbi_iot.navigation.Screen
+import com.example.ungdungbanthietbi_iot.utils.formatDateTimeZone
 import com.example.ungdungbanthietbi_iot.views.home.CardDevice
 import com.example.ungdungbanthietbi_iot.utils.formatGiaTien
 import kotlinx.coroutines.delay
@@ -150,22 +152,10 @@ fun ProductDetailsScreen(
 //    val likedViewModel: LikedViewModel = viewModel()
 //    val listLiked = likedViewModel.listLiked
 
-//    val listImage = imageViewModel.listImage
-//    LaunchedEffect(id) {
-//        imageViewModel.getImageByIdDevice(id)
-//    }
-
-//    val listReview = reviewViewModel.listReview
-//    LaunchedEffect(id) {
-//        reviewViewModel.getReviewByIdDevice(id)
-//    }
-
-//    val accountViewModel: AccountViewModel = viewModel()
-//    val account = accountViewModel.account
-//
-//    if(username != null){
-//        accountViewModel.getUserByUsername(username)
-//    }
+    val listReview by reviewViewModel.listReviews.collectAsState()
+    LaunchedEffect(id) {
+        reviewViewModel.getReviewByIdDevice(id)
+    }
 
     var currentIndex by remember { mutableStateOf(0) }
     // Tự động chuyển hình sau mỗi 3 giây
@@ -206,14 +196,14 @@ fun ProductDetailsScreen(
 //    }
 
 
-//    // Biến lưu trữ giá trị đánh giá
-//    val averageRating = if (listReview.isNotEmpty()) {
-//        val avg = listReview.map { it.rating }.average() // Tính trung bình cộng
-//        // Làm tròn tới 1 chữ số thập phân
-//        (avg * 10.0).roundToInt() / 10.0
-//    } else {
-//        0.0 // Giá trị mặc định nếu danh sách rỗng
-//    }
+    // Biến lưu trữ giá trị đánh giá
+    val averageRating = if (listReview.isNotEmpty()) {
+        val avg = listReview.map { it.rating }.average() // Tính trung bình cộng
+        // Làm tròn tới 1 chữ số thập phân
+        (avg * 10.0).roundToInt() / 10.0
+    } else {
+        0.0 // Giá trị mặc định nếu danh sách rỗng
+    }
 
     //Lưu thông tin sản phẩm để truyền qua màn hình thanh toán
     val selectedProducts = remember { mutableListOf<Triple<Int, Int, Int>>() }
@@ -250,7 +240,7 @@ fun ProductDetailsScreen(
         }
     }
 
-    var isLoading by remember { mutableStateOf(false) } // Thêm trạng thái tải cục bộ
+    val isLoading by remember { mutableStateOf(false) } // Thêm trạng thái tải cục bộ
 
     Scaffold(
         topBar = {
@@ -434,7 +424,7 @@ fun ProductDetailsScreen(
                                             if (idCustomer == null) {
                                                 navController.navigate(Screen.LoginScreen.route)
                                             } else {
-                                                var cartNew: CartEntity? = null
+                                                val cartNew: CartEntity?
                                                 var isProductFound = false
 
                                                 for (cart in listCart) {
@@ -573,7 +563,7 @@ fun ProductDetailsScreen(
                                     if (realIndex < 0) realIndex + images.size else realIndex
                                 Image(
                                     bitmap = images[adjustedIndex].asImageBitmap(),
-                                    contentDescription = device.name ?: "Hình ảnh sản phẩm",
+                                    contentDescription = device.name,
                                     modifier = Modifier
                                         .fillMaxWidth()
                                         .height(250.dp),
@@ -841,7 +831,7 @@ fun ProductDetailsScreen(
                     Column(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(start = 20.dp, end = 20.dp)
+                            .padding(horizontal = 20.dp, vertical = 8.dp)
                     )
                     {
                         Row(
@@ -857,41 +847,47 @@ fun ProductDetailsScreen(
                             Text(
                                 "Xem tất cả",
                                 fontWeight = FontWeight.Bold,
-                                fontSize = 18.sp,
+                                fontSize = 16.sp, // Giảm nhẹ để cân bằng giao diện
+                                color = Color(0xFF5D9EFF),
                                 modifier = Modifier.clickable {
-                                    navController.navigate(Screen.Product_Reviews.route + "?idDevice=${idCustomer}")
+                                    navController.navigate(Screen.Product_Reviews.route + "?idDevice=${id}")
                                 }
                             )
                         }
-//                        Row(
-//                            modifier = Modifier.padding(5.dp).fillMaxWidth(),
-//                            verticalAlignment = Alignment.CenterVertically
-//                        ){
-//                            for (i in 1..5) {
-//                                Text(
-//                                    text = if (i <= averageRating) "★" else "☆",
-//                                    fontSize = 20.sp,
-//                                    color = if (i <= averageRating) Color(0xFFFBC02D) else Color(0xFFFBC02D)
-//                                )
-//                            }
-//                            Text(
-//                                text = "${averageRating}/5.0 (${listReview.size} đánh giá)",
-//                                modifier = Modifier.padding(start = 8.dp),
-//                                color = Color.Gray,
-//                                fontSize = 15.sp,
-//                                textAlign = TextAlign.Center
-//                            )
-//                        }
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.Start
+                        ){
+                            for (i in 1..5) {
+                                Text(
+                                    text = if (i <= averageRating) "★" else "☆",
+                                    fontSize = 20.sp,
+                                    color = if (i <= averageRating) Color(0xFFFBC02D) else Color(0xFFFBC02D)
+                                )
+                            }
+                            Text(
+                                text = "${averageRating}/5.0 (${listReview.size} đánh giá)",
+                                modifier = Modifier.padding(start = 8.dp).align(Alignment.CenterVertically),
+                                color = Color.Gray,
+                                fontSize = 14.sp,
+                            )
+                        }
+                        HorizontalDivider()
                     }
+
                 }
-//                items(listReview.take(2)){
-//                    CardReview(review = it, onlick = {
-//                        navController.navigate(Screen.Product_Reviews.route + "?idDevice=${it.idDevice}")
-//                    },
-//                        id.toInt()
-//                    )
-//                }
+                items(listReview.take(2)){
+                    CardReview(
+                        review = it,
+                        onlick = { navController.navigate(Screen.Product_Reviews.route + "?idDevice=${it.idDevice}") },
+                        id.toInt(),
+                        listReview
+                    )
+                }
                 item {
+                    HorizontalDivider()
                     Spacer(modifier = Modifier.height(10.dp))
                     // Gợi ý sản phẩm
                     Text(
@@ -934,57 +930,92 @@ fun ProductDetailsScreen(
 }
 
 @Composable
-fun CardReview(review: Review, onlick:() -> Unit, id:Int){
-
-    val customerViewModel: CustomerViewModel = viewModel()
-    val listCustomer = customerViewModel.listCustomerReviewDevice
-
-    LaunchedEffect(id) {
-        customerViewModel.getCustomerReviewDeviceByIdDevice(id)
-    }
-
+fun CardReview(review: Reviews, onlick:() -> Unit, id:Int, listReviews: List<Reviews>){
+    // Lấy thông tin customer từ review
+    val customerName = "${review.surname} ${review.lastname}".trim()
+    // Lấy chữ cái đầu tiên cho avatar mặc định
+    val initial = customerName.takeIf { it.isNotEmpty() }?.substring(0, 1)?.uppercase() ?: "A"
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(start = 20.dp, end = 20.dp, top = 10.dp),
+            .padding(horizontal = 20.dp, vertical = 4.dp),
         colors = CardDefaults.cardColors(
             containerColor = Color.White
         ),
         onClick = onlick
     )
     {
-        HorizontalDivider()
-        Row(modifier = Modifier
-            .fillMaxWidth()
-            .padding(start = 5.dp, top = 5.dp)) {
-            Image(
-                painter = painterResource(R.drawable.logo),
-                contentDescription = "avt",
-                modifier = Modifier.size(30.dp)
-            )
-            Column {
-                for (customer in listCustomer){
-                    if(customer.id == review.idCustomer){
-                        Text(text = "${customer.surname} ${customer.lastname}")
-                    }
-                }
-                Row(modifier = Modifier.padding(start = 5.dp))
-                {
-                    repeat(review.rating) {
-                        Icon(
-                            imageVector = Icons.Filled.Star,
-                            contentDescription = "Sao",
-                            modifier = Modifier.size(13.dp),
-                            tint = Color(0xFFFBC02D) // Màu vàng
+        Spacer(modifier = Modifier.height(4.dp))
+        Column (
+            verticalArrangement = Arrangement.Center,
+            horizontalAlignment = Alignment.Start
+        ) {
+            Row (
+                modifier = Modifier
+                    .fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                // Avatar
+                Box(
+                    modifier = Modifier
+                        .size(20.dp)
+                        .clip(CircleShape)
+                        .background(Color(0xFF5D9EFF)) // Màu nền xanh
+                ) {
+                    if (review.customer_image.isNullOrEmpty()) {
+                        // Hiển thị chữ cái đầu tiên
+                        Text(
+                            text = initial,
+                            color = Color.White,
+                            fontSize = 18.sp,
+                            fontWeight = FontWeight.Bold,
+                            modifier = Modifier.align(Alignment.Center)
+                        )
+                    } else {
+                        AsyncImage(
+                            model = review.customer_image,
+                            contentDescription = "User Avatar",
+                            modifier = Modifier
+                                .size(40.dp)
+                                .clip(CircleShape),
+                            contentScale = ContentScale.Crop,
                         )
                     }
                 }
+                Spacer(modifier = Modifier.width(12.dp))
+                Text(
+                    text = customerName.ifEmpty { "Khách hàng ẩn danh" },
+                    fontWeight = FontWeight.SemiBold,
+                    fontSize = 16.sp,
+                    color = Color.Black
+                )
             }
+            Spacer(modifier = Modifier.height(4.dp))
+            Row(
+                verticalAlignment = Alignment.CenterVertically
+            ){
+                repeat(5) { index ->
+                    Icon(
+                        imageVector = Icons.Filled.Star,
+                        contentDescription = "Star",
+                        modifier = Modifier.size(16.dp),
+                        tint = if (index < review.rating) Color(0xFFFBC02D)
+                        else Color(0xFFE0E0E0)
+                    )
+                }
+            }
+            Spacer(modifier = Modifier.height(5.dp))
+            review.comment?.let {
+                Text(
+                    text = it,
+                    fontSize = 16.sp,
+                )
+            }
+            Text(
+                text = formatDateTimeZone(review.created_at),
+                fontSize = 14.sp,
+            )
         }
-        Text(
-            text = review.comment,
-            modifier = Modifier.padding(bottom = 10.dp, start = 15.dp, end = 5.dp)
-        )
     }
 }
 

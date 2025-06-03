@@ -1,10 +1,12 @@
 package com.example.ungdungbanthietbi_iot.api
 
 import com.example.ungdungbanthietbi_iot.models.Review
+import com.example.ungdungbanthietbi_iot.models.Reviews
 import retrofit2.http.Body
 import retrofit2.http.GET
 import retrofit2.http.POST
 import retrofit2.http.PUT
+import retrofit2.http.Path
 import retrofit2.http.Query
 
 data class AddReviewResponse(
@@ -21,37 +23,30 @@ data class CheckReviewResponse(
     val success: Boolean,
     val review_exists: Boolean
 )
+
+data class ReviewResponse(
+    val status_code: Int,
+    val data: ReviewData
+)
+data class ReviewData(
+    val data: List<Reviews>,
+    val total_page: Int
+)
+
+
 interface ReviewAPIService {
-
-    @GET ("review_device/getReview.php")
-    suspend fun checkReview(
-        @Query("idCustomer") idCustomer: String,
-        @Query("idDevice") idDevice: Int,
-        @Query("status") status: Int
-    ): getReviewResponse
-
-    @GET ("review_device/checkReview.php")
-    suspend fun checkReview2(
-        @Query("idCustomer") idCustomer: String,
-        @Query("idDevice") idDevice: Int,
-        @Query("status") status: Int
-    ): CheckReviewResponse
-
-    @GET ("review_device/getReviewByIdDevice.php")
+    @GET ("review/product/{id}")
     suspend fun getReviewByIdDevice(
-        @Query("idDevice") idDevice: String
-    ): List<Review>
+        @Path("id") id: String
+    ): ReviewResponse
 
     @GET ("review_device/show.php")
     suspend fun getReviewByIdReview(
         @Query("id") id: Int
     ): Review
 
-    @GET ("review_device/getReviewByIdCustomer.php")
-    suspend fun getReviewByIdCustomer(
-        @Query("idCustomer") idCustomer: String,
-        @Query("status") status: Int,
-    ): List<Review>
+    @GET ("review/")
+    suspend fun getAllReviews(): ReviewResponse
 
     @POST("review_device/create.php")
     suspend fun addReview(

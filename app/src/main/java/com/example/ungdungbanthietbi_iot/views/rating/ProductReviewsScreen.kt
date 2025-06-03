@@ -1,6 +1,7 @@
 package com.example.ungdungbanthietbi_iot.views.rating
 
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -18,6 +19,7 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -37,7 +39,9 @@ import androidx.navigation.NavController
 import com.example.ungdungbanthietbi_iot.viewModels.CustomerViewModel
 import com.example.ungdungbanthietbi_iot.viewModels.ReviewViewModel
 import com.example.ungdungbanthietbi_iot.models.Review
+import com.example.ungdungbanthietbi_iot.models.Reviews
 import com.example.ungdungbanthietbi_iot.utils.formatDate
+import com.example.ungdungbanthietbi_iot.utils.formatDateTimeZone
 
 /** Giao diện màn hình danh sách đánh giá của sản phẩm (ProductReviewsScreen)
  * -------------------------------------------
@@ -61,7 +65,7 @@ fun ProductReviewsScreen(
     id:String,
     reviewViewModel: ReviewViewModel
 ) {
-    val listReview = reviewViewModel.listReview
+    val listReview by reviewViewModel.listReviews.collectAsState()
     LaunchedEffect(id) {
         reviewViewModel.getReviewByIdDevice(id)
     }
@@ -89,7 +93,7 @@ fun ProductReviewsScreen(
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ReviewListScreen(reviews: List<Review>, navController: NavController, isUseful: Boolean, id:Int) {
+fun ReviewListScreen(reviews: List<Reviews>, navController: NavController, isUseful: Boolean, id:Int) {
     Scaffold(
         topBar = {
             TopAppBar(
@@ -118,11 +122,12 @@ fun ReviewListScreen(reviews: List<Review>, navController: NavController, isUsef
         LazyColumn(
             modifier = Modifier.padding(it)
                 .fillMaxSize()
+                .background(Color.White)
                 .padding(8.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             items(reviews) { index ->
-                ReviewCard(review = index, isUseful = isUseful, id)// Hiển thị từng bài đánh giá
+                ReviewCard(review = index, id)// Hiển thị từng bài đánh giá
             }
         }
     }
@@ -145,17 +150,10 @@ fun ReviewListScreen(reviews: List<Review>, navController: NavController, isUsef
  *
  */
 @Composable
-fun ReviewCard(review: Review, isUseful:Boolean, id:Int) {
-    var currentisUseful by remember { mutableStateOf(isUseful) } // Trạng thái đánh dấu hữu ích
-    val customerViewModel: CustomerViewModel = viewModel()
-    val listCustomer = customerViewModel.listCustomerReviewDevice
-
-    LaunchedEffect(id) {
-        customerViewModel.getCustomerReviewDeviceByIdDevice(id)
-    }
+fun ReviewCard(review: Reviews, id:Int) {
     Card(
         shape = RoundedCornerShape(8.dp),
-        elevation = CardDefaults.cardElevation(4.dp),
+        elevation = CardDefaults.cardElevation(1.dp),
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(
             containerColor = Color.White
@@ -177,15 +175,12 @@ fun ReviewCard(review: Review, isUseful:Boolean, id:Int) {
                     modifier = Modifier.size(50.dp).padding(end = 8.dp),
                     contentScale = ContentScale.Crop
                 )
-                for (customer in listCustomer){
-                    if(customer.id == review.idCustomer){
-                        Text(
-                            text = "${customer.surname} ${customer.lastname}",
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 18.sp
-                        )
-                    }
-                }
+                Text(
+                    text = "${review.surname} ${review.lastname}",
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 18.sp
+                )
+
             }
         }
         // Thanh đánh giá sao
@@ -201,15 +196,17 @@ fun ReviewCard(review: Review, isUseful:Boolean, id:Int) {
             }
         }
         // Nội dung bình luận
-        Text(
-            text = review.comment,
-            fontSize = 16.sp,
-            overflow = TextOverflow.Ellipsis,
-            modifier = Modifier.padding(start = 5.dp, end = 5.dp)
-        )
+        review.comment?.let {
+            Text(
+                text = it,
+                fontSize = 16.sp,
+                overflow = TextOverflow.Ellipsis,
+                modifier = Modifier.padding(start = 5.dp, end = 5.dp)
+            )
+        }
         // Ngày đánh giá
         Text(
-            text = formatDate(review.created_at),
+            text = formatDateTimeZone(review.created_at),
             fontSize = 14.sp,
             color = Color.Gray,
             modifier = Modifier.padding(start = 5.dp, end = 5.dp)

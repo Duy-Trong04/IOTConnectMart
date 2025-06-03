@@ -41,7 +41,7 @@ class DeviceViewModel:ViewModel() {
     val listDevice: StateFlow<List<Device>> get() = _listDevice.asStateFlow()
 
 
-    var deviceMap = mutableStateMapOf<String, Device>()
+    var deviceMap = mutableStateMapOf<Int, Device>()
         private set
 
     private val _listDeviceSearch = MutableStateFlow<List<Device>>(emptyList())
@@ -49,13 +49,22 @@ class DeviceViewModel:ViewModel() {
     private val _searchQuery = MutableStateFlow("")
     val searchQuery: StateFlow<String> get() = _searchQuery
 
-    fun getDeviceBySlug2(id: String) {
+    fun getDeviceBySlug2(id: Int) {
         viewModelScope.launch(Dispatchers.IO) {
             try {
-                val fetchedDevice = RetrofitClient.deviceAPIService.getDeviceById1(id)
-                deviceMap[id] = fetchedDevice  // Lưu riêng từng sản phẩm
+                val response = RetrofitClient.deviceAPIService.getDeviceById(id)
+                Log.d("DeviceViewModel", "Lấy dữ liệu thiết bị: $response")
+                if (response.statusCode == 200) {
+                    val fetchedDevice = response.data.data.firstOrNull()
+                    _device.value = fetchedDevice
+                    fetchedDevice?.let { deviceMap[id] = it } // Lưu vào deviceMap nếu không null
+                    Log.d("DeviceViewModel", "Đã lấy thiết bị: ${fetchedDevice?.name}")
+                } else {
+                    Log.e("DeviceViewModel", "Lấy thiết bị thất bại: $response")
+                }
             } catch (e: Exception) {
-                Log.e("DeviceViewModel", "Error getting device", e)
+                _device.value = null
+                Log.e("DeviceViewModel", "Lỗi khi lấy thiết bị", e)
             }
         }
     }
