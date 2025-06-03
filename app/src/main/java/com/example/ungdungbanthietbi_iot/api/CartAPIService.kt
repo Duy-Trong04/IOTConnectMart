@@ -21,15 +21,15 @@ interface CartAPIService {
         @Query("idCustomer") idCustomer: String
     ): CartResponse
 
-    @PUT("cart/update.php")
-    suspend fun updateCart(
-        @Body cart: Cart
-    ): UpdateResponse
-
-    @POST("cart/delete.php")
-    suspend fun deleteCart(
-        @Body deleteRequest: DeleteRequest
-    ): Response<ApiResponse>
+//    @PUT("cart/update.php")
+//    suspend fun updateCart(
+//        @Body cart: Cart
+//    ): UpdateResponse
+//
+//    @POST("cart/delete.php")
+//    suspend fun deleteCart(
+//        @Body deleteRequest: DeleteRequest
+//    ): Response<ApiResponse>
 
     @POST("cart/create.php")
     suspend fun addToCart(

@@ -99,6 +99,7 @@ import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -110,6 +111,7 @@ import coil.compose.AsyncImage
 import coil.compose.rememberAsyncImagePainter
 import coil.compose.rememberImagePainter
 import coil.request.ImageRequest
+import com.example.ungdungbanthietbi_iot.api.LikedProduct
 import com.example.ungdungbanthietbi_iot.models.Account
 import com.example.ungdungbanthietbi_iot.viewModels.AccountViewModel
 import com.example.ungdungbanthietbi_iot.models.Device
@@ -590,7 +592,7 @@ fun HomeScreen(
                     listAllDevice = listAllDevice,
                     listDeviceFeatured = listDeviceFeatured,
                     listDeviceLiked = deviceViewModel.listDeviceOfCustomer,
-                    categories = categories
+                    categories = categories,
                 )
                 2 -> if (username != null) NotificationScreen(navController = navController, idUser = id)
                 else NotificationScreen(navController = navController, idUser = "")
@@ -621,22 +623,48 @@ fun HomeContent(
     listAllDevice: List<Device>,
     listDeviceFeatured: List<Device>,
     listDeviceLiked: List<Device>,
-    categories: List<Category>
+    categories: List<Category>,
+    likedViewModel: LikedViewModel = viewModel()
 ) {
     val coroutineScope = rememberCoroutineScope()
     var isRefreshing by remember { mutableStateOf(false) }
+
+    // Trạng thái lưu danh sách sản phẩm yêu thích
+    var listFavoriteProducts by remember { mutableStateOf<List<LikedProduct>>(emptyList()) }
+    var isLoading by remember { mutableStateOf(false) }
+    var errorMessage by remember { mutableStateOf<String?>(null) }
+
+    // Làm mới danh sách yêu thích
+    fun refreshFavorites() {
+        if (id != null) {
+            coroutineScope.launch {
+                isLoading = true
+                likedViewModel.getLikedProducts(id).onSuccess { response ->
+                    if (response.status_code == 200) {
+                        listFavoriteProducts = response.data.data
+                    } else {
+                        errorMessage = "Lỗi khi tải danh sách yêu thích: Mã trạng thái ${response.status_code}"
+                    }
+                    isLoading = false
+                }.onFailure { exception ->
+                    errorMessage = exception.message
+                    isLoading = false
+                }
+            }
+        }
+    }
+
+    // Gọi API khi composable được tạo hoặc id thay đổi
+    LaunchedEffect(id) {
+        refreshFavorites()
+    }
 
     // Hàm xử lý refresh
     fun onRefresh() {
         isRefreshing = true
         coroutineScope.launch {
-            // Load lại dữ liệu
             deviceViewModel.getAllDevice()
-//            deviceViewModel.getDeviceFeatured()
-//            if (account != null) {
-//                deviceViewModel.getDeviceByLiked(account.idPerson.toString())
-//            }
-            // Giả lập thời gian load (có thể bỏ nếu API nhanh)
+            refreshFavorites()
             delay(1000)
             isRefreshing = false
         }
@@ -661,7 +689,6 @@ fun HomeContent(
                         pageCount = { listSlideShow.size }
                     )
                     val coroutineScope = rememberCoroutineScope()
-                    // Tự động chuyển slide
                     LaunchedEffect(Unit) {
                         while (true) {
                             delay(3000)
@@ -686,8 +713,8 @@ fun HomeContent(
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .align(Alignment.BottomCenter) // Đặt Row ở dưới cùng của Box
-                                .padding(vertical = 15.dp), // Giảm padding để gần sát mép dưới
+                                .align(Alignment.BottomCenter)
+                                .padding(vertical = 15.dp),
                             horizontalArrangement = Arrangement.Center
                         ) {
                             listSlideShow.forEachIndexed { index, _ ->
@@ -792,7 +819,27 @@ fun HomeContent(
                             .padding(end = 20.dp)
                     )
                 }
-                if (listDeviceLiked.isEmpty()) {
+                if (isLoading) {
+                    Text(
+                        text = "Đang tải...",
+                        color = Color(0xFF616161),
+                        fontSize = 14.sp,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp),
+                        textAlign = TextAlign.Center
+                    )
+                } else if (errorMessage != null) {
+                    Text(
+                        text = errorMessage ?: "Đã xảy ra lỗi",
+                        color = Color.Red,
+                        fontSize = 14.sp,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp),
+                        textAlign = TextAlign.Center
+                    )
+                } else if (listFavoriteProducts.isEmpty()) {
                     Text(
                         text = "Chưa có sản phẩm yêu thích",
                         color = Color(0xFF616161),
@@ -809,14 +856,14 @@ fun HomeContent(
                             .padding(horizontal = 16.dp),
                         horizontalArrangement = Arrangement.spacedBy(16.dp)
                     ) {
-                        items(listDeviceLiked) { device ->
+                        items(listFavoriteProducts) { product ->
                             if (username != null) {
                                 CardFavorites(
-                                    device = device,
-                                    isFavorite = isFavorite,
+                                    device = product,
+                                    isFavorite = true,
                                     idCustomer = id,
                                     username = username,
-                                    deviceViewModel = deviceViewModel,
+                                    likedViewModel = likedViewModel,
                                     navController = navController
                                 )
                             }
@@ -872,19 +919,25 @@ fun SectionTitle(text: String) {
 }
 
 @Composable
-fun CardFavorites(device: Device, isFavorite: Boolean, idCustomer: String?, username: String?, deviceViewModel: DeviceViewModel, navController: NavController) {
+fun CardFavorites(
+    device: LikedProduct,
+    isFavorite: Boolean,
+    idCustomer: String?,
+    username: String?,
+    likedViewModel: LikedViewModel,
+    navController: NavController
+) {
     var check by remember { mutableStateOf(isFavorite) }
-    val likedViewModel: LikedViewModel = viewModel()
-    val listLiked = likedViewModel.listLiked
-    var isLoading by remember { mutableStateOf(false) } // Thêm trạng thái tải cục bộ
-    LaunchedEffect(idCustomer) {
+    var isLoading by remember { mutableStateOf(false) }
+    val coroutineScope = rememberCoroutineScope()
+
+    // Kiểm tra trạng thái yêu thích
+    LaunchedEffect(idCustomer, likedViewModel.listLiked) {
         if (idCustomer != null) {
-            likedViewModel.getLikedByIdCustomer(idCustomer)
+            check = likedViewModel.listLiked.any { it.id == device.id }
         }
     }
-    LaunchedEffect(listLiked) {
-        check = listLiked.any { it.idDevice == device.idDevice }
-    }
+
     Card(
         modifier = Modifier
             .width(200.dp)
@@ -892,9 +945,15 @@ fun CardFavorites(device: Device, isFavorite: Boolean, idCustomer: String?, user
             .padding(4.dp),
         onClick = {
             if (username != null) {
-                navController.navigate(Screen.ProductDetailsScreen.route + "?id=${device.idDevice}&idCustomer=${idCustomer}&username=${username}")
+                navController.navigate(
+                    Screen.ProductDetailsScreen.route +
+                            "?id=${device.id}&idCustomer=${idCustomer}&username=${username}"
+                )
             } else {
-                navController.navigate(Screen.ProductDetailsScreen.route + "?id=${device.idDevice}&idCustomer=${idCustomer}")
+                navController.navigate(
+                    Screen.ProductDetailsScreen.route +
+                            "?id=${device.id}&idCustomer=${idCustomer}"
+                )
             }
         },
         colors = CardDefaults.cardColors(
@@ -910,11 +969,15 @@ fun CardFavorites(device: Device, isFavorite: Boolean, idCustomer: String?, user
                     .padding(4.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                //load hình ảnh từ API
                 AsyncImage(
-                    model = device.image,
-                    contentDescription = null,
-                    modifier = Modifier.fillMaxWidth().height(130.dp)
+                    model = device.image ?: "",
+                    contentDescription = device.name,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(130.dp),
+//                    placeholder = painterResource(R.drawable.placeholder_image),
+//                    error = painterResource(R.drawable.placeholder_image),
+                    contentScale = ContentScale.Fit
                 )
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(
@@ -926,7 +989,7 @@ fun CardFavorites(device: Device, isFavorite: Boolean, idCustomer: String?, user
                 )
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(
-                    text = formatGiaTien(device.sellingPrice),
+                    text = formatGiaTien(device.selling_price.toDouble()),
                     color = Color.Red,
                     modifier = Modifier.fillMaxWidth(),
                     textAlign = TextAlign.Center,
@@ -939,19 +1002,19 @@ fun CardFavorites(device: Device, isFavorite: Boolean, idCustomer: String?, user
                     if (idCustomer == null) {
                         navController.navigate(Screen.LoginScreen.route)
                     } else if (!isLoading) {
-                        isLoading = true // Bắt đầu tải
-                        if (!check) {
-                            val likedNew = Liked(0, idCustomer, device.idDevice)
-                            likedViewModel.addLiked(likedNew)
-                            check = true // Cập nhật cục bộ
-                        } else {
-                            likedViewModel.deleteLikedByCustomer(idCustomer, device.idDevice)
-                            check = false // Cập nhật cục bộ
+                        coroutineScope.launch {
+                            isLoading = true
+                            if (!check) {
+                                likedViewModel.addLikedProduct(idCustomer, device.id.toString())
+                                    .onSuccess { check = true }
+                                    .onFailure { /* Xử lý lỗi nếu cần */ }
+                            } else {
+                                likedViewModel.deleteLikedProduct(idCustomer, device.id.toString())
+                                    .onSuccess { check = false }
+                                    .onFailure { /* Xử lý lỗi nếu cần */ }
+                            }
+                            isLoading = false
                         }
-                        // Làm mới danh sách yêu thích
-                        likedViewModel.getLikedByIdCustomer(idCustomer)
-                        deviceViewModel.getDeviceByLiked(idCustomer)
-                        isLoading = false // Kết thúc tải
                     }
                 },
                 enabled = !isLoading,
@@ -986,24 +1049,23 @@ fun CardDevice(
     navController: NavController
 ) {
     var bitmap by remember { mutableStateOf<Bitmap?>(null) }
+    var check by remember { mutableStateOf(isFavorite) }
+    var isLoading by remember { mutableStateOf(false) }
+    val likedViewModel: LikedViewModel = viewModel()
+    val coroutineScope = rememberCoroutineScope()
 
     // Tải hình ảnh bất đồng bộ
     LaunchedEffect(device) {
         bitmap = deviceViewModel.getDeviceImageBitmap(device)
     }
-    var check by remember { mutableStateOf(isFavorite) }
-    val likedViewModel: LikedViewModel = viewModel()
-    val listLiked = likedViewModel.listLiked
-    var isLoading by remember { mutableStateOf(false) } // Thêm trạng thái tải cục bộ
 
-    LaunchedEffect(idCustomer) {
+    // Kiểm tra trạng thái yêu thích
+    LaunchedEffect(idCustomer, likedViewModel.listLiked) {
         if (idCustomer != null) {
-            likedViewModel.getLikedByIdCustomer(idCustomer)
+            check = likedViewModel.listLiked.any { it.id == device.idDevice }
         }
     }
-    LaunchedEffect(listLiked) {
-        check = listLiked.any { it.idDevice == device.idDevice }
-    }
+
     Card(
         modifier = Modifier
             .width(200.dp)
@@ -1011,9 +1073,14 @@ fun CardDevice(
             .padding(4.dp),
         onClick = {
             if (username != null) {
-                navController.navigate(Screen.ProductDetailsScreen.route + "?id=${device.idDevice}&idCustomer=${idCustomer}&username=${username}")
+                navController.navigate(
+                    Screen.ProductDetailsScreen.route +
+                            "?id=${device.idDevice}&idCustomer=${idCustomer}&username=${username}"
+                )
             } else {
-                navController.navigate(Screen.ProductDetailsScreen.route + "?id=${device.idDevice}")
+                navController.navigate(
+                    Screen.ProductDetailsScreen.route + "?id=${device.idDevice}"
+                )
             }
         },
         colors = CardDefaults.cardColors(
@@ -1035,8 +1102,8 @@ fun CardDevice(
                         contentDescription = device.name.ifEmpty { "Hình ảnh sản phẩm" },
                         modifier = Modifier
                             .fillMaxWidth()
-                            .aspectRatio(1f) // Giữ tỷ lệ 1:1 để hình ảnh không bị méo
-                            .clip(RoundedCornerShape(topStart = 5.dp, topEnd = 5.dp)), // Bo góc trên cùng của hình ảnh
+                            .aspectRatio(1f)
+                            .clip(RoundedCornerShape(topStart = 5.dp, topEnd = 5.dp)),
                         contentScale = ContentScale.Fit
                     )
                 } ?: run {
@@ -1052,7 +1119,7 @@ fun CardDevice(
                         )
                     }
                 }
-                Spacer(modifier = Modifier.height(2.dp)) // Giảm padding từ 4.dp xuống 2.dp
+                Spacer(modifier = Modifier.height(2.dp))
                 Text(
                     text = device.name,
                     modifier = Modifier.fillMaxWidth(),
@@ -1062,7 +1129,7 @@ fun CardDevice(
                 )
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(
-                    text = formatGiaTien(device.sellingPrice),
+                    text = formatGiaTien(device.sellingPrice.toDouble()),
                     color = Color.Red,
                     modifier = Modifier.fillMaxWidth(),
                     textAlign = TextAlign.Center,
@@ -1075,19 +1142,19 @@ fun CardDevice(
                     if (idCustomer == null) {
                         navController.navigate(Screen.LoginScreen.route)
                     } else if (!isLoading) {
-                        isLoading = true // Bắt đầu tải
-                        if (!check) {
-                            val likedNew = Liked(0, idCustomer, device.idDevice)
-                            likedViewModel.addLiked(likedNew)
-                            check = true // Cập nhật cục bộ
-                        } else {
-                            likedViewModel.deleteLikedByCustomer(idCustomer, device.idDevice)
-                            check = false // Cập nhật cục bộ
+                        coroutineScope.launch {
+                            isLoading = true
+                            if (!check) {
+                                likedViewModel.addLikedProduct(idCustomer, device.idDevice.toString())
+                                    .onSuccess { check = true }
+                                    .onFailure { /* Xử lý lỗi nếu cần */ }
+                            } else {
+                                likedViewModel.deleteLikedProduct(idCustomer, device.idDevice.toString())
+                                    .onSuccess { check = false }
+                                    .onFailure { /* Xử lý lỗi nếu cần */ }
+                            }
+                            isLoading = false
                         }
-                        // Làm mới danh sách yêu thích
-                        likedViewModel.getLikedByIdCustomer(idCustomer)
-                        deviceViewModel.getDeviceByLiked(idCustomer)
-                        isLoading = false // Kết thúc tải
                     }
                 },
                 enabled = !isLoading,

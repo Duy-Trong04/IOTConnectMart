@@ -88,10 +88,10 @@ interface AddressAPIService {
         @Body idCustomer: String
     ): addAddressResponse
 
-    @POST("address_book/delete.php")
-    suspend fun deleteAddress(
-        @Body id: deleteAddressRequest
-    ): Response<ApiResponse1>
+//    @POST("address_book/delete.php")
+//    suspend fun deleteAddress(
+//        @Body id: deleteAddressRequest
+//    ): Response<ApiResponse1>
 
     @GET("address_book/getAddressByIdOrder.php")
     suspend fun getAddressByIdOrder(
