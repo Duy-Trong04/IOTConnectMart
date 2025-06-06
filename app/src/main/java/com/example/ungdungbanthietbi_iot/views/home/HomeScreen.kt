@@ -1,6 +1,7 @@
 package com.example.ungdungbanthietbi_iot.views.home
 
 import android.graphics.Bitmap
+import android.util.Log
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.animation.core.animateFloatAsState
@@ -50,6 +51,7 @@ import androidx.compose.material.icons.filled.Laptop
 import androidx.compose.material.icons.filled.LightMode
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.Place
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.outlined.GridView
 import androidx.compose.material.icons.outlined.Home
@@ -153,7 +155,8 @@ fun HomeScreen(
     deviceViewModel: DeviceViewModel,
     slideShowViewModel: SlideShowViewModel,
     username: String?,
-    id: String?
+    id: String?,
+    password: String?
 ) {
     val categoryViewModel:CategoryViewModel = viewModel()
     val listAllDevice: List<Device> = deviceViewModel.listAllDevice
@@ -185,11 +188,12 @@ fun HomeScreen(
     }
 
     var selectedTabIndex by rememberSaveable { mutableStateOf(0) }
-
+    //Log.d("Thành công", "Đổi mật khẩu thành công ${username}va ${password}")
     ModalNavigationDrawer(
         drawerState = navdrawerState,
         drawerContent = {
             ModalDrawerSheet {
+                // Header
                 // Header của sidemenu
                 Row(
                     modifier = Modifier
@@ -620,9 +624,9 @@ fun HomeScreen(
                         navController = navController,
                         username = username,
                         id = id,
-                        deviceViewModel = deviceViewModel
+                        deviceViewModel = deviceViewModel,
+                        password = password
                     )
-
             }
         }
     }

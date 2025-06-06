@@ -1,6 +1,11 @@
 package com.example.ungdungbanthietbi_iot.views.personal
 
+import android.content.Context
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import android.net.Uri
+import android.util.Base64
+import android.util.Log
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
@@ -36,6 +41,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
@@ -62,6 +68,7 @@ import com.example.ungdungbanthietbi_iot.navigation.Screen
 import com.example.ungdungbanthietbi_iot.utils.getCurrentTimestamp
 import com.example.ungdungbanthietbi_iot.viewModels.CustomerState
 import kotlinx.coroutines.launch
+import java.io.ByteArrayOutputStream
 import java.time.LocalDate
 
 
@@ -72,6 +79,7 @@ fun PersonalScreen(
     username: String,
     id: String,
     deviceViewModel: DeviceViewModel,
+    password: String?
 ) {
 
     val navdrawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
@@ -90,20 +98,20 @@ fun PersonalScreen(
             TopAppBar(
                 title = {
                     Text("Hồ sơ cá nhân", fontWeight = FontWeight.Bold)
-                        },
+                },
                 navigationIcon = {
-                        IconButton(onClick = {
-                            scope.launch {
-                                navdrawerState.apply {
-                                    if (isClosed) open() else close()
-                                }
+                    IconButton(onClick = {
+                        scope.launch {
+                            navdrawerState.apply {
+                                if (isClosed) open() else close()
                             }
-                        }) {
-                            Icon(
-                                imageVector = Icons.Default.Menu,
-                                contentDescription = "List"
-                            )
-                        } },
+                        }
+                    }) {
+                        Icon(
+                            imageVector = Icons.Default.Menu,
+                            contentDescription = "List"
+                        )
+                    } },
                 actions = {
                     Box(
                         modifier = Modifier.size(48.dp)
@@ -182,7 +190,12 @@ fun PersonalScreen(
                 ){
                     when (currentTab) {
                         "accountInfo" -> AccountInfoSection(id, username, snackbarHostState)
-                        "changePassword" -> ChangePasswordSection(username, snackbarHostState)
+                        "changePassword" -> ChangePasswordSection(
+                            username = username,
+                            snackbarHostState = snackbarHostState,
+                            password = password,
+                            onPasswordChanged = { currentTab = "accountInfo" }
+                        )
                     }
                 }
             }
@@ -205,7 +218,17 @@ fun AccountInfoSection(
     id: String?,
     username: String,
     snackbarHostState: SnackbarHostState // Thêm tham số SnackbarHostState
+    ,context: Context = LocalContext.current
 ){
+
+    var selectedImageUri by remember { mutableStateOf<Uri?>(null) }
+    var base64Image by remember { mutableStateOf<String?>(null) }
+    var showDialog by remember { mutableStateOf(false) }
+
+    var originalBitmap by remember { mutableStateOf<Bitmap?>(null) }
+    var compressedBitmap by remember { mutableStateOf<Bitmap?>(null) }
+    var base64String by remember { mutableStateOf<String?>(null) }
+
     val maxLength = 10
 
     val customerViewModel: CustomerViewModel = viewModel()
@@ -215,7 +238,7 @@ fun AccountInfoSection(
 
     var isFocused by remember { mutableStateOf(false) }
     var isButtonEnabled by remember { mutableStateOf(false) }
-    var selectedImageUri by remember { mutableStateOf<Uri?>(null) } // Lưu URI ảnh được chọn
+    //var selectedImageUri by remember { mutableStateOf<Uri?>(null) } // Lưu URI ảnh được chọn
     var isUpdating by remember { mutableStateOf(false) } // Trạng thái loading
 
     // Launcher để chọn ảnh từ thư viện
@@ -238,7 +261,12 @@ fun AccountInfoSection(
             customerViewModel.getCustomerById9(id)
         }
     }
+    var bitmap by remember { mutableStateOf<Bitmap?>(null) }
 
+    // Tải hình ảnh bất đồng bộ
+//    LaunchedEffect(device) {
+//        bitmap = deviceViewModel.getDeviceImageBitmap(device)
+//    }
     Card(
         shape = RoundedCornerShape(5.dp),
         elevation = CardDefaults.cardElevation(1.dp),
@@ -264,66 +292,119 @@ fun AccountInfoSection(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.Center
                     ){
-    //                    AsyncImage(
-    //                        model = "",
-    //                        contentDescription = "Avatar",
-    //                        modifier = Modifier
-    //                            .size(100.dp)
-    //                            .clip(CircleShape),
-    //                        contentScale = ContentScale.Crop
-    //                    )
+                        //                    AsyncImage(
+                        //                        model = "",
+                        //                        contentDescription = "Avatar",
+                        //                        modifier = Modifier
+                        //                            .size(100.dp)
+                        //                            .clip(CircleShape),
+                        //                        contentScale = ContentScale.Crop
+                        //                    )
+
+
+                        LaunchedEffect(customer) {
+                            selectedImageUri = null // Reset để ưu tiên customer.image
+                            if (customer.image != null && isValidBase64(customer.image)) {
+                                originalBitmap = base64ToBitmap(customer.image)
+                                Log.d("ImagePicker", "Bitmap from customer.image: ${originalBitmap != null}")
+                            } else {
+                                Log.d("ImagePicker", "Invalid or null Base64 string: ${customer.image?.take(100)}")
+                            }
+                        }
+
+                        val imagePickerLauncher = rememberLauncherForActivityResult(
+                            contract = ActivityResultContracts.GetContent()
+                        ) { uri: Uri? ->
+                            uri?.let {
+                                selectedImageUri = it // Thêm dòng này để cập nhật selectedImageUri
+                                val byteArray = uriToByteArray(context, it)
+                                byteArray?.let {
+                                    originalBitmap = BitmapFactory.decodeByteArray(it, 0, it.size)
+                                    compressedBitmap = compressImage(it, 80, 200)?.let { compressedBytes ->
+                                        BitmapFactory.decodeByteArray(compressedBytes, 0, compressedBytes.size)
+                                    }
+                                    base64String = originalBitmap?.let { bitmapToBase64(it) }
+                                }
+                                Log.d("ImagePicker", "Uri: $uri")
+                                Log.d("ImagePicker", "ByteArray: ${byteArray?.size ?: "null"}")
+                                base64String = originalBitmap?.let { bitmapToBase64(it) }
+                                Log.d("ImagePicker", "Base64String: ${base64String?.take(100)?.plus("...") ?: "null"}")
+                                Log.d("ImagePicker", "Base64String Length: ${base64String?.length ?: 0}")
+                            }
+                        }
+
+
+
                         Box(
                             modifier = Modifier
                                 .size(100.dp)
                                 .clip(CircleShape)
-                                .clickable { launcher.launch("image/*") }
+                                .clickable { imagePickerLauncher.launch("image/*") }
                         ) {
                             // Hiển thị ảnh được chọn hoặc ảnh mặc định
-                            if (selectedImageUri != null) {
-                                AsyncImage(
-                                    model = selectedImageUri,
-                                    contentDescription = "Avatar",
-                                    modifier = Modifier
-                                        .fillMaxSize()
-                                        .clip(CircleShape),
-                                    contentScale = ContentScale.Crop
-                                )
-                            } else if (customer.image != null) {
-
-                                AsyncImage(
-                                    model = customer.image,
-                                    contentDescription = "Avatar",
-                                    modifier = Modifier
-                                        .fillMaxSize()
-                                        .clip(CircleShape),
-                                    contentScale = ContentScale.Crop
-                                )
+                            //val cleanedBase64 = customer.image?.let { cleanBase64(it) }
+                            when {
+                                selectedImageUri != null -> {
+                                    AsyncImage(
+                                        model = selectedImageUri,
+                                        contentDescription = "Avatar",
+                                        modifier = Modifier
+                                            .fillMaxSize()
+                                            .clip(CircleShape),
+                                        contentScale = ContentScale.Crop,
+                                        placeholder = painterResource(R.drawable.avt),
+                                        error = painterResource(R.drawable.avt)
+                                    )
+                                }
+                                originalBitmap != null -> {
+                                    originalBitmap?.let { bitmap ->
+                                        Image(
+                                            bitmap = bitmap.asImageBitmap(),
+                                            contentDescription = "Avatar",
+                                            modifier = Modifier
+                                                .fillMaxSize()
+                                                .clip(CircleShape),
+                                            contentScale = ContentScale.Crop
+                                        )
+                                        //Log.d("ImagePicker", "data:image/jpeg;base64,$cleanedBase64")
+                                    }
+                                }
+                                else -> {
+                                    Image(
+                                        painter = painterResource(id = R.drawable.logo9),
+                                        contentDescription = "Avatar",
+                                        modifier = Modifier
+                                            .fillMaxSize()
+                                            .clip(CircleShape),
+                                        contentScale = ContentScale.Crop
+                                    )
+                                }
                             }
-                            else{
-                                Image(
-                                    painter = painterResource(id = R.drawable.logo9),
-                                    contentDescription = "Avatar",
-                                    modifier = Modifier
-                                        .fillMaxSize()
-                                        .clip(CircleShape),
-                                    contentScale = ContentScale.Crop
-                                )
+                            Log.d("ImagePicker", "Customer Image Base64 Length: ${customer.image?.length ?: 0}")
+                            Log.d("ImagePicker", "Customer Image Base64 Preview: ${customer.image?.take(100)?.plus("...") ?: "null"}")
+                            LaunchedEffect(customer) {
+                                if (customer.image != null) {
+                                    Log.d("ImagePicker", "Is Valid Base64: ${isValidBase64(customer.image)}")
+                                }
                             }
-
                             // Chữ "Sửa" mờ nhạt nằm bên dưới
                             Text(
                                 text = "Sửa",
-                                color = Color.White.copy(alpha = 0.5f), // Màu chữ mờ nhạt
+                                color = Color.White.copy(alpha = 0.5f),
                                 fontSize = 14.sp,
                                 textAlign = TextAlign.Center,
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .align(Alignment.BottomCenter) // Căn chữ ở dưới cùng
-                                    .background(Color.Black.copy(alpha = 0.3f), RoundedCornerShape(4.dp)) // Nền mờ
-                                    .padding(horizontal = 8.dp, vertical = 2.dp) // Khoảng cách bên trong chữ
+                                    .align(Alignment.BottomCenter)
+                                    .background(Color.Black.copy(alpha = 0.3f), RoundedCornerShape(4.dp))
+                                    .padding(horizontal = 8.dp, vertical = 2.dp)
                             )
+
                         }
                     }
+
+
+
 
                     Spacer(modifier = Modifier.height(16.dp))
                     // Xử lý ngày sinh mặc định (18 năm trước) nếu birthdate null
@@ -601,7 +682,7 @@ fun AccountInfoSection(
                                         id = customer.id,
                                         surname = surnameValue,
                                         lastname = lastnameValue,
-                                        image = "Chưa làm image", // TODO: Sau chuyển ảnh thành base64 (chưa làm)
+                                        image = base64String, // TODO: Sau chuyển ảnh thành base64 (chưa làm)
                                         email = email.value,
                                         email_verified = customer.email_verified,
                                         phone = phone.value,
@@ -677,6 +758,7 @@ fun AccountInfoSection(
                             onClick = {
                                 if (id != null) {
                                     customerViewModel.getCustomerById9(id)
+
                                 }
                             },
                             shape = RoundedCornerShape(10.dp),
@@ -688,9 +770,14 @@ fun AccountInfoSection(
                 }
 
             }
+
         }
+
     }
+
+
 }
+
 
 
 @Composable
@@ -940,7 +1027,9 @@ fun AccountOptionLogOut(
 @Composable
 fun ChangePasswordSection(
     username: String,
-    snackbarHostState: SnackbarHostState // Thêm tham số SnackbarHostState
+    snackbarHostState: SnackbarHostState, // Thêm tham số SnackbarHostState
+    password: String?,
+    onPasswordChanged: () -> Unit // Callback để chuyển tab
 ) {
     val scope = rememberCoroutineScope()
 
@@ -952,8 +1041,8 @@ fun ChangePasswordSection(
 
     val account = accountViewModel.account
 
-    accountViewModel.getUserByUsername(username)
-    val password by remember { mutableStateOf(account?.password) }
+//    accountViewModel.getUserByUsername(username)
+//    val password by remember { mutableStateOf(account?.password) }
 
     var isPasswordVisible by remember { mutableStateOf(false) }
     var isPasswordVisible1 by remember { mutableStateOf(false) }
@@ -1015,7 +1104,10 @@ fun ChangePasswordSection(
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
                 visualTransformation = if (isPasswordVisible1) VisualTransformation.None else PasswordVisualTransformation(),
                 shape = RoundedCornerShape(17.dp),
-                onValueChange = { matkhaumoi = it }
+                onValueChange = {
+                    matkhaumoi = it
+                    //Log.d("Thành công", "Cập nhật mật khẩu mới: $it")
+                }
             )
             Spacer(modifier = Modifier.height(8.dp))
 
@@ -1040,12 +1132,15 @@ fun ChangePasswordSection(
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
                 visualTransformation = if (isPasswordVisible2) VisualTransformation.None else PasswordVisualTransformation(),
                 shape = RoundedCornerShape(17.dp),
-                onValueChange = { kiemtramkmoi = it }
+                onValueChange = {
+                    kiemtramkmoi = it
+                    //Log.d("Thành công", "Cập nhật mật khẩu mới: $it")
+                }
             )
             Spacer(modifier = Modifier.height(8.dp))
+            //Log.d("Thành công", "trướt BUTTON${password} va ${username} va ${kiemtramkmoi}")
             Button(
                 onClick = {
-                    if (account != null) {
                         if(matkhaucu == password){
                             if(matkhaumoi.isEmpty() || kiemtramkmoi.isEmpty()){
                                 scope.launch {
@@ -1081,16 +1176,19 @@ fun ChangePasswordSection(
                                         message = "Đổi mật khẩu thành công!"
                                     )
                                 }
-                                val taiKhoan = Account(
-                                    idPerson = account.idPerson,
-                                    idRole = "CUS",
-                                    username = username,
-                                    password = matkhaumoi,
-                                    report = 0,
-                                    isNew = 1,
-                                    status = 1
-                                )
-                                accountViewModel.updateAccount(taiKhoan)
+                                accountViewModel.changePassword(username, matkhaucu, matkhaumoi, kiemtramkmoi)
+                                onPasswordChanged()
+//                                val taiKhoan = Account(
+//                                    idPerson = account.idPerson,
+//                                    idRole = "CUS",
+//                                    username = username,
+//                                    password = matkhaumoi,
+//                                    report = 0,
+//                                    isNew = 1,
+//                                    status = 1
+//                                )
+//                                accountViewModel.updateAccount(taiKhoan)
+                                //Log.d("Thành công", "Trong BUTTON ${matkhaucu} va ${username} va ${kiemtramkmoi} va ${matkhaumoi}")
                             }
                         }
                         else{
@@ -1100,7 +1198,6 @@ fun ChangePasswordSection(
                                 )
                             }
                         }
-                    }
                 },
 
                 colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF5F9EFF)),
@@ -1110,5 +1207,74 @@ fun ChangePasswordSection(
                 Text("ĐỔI MẬT KHẨU", color = Color.White, fontSize = 16.sp)
             }
         }
+    }
+}
+
+// hình ảnh base64
+fun compressImage(inputImage: ByteArray, quality: Int, maxFileSizeKB: Int): ByteArray? {
+    try {
+        var bitmap = BitmapFactory.decodeByteArray(inputImage, 0, inputImage.size)
+        val outputStream = ByteArrayOutputStream()
+        var currentQuality = quality
+
+        do {
+            outputStream.reset()
+            bitmap.compress(Bitmap.CompressFormat.JPEG, currentQuality, outputStream)
+
+            if (outputStream.size() / 1024 > maxFileSizeKB) {
+                bitmap = resizeBitmap(bitmap, bitmap.width / 2, bitmap.height / 2)
+            }
+            currentQuality -= 10
+        } while (outputStream.size() / 1024 > maxFileSizeKB && currentQuality > 10)
+
+        return outputStream.toByteArray()
+    } catch (e: Exception) {
+        e.printStackTrace()
+        return null
+    }
+}
+
+fun resizeBitmap(bitmap: Bitmap, newWidth: Int, newHeight: Int): Bitmap {
+    return Bitmap.createScaledBitmap(bitmap, newWidth, newHeight, true)
+}
+
+fun uriToByteArray(context: Context, uri: Uri): ByteArray? {
+    return try {
+        val inputStream = context.contentResolver.openInputStream(uri)
+        inputStream?.use { it.readBytes() }
+    } catch (e: Exception) {
+        e.printStackTrace()
+        null
+    }
+}
+
+fun bitmapToBase64(bitmap: Bitmap): String {
+    val outputStream = ByteArrayOutputStream()
+    bitmap.compress(Bitmap.CompressFormat.JPEG, 80, outputStream)
+    return Base64.encodeToString(outputStream.toByteArray(), Base64.NO_WRAP)
+}
+
+fun isValidBase64(base64: String?): Boolean {
+    return try {
+        Base64.decode(base64?.replace("data:image/jpeg;base64,", ""), Base64.DEFAULT)
+        true
+    } catch (e: IllegalArgumentException) {
+        Log.e("ImagePicker", "Invalid Base64 string: ${base64?.take(100)}")
+        false
+    }
+}
+
+fun cleanBase64(base64: String?): String? {
+    return base64?.replace("\n", "")?.replace("\r", "")?.trim()
+}
+
+fun base64ToBitmap(base64: String?): Bitmap? {
+    return try {
+        val cleanBase64 = cleanBase64(base64) ?: return null
+        val decodedBytes = Base64.decode(cleanBase64, Base64.DEFAULT)
+        BitmapFactory.decodeByteArray(decodedBytes, 0, decodedBytes.size)
+    } catch (e: Exception) {
+        Log.e("ImagePicker", "Error decoding Base64: ${e.message}")
+        null
     }
 }

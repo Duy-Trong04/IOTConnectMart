@@ -9,6 +9,9 @@ import androidx.lifecycle.ViewModel
 import androidx.compose.runtime.State
 import androidx.datastore.preferences.core.edit
 import androidx.lifecycle.viewModelScope
+import com.example.ungdungbanthietbi_iot.api.ChangePasswordRequest
+import com.example.ungdungbanthietbi_iot.api.ChangePasswordResponse
+import com.example.ungdungbanthietbi_iot.api.ChangePasswordUiState
 import com.example.ungdungbanthietbi_iot.config.RetrofitClient
 import com.example.ungdungbanthietbi_iot.api.CheckLoginResponse
 import com.example.ungdungbanthietbi_iot.dataStore
@@ -20,8 +23,10 @@ import com.example.ungdungbanthietbi_iot.models.UpdatePassword
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import retrofit2.Response
 
 class AccountViewModel:ViewModel() {
     var account: Account? by mutableStateOf(null)
@@ -139,23 +144,65 @@ class AccountViewModel:ViewModel() {
         }
     }
 
-    fun updateAccount(account: Account) {
+//    fun updateAccount(account: Account) {
+//        viewModelScope.launch {
+//            try {
+//                val response = withContext(Dispatchers.IO) {
+//                    RetrofitClient.accountAPIService.updateAccount(account)
+//                }
+//                accountUpdateResult = if (response.success) {
+//                    "Cập nhật thành công: ${response.message}"
+//                } else {
+//                    "Cập nhật thất bại: ${response.message}"
+//                }
+//            } catch (e: Exception) {
+//                accountUpdateResult = "Lỗi khi cập nhật account: ${e.message}"
+//                Log.e("Account Error", "Lỗi khi cập nhật account: ${e.message}")
+//            }
+//        }
+//    }
+
+
+    private val _uiState = MutableStateFlow(ChangePasswordUiState())
+    val uiState: StateFlow<ChangePasswordUiState> = _uiState.asStateFlow()
+
+    fun changePassword(username: String, password: String, newPassword: String, confirmPassword: String) {
         viewModelScope.launch {
+            _uiState.value = ChangePasswordUiState(isLoading = true)
             try {
-                val response = withContext(Dispatchers.IO) {
-                    RetrofitClient.accountAPIService.updateAccount(account)
-                }
-                accountUpdateResult = if (response.success) {
-                    "Cập nhật thành công: ${response.message}"
+                val request = ChangePasswordRequest(
+                    username = username,
+                    password = password,
+                    newPassword = newPassword,
+                    confirmPassword = confirmPassword
+                )
+                val response: Response<ChangePasswordResponse> = RetrofitClient.accountAPIService.changePassword(request)
+                if (response.isSuccessful && response.body()?.status_code == 200) {
+                    _uiState.value = ChangePasswordUiState(
+                        isLoading = false,
+                        statusCode = response.body()?.status_code,
+                        error = null,
+                        result = true
+                    )
                 } else {
-                    "Cập nhật thất bại: ${response.message}"
+                    _uiState.value = ChangePasswordUiState(
+                        isLoading = false,
+                        statusCode = response.body()?.status_code,
+                        error = "Đổi mật khẩu thất bại: Mã trạng thái ${response.code()}",
+                        result = false
+                    )
                 }
             } catch (e: Exception) {
-                accountUpdateResult = "Lỗi khi cập nhật account: ${e.message}"
-                Log.e("Account Error", "Lỗi khi cập nhật account: ${e.message}")
+                _uiState.value = ChangePasswordUiState(
+                    isLoading = false,
+                    statusCode = null,
+                    error = e.message ?: "Đã xảy ra lỗi khi đổi mật khẩu",
+                    result = false
+                )
             }
         }
     }
+
 
 
     fun checkLogin(username: String, password: String) {
@@ -205,3 +252,10 @@ data class LoginUiState(
     val error: String? = null,
     val result: Boolean? = null
 )
+
+sealed class UiState {
+    object Idle : UiState()
+    object Loading : UiState()
+    data class Success(val response: ChangePasswordResponse) : UiState()
+    data class Error(val message: String) : UiState()
+}

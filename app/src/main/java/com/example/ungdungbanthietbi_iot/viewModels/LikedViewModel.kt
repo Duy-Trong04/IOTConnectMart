@@ -99,4 +99,28 @@ class LikedViewModel:ViewModel() {
             }
         }
     }
+
+//    suspend fun getLikedProducts(customerId: String): Result<LikedResponse1> {
+//        return try {
+//            Result.success(RetrofitClient.likedAPIService.getLikedProducts(customerId))
+//        } catch (e: Exception) {
+//            Result.failure(e)
+//        }
+//    }
+//
+//    suspend fun addLikedProduct(customerId: String, productId: String): Result<AddLikedResponse1> {
+//        return try {
+//            Result.success(RetrofitClient.likedAPIService.addLikedProduct(AddLikedRequest(customerId, productId)))
+//        } catch (e: Exception) {
+//            Result.failure(e)
+//        }
+//    }
+//
+//    suspend fun deleteLikedProduct(customerId: String, productId: String): Result<DeleteLikedResponse1> {
+//        return try {
+//            Result.success(RetrofitClient.likedAPIService.deleteLikedProduct(customerId, productId))
+//        } catch (e: Exception) {
+//            Result.failure(e)
+//        }
+//    }
 }

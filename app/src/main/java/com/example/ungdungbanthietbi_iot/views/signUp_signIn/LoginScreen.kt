@@ -212,7 +212,7 @@ fun LoginScreen(navController: NavController, accountViewModel: AccountViewModel
                                                 preferences[usernameKey] = username
                                                 preferences[passwordKey] = password
                                             }
-                                            navController.navigate(Screen.HomeScreen.route + "?username=$username&id=${state.customer_id}") {
+                                            navController.navigate(Screen.HomeScreen.route + "?username=$username&id=${state.customer_id}&password=$password") {
                                                 popUpTo(0) { inclusive = true }
                                             }
                                         } else if (state.result == false) {
