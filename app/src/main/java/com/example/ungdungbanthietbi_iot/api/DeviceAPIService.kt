@@ -6,9 +6,6 @@ import retrofit2.http.GET
 import retrofit2.http.Path
 import retrofit2.http.Query
 
-data class DeviceResponse1(
-    val device: List<Device>
-)
 data class DeviceResponse(
     @SerializedName("status_code") val statusCode: Int,
     @SerializedName("data") val data: DataWrapper
@@ -26,18 +23,9 @@ interface DeviceAPIService {
     @GET ("device/getDevicePriceThan5M.php")
     suspend fun getDeviceFeatured(): List<Device>
 
-    @GET("device/show.php")
-    suspend fun getDeviceById1(
-        @Path("id") id: String
-    ): Device
     @GET("product/detail/{id}")
     suspend fun getDeviceById(
         @Path("id") id: Int
-    ): DeviceResponse
-
-    @GET("device/getDeviceByCart.php")
-    suspend fun getDeviceByCart(
-        @Query("idCustomer") idCustomer: String
     ): DeviceResponse
 
     @GET("device/getDeviceByLiked.php")
@@ -45,14 +33,10 @@ interface DeviceAPIService {
         @Query("idCustomer") idCustomer: String
     ): DeviceResponse
 
-    @GET("device/getDeviceByIdOrder.php")
-    suspend fun getDeviceByIdOrder(
-        @Query("id") id: Int
-    ): DeviceResponse
-
-    @GET("device/searchDevice.php")
-    suspend fun searchDevice(
-        @Query("name") name: String,
-        @Query("des") des: String
+    @GET("product")
+    suspend fun searchProducts(
+        @Query("page") page: Int,
+        @Query("limit") limit: Int,
+        @Query("filters") filters: String
     ): DeviceResponse
 }

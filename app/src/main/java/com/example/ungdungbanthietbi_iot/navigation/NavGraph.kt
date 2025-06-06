@@ -349,33 +349,37 @@ fun NavGraph(
         }
         //Màn hinh tìm kiếm đã đăng nhập
         composable(
-            route = Screen.Search_Screen.route + "?username={username}",
+            route = Screen.Search_Screen.route + "?username={username}&idCustomer={idCustomer}",
             arguments = listOf(
-                navArgument("username") {type = NavType.StringType }
+                navArgument("username") {type = NavType.StringType },
+                navArgument("idCustomer") {type = NavType.StringType }
             )
         ){
             val username = it.arguments?.getString("username") ?: ""
-            SearchScreen(navController, username)
+            val idCustomer = it.arguments?.getString("idCustomer") ?: ""
+            SearchScreen(navController, username, idCustomer)
         }
 
         //Màn hình tìm kiếm chưa có tài khoản
         composable(
             route = Screen.Search_Screen.route
         ){
-            SearchScreen(navController, null)
+            SearchScreen(navController, null, null)
         }
 
         //Màn hình kết quả tìm kiếm
         composable(
-            route = Screen.Search_Results.route + "?query={query}&username={username}",
+            route = Screen.Search_Results.route + "?query={query}&username={username}&idCustomer={idCustomer}",
             arguments = listOf(
                 navArgument("query") {type = NavType.StringType },
-                navArgument("username") {type = NavType.StringType }
+                navArgument("username") {type = NavType.StringType },
+                navArgument("idCustomer") {type = NavType.StringType }
             )
         ){
             val query = it.arguments?.getString("query") ?: ""
             val username = it.arguments?.getString("username") ?: ""
-            SearchResultsScreen(navController, query, username)
+            val idCustomer = it.arguments?.getString("idCustomer") ?: ""
+            SearchResultsScreen(navController, query, username, idCustomer)
         }
 
         //Màn hình kết quả tìm kiếm chưa đăng nhập
@@ -386,7 +390,7 @@ fun NavGraph(
             )
         ){
             val query = it.arguments?.getString("query") ?: ""
-            SearchResultsScreen(navController, query, null)
+            SearchResultsScreen(navController, query, null, null)
         }
 
         //Màn hình sản phẩm yêu thích

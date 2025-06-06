@@ -12,6 +12,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.ungdungbanthietbi_iot.config.RetrofitClient
 import com.example.ungdungbanthietbi_iot.models.Device
+import com.google.gson.Gson
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -20,6 +21,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.ByteArrayInputStream
+import java.net.URLEncoder
 
 class DeviceViewModel:ViewModel() {
 
@@ -33,10 +35,6 @@ class DeviceViewModel:ViewModel() {
     var listDeviceOfCustomer by mutableStateOf<List<Device>>(emptyList())
         private set
 
-
-    var listDeviceByOrder by mutableStateOf<List<Device>>(emptyList())
-
-
     private val _listDevice = MutableStateFlow<List<Device>>(emptyList())
     val listDevice: StateFlow<List<Device>> get() = _listDevice.asStateFlow()
 
@@ -48,7 +46,8 @@ class DeviceViewModel:ViewModel() {
     val listDeviceSearch: StateFlow<List<Device>> get() = _listDeviceSearch
     private val _searchQuery = MutableStateFlow("")
     val searchQuery: StateFlow<String> get() = _searchQuery
-
+    private val _searchError = MutableStateFlow<String?>(null)
+    val searchError: StateFlow<String?> get() = _searchError
     fun getDeviceBySlug2(id: Int) {
         viewModelScope.launch(Dispatchers.IO) {
             try {
@@ -65,49 +64,6 @@ class DeviceViewModel:ViewModel() {
             } catch (e: Exception) {
                 _device.value = null
                 Log.e("DeviceViewModel", "Lỗi khi lấy thiết bị", e)
-            }
-        }
-    }
-    fun getDeviceByCart(idCustomer: String) {
-        viewModelScope.launch {
-            try {
-                val response = withContext(Dispatchers.IO) {
-                    RetrofitClient.deviceAPIService.getDeviceByCart(idCustomer)
-                }
-                listDeviceOfCustomer = response.data.data
-            } catch (e: Exception) {
-                Log.e("Device Error", "Lỗi khi lấy device: ${e.message}")
-            }
-        }
-    }
-    // Map lưu trữ danh sách thiết bị theo từng orderId
-    var devicesByOrder by mutableStateOf<Map<Int, List<Device>>>(emptyMap())
-        private set
-
-    fun getDeviceByIdOrder2(orderId: String) {
-        viewModelScope.launch {
-            try {
-                val response = withContext(Dispatchers.IO) {
-                    RetrofitClient.deviceAPIService.getDeviceByIdOrder(orderId.toInt())
-                }
-                // Cập nhật vào map
-                devicesByOrder = devicesByOrder.toMutableMap().apply {
-                    put(orderId.toInt(), response.data.data)
-                }
-            } catch (e: Exception) {
-                Log.e("DeviceViewModel", "Lỗi khi lấy thiết bị: ${e.message}")
-            }
-        }
-    }
-    fun getDeviceByIdOrder(id: Int) {
-        viewModelScope.launch {
-            try {
-                val response = withContext(Dispatchers.IO) {
-                    RetrofitClient.deviceAPIService.getDeviceByIdOrder(id)
-                }
-                listDeviceByOrder = response.data.data
-            } catch (e: Exception) {
-                Log.e("Device Error", "Lỗi khi lấy Device")
             }
         }
     }
@@ -173,22 +129,51 @@ class DeviceViewModel:ViewModel() {
         }
     }
     // Tìm kiếm thiết bị
-    fun searchDevice(name: String, des: String) {
+    fun searchDevice(query: String) {
         viewModelScope.launch {
             try {
-                val response = withContext(Dispatchers.IO) {
-                    RetrofitClient.deviceAPIService.searchDevice(name, des)
+                val trimmedQuery = query.trim()
+                _searchError.value = null // Reset lỗi
+
+                if (trimmedQuery.isEmpty()) {
+                    _listDeviceSearch.value = emptyList()
+                    return@launch
                 }
-                if (response.data.data.isNotEmpty()) {
+                // Xây dựng đối tượng filters JSON
+                val filters = mutableMapOf<String, Any>()
+                filters["logic"] = "OR"
+                val filterList = mutableListOf<Map<String, String>>()
+                if (trimmedQuery.isNotEmpty()) {
+                    filterList.addAll(
+                        listOf(
+                            mapOf("field" to "product.name", "condition" to "contains", "value" to trimmedQuery),
+                            mapOf("field" to "product.description", "condition" to "contains", "value" to trimmedQuery)
+                        )
+                    )
+                }
+                filters["filters"] = filterList
+
+                // Chuyển filters thành chuỗi JSON và mã hóa URL
+                val filtersJson = Gson().toJson(filters)
+                Log.d("DeviceViewModel", "Filter JSON: $filtersJson")
+                // Gọi API tìm kiếm
+                val response = RetrofitClient.deviceAPIService.searchProducts(
+                    page = 1,
+                    limit = 12,
+                    filters = filtersJson
+                )
+
+                if (response.statusCode == 200) {
                     _listDeviceSearch.value = response.data.data
-                    Log.d("Search Success", "Tìm kiếm thành công: ${response.data.data.size} thiết bị")
+                    Log.d("DeviceViewModel", "Tìm kiếm thành công: ${response.data.data.size} kết quả")
                 } else {
                     _listDeviceSearch.value = emptyList()
-                    Log.e("Search Error", "Không tìm thấy thiết bị phù hợp")
+                    _searchError.value = "Lỗi server: ${response.statusCode}"
+                    Log.e("DeviceViewModel", "Tìm kiếm thất bại: ${response.statusCode}")
                 }
             } catch (e: Exception) {
-                Log.e("Search Error", "Lỗi khi tìm kiếm thiết bị: ${e.message}")
                 _listDeviceSearch.value = emptyList()
+                Log.e("DeviceViewModel", "Lỗi khi tìm kiếm", e)
             }
         }
     }

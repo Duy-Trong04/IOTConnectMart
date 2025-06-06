@@ -900,7 +900,7 @@ fun ProductDetailsScreen(
                             )
                             Spacer(modifier = Modifier.height(8.dp))
                             Text(
-                                text = device.descriptionNormal,
+                                text = device.description,
                                 color = Color.Black,
                                 fontSize = 16.sp
                             )

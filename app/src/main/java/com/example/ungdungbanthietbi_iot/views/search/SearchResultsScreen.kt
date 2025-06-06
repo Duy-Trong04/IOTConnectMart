@@ -1,6 +1,7 @@
 package com.example.ungdungbanthietbi_iot.views.search
 
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.GridCells
@@ -8,6 +9,7 @@ import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.FilterAlt
 import androidx.compose.material.icons.filled.KeyboardArrowDown
@@ -35,20 +37,20 @@ import com.example.ungdungbanthietbi_iot.viewModels.DeviceViewModel
 import com.example.ungdungbanthietbi_iot.navigation.Screen
 import com.example.ungdungbanthietbi_iot.utils.formatGiaTien
 
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SearchResultsScreen(
     navController: NavController,
     query: String?,
-    username: String?
+    username: String?,
+    idCustomer:String?
 ) {
     val deviceViewModel: DeviceViewModel = viewModel()
-    val accountViewModel: AccountViewModel = viewModel()
 
     val devices by deviceViewModel.listDeviceSearch.collectAsState()
     val searchQuery by deviceViewModel.searchQuery.collectAsState()
-    val account = accountViewModel.account
-
+    // Trạng thái tải
+    var isLoading by remember { mutableStateOf(true) }
     // Trạng thái cho hộp thoại lọc
     var showFilterDialog by remember { mutableStateOf(false) }
     // Trạng thái cho khoảng giá lọc
@@ -59,10 +61,11 @@ fun SearchResultsScreen(
     var isPriceAscending by remember { mutableStateOf(false) }
 
     LaunchedEffect(query) {
-        if (!query.isNullOrEmpty()) {
+        if (!query.isNullOrEmpty() && searchQuery != devices.firstOrNull()?.name) {
+            isLoading = true
             deviceViewModel.updateSearchQuery(query)
-            deviceViewModel.searchDevice("", query)
-            deviceViewModel.searchDevice(query, "")
+            deviceViewModel.searchDevice(query)
+            isLoading = false
         }
     }
 
@@ -70,32 +73,33 @@ fun SearchResultsScreen(
         topBar = {
             TopAppBar(
                 title = {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(8.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Box(modifier = Modifier.weight(1f)) {
-                            OutlinedTextField(
+//                    Row(
+//                        modifier = Modifier
+//                            .fillMaxWidth()
+//                            .padding(8.dp),
+//                        horizontalArrangement = Arrangement.SpaceBetween,
+//                        verticalAlignment = Alignment.CenterVertically
+//                    ) {
+                        Box(modifier = Modifier.fillMaxWidth(1f)) {
+                            TextField(
                                 value = searchQuery,
                                 onValueChange = { /* Không cho phép nhập trực tiếp */ },
                                 modifier = Modifier
-                                    .fillMaxWidth()
-                                    .height(50.dp),
+                                    .fillMaxWidth(1f),
                                 colors = TextFieldDefaults.colors(
                                     unfocusedContainerColor = Color.White,
                                     focusedContainerColor = Color.White,
                                     focusedTextColor = Color.Black,
-                                    unfocusedTextColor = Color.Black
+                                    unfocusedIndicatorColor = Color.Transparent,
+                                    focusedIndicatorColor = Color.Transparent,
+                                    unfocusedTextColor = Color.Black,
+                                    cursorColor = Color(0xFF5D9EFF)
                                 ),
-                                placeholder = { Text(text = "Tìm kiếm ...") },
                                 textStyle = TextStyle(
                                     fontSize = 16.sp,
-                                    textAlign = TextAlign.Start
+                                    textAlign = TextAlign.Start,
                                 ),
-                                shape = RoundedCornerShape(20.dp),
+                                shape = RoundedCornerShape(25.dp),
                                 singleLine = true,
                                 readOnly = true
                             )
@@ -107,19 +111,21 @@ fun SearchResultsScreen(
                                     }
                             )
                         }
-                        // Nút biểu tượng lọc
-                        IconButton(onClick = { showFilterDialog = true }) {
-                            Icon(
-                                imageVector = Icons.Filled.FilterAlt,
-                                contentDescription = "Filter",
-                                tint = Color.White
-                            )
-                        }
+
+                },
+                actions = {
+                    // Nút biểu tượng lọc
+                    IconButton(onClick = { showFilterDialog = true }) {
+                        Icon(
+                            imageVector = Icons.Filled.FilterAlt,
+                            contentDescription = "Filter",
+                            tint = Color.White
+                        )
                     }
                 },
                 navigationIcon = {
                     IconButton(onClick = { navController.popBackStack() }) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Back")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -133,149 +139,162 @@ fun SearchResultsScreen(
         Column(
             modifier = Modifier
                 .fillMaxSize()
+                .background(Color.White)
                 .padding(padding)
         ) {
-            // TabRow cho các loại lọc
-            TabRow(
-                selectedTabIndex = selectedTabIndex,
-                modifier = Modifier.fillMaxWidth(),
-                contentColor = Color(0xFF5D9EFF),
-                containerColor = Color.White,
-                indicator = { tabPositions ->
-                    SecondaryIndicator(
-                        modifier = Modifier
-                            .zIndex(-1f)
-                            .tabIndicatorOffset(tabPositions[selectedTabIndex]),
-                        color = Color(0xFF5D9EFF)
-                    )
-                }
-            ) {
-                Tab(
-                    selected = selectedTabIndex == 0,
-                    onClick = { selectedTabIndex = 0 },
-                    text = {
-                        Text(
-                            "Liên quan",
-                            color = if (selectedTabIndex == 0) Color(0xFF5D9EFF) else Color.Gray
-                        )
-                    }
-                )
-                Tab(
-                    selected = selectedTabIndex == 1,
-                    onClick = { selectedTabIndex = 1 },
-                    text = {
-                        Text(
-                            "Mới nhất",
-                            color = if (selectedTabIndex == 1) Color(0xFF5D9EFF) else Color.Gray
-                        )
-                    }
-                )
-                Tab(
-                    selected = selectedTabIndex == 2,
-                    onClick = { selectedTabIndex = 2 },
-                    text = {
-                        Text(
-                            "Bán chạy",
-                            color = if (selectedTabIndex == 2) Color(0xFF5D9EFF) else Color.Gray
-                        )
-                    }
-                )
-                Tab(
-                    selected = selectedTabIndex == 3,
-                    onClick = {
-                        if (selectedTabIndex == 3) {
-                            isPriceAscending = !isPriceAscending
-                        } else {
-                            selectedTabIndex = 3
-                            isPriceAscending = false
-                        }
-                    }
-                ) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.Center
-                    ) {
-                        Text(
-                            "Giá",
-                            color = if (selectedTabIndex == 3) Color(0xFF5D9EFF) else Color.Gray
-                        )
-                        Spacer(modifier = Modifier.width(4.dp))
-                        Icon(
-                            imageVector = if (isPriceAscending) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown,
-                            contentDescription = if (isPriceAscending) "Sắp xếp giá tăng dần" else "Sắp xếp giá giảm dần",
-                            modifier = Modifier.size(18.dp),
-                            tint = if (selectedTabIndex == 3) Color(0xFF5D9EFF) else Color.Gray
-                        )
-                    }
-                }
-            }
-
-            // Hộp thoại lọc
-            if (showFilterDialog) {
-                FilterDialog(
-                    priceRange = priceRange,
-                    onDismiss = { showFilterDialog = false },
-                    onApply = { newPriceRange ->
-                        priceRange = newPriceRange
-                        showFilterDialog = false
-                    },
-                    onReset = {
-                        priceRange = 0f..10000000f // Reset khoảng giá về mặc định
-                        showFilterDialog = false
-                    }
-                )
-            }
-
-            // Sắp xếp và lọc danh sách sản phẩm
-            val filteredDevices = devices.filter {
-                it.sellingPrice in priceRange.start..priceRange.endInclusive
-            }
-            val sortedDevices = when (selectedTabIndex) {
-                0 -> filteredDevices
-                1 -> filteredDevices.sortedByDescending { it.created_at }
-                2 -> filteredDevices.sortedByDescending { it.isHide }
-                3 -> if (isPriceAscending) {
-                    filteredDevices.sortedBy { it.sellingPrice }
-                } else {
-                    filteredDevices.sortedByDescending { it.sellingPrice }
-                }
-                else -> filteredDevices
-            }
-
-            // Hiển thị danh sách sản phẩm
-            if (sortedDevices.isEmpty()) {
-                Column(
+            if (isLoading) {
+                Box(
                     modifier = Modifier.fillMaxSize(),
-                    verticalArrangement = Arrangement.Center,
-                    horizontalAlignment = Alignment.CenterHorizontally
+                    contentAlignment = Alignment.Center
                 ) {
-                    Text(
-                        text = "Không tìm thấy sản phẩm",
-                        fontSize = 16.sp,
-                        color = Color.Gray
-                    )
+                    CircularProgressIndicator(color = Color(0xFF5D9EFF))
                 }
             } else {
-                LazyVerticalGrid(
-                    columns = GridCells.Fixed(2),
-                ) {
-                    items(sortedDevices) { device ->
-                        ProductCard(
-                            device = device,
-                            onClick = {
-                                if (account != null) {
-                                    navController.navigate(
-                                        Screen.ProductDetailsScreen.route +
-                                                "?id=${device.idDevice}&idCustomer=${account.idPerson}&username=${username}"
-                                    )
-                                } else {
-                                    navController.navigate(
-                                        Screen.ProductDetailsScreen.route +
-                                                "?id=${device.idDevice}"
-                                    )
-                                }
-                            }
+                // TabRow cho các loại lọc
+                TabRow(
+                    selectedTabIndex = selectedTabIndex,
+                    modifier = Modifier.fillMaxWidth(),
+                    contentColor = Color(0xFF5D9EFF),
+                    containerColor = Color.White,
+                    indicator = { tabPositions ->
+                        SecondaryIndicator(
+                            modifier = Modifier
+                                .zIndex(-1f)
+                                .tabIndicatorOffset(tabPositions[selectedTabIndex]),
+                            color = Color(0xFF5D9EFF)
                         )
+                    }
+                ) {
+                    Tab(
+                        selected = selectedTabIndex == 0,
+                        onClick = { selectedTabIndex = 0 },
+                        text = {
+                            Text(
+                                "Liên quan",
+                                color = if (selectedTabIndex == 0) Color(0xFF5D9EFF) else Color.Gray
+                            )
+                        }
+                    )
+                    Tab(
+                        selected = selectedTabIndex == 1,
+                        onClick = { selectedTabIndex = 1 },
+                        text = {
+                            Text(
+                                "Mới nhất",
+                                color = if (selectedTabIndex == 1) Color(0xFF5D9EFF) else Color.Gray
+                            )
+                        }
+                    )
+                    Tab(
+                        selected = selectedTabIndex == 2,
+                        onClick = { selectedTabIndex = 2 },
+                        text = {
+                            Text(
+                                "Bán chạy",
+                                color = if (selectedTabIndex == 2) Color(0xFF5D9EFF) else Color.Gray
+                            )
+                        }
+                    )
+                    Tab(
+                        selected = selectedTabIndex == 3,
+                        onClick = {
+                            if (selectedTabIndex == 3) {
+                                isPriceAscending = !isPriceAscending
+                            } else {
+                                selectedTabIndex = 3
+                                isPriceAscending = false
+                            }
+                        }
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.Center
+                        ) {
+                            Text(
+                                "Giá",
+                                color = if (selectedTabIndex == 3) Color(0xFF5D9EFF) else Color.Gray
+                            )
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Icon(
+                                imageVector = if (isPriceAscending) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown,
+                                contentDescription = if (isPriceAscending) "Sắp xếp giá tăng dần" else "Sắp xếp giá giảm dần",
+                                modifier = Modifier.size(18.dp),
+                                tint = if (selectedTabIndex == 3) Color(0xFF5D9EFF) else Color.Gray
+                            )
+                        }
+                    }
+                }
+
+                // Hộp thoại lọc
+                if (showFilterDialog) {
+                    FilterDialog(
+                        priceRange = priceRange,
+                        onDismiss = { showFilterDialog = false },
+                        onApply = { newPriceRange ->
+                            priceRange = newPriceRange
+                            showFilterDialog = false
+                        },
+                        onReset = {
+                            priceRange = 0f..10000000f // Reset khoảng giá về mặc định
+                            showFilterDialog = false
+                        }
+                    )
+                }
+
+                // Sắp xếp và lọc danh sách sản phẩm
+                val filteredDevices = devices.filter {
+                    it.sellingPrice in priceRange.start..priceRange.endInclusive
+                }
+                val sortedDevices = when (selectedTabIndex) {
+                    0 -> filteredDevices
+                    1 -> filteredDevices.sortedByDescending { it.created_at }
+                    2 -> filteredDevices.sortedByDescending { it.totalReview }
+                    3 -> if (isPriceAscending) {
+                        filteredDevices.sortedBy { it.sellingPrice }
+                    } else {
+                        filteredDevices.sortedByDescending { it.sellingPrice }
+                    }
+
+                    else -> filteredDevices
+                }
+
+                // Hiển thị danh sách sản phẩm
+                if (sortedDevices.isEmpty()) {
+                    Column(
+                        modifier = Modifier.fillMaxSize()
+                            .background(Color.White),
+                        verticalArrangement = Arrangement.Center,
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Text(
+                            text = "Không tìm thấy sản phẩm",
+                            fontSize = 16.sp,
+                            color = Color.Gray
+                        )
+                    }
+                } else {
+                    LazyVerticalGrid(
+                        modifier = Modifier.fillMaxSize().background(Color.White),
+                        columns = GridCells.Fixed(2),
+                    ) {
+                        items(sortedDevices) { device ->
+                            ProductCard(
+                                device = device,
+                                onClick = {
+                                    if (username != null) {
+                                        navController.navigate(
+                                            Screen.ProductDetailsScreen.route +
+                                                    "?id=${device.idDevice}&idCustomer=${idCustomer}&username=${username}"
+                                        )
+                                    } else {
+                                        navController.navigate(
+                                            Screen.ProductDetailsScreen.route +
+                                                    "?id=${device.idDevice}"
+                                        )
+                                    }
+                                }
+                            )
+                        }
                     }
                 }
             }

@@ -7,7 +7,7 @@ data class Device(
     val name: String,
     val slug: String,
     val description: String,
-    @SerializedName("description_normal") val descriptionNormal: String,
+    //@SerializedName("description_normal") val descriptionNormal: String,
     @SerializedName("selling_price") val sellingPrice: Double,
     val sold: Int,
     val views: Int,
