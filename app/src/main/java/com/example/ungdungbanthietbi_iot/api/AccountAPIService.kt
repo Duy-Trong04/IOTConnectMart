@@ -50,6 +50,65 @@ data class ChangePasswordUiState(
     val result: Boolean? = null
 )
 
+data class RegisterRequest(
+    val username: String,
+    val password: String,
+    val confirm_password: String,
+    val surname: String,
+    val lastname: String,
+    val phone: String,
+    val email: String,
+    val gender: Boolean
+)
+data class RegisterResponse(
+    val status_code: Int,
+    val data: AddAccount
+)
+
+// Yêu cầu gửi email để nhận OTP
+data class SendOtpRequest(
+    val email: String
+)
+
+// Phản hồi từ API gửi OTP
+data class SendOtpResponse(
+    val status_code: Int,
+    val data: OtpData
+)
+
+data class OtpData(
+    val message: String,
+    val otp: String
+)
+
+// Yêu cầu xác minh OTP
+data class VerifyOtpRequest(
+    val email: String,
+    val otp: String
+)
+
+// Phản hồi từ API xác minh OTP
+data class VerifyOtpResponse(
+    val status_code: Int,
+    val data: VerifyData
+)
+
+data class VerifyData(
+    val message: String
+)
+
+// Yêu cầu đặt lại mật khẩu
+data class ResetPasswordRequest(
+    val email: String,
+    val newPassword: String,
+    val confirmPassword: String
+)
+
+// Phản hồi từ API đặt lại mật khẩu
+data class ResetPasswordResponse(
+    val status_code: Int
+)
+
 interface AccuntAPIService {
     @GET("account/check_account.php")
     suspend fun check_Login(
@@ -75,10 +134,10 @@ interface AccuntAPIService {
         @Query("idPerson") idPerson: String
     ): Account
 
-    @POST("account/create.php")
+    @POST("auth/register")
     suspend fun addAccount(
-        @Body account: AddAccount
-    ): AddAccountResponse
+        @Body account: RegisterRequest
+    ): Response<RegisterResponse>
 
     @PUT("account/updatePassword.php")
     suspend fun updatePassword(
@@ -94,4 +153,19 @@ interface AccuntAPIService {
     suspend fun changePassword(
         @Body request: ChangePasswordRequest
     ): Response<ChangePasswordResponse>
+
+    @POST("auth/send-otp")
+    suspend fun sendOtp(
+        @Body request: SendOtpRequest
+    ): Response<SendOtpResponse>
+
+    @POST("auth/verify-otp")
+    suspend fun verifyOtp(
+        @Body request: VerifyOtpRequest
+    ): Response<VerifyOtpResponse>
+
+    @POST("auth/account/change-password")
+    suspend fun resetPassword(
+        @Body request: ResetPasswordRequest
+    ): Response<ResetPasswordResponse>
 }

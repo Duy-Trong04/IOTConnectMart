@@ -44,6 +44,7 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.example.ungdungbanthietbi_iot.R
 import com.example.ungdungbanthietbi_iot.navigation.Screen
+import com.example.ungdungbanthietbi_iot.viewModels.AccountViewModel
 
 /** Giao diện màn hình cập nhật mật khẩu (ResetPasswordScreen)
  * -------------------------------------------
@@ -65,7 +66,9 @@ import com.example.ungdungbanthietbi_iot.navigation.Screen
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 
-fun ResetPasswordScreen(navController: NavController) {
+fun ResetPasswordScreen(navController: NavController,
+                        accountViewModel: AccountViewModel,
+                        email: String?) {
     // Biến nhận dữ liệu mật khẩu mới từ người dùng
     var Password by remember { mutableStateOf("") }
     // Biến nhận dữ liệu nhập lại mật khầu từ người dùng
@@ -177,6 +180,7 @@ fun ResetPasswordScreen(navController: NavController) {
                     Spacer(modifier = Modifier.height(16.dp))
                     Button(
                         onClick = { /* Chuyển sang màn hình đăng nhập(LoginScreen) */
+                            accountViewModel.resetPassword(email!!, Password, comfirmPassword)
                             navController.navigate(Screen.LoginScreen.route)
                         },
                         modifier = Modifier

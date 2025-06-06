@@ -3,6 +3,7 @@ package com.example.ungdungbanthietbi_iot.views.signUp_signIn
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import android.util.Log
+import android.widget.Toast
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -35,6 +36,8 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -59,6 +62,8 @@ import com.example.ungdungbanthietbi_iot.models.AddCustomer
 import com.example.ungdungbanthietbi_iot.viewModels.CustomerViewModel
 import com.example.ungdungbanthietbi_iot.navigation.Screen
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.LocalContext
+import com.example.ungdungbanthietbi_iot.api.RegisterRequest
 
 
 /** Giao diện màn hình đăng ký (RegisterScreen)
@@ -88,6 +93,7 @@ fun RegisterScreen(
     customerViewModel: CustomerViewModel
 ) {
 
+
     val accountCheckResult by accountViewModel.accountCheckResult
     val customerCheckResult by customerViewModel.customerCheckResult
     Log.d("AccountViewModel", "accountCheckResult: $accountCheckResult")
@@ -100,6 +106,8 @@ fun RegisterScreen(
     // Biến nhận dữ liệu sdt từ người dùng
     var sdt by remember { mutableStateOf("") }
     // Biến nhận dữ liệu email từ người dùng
+    var email by remember { mutableStateOf("") }
+    // Biến nhận dữ liệu username từ người dùng
     var username by remember { mutableStateOf("") }
     // Biến nhận dữ liệu password từ người dùng
     var password by remember { mutableStateOf("") }
@@ -114,12 +122,27 @@ fun RegisterScreen(
     var openDialog_Dk by remember { mutableStateOf(false) }
 
     // Gửi dữ liệu lên server
-    val accountNew = AddAccount(username, username, password)
+    //val accountNew = AddAccount(username, username, password)
     val customerNew = AddCustomer(username, ho, ten, sdt)
-    accountViewModel.check_Dk(accountNew)
+    //accountViewModel.check_Dk(accountNew)
     customerViewModel.check_Dk(customerNew)
 
     var phoneError by remember { mutableStateOf("") }
+
+//    // Xử lý kết quả từ API
+//    LaunchedEffect(registerResult) {
+//        val context = LocalContext.current
+//        registerResult?.let { response ->
+//            if (response.isSuccessful && response.body()?.status_code == 200) {
+//                Toast.makeText(context, "Đăng ký thành công!", Toast.LENGTH_SHORT).show()
+//                openDialog_Dk = true
+//            } else {
+//                val errorMessage = response.errorBody()?.string() ?: "Đăng ký thất bại"
+//                Toast.makeText(context, errorMessage, Toast.LENGTH_SHORT).show()
+//                openDialog = true
+//            }
+//        }
+//    }
 
     Scaffold(
         modifier = Modifier.fillMaxWidth(),
@@ -239,6 +262,30 @@ fun RegisterScreen(
 
                     //email
                     TextField(
+                        value = email,
+                        onValueChange = { email = it },
+                        modifier = Modifier.width(350.dp).padding(4.dp),
+                        placeholder = { Text(text = "Email") },
+                        leadingIcon = {
+                            Icon(
+                                imageVector = Icons.Default.Email,
+                                contentDescription = "email"
+                            )
+                        },
+                        colors = TextFieldDefaults.colors(
+                            focusedContainerColor = Color.White,
+                            unfocusedContainerColor = Color.White,
+                            focusedIndicatorColor = Color(0xFF00C3FF)
+                        ),
+                        singleLine = true,
+                        keyboardOptions = KeyboardOptions.Default.copy(
+                            keyboardType = KeyboardType.Email,
+                            imeAction = ImeAction.Next
+                        )
+                    )
+
+                    //username
+                    TextField(
                         value = username,
                         onValueChange = { username = it },
                         modifier = Modifier.width(350.dp).padding(4.dp),
@@ -352,29 +399,25 @@ fun RegisterScreen(
                     Spacer(modifier = Modifier.height(16.dp))
                     Button(
                         onClick = {
-                            accountViewModel.check_Dk(accountNew)
-                            customerViewModel.check_Dk(customerNew)
-                            if(accountCheckResult == false || customerCheckResult == false) {
-                                // Kiểm tra điều kiện hợp lệ trước khi gửi lên server
-                                if (username.isNotEmpty() && password.isNotEmpty() && comfirmPassword.isNotEmpty() && sdt.isNotEmpty() && ho.isNotEmpty() && ten.isNotEmpty()) {
-                                    if (password == comfirmPassword) {
-                                        // Thực hiện gọi API hoặc gửi dữ liệu tới server
-                                        accountViewModel.addToAccount(accountNew)
-                                        // Ví dụ gọi ViewModel để gửi dữ liệu
-                                        customerViewModel.addToCustomer(customerNew)
-                                        // Điều hướng đến màn hình đăng nhập sau khi thành công
-                                        openDialog_Dk=true
 
-                                    } else {
-                                        openDialog = true  // Nếu mật khẩu không khớp, hiển thị thông báo lỗi
-                                    }
-                                } else {
-                                    openDialog = true  // Nếu thiếu thông tin, hiển thị thông báo lỗi
-                                }
-                                Log.d("AccountViewModel", "Đăng ký thành công\n")
-                            } else if (accountCheckResult == true&& customerCheckResult == true) {
+                            val accountNew = RegisterRequest(
+                                username = username,
+                                password = password,
+                                confirm_password = comfirmPassword,
+                                surname = ho,
+                                lastname = ten,
+                                phone = sdt,
+                                email = email,
+                                gender = true
+                            )
+                            if (username.isNotEmpty() && password.isNotEmpty() && comfirmPassword.isNotEmpty() && sdt.isNotEmpty() && ho.isNotEmpty() && ten.isNotEmpty()) {
+                                accountViewModel.register(accountNew)
+                                navController.navigate(Screen.LoginScreen.route)
+                                Log.d("AccountViewModel", "Đăng ký thành công")
+                                openDialog_Dk = true
+                            }
+                            else {
                                 openDialog = true
-                                Log.d("AccountViewModel", "Đăng ký thất bại\n")
                             }
                         },
                         modifier = Modifier

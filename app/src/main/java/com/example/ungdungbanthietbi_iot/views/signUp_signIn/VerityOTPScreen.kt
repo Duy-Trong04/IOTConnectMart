@@ -18,6 +18,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material3.AlertDialog
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -51,6 +52,7 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.navigation.NavController
 import com.example.ungdungbanthietbi_iot.R
 import com.example.ungdungbanthietbi_iot.navigation.Screen
+import com.example.ungdungbanthietbi_iot.viewModels.AccountViewModel
 import kotlinx.coroutines.delay
 
 /** Giao diện màn hình xác thực OTP (VerifyOTPScreen)
@@ -75,13 +77,17 @@ import kotlinx.coroutines.delay
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun VerifyOTPScreen(navController: NavController) {
+fun VerifyOTPScreen(navController: NavController,
+                    accountViewModel: AccountViewModel,
+                    email: String?) {
     // Biến lưu trữ 6 chữ số OTP
     var otpDigits by remember { mutableStateOf(List(6) { "" }) }
     var isResendEnabled by remember { mutableStateOf(false) }
     var timer by remember { mutableStateOf(59) }
     // Tạo FocusRequester cho từng ô
     val focusRequesters = remember { List(6) { FocusRequester() } }
+    var showErrorDialog by remember { mutableStateOf(false) }
+    var errorMessage by remember { mutableStateOf("") }
 
     // Bắt đầu đếm ngược thời gian
     LaunchedEffect(key1 = timer) {
@@ -179,7 +185,14 @@ fun VerifyOTPScreen(navController: NavController) {
 
                     Button(
                         onClick = {
-                            navController.navigate(Screen.ResetPasswordScreen.route)
+                            if (otpDigits.isNotEmpty()) {
+                                accountViewModel.verifyOtp(email!!, otpDigits.joinToString(""))
+                                navController.navigate(Screen.ResetPasswordScreen.route + "?email=${email}")
+                            } else {
+                                errorMessage = "Vui lòng nhập mã OTP"
+                                showErrorDialog = true
+                            }
+
                         },
                         modifier = Modifier
                             .width(350.dp)
@@ -193,6 +206,19 @@ fun VerifyOTPScreen(navController: NavController) {
                             text = "XÁC NHẬN",
                             fontSize = 23.sp,
                             fontWeight = FontWeight.Bold
+                        )
+                    }
+
+                    if (showErrorDialog) {
+                        AlertDialog(
+                            onDismissRequest = { showErrorDialog = false },
+                            title = { Text("Lỗi") },
+                            text = { Text(errorMessage) },
+                            confirmButton = {
+                                Button(onClick = { showErrorDialog = false }) {
+                                    Text("OK")
+                                }
+                            }
                         )
                     }
                 }

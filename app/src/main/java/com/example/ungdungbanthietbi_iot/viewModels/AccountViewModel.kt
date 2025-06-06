@@ -2,6 +2,7 @@ package com.example.ungdungbanthietbi_iot.viewModels
 
 import android.content.Context
 import android.util.Log
+import android.view.PixelCopy.request
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -14,6 +15,14 @@ import com.example.ungdungbanthietbi_iot.api.ChangePasswordResponse
 import com.example.ungdungbanthietbi_iot.api.ChangePasswordUiState
 import com.example.ungdungbanthietbi_iot.config.RetrofitClient
 import com.example.ungdungbanthietbi_iot.api.CheckLoginResponse
+import com.example.ungdungbanthietbi_iot.api.RegisterRequest
+import com.example.ungdungbanthietbi_iot.api.RegisterResponse
+import com.example.ungdungbanthietbi_iot.api.ResetPasswordRequest
+import com.example.ungdungbanthietbi_iot.api.ResetPasswordResponse
+import com.example.ungdungbanthietbi_iot.api.SendOtpRequest
+import com.example.ungdungbanthietbi_iot.api.SendOtpResponse
+import com.example.ungdungbanthietbi_iot.api.VerifyOtpRequest
+import com.example.ungdungbanthietbi_iot.api.VerifyOtpResponse
 import com.example.ungdungbanthietbi_iot.dataStore
 import com.example.ungdungbanthietbi_iot.models.Account
 import com.example.ungdungbanthietbi_iot.models.AddAccount
@@ -38,6 +47,10 @@ class AccountViewModel:ViewModel() {
     private var accountAddResult by mutableStateOf("")
 
 
+    private val _loginResult = MutableStateFlow<CheckLoginResponse?>(null)
+    val loginResult: StateFlow<CheckLoginResponse?> = _loginResult
+
+
     private var accountUpdateResult by mutableStateOf("")
 
     var username: String? = null
@@ -48,6 +61,24 @@ class AccountViewModel:ViewModel() {
 
     private val _accountCheckResult = mutableStateOf<Boolean?>(null)
     val accountCheckResult: State<Boolean?> = _accountCheckResult
+
+
+    fun CheckLogin(username: String, password: String) {
+        viewModelScope.launch {
+            try {
+                // Thực hiện yêu cầu API
+                val response = withContext(Dispatchers.IO) {
+                    RetrofitClient.accountAPIService.check_Login(username, password)
+                }
+                // Cập nhật kết quả API vào state
+                _loginResult.value = response
+            } catch (e: Exception) {
+                // Xử lý lỗi nếu có
+                Log.e("TaiKhoanViewModel", "Đã xảy ra lỗi: ${e.message}")
+                _loginResult.value = CheckLoginResponse(result = false, message = e.message)
+            }
+        }
+    }
 
     suspend fun logout(context: Context) {
         try {
@@ -88,6 +119,7 @@ class AccountViewModel:ViewModel() {
             }
         }
     }
+
     fun getAccountById(idPerson: String) {
         this.idPerson = idPerson
         viewModelScope.launch(Dispatchers.IO) {
@@ -99,68 +131,55 @@ class AccountViewModel:ViewModel() {
         }
     }
 
-    //Them vào account
-    fun addToAccount(account: AddAccount) {
+
+    private val _registerResult = MutableStateFlow<Response<RegisterResponse>?>(null)
+    val registerResult: StateFlow<Response<RegisterResponse>?> = _registerResult
+
+
+    fun register(request: RegisterRequest) {
         viewModelScope.launch {
             try {
-                // Gọi API để thêm account trên server
-                val response = RetrofitClient.accountAPIService.addAccount(account)
-                accountAddResult = if (response.success) {
-                    "Cập nhật thành công: ${response.message}"
+                val response = RetrofitClient.accountAPIService.addAccount(request)
+                _registerResult.value = response
+                if (response.isSuccessful) {
+                    Log.d("AccountViewModel", "Registration successful: ${response.body()?.data}")
                 } else {
-                    "Cập nhật thất bại: ${response.message}"
+                    Log.e("AccountViewModel", "Registration failed: ${response.errorBody()?.string()}")
                 }
             } catch (e: Exception) {
-                Log.e("AddToAccount", "Lỗi kết nối: ${e.message}")
+                Log.e("AccountViewModel", "Registration error: ${e.message}")
+                _registerResult.value = null
             }
         }
     }
 
-    fun check_Dk(account: AddAccount) {
-        viewModelScope.launch {
-            try {
-                val response = RetrofitClient.accountAPIService.checkAccount_Dk(account)
-                // Giả sử response.success là một Boolean xác nhận xem khách hàng có hợp lệ không
-                    _accountCheckResult.value= response
-                Log.d("AccountViewModel", "check_Dka: $response")
-            } catch (e: Exception) {
-                Log.e("AccountViewModel", "Lỗi kết nối: ${e.message}")
-                _accountCheckResult.value= false
+        fun check_Dk(account: AddAccount) {
+            viewModelScope.launch {
+                try {
+                    val response = RetrofitClient.accountAPIService.checkAccount_Dk(account)
+                    // Giả sử response.success là một Boolean xác nhận xem khách hàng có hợp lệ không
+                    _accountCheckResult.value = response
+                    Log.d("AccountViewModel", "check_Dka: $response")
+                } catch (e: Exception) {
+                    Log.e("AccountViewModel", "Lỗi kết nối: ${e.message}")
+                    _accountCheckResult.value = false
+                }
             }
         }
-    }
 
-    fun updatePassword(account: UpdatePassword) {
-        viewModelScope.launch {
-            try {
-                val response = RetrofitClient.accountAPIService.updatePassword(account)
-                // Giả sử response.success là một Boolean xác nhận xem khách hàng có hợp lệ không
-                //_customerCheckResult.value = response
-                Log.d("AccountViewModel", "check_Dkc: $response")
-            } catch (e: Exception) {
-                Log.e("AccountViewModel", "Lỗi kết nối: ${e.message}")
-                //_customerCheckResult.value = false
+        fun updatePassword(account: UpdatePassword) {
+            viewModelScope.launch {
+                try {
+                    val response = RetrofitClient.accountAPIService.updatePassword(account)
+                    // Giả sử response.success là một Boolean xác nhận xem khách hàng có hợp lệ không
+                    //_customerCheckResult.value = response
+                    Log.d("AccountViewModel", "check_Dkc: $response")
+                } catch (e: Exception) {
+                    Log.e("AccountViewModel", "Lỗi kết nối: ${e.message}")
+                    //_customerCheckResult.value = false
+                }
             }
         }
-    }
-
-//    fun updateAccount(account: Account) {
-//        viewModelScope.launch {
-//            try {
-//                val response = withContext(Dispatchers.IO) {
-//                    RetrofitClient.accountAPIService.updateAccount(account)
-//                }
-//                accountUpdateResult = if (response.success) {
-//                    "Cập nhật thành công: ${response.message}"
-//                } else {
-//                    "Cập nhật thất bại: ${response.message}"
-//                }
-//            } catch (e: Exception) {
-//                accountUpdateResult = "Lỗi khi cập nhật account: ${e.message}"
-//                Log.e("Account Error", "Lỗi khi cập nhật account: ${e.message}")
-//            }
-//        }
-//    }
 
 
     private val _uiState = MutableStateFlow(ChangePasswordUiState())
@@ -240,6 +259,77 @@ class AccountViewModel:ViewModel() {
                     error = e.message ?: "Đã xảy ra lỗi khi đăng nhập",
                     result = false
                 )
+        }
+        }
+        }
+
+
+    private val _sendOtpResult = MutableStateFlow<Response<SendOtpResponse>?>(null)
+    val sendOtpResult: StateFlow<Response<SendOtpResponse>?> = _sendOtpResult
+
+    private val _verifyOtpResult = MutableStateFlow<Response<VerifyOtpResponse>?>(null)
+    val verifyOtpResult: StateFlow<Response<VerifyOtpResponse>?> = _verifyOtpResult
+
+    private val _resetPasswordResult = MutableStateFlow<Response<ResetPasswordResponse>?>(null)
+    val resetPasswordResult: StateFlow<Response<ResetPasswordResponse>?> = _resetPasswordResult
+
+    fun sendOtp(email: String) {
+        viewModelScope.launch {
+            try {
+                val request = SendOtpRequest(email = email)
+                Log.d("AuthViewModel", "Sending OTP request: $request")
+                val response = RetrofitClient.authApiService.sendOtp(request)
+                _sendOtpResult.value = response
+                if (response.isSuccessful) {
+                    Log.d("AuthViewModel", "Send OTP successful: ${response.body()?.data}")
+                } else {
+                    Log.e("AuthViewModel", "Send OTP failed: ${response.errorBody()?.string()}")
+                }
+            } catch (e: Exception) {
+                Log.e("AuthViewModel", "Send OTP error: ${e.message}")
+                _sendOtpResult.value = null
+            }
+        }
+    }
+
+    fun verifyOtp(email: String, otp: String) {
+        viewModelScope.launch {
+            try {
+                val request = VerifyOtpRequest(email = email, otp = otp)
+                Log.d("AuthViewModel", "Verify OTP request: $request")
+                val response = RetrofitClient.verifyOtp.verifyOtp(request)
+                _verifyOtpResult.value = response
+                if (response.isSuccessful) {
+                    Log.d("AuthViewModel", "Verify OTP successful: ${response.body()?.data}")
+                } else {
+                    Log.e("AuthViewModel", "Verify OTP failed: ${response.errorBody()?.string()}")
+                }
+            } catch (e: Exception) {
+                Log.e("AuthViewModel", "Verify OTP error: ${e.message}")
+                _verifyOtpResult.value = null
+            }
+        }
+    }
+
+    fun resetPassword(email: String, newPassword: String, confirmPassword: String) {
+        viewModelScope.launch {
+            try {
+                val request = ResetPasswordRequest(
+                    email = email,
+                    newPassword = newPassword,
+                    confirmPassword = confirmPassword
+                )
+                Log.d("AuthViewModel", "Reset password request: $request")
+                val response = RetrofitClient.resetPassword.resetPassword(request)
+                _resetPasswordResult.value = response
+                if (response.isSuccessful) {
+                    Log.d("AuthViewModel", "Reset password successful: ${response.body()?.status_code}")
+                } else {
+                    Log.e("AuthViewModel", "Reset password failed: ${response.errorBody()?.string()}")
+                }
+            } catch (e: Exception) {
+                Log.e("AuthViewModel", "Reset password error: ${e.message}")
+                _resetPasswordResult.value = null
             }
         }
     }

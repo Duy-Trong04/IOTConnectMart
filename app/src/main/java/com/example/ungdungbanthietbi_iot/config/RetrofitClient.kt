@@ -117,4 +117,29 @@ object RetrofitClient {
             .build()
             .create(CategoryApi::class.java)
     }
+
+    val verifyOtp: AccuntAPIService by lazy {
+        Retrofit.Builder()
+            .baseUrl(Constant.BASE_URL)
+            .addConverterFactory(GsonConverterFactory.create(GsonBuilder().create()))
+            .build()
+            .create(AccuntAPIService::class.java)
+    }
+
+    val authApiService: AccuntAPIService by lazy {
+        Retrofit.Builder()
+            .baseUrl(Constant.BASE_URL)
+            .addConverterFactory(GsonConverterFactory.create(GsonBuilder().create()))
+            .build()
+            .create(AccuntAPIService::class.java)
+    }
+
+    val resetPassword: AccuntAPIService by lazy {
+        Retrofit.Builder()
+            .baseUrl(Constant.BASE_URL)
+            .addConverterFactory(GsonConverterFactory.create(GsonBuilder().create()))
+            .build()
+            .create(AccuntAPIService::class.java)
+    }
+
 }
