@@ -109,7 +109,8 @@ fun CheckoutScreen(
     selectedProducts: List<Triple<Int, Int, Int>>,
     tongtien: Double,
     username: String,
-    idCustomer: String
+    idCustomer: String,
+    password: String,
 ) {
     val deviceViewModel: DeviceViewModel = viewModel()
     val cartViewModel: CartViewModel = viewModel()
@@ -205,7 +206,7 @@ fun CheckoutScreen(
                                 "id=$idCustomer&" +
                                 "orderId=$encodedOrderId&" +
                                 "totalMoney=${orderData.totalMoney}&" +
-                                "createdAt=$encodedCreatedAt"
+                                "createdAt=$encodedCreatedAt&password=$password"
                     ) {
                         popUpTo(0) { inclusive = true }
                     }

@@ -59,7 +59,8 @@ fun CheckOutSuccessScreen(
     id: String,
     orderId: String,
     totalMoney: Int,
-    createdAt: String
+    createdAt: String,
+    password: String
 ) {
     var animateIcon by remember { mutableStateOf(false) }
     val scale by animateFloatAsState(
@@ -212,7 +213,7 @@ fun CheckOutSuccessScreen(
             Button(
                 onClick = {
                     navController.navigate(
-                        "${Screen.HomeScreen.route}?username=${username}&id=${id}"
+                        "${Screen.HomeScreen.route}?username=${username}&id=${id}&password=$password"
                     ) {
                         popUpTo(0) { inclusive = true }
                     }

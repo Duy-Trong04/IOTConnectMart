@@ -78,7 +78,7 @@ class MainActivity : ComponentActivity() {
                         accountViewModel.loginUiState.collect { loginState ->
                             if (loginState.isLoading) return@collect
                             startDestination = if (loginState.result == true && loginState.customer_id != null) {
-                                "${Screen.HomeScreen.route}?username=$savedUsername&id=${loginState.customer_id}"
+                                "${Screen.HomeScreen.route}?username=$savedUsername&id=${loginState.customer_id}&password=$savedPassword"
                             } else {
                                 Screen.LoginScreen.route
                             }

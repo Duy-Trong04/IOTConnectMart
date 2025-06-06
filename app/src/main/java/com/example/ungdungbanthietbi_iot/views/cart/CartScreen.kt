@@ -325,7 +325,8 @@ fun CartItem(
 fun CartScreen(
     navController: NavController,
     idCustomer: String,
-    username: String
+    username: String,
+    password: String
 ) {
     val cartViewModel: CartViewModel = viewModel()
     val deviceViewModel: DeviceViewModel = viewModel()
@@ -504,7 +505,7 @@ fun CartScreen(
                                 openDialog = true // Hiển thị dialog thông báo thêm địa chỉ
                             } else {
                                 val selectedProductsString = selectedProducts.joinToString(",") { "${it.first}:${it.second}:${it.third}" }
-                                navController.navigate(Screen.Check_Out.route + "?selectedProducts=${selectedProductsString}&tongtien=${totalPrice}&username=${username}&id=$idCustomer")
+                                navController.navigate(Screen.Check_Out.route + "?selectedProducts=${selectedProductsString}&tongtien=${totalPrice}&username=${username}&id=$idCustomer&password=$password")
                             }
                         },
                         shape = RoundedCornerShape(10.dp),

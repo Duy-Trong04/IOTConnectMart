@@ -42,7 +42,8 @@ fun CategoriesScreen(
     deviceViewModel: DeviceViewModel = viewModel(),
     category: String?,
     username: String?,
-    idCustomer: String?
+    idCustomer: String?,
+    password: String?
 ) {
     val listAllDevice: List<Device> = deviceViewModel.listAllDevice
     val filteredDevices = listAllDevice.filter { it.categories == category } // Lọc sản phẩm theo danh mục
@@ -113,6 +114,7 @@ fun CategoriesScreen(
                                     isFavorite = false, // Có thể kiểm tra trạng thái yêu thích
                                     idCustomer = idCustomer,
                                     username = username,
+                                    password = password,
                                     deviceViewModel = deviceViewModel,
                                     navController = navController
                                 )

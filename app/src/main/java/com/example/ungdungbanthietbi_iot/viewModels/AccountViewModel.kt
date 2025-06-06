@@ -259,9 +259,9 @@ class AccountViewModel:ViewModel() {
                     error = e.message ?: "Đã xảy ra lỗi khi đăng nhập",
                     result = false
                 )
+            }
         }
-        }
-        }
+    }
 
 
     private val _sendOtpResult = MutableStateFlow<Response<SendOtpResponse>?>(null)

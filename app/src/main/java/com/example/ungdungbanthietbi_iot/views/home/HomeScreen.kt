@@ -194,7 +194,6 @@ fun HomeScreen(
         drawerContent = {
             ModalDrawerSheet {
                 // Header
-                // Header của sidemenu
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -611,6 +610,7 @@ fun HomeScreen(
                     navController = navController,
                     username = username,
                     id = id,
+                    password = password,
                     isFavorite = isFavorite,
                     listAllDevice = listAllDevice,
                     listDeviceFeatured = listDeviceFeatured,
@@ -642,6 +642,7 @@ fun HomeContent(
     navController: NavController,
     username: String?,
     id: String?,
+    password: String?,
     isFavorite: Boolean,
     listAllDevice: List<Device>,
     listDeviceFeatured: List<Device>,
@@ -823,6 +824,7 @@ fun HomeContent(
                             isFavorite = isFavorite,
                             idCustomer = id,
                             username = username,
+                            password = password,
                             deviceViewModel = deviceViewModel,
                             navController = navController
                         )
@@ -909,6 +911,7 @@ fun HomeContent(
                                 isFavorite = isFavorite,
                                 idCustomer = id,
                                 username = username,
+                                password = password,
                                 deviceViewModel = deviceViewModel,
                                 navController = navController
                             )
@@ -1046,6 +1049,7 @@ fun CardDevice(
     isFavorite: Boolean,
     idCustomer: String?,
     username: String?,
+    password: String?,
     deviceViewModel: DeviceViewModel,
     navController: NavController
 ) {
@@ -1079,7 +1083,7 @@ fun CardDevice(
             if (username != null) {
                 navController.navigate(
                     Screen.ProductDetailsScreen.route +
-                            "?id=${device.idDevice}&idCustomer=${idCustomer}&username=${username}"
+                            "?id=${device.idDevice}&idCustomer=${idCustomer}&username=${username}&password=$password"
                 )
             } else {
                 navController.navigate(Screen.ProductDetailsScreen.route + "?id=${device.idDevice}")

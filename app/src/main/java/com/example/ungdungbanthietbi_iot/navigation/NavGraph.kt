@@ -145,12 +145,13 @@ fun NavGraph(
 
         //Màn hình thanh toán
         composable(
-            route = Screen.Check_Out.route + "?selectedProducts={selectedProducts}&tongtien={tongtien}&username={username}&id={id}",
+            route = Screen.Check_Out.route + "?selectedProducts={selectedProducts}&tongtien={tongtien}&username={username}&id={id}&password={password}",
             arguments = listOf(
                 navArgument("selectedProducts") {type = NavType.StringType },
                 navArgument("tongtien") { type = NavType.StringType},
                 navArgument("username") {type = NavType.StringType },
-                navArgument("id") {type = NavType.StringType }
+                navArgument("id") {type = NavType.StringType },
+                navArgument("password") {type = NavType.StringType }
             )
         ){ backStackEntry ->
             // Lấy chuỗi selectedProducts từ tham số điều hướng
@@ -163,8 +164,9 @@ fun NavGraph(
             val tongtien = backStackEntry.arguments?.getString("tongtien")?.toDoubleOrNull() ?: 0.0
             val username = backStackEntry.arguments?.getString("username") ?: ""
             val id = backStackEntry.arguments?.getString("id") ?: ""
+            val password = backStackEntry.arguments?.getString("password") ?: ""
 
-            CheckoutScreen(navController, selectedProducts, tongtien = tongtien, username = username, idCustomer = id)
+            CheckoutScreen(navController, selectedProducts, tongtien = tongtien, username = username, idCustomer = id, password)
         }
         //Màn hình đăng ký
         composable(route = Screen.RegisterScreen.route){
@@ -232,22 +234,25 @@ fun NavGraph(
         }
         //Màn hình chi tiêt sản phẩm
         composable(
-            route = Screen.ProductDetailsScreen.route + "?id={idDevice}&idCustomer={idCustomer}&username={username}",
+            route = Screen.ProductDetailsScreen.route + "?id={idDevice}&idCustomer={idCustomer}&username={username}&password={password}",
             arguments = listOf(
                 navArgument("idDevice"){nullable = true},
                 navArgument("idCustomer"){nullable = true},
-                navArgument("username"){nullable = true}
+                navArgument("username"){nullable = true},
+                navArgument("password"){nullable = true}
             )
         ) {
             val idDevice = it.arguments?.getString("idDevice")
             val idCustomer = it.arguments?.getString("idCustomer")
             val username = it.arguments?.getString("username")
+            val password = it.arguments?.getString("password")
             if(idDevice != null){
                 ProductDetailsScreen(
                     navController,
                     idDevice,
                     idCustomer,
                     username,
+                    password,
                     deviceViewModel,
                     imageViewModel,
                     reviewViewModel
@@ -255,7 +260,7 @@ fun NavGraph(
             }
         }
         //Màn hình giỏ hàng
-        composable(route = Screen.Cart_Screen.route + "?idCustomer={idCustomer}&username={username}",
+        composable(route = Screen.Cart_Screen.route + "?idCustomer={idCustomer}&username={username}&password={password}",
             arguments = listOf(
                 navArgument("idCustomer"){
                     type = NavType.StringType
@@ -263,12 +268,17 @@ fun NavGraph(
                 navArgument("username") {
                     type = NavType.StringType
                     defaultValue = ""
+                },
+                navArgument("password") {
+                    type = NavType.StringType
+                    defaultValue = ""
                 }
             )
         ) {
             val idCustomer = it.arguments?.getString("idCustomer") ?: ""
             val username = it.arguments?.getString("username") ?: ""
-            CartScreen(navController, idCustomer, username)
+            val password = it.arguments?.getString("password") ?: ""
+            CartScreen(navController, idCustomer, username, password)
         }
         //Màn hình tất cả đánh giá, bình luận
         composable(route = Screen.Product_Reviews.route+ "?idDevice={idDevice}",
@@ -282,13 +292,14 @@ fun NavGraph(
 
         //màn hình thanh toán
         composable(
-            route = Screen.CheckOutSuccess.route  + "?username={username}&id={id}&orderId={orderId}&totalMoney={totalMoney}&createdAt={createdAt}",
+            route = Screen.CheckOutSuccess.route  + "?username={username}&id={id}&orderId={orderId}&totalMoney={totalMoney}&createdAt={createdAt}&password={password}",
             arguments = listOf(
                 navArgument("username") {type = NavType.StringType},
                 navArgument("id") {type = NavType.StringType},
                 navArgument("orderId") {type = NavType.StringType},
                 navArgument("totalMoney") {type = NavType.IntType},
-                navArgument("createdAt") {type = NavType.StringType}
+                navArgument("createdAt") {type = NavType.StringType},
+                navArgument("password") {type = NavType.StringType},
             )
         ){
             val username = it.arguments?.getString("username") ?: ""
@@ -296,7 +307,8 @@ fun NavGraph(
             val orderId = it.arguments?.getString("orderId") ?: ""
             val totalMoney = it.arguments?.getInt("totalMoney") ?: 0
             val createdAt = it.arguments?.getString("createdAt") ?: ""
-            CheckOutSuccessScreen(navController, username, id, orderId, totalMoney, createdAt)
+            val password = it.arguments?.getString("password") ?: ""
+            CheckOutSuccessScreen(navController, username, id, orderId, totalMoney, createdAt, password)
         }
         //Màn hình lịch sử đánh giá, bình luận
         composable(route = Screen.Rating_History.route + "?idCustomer={idCustomer}&username={username}",
@@ -499,17 +511,19 @@ fun NavGraph(
 
         //màn hình danh mục
         composable(
-            Screen.Category_Screen.route +"?category={category}&username={username}&idCustomer={idCustomer}",
+            Screen.Category_Screen.route +"?category={category}&username={username}&idCustomer={idCustomer}&password={password}",
             arguments = listOf(
                 navArgument("category") { type = NavType.StringType; nullable = true },
                 navArgument("username") { type = NavType.StringType; nullable = true },
-                navArgument("idCustomer") { type = NavType.StringType; nullable = true }
+                navArgument("idCustomer") { type = NavType.StringType; nullable = true },
+                navArgument("password") { type = NavType.StringType; nullable = true }
             )
         ) { backStackEntry ->
             val category = backStackEntry.arguments?.getString("category")
             val username = backStackEntry.arguments?.getString("username")
             val idCustomer = backStackEntry.arguments?.getString("idCustomer")
-            CategoriesScreen(navController, deviceViewModel, category, username, idCustomer)
+            val password = backStackEntry.arguments?.getString("password")
+            CategoriesScreen(navController, deviceViewModel, category, username, idCustomer, password)
         }
     }
 }

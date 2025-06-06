@@ -135,6 +135,7 @@ fun ProductDetailsScreen(
     id:String,
     idCustomer:String?,
     username:String?,
+    password: String?,
     deviceViewModel: DeviceViewModel,
     imageViewModel: ImageViewModel,
     reviewViewModel: ReviewViewModel
@@ -305,7 +306,7 @@ fun ProductDetailsScreen(
                                     navController.navigate(Screen.LoginScreen.route)
                                 }
                                 else{
-                                    navController.navigate(Screen.Cart_Screen.route +"?idCustomer=${idCustomer}&username=${username}")
+                                    navController.navigate(Screen.Cart_Screen.route +"?idCustomer=${idCustomer}&username=${username}&password=$password")
                                 }
                             }) {
                                 Icon(
@@ -603,7 +604,7 @@ fun ProductDetailsScreen(
                                                     Screen.Check_Out.route +
                                                             "?selectedProducts=$selectedProductsString" +
                                                             "&tongtien=$totalPrice" +
-                                                            "&username=$username" + "&id=$idCustomer"
+                                                            "&username=$username" + "&id=$idCustomer&password=$password"
                                                 )
                                                 snackbarMessage.value = "Đã chọn sản phẩm để mua ngay!"
                                                 showSnackbar.value = true
@@ -1035,6 +1036,7 @@ fun ProductDetailsScreen(
                                     isFavorite = isFavorite,
                                     idCustomer,
                                     username,
+                                    password,
                                     deviceViewModel = deviceViewModel,
                                     navController
                                 )
@@ -1044,6 +1046,7 @@ fun ProductDetailsScreen(
                                     isFavorite = isFavorite,
                                     null,
                                     username,
+                                    password,
                                     deviceViewModel = deviceViewModel,
                                     navController
                                 )
