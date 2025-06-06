@@ -1,6 +1,7 @@
 package com.example.ungdungbanthietbi_iot.api
 
 import com.example.ungdungbanthietbi_iot.models.Review
+import com.example.ungdungbanthietbi_iot.models.ReviewDetail
 import com.example.ungdungbanthietbi_iot.models.Reviews
 import retrofit2.http.Body
 import retrofit2.http.GET
@@ -32,7 +33,29 @@ data class ReviewData(
     val data: List<Reviews>,
     val total_page: Int
 )
+data class ReviewRequestUpdate(
+    val id: Int,
+    val customer_id: String,
+    val comment: String?,
+    val image: String?,
+    val rating: Int
+)
+data class ReviewResponseUpdate(
+    val status_code: Int,
+    val data: Reviews
+)
 
+data class ReviewDetailResponse(
+    val status_code: Int,
+    val data: ReviewDetail
+)
+data class ReviewRequestCreate(
+    val customer_id: String,
+    val product_id: Int,
+    val comment: String?,
+    val image: String?,
+    val rating: Int
+)
 
 interface ReviewAPIService {
     @GET ("review/product/{id}")
@@ -40,21 +63,21 @@ interface ReviewAPIService {
         @Path("id") id: String
     ): ReviewResponse
 
-    @GET ("review_device/show.php")
+    @GET ("review/{id}")
     suspend fun getReviewByIdReview(
-        @Query("id") id: Int
-    ): Review
+        @Path("id") id: Int
+    ): ReviewDetailResponse
 
     @GET ("review/")
     suspend fun getAllReviews(): ReviewResponse
 
-    @POST("review_device/create.php")
+    @POST("review/")
     suspend fun addReview(
-        @Body review: Review
-    ): AddReviewResponse
+        @Body request: ReviewRequestCreate
+    ): ReviewResponseUpdate
 
-    @PUT("review_device/update.php")
+    @PUT("review/")
     suspend fun updateReview(
-        @Body review: Review
-    ): AddReviewResponse
+        @Body request: ReviewRequestUpdate
+    ): ReviewResponseUpdate
 }

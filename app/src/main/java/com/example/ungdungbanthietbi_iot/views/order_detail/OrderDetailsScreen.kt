@@ -17,15 +17,15 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.BottomAppBar
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.Divider
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Scaffold
@@ -36,10 +36,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -52,24 +48,14 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
-import coil.compose.AsyncImage
-import com.example.ungdungbanthietbi_iot.viewModels.AddressViewModel
-import com.example.ungdungbanthietbi_iot.viewModels.CustomerViewModel
-import com.example.ungdungbanthietbi_iot.viewModels.DeviceViewModel
 import com.example.ungdungbanthietbi_iot.viewModels.OrderViewModel
-import com.example.ungdungbanthietbi_iot.viewModels.OrderDetailViewModel
-import com.example.ungdungbanthietbi_iot.models.Review
 import com.example.ungdungbanthietbi_iot.viewModels.ReviewViewModel
 import com.example.ungdungbanthietbi_iot.navigation.Screen
 import com.example.ungdungbanthietbi_iot.utils.base64ToBitmap
 import com.example.ungdungbanthietbi_iot.utils.formatGiaTien
-import com.example.ungdungbanthietbi_iot.utils.getCurrentTimestamp
-import kotlinx.coroutines.launch
 import java.net.URLDecoder
-import java.text.SimpleDateFormat
 import java.time.Instant
 import java.time.temporal.ChronoUnit
-import java.util.*
 
 /** Giao diện màn hình chi tiết đơn hàng (OrderDetailsScreen)
  * -------------------------------------------
@@ -96,8 +82,10 @@ fun OrderDetailsScreen(
     totalAmount: Double,
     idCustomer: String
 ) {
+    val reviewViewModel: ReviewViewModel = viewModel()
     val orderViewModel: OrderViewModel = viewModel()
     val listOrder by orderViewModel.listOrders.collectAsState()
+    val listReviews by reviewViewModel.listAllReviews.collectAsState()
     // Decode idOrder to match order.id
     val decodedId = try {
         URLDecoder.decode(idOrder, "UTF-8")
@@ -109,6 +97,7 @@ fun OrderDetailsScreen(
     LaunchedEffect(idCustomer) {
         Log.d("OrderDetailsScreen", "Loading orders for customer: $idCustomer")
         orderViewModel.getOrdersByCustomer(idCustomer) // Replace with actual customer ID
+        reviewViewModel.getAllReviews() // Tải danh sách đánh giá
     }
     // Tìm đơn hàng từ listOrder dựa trên idOrder
     val order = listOrder?.data?.data?.find { it.id == decodedId }
@@ -145,7 +134,7 @@ fun OrderDetailsScreen(
                         navController.popBackStack()
                     }) {
                         Icon(
-                            imageVector = Icons.Filled.ArrowBack,
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = "Back"
                         )
                     }
@@ -153,31 +142,39 @@ fun OrderDetailsScreen(
             )
         },
         bottomBar = {
-            BottomAppBar(
-                containerColor = Color.White,
-                modifier = Modifier.fillMaxWidth().height(100.dp)
-            ) {
-                if (order != null) {
-                    Button(
-                        onClick = {
-                            // Vô hiệu hóa logic API, chỉ log hành động
-                            Log.d("OrderDetailsScreen", "Xác nhận đã nhận hàng: ${order.id}")
-                            navController.popBackStack()
-                        },
-                        modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(10.dp),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = Color(0xFF5D9EFF)
-                        ),
-                        enabled = order.status == 3,
-                        elevation = ButtonDefaults.buttonElevation(2.dp)
+            if (order != null) {
+                if (order.status == 3) {
+                    BottomAppBar(
+                        containerColor = Color.White,
+                        modifier = Modifier.fillMaxWidth().height(100.dp)
                     ) {
-                        Text(
-                            text = "Xác nhận đã nhận hàng",
-                            color = Color.White,
-                            fontSize = 20.sp
-                        )
+
+                        Button(
+                            onClick = {
+                                // Vô hiệu hóa logic API, chỉ log hành động
+                                Log.d("OrderDetailsScreen", "Xác nhận đã nhận hàng: ${order.id}")
+                                navController.popBackStack()
+                            },
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = RoundedCornerShape(10.dp),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = Color(0xFF5D9EFF)
+                            ),
+                            elevation = ButtonDefaults.buttonElevation(2.dp)
+                        ) {
+                            Text(
+                                text = "Xác nhận đã nhận hàng",
+                                color = Color.White,
+                                fontSize = 20.sp
+                            )
+                        }
                     }
+                }
+                else{
+                    BottomAppBar(
+                        containerColor = Color.White,
+                        modifier = Modifier.fillMaxWidth().height(100.dp)
+                    ) {}
                 }
             }
         }
@@ -267,7 +264,7 @@ fun OrderDetailsScreen(
                                     fontSize = 16.sp
                                 )
                                 Text(
-                                    text = "Số điện thoại: ${order.phone ?: "Không có thông tin"}",
+                                    text = "Số điện thoại: ${order.phone}",
                                     fontSize = 16.sp
                                 )
                                 Text(
@@ -293,6 +290,20 @@ fun OrderDetailsScreen(
                         ) {
                             Column(modifier = Modifier.padding(8.dp)) {
                                 order.details.forEach { detail ->
+                                    // Kiểm tra xem sản phẩm đã được đánh giá chưa
+                                    val existingReview = listReviews.find { review ->
+                                        review.idCustomer == idCustomer && review.idDevice == detail.product_id
+                                    }
+                                    val isReviewed = existingReview != null
+                                    // Tính số ngày kể từ created_at hoặc updated_at
+                                    val daysSinceReview = if (existingReview != null) {
+                                        val reviewDate = existingReview.updated_at?.takeIf { it.isNotBlank() } ?: existingReview.created_at
+                                        calculateDaysSinceReceived(reviewDate)
+                                    } else {
+                                        Int.MAX_VALUE
+                                    }
+                                    val canEditReview = daysSinceReview <= 7
+                                    Log.d("Debug", "$existingReview, $isReviewed và $canEditReview")
                                     Row(
                                         modifier = Modifier
                                             .fillMaxWidth()
@@ -338,9 +349,49 @@ fun OrderDetailsScreen(
                                                 }
                                             }
                                         }
+                                        // Hiển thị nút "Đánh giá" nếu chưa được đánh giá và đơn hàng đã giao/hoàn tất
+                                        if (order.status == 4) {
+                                            if (isReviewed && existingReview != null) {
+                                                if (canEditReview) {
+                                                    Button(
+                                                        onClick = {
+                                                            navController.navigate(Screen.Update_Rating_Screen.route+"?idReview=${existingReview.idReview}&idCustomer=$idCustomer")
+                                                        },
+                                                        shape = RoundedCornerShape(8.dp),
+                                                        colors = ButtonDefaults.buttonColors(
+                                                            containerColor = Color(0xFF5D9EFF),
+                                                            contentColor = Color.White
+                                                        ),
+                                                        modifier = Modifier.padding(start = 8.dp)
+                                                    ) {
+                                                        Text(
+                                                            text = "Chỉnh sửa",
+                                                            fontSize = 14.sp
+                                                        )
+                                                    }
+                                                }
+
+                                            }
+                                            else {
+                                                Button(
+                                                    onClick = { navController.navigate(Screen.Rating_Screen.route + "?idCustomer=$idCustomer&idDevice=${detail.product_id}") },
+                                                    shape = RoundedCornerShape(8.dp),
+                                                    colors = ButtonDefaults.buttonColors(
+                                                        containerColor = Color(0xFF5D9EFF),
+                                                        contentColor = Color.White
+                                                    ),
+                                                    modifier = Modifier.padding(start = 8.dp)
+                                                ) {
+                                                    Text(
+                                                        text = "Đánh giá",
+                                                        fontSize = 14.sp
+                                                    )
+                                                }
+                                            }
+                                        }
                                     }
                                 }
-                                Divider()
+                                HorizontalDivider()
                                 Row(
                                     modifier = Modifier
                                         .fillMaxWidth()
@@ -406,10 +457,10 @@ fun OrderDetailsScreen(
 }
 
 fun calculateDaysSinceReceived(receivedDate: String?): Int {
-    return try {
+    try {
         if (receivedDate.isNullOrEmpty()) {
             Log.e("CalculateDays", "receivedDate is null or empty")
-            0
+            return 0
         }
         // Parse định dạng ISO 8601 (ví dụ: 2025-05-07T15:27:53.000Z)
         val pastInstant = Instant.parse(receivedDate)

@@ -6,12 +6,15 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.ungdungbanthietbi_iot.api.CreateAddressRequest
 import com.example.ungdungbanthietbi_iot.api.CustomerData
-import com.example.ungdungbanthietbi_iot.api.deleteAddressRequest
+import com.example.ungdungbanthietbi_iot.api.UpdateAddressRequest
 import com.example.ungdungbanthietbi_iot.config.RetrofitClient
-import com.example.ungdungbanthietbi_iot.models.Address
 import com.example.ungdungbanthietbi_iot.models.AddressBook
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
@@ -22,15 +25,12 @@ class AddressViewModel : ViewModel() {
     var address by mutableStateOf<AddressBook?>(null)
         private set
 
-    private var addressAddResult by mutableStateOf("")
-
-    private var addressUpdateResult by mutableStateOf("")
-
     var addressDatas by mutableStateOf<CustomerData?>(null)
         private set
     var errorMessage by mutableStateOf<String?>(null)
         private set
-    var isLoading by mutableStateOf(false)
+    private val _isLoading = MutableStateFlow(false)
+    val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
     fun updateErrorMessage(message: String?) {
         errorMessage = message
     }
@@ -38,7 +38,7 @@ class AddressViewModel : ViewModel() {
     fun getAddressById(id: Int) {
         viewModelScope.launch(Dispatchers.IO) {
             Log.d("AddressViewModel", "Bắt đầu lấy chi tiết địa chỉ với id: $id")
-            isLoading = true
+            _isLoading.value = true
             try {
                 Log.i("AddressViewModel", "Đang gọi API getAddressById với id: $id")
                 val response = RetrofitClient.addressAPIService.getAddressById(id)
@@ -59,7 +59,7 @@ class AddressViewModel : ViewModel() {
                 }
             } finally {
                 withContext(Dispatchers.Main) {
-                    isLoading = false
+                    _isLoading.value = false
                     Log.d("AddressViewModel", "Hoàn tất gọi API getAddressById. isLoading = false")
                 }
             }
@@ -68,7 +68,7 @@ class AddressViewModel : ViewModel() {
     fun getCustomerAddressBook(customerId: String) {
         viewModelScope.launch {
             Log.d("AddressViewModel", "Bắt đầu lấy danh sách địa chỉ cho customerId: $customerId")
-            isLoading = true
+            _isLoading.value = true
             try {
                 Log.i("AddressViewModel", "Đang gọi API getCustomerAddressBook với customerId: $customerId")
                 val response = RetrofitClient.addressAPIService.getCustomerAddressBook(customerId)
@@ -84,7 +84,7 @@ class AddressViewModel : ViewModel() {
                 errorMessage = "Lỗi khi gọi API: ${e.message}"
                 Log.e("AddressViewModel", "Lỗi khi lấy địa chỉ: ${e.message}", e)
             } finally {
-                isLoading = false
+                _isLoading.value = false
                 Log.d("AddressViewModel", "Hoàn tất gọi API getCustomerAddressBook. isLoading = false")
             }
         }
@@ -92,7 +92,7 @@ class AddressViewModel : ViewModel() {
     fun getAddressDefault(customerId: String) {
         viewModelScope.launch(Dispatchers.IO) {
             Log.d("AddressViewModel", "Bắt đầu lấy địa chỉ mặc định cho customerId: $customerId")
-            isLoading = true
+            _isLoading.value = true
             try {
                 Log.i("AddressViewModel", "Đang gọi API getCustomerAddressBook để tìm địa chỉ mặc định với customerId: $customerId")
                 val response = RetrofitClient.addressAPIService.getCustomerAddressBook(customerId)
@@ -100,7 +100,7 @@ class AddressViewModel : ViewModel() {
                     if (response.status_code == 200 && response.data.data.address_books.isNotEmpty()) {
                         addressDatas = response.data.data
                         listAddress = response.data.data.address_books
-                        val defaultAddress = response.data.data.address_books.find { it.is_default == 1 }
+                        val defaultAddress = response.data.data.address_books.find { it.is_default }
                         if (defaultAddress != null) {
                             address = defaultAddress
                             errorMessage = null
@@ -128,113 +128,73 @@ class AddressViewModel : ViewModel() {
                 }
             } finally {
                 withContext(Dispatchers.Main) {
-                    isLoading = false
+                    _isLoading.value = false
                     Log.d("AddressViewModel", "Hoàn tất gọi API getCustomerAddressBook. isLoading = false")
                 }
             }
         }
     }
+    private val _error = MutableStateFlow<String?>(null)
+    val error: StateFlow<String?> = _error.asStateFlow()
 
-//    fun getAddressByIdOrder(id: Int) {
-//        viewModelScope.launch {
-//            try {
-//                val fetchedAddress = RetrofitClient.addressAPIService.getAddressByIdOrder(id)
-//                address = fetchedAddress
-//            } catch (e: Exception) {
-//                Log.e("AddressViewModel", "Error getting Address", e)
-//            }
-//        }
-//    }
+    fun createAddress(request: CreateAddressRequest) {
+        viewModelScope.launch {
+            try {
+                val response = RetrofitClient.addressAPIService.createAddress(request)
+                if(response.status_code == 201){
+                    _error.value = null
+                }
+                else{
+                    _error.value = "Failed to update review, status: ${response.status_code}"
+                    Log.e("AddressViewModel", "Failed to add address, status: ${response.status_code}")
+                }
+            } catch (e: Exception) {
+                _error.value = "Error creating address: ${e.message}"
+                Log.e("Add Address", "Lỗi kết nối: ${e.message}")
+            }finally {
+                _isLoading.value = false
+            }
+        }
+    }
 
-//    fun getAddressByIdCustomer(idCustomer: String?) {
-//        viewModelScope.launch {
-//            try {
-//                val response = withContext(Dispatchers.IO) {
-//                    RetrofitClient.addressAPIService.getAddressByIdCustomer(idCustomer)
-//                }
-//                listAddress = response.address
-//            } catch (e: Exception) {
-//                Log.e("Address Error", "Lỗi khi lấy địa chỉ: ${e.message}")
-//                listAddress = emptyList()
-//            }
-//        }
-//    }
+    fun updateAddress(request: UpdateAddressRequest) {
+        viewModelScope.launch {
+            try {
+                val response = RetrofitClient.addressAPIService.updateAddress(request)
 
-//    fun getAddressDefault(idCustomer: String?, isDefault: Int?) {
-//        if (idCustomer == null || isDefault == null) {
-//            Log.e("AddressViewModel", "Tham số idCustomer hoặc isDefault bị null")
-//            return
-//        }
-//
-//        viewModelScope.launch(Dispatchers.IO) {
-//            try {
-//                val fetchedAddress = RetrofitClient.addressAPIService.getAddressDefault(
-//                    idCustomer = idCustomer,
-//                    isDefault = isDefault
-//                )
-//                withContext(Dispatchers.Main) {
-//                    address = fetchedAddress
-//                }
-//                Log.d("AddressViewModel", "Đã lấy địa chỉ thành công: $address")
-//            } catch (e: Exception) {
-//                Log.e("AddressViewModel", "Lỗi khi lấy địa chỉ mặc định", e)
-//            }
-//        }
-//    }
+                if(response.status_code == 200){
+                    _error.value = null
+                }
+                else{
+                    _error.value = "Failed to update address, status: ${response.status_code}"
+                    Log.e("AddressViewModel", "Failed to update address, status: ${response.status_code}")
+                }
+            } catch (e: Exception) {
+                _error.value = "Error updating address: ${e.message}"
+                Log.e("Add Address", "Lỗi kết nối: ${e.message}")
+            }finally {
+                _isLoading.value = false
+            }
+        }
+    }
 
-//    fun addAddress(address: Address) {
-//        viewModelScope.launch {
-//            try {
-//                val response = RetrofitClient.addressAPIService.addAddress(address)
-//                addressAddResult = if (response.success) {
-//                    listAddress = listAddress + address
-//                    "Thành công: ${response.message}"
-//                } else {
-//                    "Thất bại: ${response.message}"
-//                }
-//            } catch (e: Exception) {
-//                Log.e("Add address", "Lỗi kết nối: ${e.message}")
-//            }
-//        }
-//    }
-
-//    fun updateAddress(address: Address) {
-//        viewModelScope.launch {
-//            try {
-//                val response = withContext(Dispatchers.IO) {
-//                    RetrofitClient.addressAPIService.updateAddress(address)
-//                }
-//                addressUpdateResult = if (response.success) {
-//                    "Cập nhật thành công: ${response.message}"
-//                } else {
-//                    "Cập nhật thất bại: ${response.message}"
-//                }
-//            } catch (e: Exception) {
-//                addressUpdateResult = "Lỗi khi cập nhật address: ${e.message}"
-//                Log.e("Address Error", "Lỗi khi cập nhật address: ${e.message}")
-//            }
-//        }
-//    }
-
-//    fun deleteAddress(id: Int) {
-//        viewModelScope.launch {
-//            try {
-//                val deleteRequest = deleteAddressRequest(id)
-//                val response = RetrofitClient.addressAPIService.deleteAddress(deleteRequest)
-//                if (response.isSuccessful) {
-//                    val apiResponse = response.body()
-//                    if (apiResponse?.message == "Address Deleted") {
-//                        listAddress = listAddress.filter { it.id != id }
-//                        Log.d("AddressViewModel", "Address đã được xóa")
-//                    } else {
-//                        Log.e("AddressViewModel", "Lỗi: ${apiResponse?.message}")
-//                    }
-//                } else {
-//                    Log.e("AddressViewModel", "Error: ${response.message()}")
-//                }
-//            } catch (e: Exception) {
-//                Log.e("AddressViewModel", "Exception: ${e.message}")
-//            }
-//        }
-//    }
+    fun deleteAddress(customerId: String, id: Int) {
+        viewModelScope.launch {
+            try {
+                val response = RetrofitClient.addressAPIService.deleteAddress(customerId, id)
+                if(response.status_code == 200){
+                    _error.value = null
+                }
+                else{
+                    _error.value = "Failed to update address, status: ${response.status_code}"
+                    Log.e("AddressViewModel", "Failed to update address, status: ${response.status_code}")
+                }
+            } catch (e: Exception) {
+                _error.value = "Error updating address: ${e.message}"
+                Log.e("Add Address", "Lỗi kết nối: ${e.message}")
+            }finally {
+                _isLoading.value = false
+            }
+        }
+    }
 }

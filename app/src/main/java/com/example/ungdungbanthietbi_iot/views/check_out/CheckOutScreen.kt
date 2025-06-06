@@ -1,6 +1,7 @@
 package com.example.ungdungbanthietbi_iot.views.check_out
 
 import android.util.Log
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -47,6 +48,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.graphics.painter.BitmapPainter
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -74,6 +77,7 @@ import com.example.ungdungbanthietbi_iot.models.Product
 import com.example.ungdungbanthietbi_iot.models.Shipping
 import com.example.ungdungbanthietbi_iot.viewModels.OrderDetailViewModel
 import com.example.ungdungbanthietbi_iot.navigation.Screen
+import com.example.ungdungbanthietbi_iot.utils.base64ToBitmap
 import com.example.ungdungbanthietbi_iot.utils.formatGiaTien
 import com.example.ungdungbanthietbi_iot.utils.getCurrentTimestamp
 import com.example.ungdungbanthietbi_iot.utils.getCurrentTimestampEX
@@ -111,15 +115,12 @@ fun CheckoutScreen(
     val cartViewModel: CartViewModel = viewModel()
     val addressViewModel: AddressViewModel = viewModel()
     val orderViewModel: OrderViewModel = viewModel()
-    val orderDetailViewModel: OrderDetailViewModel = viewModel()
-    val customerViewModel: CustomerViewModel = viewModel()
-    val noticeViewModel: NoticeViewModel = viewModel()
 
 
     val listDevice by deviceViewModel.listDevice.collectAsState(initial = emptyList())
     var selectedPaymentMethod by remember { mutableStateOf("Thanh toán khi nhận hàng (COD)") }
     val address = addressViewModel.address
-    val isLoadingAddress = addressViewModel.isLoading
+    val isLoadingAddress by addressViewModel.isLoading.collectAsState()
     val errorMessage = addressViewModel.errorMessage
 
     // State để theo dõi việc loading sản phẩm
@@ -137,13 +138,13 @@ fun CheckoutScreen(
         Log.d("CheckoutScreen", "idCustomer: $idCustomer, selectedAddressId: $selectedAddressId")
         if (idCustomer.isEmpty()) {
             addressViewModel.updateErrorMessage("ID khách hàng không hợp lệ")
-            addressViewModel.isLoading = false
+            //addressViewModel.isLoading = false
             Log.d("CheckoutScreen", "Đã đặt errorMessage và isLoading = false do idCustomer rỗng")
             return@LaunchedEffect
         }
         if (selectedAddressId != null) {
             addressViewModel.getAddressById(selectedAddressId!!)
-            Log.d("CheckoutScreen", "Gọi getAddressById với id: ${selectedAddressId}")
+            Log.d("CheckoutScreen", "Gọi getAddressById với id: $selectedAddressId")
         } else {
             addressViewModel.getAddressDefault(idCustomer)
             Log.d("CheckoutScreen", "Gọi getAddressDefault với customerId: $idCustomer")
@@ -152,8 +153,10 @@ fun CheckoutScreen(
     // Lấy thông tin sản phẩm
     val loadedDeviceIds = remember { mutableStateListOf<String>() }
     LaunchedEffect(selectedProducts) {
+        Log.d("CheckoutScreen", "Danh sách sản phẩm đã chọn: $selectedProducts")
         deviceViewModel.clearDevices()
         selectedProducts.forEach { triple ->
+            Log.d("CheckoutScreen", "Sản phẩm: idDevice=${triple.first}, số lượng=${triple.second}, cartId=${triple.third}")
             val deviceId = triple.first
             if (!loadedDeviceIds.contains(deviceId.toString())) {
                 deviceViewModel.getDeviceCheckOut(deviceId)
@@ -181,11 +184,14 @@ fun CheckoutScreen(
         orderViewModel.checkoutState.collect { state ->
             when (state) {
                 is CheckoutState.Success -> {
+                    Log.d("CheckoutScreen", "Dữ liệu đơn hàng: ${state.orderData}")
 
                     // Xóa giỏ hàng
                     selectedProducts.forEach { triple ->
                         if (triple.third != 0) {
                             cartViewModel.deleteCart(triple.third, idCustomer)
+                        }else {
+                            Log.e("CheckoutScreen", "ID giỏ hàng không hợp lệ cho sản phẩm ID: ${triple.first}")
                         }
                     }
 
@@ -294,7 +300,7 @@ fun CheckoutScreen(
                                         cardExpiry = "",
                                         cardCvc = ""
                                     ),
-                                    products = selectedProducts.map { triple ->
+                                    products = selectedProducts.distinctBy { it.first }.map { triple ->
                                         val device = listDevice.find { it.idDevice == triple.first }
                                         Product(
                                             id = triple.first,
@@ -314,11 +320,12 @@ fun CheckoutScreen(
                                         status = 0
                                     )
                                 )
-                                Log.d("CheckoutScreen", "CheckoutRequest: $checkoutRequest")
+                                Log.d("CheckoutScreen", "Danh sách sản phẩm trong CheckoutRequest: ${checkoutRequest.products}")
                                 triggerCheckout = checkoutRequest
                             }
                         },
                         shape = RoundedCornerShape(10.dp),
+                        modifier = Modifier.fillMaxWidth(),
                         elevation = ButtonDefaults.buttonElevation(1.dp),
                         colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF5D9EFF))
                     ) {
@@ -343,7 +350,7 @@ fun CheckoutScreen(
                 contentAlignment = Alignment.Center
             ) {
                 Text(
-                    text = errorMessage ?: "Lỗi không xác định",
+                    text = errorMessage,
                     color = Color.Red,
                     textAlign = TextAlign.Center
                 )
@@ -589,6 +596,7 @@ fun DeviceItem(
     device: Device,
     stock:Int
 ) {
+    val bitmap = base64ToBitmap(device.image)
     Card(
         modifier = Modifier
             .padding(4.dp)
@@ -608,13 +616,15 @@ fun DeviceItem(
                     .fillMaxWidth(),
                 verticalAlignment = Alignment.Top
             ) {
-                AsyncImage(
-                    model = device.image,
-                    contentDescription = null,
-                    modifier = Modifier
-                        .size(100.dp),
-                    contentScale = ContentScale.Fit
-                )
+                if (bitmap != null) {
+                    Image(
+                        painter = BitmapPainter(bitmap.asImageBitmap()),
+                        contentDescription = "Hình ảnh sản phẩm",
+                        modifier = Modifier
+                            .size(100.dp),
+                        contentScale = ContentScale.Fit
+                    )
+                }
                 Spacer(modifier = Modifier.width(10.dp))
                 Column(
                     modifier = Modifier

@@ -2,22 +2,21 @@ package com.example.ungdungbanthietbi_iot.viewModels
 
 import android.util.Log
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
-import androidx.compose.runtime.snapshots.SnapshotStateMap
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.ungdungbanthietbi_iot.api.ReviewRequestCreate
+import com.example.ungdungbanthietbi_iot.api.ReviewRequestUpdate
 import com.example.ungdungbanthietbi_iot.config.RetrofitClient
 import com.example.ungdungbanthietbi_iot.models.Review
+import com.example.ungdungbanthietbi_iot.models.ReviewDetail
 import com.example.ungdungbanthietbi_iot.models.Reviews
-import com.example.ungdungbanthietbi_iot.models.SlideShow
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import java.time.Instant
 
 class ReviewViewModel:ViewModel() {
@@ -31,21 +30,21 @@ class ReviewViewModel:ViewModel() {
     private val _isLoading = MutableStateFlow(false)
     val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
 
-    var listReviewDaDanhGia by mutableStateOf<List<Review>>(emptyList())
-        private set
+    private val _error = MutableStateFlow<String?>(null)
+    val error: StateFlow<String?> = _error.asStateFlow()
 
     private var reviewAddResult by mutableStateOf("")
-    private var reviewUpdateResult by mutableStateOf("")
 
-    var review by mutableStateOf<Review?>(null)
+    var review by mutableStateOf<ReviewDetail?>(null)
         private set
 
     fun getReviewById(id: Int) {
         viewModelScope.launch {
             try {
                 val result = RetrofitClient.reviewAPIService.getReviewByIdReview(id)
-                review = result
+                review = result.data
             } catch (e: Exception) {
+                review = null
                 Log.e("API", "Lỗi: ${e.message}")
             }
         }
@@ -92,40 +91,49 @@ class ReviewViewModel:ViewModel() {
         }
     }
 
-    fun addReview(review: Review) {
+    fun addReview(request: ReviewRequestCreate) {
         viewModelScope.launch {
             try {
-                val response = RetrofitClient.reviewAPIService.addReview(review)
-                reviewAddResult = if (response.success) {
-                    "Thêm thành công: ${response.message}"
-                } else {
-                    "Thêm thất bại: ${response.message}"
+                val response = RetrofitClient.reviewAPIService.addReview(request)
+                if(response.status_code == 201){
+                    _error.value = null
+                }
+                else{
+                    _error.value = "Failed to update review, status: ${response.status_code}"
+                    Log.e("ReviewViewModel", "Failed to update review, status: ${response.status_code}")
                 }
             } catch (e: Exception) {
+                _error.value = "Error updating review: ${e.message}"
                 Log.e("Add Review", "Lỗi kết nối: ${e.message}")
+            }finally {
+                _isLoading.value = false
             }
         }
     }
 
 
-    fun updateReview(review: Review) {
-        viewModelScope.launch {
+    fun updateReview(request : ReviewRequestUpdate) {
+        viewModelScope.launch(Dispatchers.IO) {
+            _isLoading.value = true
+            _error.value = null
             try {
-                val response = withContext(Dispatchers.IO) {
-                    RetrofitClient.reviewAPIService.updateReview(review)
-                }
-                reviewUpdateResult = if (response.success) {
-                    "Cập nhật thành công: ${response.message}"
-
+                val response = RetrofitClient.reviewAPIService.updateReview(request)
+                if (response.status_code == 200) {
+                    _error.value = null
                 } else {
-                    "Cập nhật thất bại: ${response.message}"
-
+                    _error.value = "Failed to update review, status: ${response.status_code}"
+                    Log.e("ReviewViewModel", "Failed to update review, status: ${response.status_code}")
                 }
             } catch (e: Exception) {
-                reviewUpdateResult = "Lỗi khi cập nhật review: ${e.message}"
-                Log.e("Order Error", "Lỗi khi cập nhật review: ${e.message}")
-
+                _error.value = "Error updating review: ${e.message}"
+                Log.e("ReviewViewModel", "Error updating review", e)
+            } finally {
+                _isLoading.value = false
             }
         }
+    }
+
+    fun clearError() {
+        _error.value = null
     }
 }

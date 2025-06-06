@@ -62,7 +62,10 @@ import com.example.ungdungbanthietbi_iot.utils.base64ToBitmap
 import com.example.ungdungbanthietbi_iot.utils.formatDateTimeZone
 import com.example.ungdungbanthietbi_iot.utils.formatGiaTien
 import com.example.ungdungbanthietbi_iot.utils.getCurrentTimestampEX
+import com.example.ungdungbanthietbi_iot.viewModels.ReviewViewModel
+import com.example.ungdungbanthietbi_iot.views.order_detail.calculateDaysSinceReceived
 import java.net.URLEncoder
+import java.time.OffsetDateTime
 
 enum class OrderStatus(val value: Int, val displayName: String) {
     CHO_XAC_NHAN(0, "Chờ xác nhận"),
@@ -242,7 +245,9 @@ fun DaGiaoHangScreen(navController: NavController, idCustomer: String?) {
                 ) {
                     listOrder?.data?.let { orderData ->
                         // Filter orders with status == 1
-                        val pendingOrders = orderData.data.filter { it.status == OrderStatus.DA_GIAO.value  }
+                        val pendingOrders = orderData.data
+                            .filter { it.status == OrderStatus.DA_GIAO.value  }
+                            .sortedByDescending { OffsetDateTime.parse(it.created_at) }
                         Log.d("ChoXacNhanScreen", "Filtered ${pendingOrders.size} orders with status == 3")
                         if (pendingOrders.isEmpty()) {
                             item {
@@ -349,7 +354,9 @@ fun HoanTatScreen(navController: NavController, idCustomer: String?) {
                 ) {
                     listOrder?.data?.let { orderData ->
                         // Filter orders with status == 1
-                        val pendingOrders = orderData.data.filter { it.status == OrderStatus.HOAN_TAT.value  }
+                        val pendingOrders = orderData.data
+                            .filter { it.status == OrderStatus.HOAN_TAT.value  }
+                            .sortedByDescending { OffsetDateTime.parse(it.created_at) }
                         Log.d("ChoXacNhanScreen", "Filtered ${pendingOrders.size} orders with status == 4")
                         if (pendingOrders.isEmpty()) {
                             item {
@@ -456,7 +463,9 @@ fun ChoGiaoHangScreen(navController: NavController, idCustomer: String?) {
                 ) {
                     listOrder?.data?.let { orderData ->
                         // Filter orders with status == 1
-                        val pendingOrders = orderData.data.filter { it.status == OrderStatus.CHO_GIAO_HANG.value  }
+                        val pendingOrders = orderData.data
+                            .filter { it.status == OrderStatus.CHO_GIAO_HANG.value  }
+                            .sortedByDescending { OffsetDateTime.parse(it.created_at) }
                         Log.d("ChoXacNhanScreen", "Filtered ${pendingOrders.size} orders with status == 3")
                         if (pendingOrders.isEmpty()) {
                             item {
@@ -565,7 +574,9 @@ fun HuyDonHangScreen(navController: NavController, idCustomer: String?) {
                 ) {
                     listOrder?.data?.let { orderData ->
                         // Filter orders with status == 1
-                        val pendingOrders = orderData.data.filter { it.status == OrderStatus.DA_HUY.value  }
+                        val pendingOrders = orderData.data
+                            .filter { it.status == OrderStatus.DA_HUY.value  }
+                            .sortedByDescending { OffsetDateTime.parse(it.created_at) }
                         Log.d("ChoXacNhanScreen", "Filtered ${pendingOrders.size} orders with status == -1")
                         if (pendingOrders.isEmpty()) {
                             item {
@@ -674,7 +685,9 @@ fun ChoLayHangScreen(navController: NavController, idCustomer: String?) {
                 ) {
                     listOrder?.data?.let { orderData ->
                         // Filter orders with status == 1
-                        val pendingOrders = orderData.data.filter { it.status == OrderStatus.CHO_LAY_HANG.value  }
+                        val pendingOrders = orderData.data
+                            .filter { it.status == OrderStatus.CHO_LAY_HANG.value  }
+                            .sortedByDescending { OffsetDateTime.parse(it.created_at) }
                         Log.d("ChoXacNhanScreen", "Filtered ${pendingOrders.size} orders with status == 2")
                         if (pendingOrders.isEmpty()) {
                             item {
@@ -785,7 +798,9 @@ fun ChoXacNhanScreen(navController: NavController, idCustomer: String?) {
                 ) {
                     listOrder?.data?.let { orderData ->
                         // Filter orders with status == 1
-                        val pendingOrders = orderData.data.filter { it.status == OrderStatus.CHO_XAC_NHAN.value }
+                        val pendingOrders = orderData.data
+                            .filter { it.status == OrderStatus.CHO_XAC_NHAN.value }
+                            .sortedByDescending { OffsetDateTime.parse(it.created_at) }
                         Log.d("ChoXacNhanScreen", "Filtered ${pendingOrders.size} orders with status == 1")
                         if (pendingOrders.isEmpty()) {
                             item {
@@ -826,14 +841,20 @@ fun OrderItem(
     idCustomer: String,
 ) {
     val orderViewModel: OrderViewModel = viewModel()
+    val reviewViewModel: ReviewViewModel = viewModel()
     val listDetail = order.details // Lấy từ JSON của order
+    val listReviews by reviewViewModel.listAllReviews.collectAsState()
     val encodedOrderId = order.id.let { URLEncoder.encode(it, "UTF-8") } ?: ""
     val shouldRefresh by orderViewModel.shouldRefresh
     LaunchedEffect(shouldRefresh) {
         if (shouldRefresh) {
+
             orderViewModel.getOrdersByCustomer(idCustomer) // Làm mới danh sách từ server
             orderViewModel.resetRefresh() // Reset state
         }
+    }
+    LaunchedEffect (Unit){
+        reviewViewModel.getAllReviews()
     }
     Card(
         colors = CardDefaults.cardColors(
@@ -891,6 +912,19 @@ fun OrderItem(
 
                 Column {
                     listDetail.forEach { detail ->
+                        val existingReview = listReviews.find { review ->
+                            review.idCustomer == idCustomer && review.idDevice == detail.product_id
+                        }
+                        val isReviewed = existingReview != null
+                        // Tính số ngày kể từ created_at hoặc updated_at
+                        val daysSinceReview = if (existingReview != null) {
+                            val reviewDate = existingReview.updated_at?.takeIf { it.isNotBlank() } ?: existingReview.created_at
+                            calculateDaysSinceReceived(reviewDate)
+                        } else {
+                            Int.MAX_VALUE
+                        }
+                        val canEditReview = daysSinceReview <= 7
+                        Log.d("Debug", "$existingReview, $isReviewed và $canEditReview")
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.SpaceBetween,
@@ -936,6 +970,45 @@ fun OrderItem(
                                                 fontWeight = FontWeight.Bold
                                             )
                                         }
+                                    }
+                                }
+                            }
+                            if (order.status == 4) {
+                                if (isReviewed && existingReview != null) {
+                                    if (canEditReview) {
+                                        Button(
+                                            onClick = {
+                                                navController.navigate(Screen.Update_Rating_Screen.route+"?idReview=${existingReview.idReview}&idCustomer=$idCustomer")
+                                            },
+                                            shape = RoundedCornerShape(8.dp),
+                                            colors = ButtonDefaults.buttonColors(
+                                                containerColor = Color(0xFF5D9EFF),
+                                                contentColor = Color.White
+                                            ),
+                                            modifier = Modifier.padding(start = 8.dp)
+                                        ) {
+                                            Text(
+                                                text = "Chỉnh sửa",
+                                                fontSize = 14.sp
+                                            )
+                                        }
+                                    }
+
+                                }
+                                else {
+                                    Button(
+                                        onClick = { navController.navigate(Screen.Rating_Screen.route + "?idCustomer=$idCustomer&idDevice=${detail.product_id}") },
+                                        shape = RoundedCornerShape(8.dp),
+                                        colors = ButtonDefaults.buttonColors(
+                                            containerColor = Color(0xFF5D9EFF),
+                                            contentColor = Color.White
+                                        ),
+                                        modifier = Modifier.padding(start = 8.dp)
+                                    ) {
+                                        Text(
+                                            text = "Đánh giá",
+                                            fontSize = 14.sp
+                                        )
                                     }
                                 }
                             }

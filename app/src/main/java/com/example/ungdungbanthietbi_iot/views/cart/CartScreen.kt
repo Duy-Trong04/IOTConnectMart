@@ -160,6 +160,7 @@ fun CartItem(
                 onCheckedChange = { isChecked ->
                     selectedItems[cart.id] = isChecked
                     if (isChecked) {
+                        selectedProducts.removeAll { it.first == cart.idDevice }
                         selectedProducts.add(Triple(cart.idDevice, cart.stock, cart.id))
                     } else {
                         selectedProducts.removeAll { it.first == cart.idDevice }
@@ -242,6 +243,8 @@ fun CartItem(
                                 val index = selectedProducts.indexOfFirst { it.first == cart.idDevice }
                                 if (index != -1) {
                                     selectedProducts[index] = Triple(cart.idDevice, soLuong, cart.id)
+                                } else if (selectedItems[cart.id] == true) {
+                                    selectedProducts.add(Triple(cart.idDevice, soLuong, cart.id))
                                 }
                                 onCalculateTotalPrice()
                             }
@@ -292,6 +295,8 @@ fun CartItem(
                                 val index = selectedProducts.indexOfFirst { it.first == cart.idDevice }
                                 if (index != -1) {
                                     selectedProducts[index] = Triple(cart.idDevice, soLuong, cart.id)
+                                }else if (selectedItems[cart.id] == true) {
+                                    selectedProducts.add(Triple(cart.idDevice, soLuong, cart.id))
                                 }
                                 onCalculateTotalPrice()
                             }
@@ -360,7 +365,7 @@ fun CartScreen(
     LaunchedEffect(idCustomer) {
         cartViewModel.getCartByIdCustomer(idCustomer)
         deviceViewModel.getAllDevice()
-        //addressViewModel.getAddressByIdCustomer(idCustomer)
+        addressViewModel.getAddressDefault(idCustomer)
     }
 
     // Khởi tạo selectedItems khi listCart thay đổi
@@ -495,11 +500,11 @@ fun CartScreen(
                         onClick = {
                             if (selectedProducts.isEmpty()) {
                                 showDialog = true // Hiển thị dialog nếu không có sản phẩm nào được chọn
-                            } else if (addressViewModel.listAddress.isEmpty()) { // Kiểm tra danh sách địa chỉ rỗng
+                            } else if (listAddress.isEmpty()) { // Kiểm tra danh sách địa chỉ rỗng
                                 openDialog = true // Hiển thị dialog thông báo thêm địa chỉ
                             } else {
                                 val selectedProductsString = selectedProducts.joinToString(",") { "${it.first}:${it.second}:${it.third}" }
-                                navController.navigate(Screen.Check_Out.route + "?selectedProducts=${selectedProductsString}&tongtien=${totalPrice}&username=${username}")
+                                navController.navigate(Screen.Check_Out.route + "?selectedProducts=${selectedProductsString}&tongtien=${totalPrice}&username=${username}&id=$idCustomer")
                             }
                         },
                         shape = RoundedCornerShape(10.dp),
@@ -566,7 +571,8 @@ fun CartScreen(
                     ) {
                         Text("OK")
                     }
-                }
+                },
+                containerColor = Color.White
             )
         }
         if (showDialogDelete) {

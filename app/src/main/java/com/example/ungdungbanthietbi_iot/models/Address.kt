@@ -12,6 +12,7 @@ data class Address(
 
 data class AddressBook(
     val id: Int,
+    val customer_id :String,
     val receiver_name: String,
     val phone: String,
     val district: String,
@@ -19,7 +20,7 @@ data class AddressBook(
     val ward: String,
     val street: String,
     val detail: String,
-    val is_default: Int,
+    val is_default: Boolean,
     val created_at: String,
     val updated_at: String?,
     val deleted_at: String?

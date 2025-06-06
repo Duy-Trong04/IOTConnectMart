@@ -71,6 +71,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.graphics.painter.BitmapPainter
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
@@ -98,6 +99,7 @@ import com.example.ungdungbanthietbi_iot.models.Review
 import com.example.ungdungbanthietbi_iot.models.Reviews
 import com.example.ungdungbanthietbi_iot.viewModels.ReviewViewModel
 import com.example.ungdungbanthietbi_iot.navigation.Screen
+import com.example.ungdungbanthietbi_iot.utils.base64ToBitmap
 import com.example.ungdungbanthietbi_iot.utils.formatDateTimeZone
 import com.example.ungdungbanthietbi_iot.views.home.CardDevice
 import com.example.ungdungbanthietbi_iot.utils.formatGiaTien
@@ -123,7 +125,8 @@ import kotlin.math.roundToInt
  */
 enum class DialogType {
     AddToCart,
-    AddressRequired
+    AddressRequired,
+    BuyNow // Thêm loại dialog mới cho Mua ngay
 }
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -219,7 +222,7 @@ fun ProductDetailsScreen(
 
     // Biến lưu trữ số lượng sản phẩm
     var quantity by remember { mutableStateOf(1) }
-
+    var buyNowQuantity by remember { mutableStateOf(1) } // Biến mới cho số lượng khi mua ngay
     val snackbarHostState = remember { SnackbarHostState() }
     val showSnackbar = remember { mutableStateOf(false) }
     val snackbarMessage = remember { mutableStateOf("") }
@@ -234,6 +237,7 @@ fun ProductDetailsScreen(
     }
 
     val addressViewModel: AddressViewModel = viewModel()
+    val isLoadingAddress by addressViewModel.isLoading.collectAsState()
     LaunchedEffect(Unit) {
         if (idCustomer != null) {
             addressViewModel.getCustomerAddressBook(idCustomer)
@@ -364,11 +368,16 @@ fun ProductDetailsScreen(
                                     modifier = Modifier.fillMaxWidth(),
                                 ) {
                                     Row {
-                                        AsyncImage(
-                                            model = device?.image,
-                                            contentDescription = null,
-                                            modifier = Modifier.size(100.dp)
-                                        )
+                                        val bitmapCart = base64ToBitmap(device?.image)
+                                        if (bitmapCart != null) {
+                                            Image(
+                                                painter = BitmapPainter(bitmapCart.asImageBitmap()),
+                                                contentDescription = "Hình ảnh sản phẩm",
+                                                modifier = Modifier
+                                                    .size(100.dp),
+                                                contentScale = ContentScale.Fit
+                                            )
+                                        }
                                         Column {
                                             if (device != null) {
                                                 Text(
@@ -506,6 +515,118 @@ fun ProductDetailsScreen(
                                     },
                                     modifier = Modifier.fillMaxWidth()
                                 )
+                            }
+                            DialogType.BuyNow -> {
+                                Column(
+                                    modifier = Modifier.fillMaxWidth(),
+                                ) {
+                                    Row {
+                                        val bitmapBuy = base64ToBitmap(device?.image)
+                                        if (bitmapBuy != null) {
+                                            Image(
+                                                painter = BitmapPainter(bitmapBuy.asImageBitmap()),
+                                                contentDescription = "Hình ảnh sản phẩm",
+                                                modifier = Modifier
+                                                    .size(100.dp),
+                                                contentScale = ContentScale.Fit
+                                            )
+                                        }
+                                        Column {
+                                            if (device != null) {
+                                                Text(
+                                                    text = "Giá: ${formatGiaTien(device.sellingPrice)}",
+                                                    modifier = Modifier.padding(start = 16.dp),
+                                                    color = Color.Red
+                                                )
+                                            }
+                                            Spacer(modifier = Modifier.height(8.dp))
+                                            if (device != null) {
+                                                Text(
+                                                    text = "Tồn kho: ${device.stock - buyNowQuantity}",
+                                                    modifier = Modifier.padding(start = 16.dp)
+                                                )
+                                            }
+                                        }
+                                    }
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.SpaceBetween
+                                    ) {
+                                        Text(
+                                            text = "Số lượng",
+                                            modifier = Modifier.padding(top = 10.dp),
+                                            fontSize = 20.sp
+                                        )
+                                        Row(verticalAlignment = Alignment.CenterVertically) {
+                                            IconButton(onClick = {
+                                                if (buyNowQuantity > 1) buyNowQuantity--
+                                            }) {
+                                                Icon(
+                                                    imageVector = Icons.Filled.Remove,
+                                                    contentDescription = "Trừ"
+                                                )
+                                            }
+                                            Spacer(modifier = Modifier.width(8.dp))
+                                            Text(text = "$buyNowQuantity")
+                                            Spacer(modifier = Modifier.width(8.dp))
+                                            IconButton(onClick = {
+                                                buyNowQuantity++
+                                            }) {
+                                                Icon(
+                                                    imageVector = Icons.Filled.Add,
+                                                    contentDescription = "Thêm"
+                                                )
+                                            }
+                                        }
+                                    }
+                                    Spacer(modifier = Modifier.height(16.dp))
+                                    Button(
+                                        onClick = {
+                                            if (idCustomer == null) {
+                                                navController.navigate(Screen.LoginScreen.route)
+                                            } else if (isLoadingAddress) {
+                                                snackbarMessage.value = "Đang tải thông tin địa chỉ..."
+                                                showSnackbar.value = true
+                                            } else if (addressViewModel.errorMessage != null) {
+                                                snackbarMessage.value = addressViewModel.errorMessage ?: "Lỗi không xác định"
+                                                showSnackbar.value = true
+                                            } else if (addressViewModel.addressDatas?.address_books?.isEmpty() == true) {
+                                                showDialog = true
+                                                dialogType = DialogType.AddressRequired
+                                            } else {
+                                                selectedProducts.clear()
+                                                selectedProducts.add(Triple(device!!.idDevice, buyNowQuantity, 0))
+                                                val totalPrice = device.sellingPrice * buyNowQuantity
+                                                val selectedProductsString = selectedProducts.joinToString(",") { "${it.first}:${it.second}:${it.third}" }
+                                                navController.navigate(
+                                                    Screen.Check_Out.route +
+                                                            "?selectedProducts=$selectedProductsString" +
+                                                            "&tongtien=$totalPrice" +
+                                                            "&username=$username" + "&id=$idCustomer"
+                                                )
+                                                snackbarMessage.value = "Đã chọn sản phẩm để mua ngay!"
+                                                showSnackbar.value = true
+                                                buyNowQuantity = 1
+                                                showDialog = false
+                                            }
+                                        },
+                                        colors = ButtonDefaults.buttonColors(
+                                            containerColor = Color.Red,
+                                            contentColor = Color.White
+                                        ),
+                                        shape = RoundedCornerShape(5.dp),
+                                        elevation = ButtonDefaults.buttonElevation(5.dp),
+                                        modifier = Modifier.fillMaxWidth()
+                                    ) {
+                                        Text(
+                                            "Mua ngay",
+                                            color = Color.White,
+                                            fontWeight = FontWeight.Bold,
+                                            fontSize = 18.sp
+                                        )
+                                    }
+                                }
                             }
                             else -> {}
                         }
@@ -719,36 +840,42 @@ fun ProductDetailsScreen(
                             }
                             Button(
                                 onClick = {
-                                    if (idCustomer == null) {
-                                        navController.navigate(Screen.LoginScreen.route)
-                                    } else if (addressViewModel.isLoading) {
-                                        // Hiển thị thông báo đang tải hoặc vô hiệu hóa nút
-                                        snackbarMessage.value = "Đang tải thông tin địa chỉ..."
-                                        showSnackbar.value = true
-
-                                    } else if (addressViewModel.errorMessage != null) {
-                                        snackbarMessage.value = addressViewModel.errorMessage ?: "Lỗi không xác định"
-                                        showSnackbar.value = true
-                                    } else if (addressViewModel.addressDatas?.address_books?.isEmpty() == true) {
+//                                    if (idCustomer == null) {
+//                                        navController.navigate(Screen.LoginScreen.route)
+//                                    } else if (isLoadingAddress) {
+//                                        // Hiển thị thông báo đang tải hoặc vô hiệu hóa nút
+//                                        snackbarMessage.value = "Đang tải thông tin địa chỉ..."
+//                                        showSnackbar.value = true
+//
+//                                    } else if (addressViewModel.errorMessage != null) {
+//                                        snackbarMessage.value = addressViewModel.errorMessage ?: "Lỗi không xác định"
+//                                        showSnackbar.value = true
+//                                    } else if (addressViewModel.addressDatas?.address_books?.isEmpty() == true) {
+//                                        showDialog = true
+//                                        dialogType = DialogType.AddressRequired
+//
+//                                    } else {
+//                                        // Logic mua hàng hiện tại
+//                                        selectedProducts.clear()
+//                                        selectedProducts.add(Triple(device.idDevice, quantity, 0))
+//                                        val totalPrice = device.sellingPrice * quantity
+//                                        val selectedProductsString = selectedProducts.joinToString(",") { "${it.first}:${it.second}:${it.third}" }
+//                                        println("selectedProductsString: $selectedProductsString")
+//                                        navController.navigate(
+//                                            Screen.Check_Out.route +
+//                                                    "?selectedProducts=$selectedProductsString" +
+//                                                    "&tongtien=$totalPrice" +
+//                                                    "&username=$username" + "&id=$idCustomer"
+//                                        )
+//                                        snackbarMessage.value = "Đã chọn sản phẩm để mua ngay!"
+//                                        showSnackbar.value = true
+//                                        quantity = 1
+//                                    }
+                                    if (idCustomer != null) {
                                         showDialog = true
-                                        dialogType = DialogType.AddressRequired
-
+                                        dialogType = DialogType.BuyNow
                                     } else {
-                                        // Logic mua hàng hiện tại
-                                        selectedProducts.clear()
-                                        selectedProducts.add(Triple(device.idDevice, quantity, 0))
-                                        val totalPrice = device.sellingPrice * quantity
-                                        val selectedProductsString = selectedProducts.joinToString(",") { "${it.first}:${it.second}:${it.third}" }
-                                        println("selectedProductsString: $selectedProductsString")
-                                        navController.navigate(
-                                            Screen.Check_Out.route +
-                                                    "?selectedProducts=$selectedProductsString" +
-                                                    "&tongtien=$totalPrice" +
-                                                    "&username=$username" + "&id=$idCustomer"
-                                        )
-                                        snackbarMessage.value = "Đã chọn sản phẩm để mua ngay!"
-                                        showSnackbar.value = true
-                                        quantity = 1
+                                        navController.navigate(Screen.LoginScreen.route)
                                     }
                                 },
                                 modifier = Modifier.fillMaxWidth(),
@@ -757,7 +884,7 @@ fun ProductDetailsScreen(
                                     contentColor = Color.White,
                                     containerColor = Color.Red
                                 ),
-                                enabled = !addressViewModel.isLoading // Vô hiệu hóa nút khi đang tải
+                                enabled = !isLoadingAddress // Vô hiệu hóa nút khi đang tải
                             ) {
                                 Text(
                                     text = "MUA NGAY",

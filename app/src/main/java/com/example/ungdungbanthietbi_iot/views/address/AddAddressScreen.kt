@@ -1,8 +1,11 @@
 package com.example.ungdungbanthietbi_iot.views.address
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -43,6 +46,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+import com.example.ungdungbanthietbi_iot.api.CreateAddressRequest
 import com.example.ungdungbanthietbi_iot.models.Address
 import com.example.ungdungbanthietbi_iot.viewModels.AddressViewModel
 import com.example.ungdungbanthietbi_iot.viewModels.CustomerViewModel
@@ -74,22 +78,17 @@ fun AddAddressScreen(
     var showDialog by remember { mutableStateOf(false) }
 
     val addressViewModel: AddressViewModel = viewModel()
-    var listAddress = addressViewModel.listAddress
-    //addressViewModel.getAddressByIdCustomer(idCustomer)
 
-    val customerViewModel: CustomerViewModel = viewModel()
-    val customer = customerViewModel.customer
-    LaunchedEffect (idCustomer){
-        customerViewModel.getCustomerById(idCustomer)
-    }
     // Biến trạng thái lưu thông tin nhập vào
-    var hoten by remember { mutableStateOf("${customer?.surname} ${customer?.lastname}") }// Tên đầy đủ
-    var phone by remember { mutableStateOf("${customer?.phone}") }// Số điện thoại
+    var hoten by remember { mutableStateOf("") }// Tên đầy đủ
+    var phone by remember { mutableStateOf("") }// Số điện thoại
     var district by remember { mutableStateOf("") }// Tỉnh/Thành phố
     var city by remember { mutableStateOf("") }// Quận/Huyện
     var ward by remember { mutableStateOf("") }// Phường/Xã
     var street by remember { mutableStateOf("") }// Địa chỉ chi tiết
+    var detail by remember { mutableStateOf("") }// Địa chỉ chi tiết
     var isDefault by remember { mutableStateOf(false) } // Trạng thái của Switch đặt làm địa chỉ mặc định
+    var validatePhone by remember { mutableStateOf(false) }
     Scaffold (
         topBar = {
             TopAppBar(
@@ -118,21 +117,21 @@ fun AddAddressScreen(
         // Thanh điều hướng hoặc nút hành động ở dưới cùng (bottomBar)
         bottomBar = {
             BottomAppBar (
-                containerColor = Color.Transparent,
+                containerColor = Color.White,
                 modifier = Modifier.fillMaxWidth().height(175.dp)
             ){
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
                         .background(Color.White)
-                        .padding(10.dp)
+                        .padding(horizontal = 10.dp)
                 ) {
                     // Nút Switch: Đặt làm địa chỉ mặc định
                     Row(
                         modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(8.dp),
-                        verticalAlignment = Alignment.CenterVertically
+                            .fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
                     ) {
                         Text(
                             text = "Đặt làm địa chỉ mặc định",
@@ -154,36 +153,22 @@ fun AddAddressScreen(
                     Button(
                         modifier = Modifier.fillMaxWidth(),
                         onClick = {
-                            if(city.trim() != "" || district.trim() != "" || ward != "" || street != ""){
-                                /* Thêm logic thêm địa chỉ */
-                                if(isDefault){
-                                    for(address in listAddress){
-//                                        if(address.is_default == 1){
-//                                            var address = Address(
-//                                                address.id,
-//                                                address.,
-//                                                address.district,
-//                                                address.city,
-//                                                address.ward,
-//                                                address.street,
-//                                                0
-//                                            )
-//                                            //addressViewModel.updateAddress(address)
-//                                        }
-                                    }
-                                }
-                                if(idCustomer != null){
-                                    var address = Address(
-                                        0,
-                                        idCustomer,
-                                        district,
-                                        city,
-                                        ward,
-                                        street,
-                                        if(isDefault) 1 else 0
-                                    )
-                                    //addressViewModel.addAddress(address)
-                                }
+                            if(phone.length != 10){
+                                validatePhone = true
+                            }
+                            if(city.trim() != "" || district.trim() != "" || ward != "" || street != "" || hoten.trim().isNotEmpty() || phone.isNotEmpty()){
+                                val createAddress = CreateAddressRequest(
+                                    customer_id = idCustomer,
+                                    receiver_name = hoten,
+                                    phone = phone,
+                                    district = district,
+                                    city = city,
+                                    ward = ward,
+                                    street = street,
+                                    detail = detail,
+                                    is_default = isDefault
+                                )
+                                addressViewModel.createAddress(createAddress)
                                 navController.popBackStack()
                             }
                             else{
@@ -193,8 +178,8 @@ fun AddAddressScreen(
                         colors = ButtonDefaults.buttonColors(
                             containerColor = Color(0xFF5D9EFF)
                         ),
-                        shape = RoundedCornerShape(5.dp),// Bo góc nút
-                        elevation = ButtonDefaults.buttonElevation(4.dp)// Tạo độ nổi
+                        shape = RoundedCornerShape(10.dp),// Bo góc nút
+                        elevation = ButtonDefaults.buttonElevation(1.dp)// Tạo độ nổi
                     ) {
                         Text("Thêm địa chỉ", fontSize = 20.sp)
                     }
@@ -207,7 +192,9 @@ fun AddAddressScreen(
                                 Button(onClick = { showDialog = false },
                                     colors = ButtonDefaults.buttonColors(
                                         containerColor = Color(0xFF5D9EFF)
-                                    )) {
+                                    ),
+                                    shape = RoundedCornerShape(10.dp)
+                                ) {
                                     Text("OK")
                                 }
                             }
@@ -219,16 +206,60 @@ fun AddAddressScreen(
     ) {
         // Nội dung chính (LazyColumn) hiển thị danh sách các trường nhập liệu
         LazyColumn (
-            modifier = Modifier.fillMaxWidth().padding(it).background(Color.White)
+            modifier = Modifier.fillMaxSize().padding(it).background(Color.White)
                 .padding(10.dp)
         ){
+            item{
+                Text(
+                    text = "Thông tin người nhận",
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.W500,
+                    modifier = Modifier.padding(bottom = 6.dp)
+                )
+                TextField(
+                    value = hoten,
+                    onValueChange = { hoten = it },
+                    label = { Text("Họ và tên") },
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = TextFieldDefaults.colors(
+                        unfocusedContainerColor = Color.Transparent,
+                        focusedContainerColor = Color.Transparent,
+                        focusedIndicatorColor = Color(0xFF5D9EFF),
+                        focusedLabelColor = Color(0xFF5D9EFF),
+                        cursorColor = Color(0xFF5D9EFF)
+                    ),
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text)
+                )
+                TextField(
+                    value = phone,
+                    onValueChange = { phone = it },
+                    label = { Text("Số điện thoại") },
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = TextFieldDefaults.colors(
+                        unfocusedContainerColor = Color.Transparent,
+                        focusedContainerColor = Color.Transparent,
+                        unfocusedIndicatorColor = Color.Transparent,
+                        focusedIndicatorColor = Color.Transparent,
+                        focusedLabelColor = Color(0xFF5D9EFF),
+                        cursorColor = Color(0xFF5D9EFF)
+                    ),
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone)
+                )
+                if(validatePhone){
+                    Text(
+                        text = "Số điện thoại phải đủ 10 số",
+                        color = Color.Red
+                    )
+                }
+            }
             // Nhóm trường "Địa chỉ"
             item {
+                Spacer(modifier = Modifier.height(10.dp))
                 Text(
                     text = "Địa chỉ",
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.W400,
-                    modifier = Modifier.padding(bottom = 10.dp)
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.W500,
+                    modifier = Modifier.padding(bottom = 6.dp)
                 )
                 TextField(
                     value = city,
@@ -238,8 +269,11 @@ fun AddAddressScreen(
                     colors = TextFieldDefaults.colors(
                         unfocusedContainerColor = Color.Transparent,
                         focusedContainerColor = Color.Transparent,
-                        focusedIndicatorColor = Color(0xFF5D9EFF)
-                    )
+                        focusedIndicatorColor = Color(0xFF5D9EFF),
+                        focusedLabelColor = Color(0xFF5D9EFF),
+                        cursorColor = Color(0xFF5D9EFF)
+                    ),
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text)
                 )
                 TextField(
                     value = district,
@@ -249,8 +283,11 @@ fun AddAddressScreen(
                     colors = TextFieldDefaults.colors(
                         unfocusedContainerColor = Color.Transparent,
                         focusedContainerColor = Color.Transparent,
-                        focusedIndicatorColor = Color(0xFF5D9EFF)
+                        focusedIndicatorColor = Color(0xFF5D9EFF),
+                        focusedLabelColor = Color(0xFF5D9EFF),
+                        cursorColor = Color(0xFF5D9EFF)
                     ),
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text)
                 )
                 TextField(
                     value = ward,
@@ -260,12 +297,29 @@ fun AddAddressScreen(
                     colors = TextFieldDefaults.colors(
                         unfocusedContainerColor = Color.Transparent,
                         focusedContainerColor = Color.Transparent,
-                        focusedIndicatorColor = Color(0xFF5D9EFF)
+                        focusedIndicatorColor = Color(0xFF5D9EFF),
+                        focusedLabelColor = Color(0xFF5D9EFF),
+                        cursorColor = Color(0xFF5D9EFF)
                     ),
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text)
                 )
                 TextField(
                     value = street,
                     onValueChange = { street = it },
+                    label = { Text("Đường") },
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = TextFieldDefaults.colors(
+                        unfocusedContainerColor = Color.Transparent,
+                        focusedContainerColor = Color.Transparent,
+                        focusedIndicatorColor = Color(0xFF5D9EFF),
+                        focusedLabelColor = Color(0xFF5D9EFF),
+                        cursorColor = Color(0xFF5D9EFF)
+                    ),
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text)
+                )
+                TextField(
+                    value = detail,
+                    onValueChange = { detail = it },
                     label = { Text("Địa chỉ chi tiết") },
                     modifier = Modifier.fillMaxWidth(),
                     maxLines = 3,
@@ -273,7 +327,9 @@ fun AddAddressScreen(
                         unfocusedContainerColor = Color.Transparent,
                         focusedContainerColor = Color.Transparent,
                         unfocusedIndicatorColor = Color.Transparent,
-                        focusedIndicatorColor = Color.Transparent
+                        focusedIndicatorColor = Color.Transparent,
+                        focusedLabelColor = Color(0xFF5D9EFF),
+                        cursorColor = Color(0xFF5D9EFF)
                     ),
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text)// Bàn phím văn bản
                 )

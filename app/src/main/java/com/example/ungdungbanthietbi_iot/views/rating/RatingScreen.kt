@@ -31,6 +31,7 @@ import androidx.compose.material3.CheckboxDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Snackbar
@@ -40,6 +41,7 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -55,6 +57,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import coil.compose.AsyncImage
+import com.example.ungdungbanthietbi_iot.api.ReviewRequestCreate
 import com.example.ungdungbanthietbi_iot.models.Review
 import com.example.ungdungbanthietbi_iot.viewModels.ReviewViewModel
 import com.example.ungdungbanthietbi_iot.utils.getCurrentTimestamp
@@ -62,14 +65,15 @@ import kotlinx.coroutines.delay
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun RatingScreen(navController: NavController, idCustomer: String?, idDevice: Int) {
+fun RatingScreen(navController: NavController, idCustomer: String, idDevice: Int) {
     val reviewViewModel: ReviewViewModel = viewModel()
 
     var rating by remember { mutableStateOf(0) }
     var comment by remember { mutableStateOf("") }
     var selectedImage by remember { mutableStateOf<Uri?>(null) }
-    var isAnonymous by remember { mutableStateOf(false) }
 
+    val error by reviewViewModel.error.collectAsState()
+    val isLoading by reviewViewModel.isLoading.collectAsState()
     val showSnackbar = remember { mutableStateOf(false) }
     val snackbarMessage = remember { mutableStateOf("") }
 
@@ -123,64 +127,41 @@ fun RatingScreen(navController: NavController, idCustomer: String?, idDevice: In
                             Text(snackbarMessage.value)
                         }
                     }
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            modifier = Modifier.padding(bottom = 1.dp)
-                        ) {
-                            Checkbox(
-                                checked = isAnonymous,
-                                onCheckedChange = { isAnonymous = it },
-                                colors = CheckboxDefaults.colors(
-                                    checkedColor = Color(0xFF5D9EFF),
-                                    uncheckedColor = Color.Gray
-                                )
-                            )
-                            Text(
-                                text = "Đánh giá ẩn danh",
-                                fontSize = 16.sp,
-                                modifier = Modifier.clickable { isAnonymous = !isAnonymous }
-                            )
-                        }
+                    if (error != null) {
+                        Text(
+                            text = "Lỗi: $error",
+                            color = MaterialTheme.colorScheme.error,
+                            modifier = Modifier.padding(8.dp)
+                        )
                     }
                     Spacer(modifier = Modifier.height(8.dp))
                     Button(
                         onClick = {
-                            if (idCustomer != null) {
-                                val addReview = Review(
-                                    idReview = 0,
-                                    idCustomer = if (isAnonymous) "Anonymous" else idCustomer,
-                                    idEmployee = "Null",
-                                    idDevice = idDevice,
+                            if(!isLoading){
+                                val createReview = ReviewRequestCreate(
+                                    customer_id = idCustomer,
+                                    product_id = idDevice,
                                     comment = comment,
-                                    rating = rating,
-                                    response = "Null",
-                                    note = "Null",
-                                    created_at = getCurrentTimestamp(),
-                                    updated_at = getCurrentTimestamp(),
-                                    status = 1
+                                    image = "selectedImage",
+                                    rating = rating
                                 )
-                                reviewViewModel.addReview(addReview)
+                                reviewViewModel.addReview(createReview)
+                                showSnackbar.value = true
+                                snackbarMessage.value = "Đánh giá của bạn đã được gửi thành công!"
+                                navController.popBackStack()
                             }
-                            showSnackbar.value = true
-                            snackbarMessage.value = "Đánh giá của bạn đã được gửi thành công!"
-                            navController.popBackStack()
+
                         },
                         modifier = Modifier
-                            .fillMaxWidth()
-                            .height(50.dp),
-                        shape = RoundedCornerShape(5.dp),
-                        elevation = ButtonDefaults.buttonElevation(5.dp),
+                            .fillMaxWidth(),
+                        shape = RoundedCornerShape(10.dp),
+                        elevation = ButtonDefaults.buttonElevation(1.dp),
                         colors = ButtonDefaults.buttonColors(
                             containerColor = Color(0xFF5D9EFF),
                             contentColor = Color.White
                         )
                     ) {
-                        Text(text = "Gửi đánh giá", fontSize = 20.sp)
+                        Text(text = if (isLoading) "Đang gửi..." else "Gửi đánh giá", fontSize = 20.sp)
                     }
                 }
             }

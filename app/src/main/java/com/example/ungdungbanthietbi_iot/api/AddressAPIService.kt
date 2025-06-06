@@ -1,27 +1,44 @@
 package com.example.ungdungbanthietbi_iot.api
 
+import androidx.room.Update
 import com.example.ungdungbanthietbi_iot.models.Address
 import com.example.ungdungbanthietbi_iot.models.AddressBook
 import retrofit2.Response
 import retrofit2.http.Body
+import retrofit2.http.DELETE
 import retrofit2.http.GET
 import retrofit2.http.POST
 import retrofit2.http.PUT
 import retrofit2.http.Path
 import retrofit2.http.Query
 
-data class AddressResponse(
-    val address: List<Address>
+data class createAddressResponse(
+    val status_code: Int,
+    val data: AddressBook
 )
 
-data class addAddressResponse(
-    val success: Boolean,
-    val message: String
+data class CreateAddressRequest(
+    val customer_id: String,
+    val receiver_name: String,
+    val phone: String,
+    val district: String?,
+    val city: String?,
+    val ward: String?,
+    val street: String?,
+    val detail: String?,
+    val is_default: Boolean
 )
-
-
-data class deleteAddressRequest(
-    val id: Int
+data class UpdateAddressRequest(
+    val customer_id: String,
+    val id: Int,
+    val receiver_name: String,
+    val phone: String,
+    val district: String?,
+    val city: String?,
+    val ward: String?,
+    val street: String?,
+    val detail: String?,
+    val is_default: Boolean
 )
 
 data class ApiResponse(
@@ -51,7 +68,10 @@ data class AddressDetailRES(
     val data: AddressBook
 )
 
-
+data class deleteResponse(
+    val status_code: Int,
+    val data: String
+)
 interface AddressAPIService {
 
     @GET("address-book/customer/{id}")
@@ -62,39 +82,20 @@ interface AddressAPIService {
         @Path("id") id: Int
     ): AddressDetailRES
 
-    @POST("address_book/create.php")
-    suspend fun addAddress(
-        @Body address: Address
-    ): addAddressResponse
+    @POST("address-book/")
+    suspend fun createAddress(
+        @Body request : CreateAddressRequest
+    ): createAddressResponse
 
-    @PUT("address_book/update.php")
+    @PUT("address-book/")
     suspend fun updateAddress(
-        @Body address: Address
-    ): addAddressResponse
+        @Body request : UpdateAddressRequest
+    ): createAddressResponse
 
-    @GET("customer/{id}")
-    suspend fun getAddressByIdCustomer(
-        @Query("idCustomer") idCustomer: String?
-    ): AddressResponse
 
-    @GET("address_book/getAddressDefault.php")
-    suspend fun getAddressDefault(
-        @Query("idCustomer") idCustomer: String,
-        @Query("isDefault") isDefault: Int
-    ): Address
-
-    @PUT("address_book/updateAddressDefault.php")
-    suspend fun updateAddressDefault(
-        @Body idCustomer: String
-    ): addAddressResponse
-
-    @POST("address_book/delete.php")
+    @DELETE("address-book/{customer_id}/{id}")
     suspend fun deleteAddress(
-        @Body id: deleteAddressRequest
-    ): Response<ApiResponse1>
-
-    @GET("address_book/getAddressByIdOrder.php")
-    suspend fun getAddressByIdOrder(
-        @Query("id") id: Int
-    ): Address
+        @Path ("customer_id") customer_id: String,
+        @Path ("id") id: Int,
+    ): deleteResponse
 }

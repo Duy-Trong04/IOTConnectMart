@@ -33,6 +33,7 @@ import androidx.compose.material3.CheckboxDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Snackbar
@@ -42,6 +43,7 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -52,10 +54,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+import com.example.ungdungbanthietbi_iot.api.ReviewRequestUpdate
 import com.example.ungdungbanthietbi_iot.viewModels.ReviewViewModel
 import com.example.ungdungbanthietbi_iot.utils.getCurrentTimestamp
 import kotlinx.coroutines.delay
@@ -88,9 +92,9 @@ fun UpdateRatingScreen(navController: NavController, idReview: Int, idCustomer: 
 
     var rating by remember { mutableStateOf(0) } // Lưu trạng thái số sao được đánh giá
     var comment by remember { mutableStateOf("") } // Lưu nội dung bình luận
-    var images by remember { mutableStateOf(mutableListOf<Uri>()) } // Lưu danh sách ảnh
-    var isAnonymous by remember { mutableStateOf(false) } // Trạng thái ẩn danh
-
+    val images by remember { mutableStateOf(mutableListOf<Uri>()) } // Lưu danh sách ảnh
+    val error by reviewViewModel.error.collectAsState()
+    val isLoading by reviewViewModel.isLoading.collectAsState()
     LaunchedEffect (idReview){
         reviewViewModel.getReviewById(idReview)
     }
@@ -101,8 +105,6 @@ fun UpdateRatingScreen(navController: NavController, idReview: Int, idCustomer: 
             // If your model has an anonymous flag, populate it here
         }
     }
-    val scaffoldState = rememberScaffoldState()
-    val scope = rememberCoroutineScope()
     val showSnackbar = remember { mutableStateOf(false) }
     val snackbarMessage = remember { mutableStateOf("") }
 
@@ -147,165 +149,168 @@ fun UpdateRatingScreen(navController: NavController, idReview: Int, idCustomer: 
                             Text(snackbarMessage.value)
                         }
                     }
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            modifier = Modifier.padding(bottom = 1.dp)
-                        ) {
-                            Checkbox(
-                                checked = isAnonymous,
-                                onCheckedChange = { isAnonymous = it },
-                                colors = CheckboxDefaults.colors(
-                                    checkedColor = Color(0xFF5D9EFF),
-                                    uncheckedColor = Color.Gray
-                                )
-                            )
-                            Text(
-                                text = "Đánh giá ẩn danh",
-                                fontSize = 16.sp,
-                                modifier = Modifier.clickable { isAnonymous = !isAnonymous }
-                            )
-                        }
-
+                    if (error != null) {
+                        Text(
+                            text = "Lỗi: $error",
+                            color = MaterialTheme.colorScheme.error,
+                            modifier = Modifier.padding(8.dp)
+                        )
                     }
                     Spacer(modifier = Modifier.height(8.dp))
                     // Nút Gửi
                     Button(
                         onClick = {
-                            if(idCustomer != null){
-                                review?.let {
-                                    val updatedReview = it.copy(
-                                        rating = rating,
-                                        comment = comment,
-                                        updated_at = getCurrentTimestamp(),
-                                        status = 1
-                                    )
-                                    reviewViewModel.updateReview(updatedReview)
+                            if (!isLoading) {
+                                if (idCustomer != null) {
+                                    review?.let {
+                                        val updatedReview = ReviewRequestUpdate(
+                                            id = idReview,
+                                            customer_id = idCustomer,
+                                            comment = comment,
+                                            image = "images",
+                                            rating = rating
+                                        )
+                                        reviewViewModel.updateReview(updatedReview)
+                                    }
+                                    showSnackbar.value = true
+                                    snackbarMessage.value =
+                                        "Đánh giá của bạn đã được gửi thành công!"
+                                    navController.previousBackStackEntry
+                                        ?.savedStateHandle
+                                        ?.set("needRefreshReviews", true)
+                                    navController.popBackStack()
                                 }
-                                showSnackbar.value = true
-                                snackbarMessage.value = "Đánh giá của bạn đã được gửi thành công!"
-                                navController.previousBackStackEntry
-                                    ?.savedStateHandle
-                                    ?.set("needRefreshReviews", true)
-                                navController.popBackStack()
                             }
-
                         },
                         modifier = Modifier
-                            .fillMaxWidth()
-                            .height(50.dp),
-                        shape = RoundedCornerShape(5.dp),
-                        elevation = ButtonDefaults.buttonElevation(5.dp),
+                            .fillMaxWidth(),
+                        shape = RoundedCornerShape(10.dp),
+                        elevation = ButtonDefaults.buttonElevation(1.dp),
                         colors = ButtonDefaults.buttonColors(
                             containerColor = Color(0xFF5D9EFF),
                             contentColor = Color.White
                         )
                     ) {
-                        Text(text = "Gửi đánh giá", fontSize = 20.sp)
+                        Text(text = if (isLoading) "Đang gửi..." else "Gửi đánh giá", fontSize = 20.sp)
                     }
                 }
             }
         }
     ) { paddingValues ->
-        LazyColumn(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues)
-                .padding(16.dp)
-        ) {
-            item{
-                // Tiêu đề
+        if(review == null){
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(paddingValues),
+                contentAlignment = Alignment.Center
+            ) {
                 Text(
-                    text = "Bạn đánh giá sản phẩm này như thế nào?",
-                    fontSize = 18.sp,
-                    fontWeight = FontWeight.Bold,
-                    modifier = Modifier.padding(bottom = 16.dp)
-                )
-
-                // Đánh giá sao
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(bottom = 16.dp),
-                    horizontalArrangement = Arrangement.Center
-                ) {
-                    for (i in 1..5) {
-                        Icon(
-                            imageVector = if (i <= rating) Icons.Filled.Star else Icons.Outlined.Star,
-                            contentDescription = "Star $i",
-                            tint = if (i <= rating) Color(0xFFFFD700) else Color(0xFFBDBDBD),
-                            modifier = Modifier
-                                .size(40.dp)
-                                .clickable { rating = i } // Cập nhật số sao khi người dùng nhấn
-                                .padding(4.dp)
-                        )
-                    }
-                }
-
-                // Ô nhập bình luận
-                OutlinedTextField(
-                    value = comment,
-                    onValueChange = { comment = it },
-                    label = { Text("Viết bình luận của bạn...") },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(150.dp),
-                    shape = RoundedCornerShape(8.dp),
-                    colors = TextFieldDefaults.colors(
-                        focusedIndicatorColor = Color(0xFF5D9EFF),
-                        focusedLabelColor = Color(0xFF5D9EFF),
-                        unfocusedContainerColor = Color.White,
-                        focusedContainerColor = Color.White,
-                        cursorColor = Color(0xFF5D9EFF)
-                    ),
-                    maxLines = 5
-                )
-
-                Spacer(modifier = Modifier.height(16.dp))
-
-                // Chế độ ảnh đánh giá
-                Text(
-                    text = "Thêm ảnh đánh giá",
+                    text = "Không tìm thấy đánh giá",
                     fontSize = 16.sp,
-                    fontWeight = FontWeight.Bold,
-                    modifier = Modifier.padding(bottom = 8.dp)
+                    textAlign = TextAlign.Center,
+                    color = MaterialTheme.colorScheme.error
                 )
-                LazyRow(
-                    contentPadding = PaddingValues(horizontal = 8.dp),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    // Nút thêm ảnh
-                    item {
-                        Box(
-                            modifier = Modifier
-                                .size(100.dp)
-                                .border(1.dp, Color.Gray, RoundedCornerShape(8.dp))
-                                .clickable {
-                                    // Thêm logic chọn ảnh ở đây (giả lập bằng mã bên dưới)
-                                    images.add(Uri.parse("android.resource://com.example.app/drawable/sample_image"))
-                                },
-                            contentAlignment = Alignment.Center
-                        ) {
+            }
+        }
+        else {
+
+            LazyColumn(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(Color.White)
+                    .padding(paddingValues)
+                    .padding(16.dp)
+            ) {
+                item {
+                    // Tiêu đề
+                    Text(
+                        text = "Bạn đánh giá sản phẩm này như thế nào?",
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier.padding(bottom = 16.dp)
+                    )
+
+                    // Đánh giá sao
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(bottom = 16.dp),
+                        horizontalArrangement = Arrangement.Center
+                    ) {
+                        for (i in 1..5) {
                             Icon(
-                                imageVector = Icons.Default.Add,
-                                contentDescription = "Thêm ảnh",
-                                tint = Color.Gray,
-                                modifier = Modifier.size(40.dp)
+                                imageVector = if (i <= rating) Icons.Filled.Star else Icons.Outlined.Star,
+                                contentDescription = "Star $i",
+                                tint = if (i <= rating) Color(0xFFFFD700) else Color(0xFFBDBDBD),
+                                modifier = Modifier
+                                    .size(40.dp)
+                                    .clickable { rating = i } // Cập nhật số sao khi người dùng nhấn
+                                    .padding(4.dp)
                             )
                         }
                     }
-                    // Hiển thị danh sách ảnh
-                    items(images) { image ->
-                        Box(
-                            modifier = Modifier
-                                .size(100.dp)
-                                .clip(RoundedCornerShape(8.dp))
-                                .background(Color.LightGray)
-                        ) {
+
+                    // Ô nhập bình luận
+                    OutlinedTextField(
+                        value = comment,
+                        onValueChange = { comment = it },
+                        label = { Text("Viết bình luận của bạn...") },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(150.dp),
+                        shape = RoundedCornerShape(8.dp),
+                        colors = TextFieldDefaults.colors(
+                            focusedIndicatorColor = Color(0xFF5D9EFF),
+                            focusedLabelColor = Color(0xFF5D9EFF),
+                            unfocusedContainerColor = Color.White,
+                            focusedContainerColor = Color.White,
+                            cursorColor = Color(0xFF5D9EFF)
+                        ),
+                        maxLines = 5
+                    )
+
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    // Chế độ ảnh đánh giá
+                    Text(
+                        text = "Thêm ảnh đánh giá",
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier.padding(bottom = 8.dp)
+                    )
+                    LazyRow(
+                        contentPadding = PaddingValues(horizontal = 8.dp),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        // Nút thêm ảnh
+                        item {
+                            Box(
+                                modifier = Modifier
+                                    .size(100.dp)
+                                    .border(1.dp, Color.Gray, RoundedCornerShape(8.dp))
+                                    .clickable {
+                                        // Thêm logic chọn ảnh ở đây (giả lập bằng mã bên dưới)
+                                        images.add(Uri.parse("android.resource://com.example.app/drawable/sample_image"))
+                                    },
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Add,
+                                    contentDescription = "Thêm ảnh",
+                                    tint = Color.Gray,
+                                    modifier = Modifier.size(40.dp)
+                                )
+                            }
+                        }
+                        // Hiển thị danh sách ảnh
+                        items(images) { image ->
+                            Box(
+                                modifier = Modifier
+                                    .size(100.dp)
+                                    .clip(RoundedCornerShape(8.dp))
+                                    .background(Color.LightGray)
+                            ) {
+                            }
                         }
                     }
                 }

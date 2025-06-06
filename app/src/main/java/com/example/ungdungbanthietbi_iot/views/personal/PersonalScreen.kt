@@ -147,9 +147,9 @@ fun PersonalScreen(
         bottomBar = {
             BottomAppBar (
                 containerColor = Color.White,
-                contentColor = Color.Black,
                 modifier = Modifier
                     .fillMaxWidth()
+                    .background(Color.White)
                     .offset(y = 16.dp) // Dịch chuyển BottomAppBar xuống 16dp
             ){}
         },

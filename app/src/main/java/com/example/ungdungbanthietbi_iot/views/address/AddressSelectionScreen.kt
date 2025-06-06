@@ -22,7 +22,6 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -56,6 +55,7 @@ import com.example.ungdungbanthietbi_iot.viewModels.AddressViewModel
 import com.example.ungdungbanthietbi_iot.viewModels.CustomerViewModel
 import com.example.ungdungbanthietbi_iot.navigation.Screen
 import com.example.ungdungbanthietbi_iot.viewModels.CustomerState
+import androidx.compose.material3.CircularProgressIndicator as CircularProgressIndicator1
 
 /** Giao diện màn hình chọn địa chỉ (AddressSelectionScreen)
  * -------------------------------------------
@@ -194,29 +194,26 @@ fun AddressItem(
     selectedAddressId: Int?, // ID của địa chỉ đang được chọn
     onSelectClick: (Int) -> Unit // Callback khi chọn địa chỉ
 ) {
-    val customerViewModel: CustomerViewModel = viewModel()
-    val customerState by customerViewModel.customerState.collectAsState()
 
-    LaunchedEffect(address) {
-        customerViewModel.getCustomerById9(idCustomer)
-    }
-    when (val state = customerState) {
-        is CustomerState.Loading -> {
-            Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
-                CircularProgressIndicator(
-                    color = Color(0xFF5F9EFF)
-                )
-            }
+    val addressViewModel: AddressViewModel = viewModel()
+    val isLoading by addressViewModel.isLoading.collectAsState()
+    if(isLoading){
+        Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+            CircularProgressIndicator1(
+                color = Color(0xFF5F9EFF)
+            )
         }
-        is CustomerState.Success -> {
-            val customer = state.customer
-
+    }
             Card(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(5.dp)
-                    .clickable { if (selectedAddressId != null) onSelectClick(address.id)
-                    else { navController.navigate("${Screen.Update_Address.route}?idCustomer=${idCustomer}&id=${address.id}") }}, // Nhấn vào Card để chọn
+                    .clickable {
+                        if (selectedAddressId != null) onSelectClick(address.id)
+                        else {
+                            navController.navigate("${Screen.Update_Address.route}?idCustomer=${idCustomer}&id=${address.id}")
+                        }
+                    }, // Nhấn vào Card để chọn
                 colors = CardDefaults.cardColors(containerColor = Color.White),
                 elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
                 shape = RoundedCornerShape(5.dp)
@@ -250,7 +247,7 @@ fun AddressItem(
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Text(
-                                text = "Người nhận: ${customer?.surname} ${customer?.lastname}",
+                                text = "Người nhận: ${address.receiver_name}",
                                 fontSize = 18.sp,
                                 fontWeight = FontWeight.Bold
                             )
@@ -268,27 +265,30 @@ fun AddressItem(
                                         color = Color(0xFF5D9EFF)
                                     )
                                 }
-                            }
-                            else {
+                            } else {
                                 Spacer(modifier = Modifier.width(8.dp)) // Giữ khoảng cách khi không có RadioButton
                             }
                         }
                         Text(
-                            text = "Số điện thoại: ${customer?.phone}",
+                            text = "Số điện thoại: ${address.phone}",
                             fontSize = 18.sp,
                             modifier = Modifier.padding(bottom = 8.dp)
                         )
                         Text(
-                            text = "Địa chỉ: ${address.street}, ${address.ward}, ${address.district}, ${address.city}",
+                            text = "Địa chỉ: ${address.detail}, ${address.street}, ${address.ward}, ${address.district}, ${address.city}",
                             modifier = Modifier.padding(bottom = 8.dp),
                             fontSize = 18.sp
                         )
-                        if (address.is_default == 1) {
+                        if (address.is_default) {
                             Text(
                                 text = "Mặc định",
                                 fontSize = 13.sp,
                                 modifier = Modifier
-                                    .border(1.dp, Color(0xFF5D9EFF), shape = RoundedCornerShape(10.dp))
+                                    .border(
+                                        1.dp,
+                                        Color(0xFF5D9EFF),
+                                        shape = RoundedCornerShape(10.dp)
+                                    )
                                     .padding(3.dp),
                                 color = Color(0xFF5D9EFF)
                             )
@@ -296,29 +296,5 @@ fun AddressItem(
                     }
                 }
             }
-        }
-        is CustomerState.Error -> {
-            Column(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                Text(
-                    text = state.message,
-                    color = MaterialTheme.colorScheme.error,
-                    fontSize = 16.sp
-                )
-                Spacer(modifier = Modifier.height(8.dp))
-                Button(
-                    onClick = {
-                        customerViewModel.getCustomerById9(idCustomer)
-                    },
-                    shape = RoundedCornerShape(10.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF5F9EFF))
-                ) {
-                    Text("Thử lại", color = Color.White)
-                }
-            }
-        }
-    }
 
 }
