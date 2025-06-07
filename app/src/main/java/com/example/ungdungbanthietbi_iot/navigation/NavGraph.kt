@@ -197,7 +197,7 @@ fun NavGraph(
         }
 
         //Màn hình Reset Pass
-        composable(route = Screen.ResetPasswordScreen.route + "?email={email}",) {
+        composable(route = Screen.ResetPasswordScreen.route + "?email={email}") {
             ResetPasswordScreen(navController, accountViewModel, email = it.arguments?.getString("email"))
         }
         //Màn hình chọn địa chỉ
@@ -225,7 +225,7 @@ fun NavGraph(
             )
         }
         //Màn hình Xác nhận OTP
-        composable(route = Screen.VerifyOTPScreen.route + "?email={email}",) {
+        composable(route = Screen.VerifyOTPScreen.route + "?email={email}") {
             VerifyOTPScreen(navController, accountViewModel, email = it.arguments?.getString("email"))
         }
         //Màn hình quên mật khẩu
@@ -361,63 +361,71 @@ fun NavGraph(
             val totalAmount = it.arguments?.getString("totalAmount")?.toDoubleOrNull() ?: 0.0
             OrderDetailsScreen(navController, id, totalAmount, idCustomer)
         }
-        //Màn hinh tìm kiếm đã đăng nhập
+        //Màn hình tìm kiếm đã đăng nhập
         composable(
-            route = Screen.Search_Screen.route + "?username={username}&idCustomer={idCustomer}",
+            route = Screen.Search_Screen.route + "?username={username}&idCustomer={idCustomer}&password={password}",
             arguments = listOf(
-                navArgument("username") {type = NavType.StringType },
-                navArgument("idCustomer") {type = NavType.StringType }
+                navArgument("username") {
+                    type = NavType.StringType
+                    nullable = true
+                },
+                navArgument("idCustomer") {
+                    type = NavType.StringType
+                    nullable = true
+                },
+                navArgument("password") {
+                    type = NavType.StringType
+                    nullable = true
+                }
             )
         ){
             val username = it.arguments?.getString("username") ?: ""
             val idCustomer = it.arguments?.getString("idCustomer") ?: ""
-            SearchScreen(navController, username, idCustomer)
-        }
-
-        //Màn hình tìm kiếm chưa có tài khoản
-        composable(
-            route = Screen.Search_Screen.route
-        ){
-            SearchScreen(navController, null, null)
+            val password = it.arguments?.getString("password") ?: ""
+            SearchScreen(navController, username, idCustomer, password)
         }
 
         //Màn hình kết quả tìm kiếm
         composable(
-            route = Screen.Search_Results.route + "?query={query}&username={username}&idCustomer={idCustomer}",
+            route = Screen.Search_Results.route + "?query={query}&username={username}&idCustomer={idCustomer}&password={password}",
             arguments = listOf(
-                navArgument("query") {type = NavType.StringType },
-                navArgument("username") {type = NavType.StringType },
-                navArgument("idCustomer") {type = NavType.StringType }
+                navArgument("query") {
+                    type = NavType.StringType
+                },
+                navArgument("username") {
+                    type = NavType.StringType
+                    nullable = true
+                },
+                navArgument("idCustomer") {
+                    type = NavType.StringType
+                    nullable = true
+                },
+                navArgument("password") {
+                    type = NavType.StringType
+                    nullable = true
+                }
             )
         ){
             val query = it.arguments?.getString("query") ?: ""
             val username = it.arguments?.getString("username") ?: ""
             val idCustomer = it.arguments?.getString("idCustomer") ?: ""
-            SearchResultsScreen(navController, query, username, idCustomer)
-        }
-
-        //Màn hình kết quả tìm kiếm chưa đăng nhập
-        composable(
-            route = Screen.Search_Results.route + "?query={query}",
-            arguments = listOf(
-                navArgument("query") {type = NavType.StringType },
-            )
-        ){
-            val query = it.arguments?.getString("query") ?: ""
-            SearchResultsScreen(navController, query, null, null)
+            val password = it.arguments?.getString("password") ?: ""
+            SearchResultsScreen(navController, query, username, idCustomer, password)
         }
 
         //Màn hình sản phẩm yêu thích
         composable(
-            route = Screen.Favorites_Screen.route + "?idCustomer={idCustomer}&username={username}",
+            route = Screen.Favorites_Screen.route + "?idCustomer={idCustomer}&username={username}&password={password}",
             arguments = listOf(
                 navArgument("idCustomer"){type = NavType.StringType },
-                navArgument("username") {type = NavType.StringType }
+                navArgument("username") {type = NavType.StringType },
+                navArgument("password") {type = NavType.StringType }
             )
         ){
             val idCustomer = it.arguments?.getString("idCustomer") ?: ""
             val username = it.arguments?.getString("username") ?: ""
-            FavoritesScreen(navController, idCustomer, username)
+            val password = it.arguments?.getString("password") ?: ""
+            FavoritesScreen(navController, idCustomer, username, password)
         }
 
         //Đến màn Chỉnh sửa thông tin cá nhân
@@ -455,7 +463,7 @@ fun NavGraph(
             EditPhoneScreen(id,onBack = { navController.popBackStack()}, phoneNumber)
         }
         //Dẫn đến màn chọn(chỉnh sửa) Email cá nhân
-        composable(Screen.EditEmailScreen.route + "/{id}/{email}",) {
+        composable(Screen.EditEmailScreen.route + "/{id}/{email}") {
             backStackEntry ->
             val id = backStackEntry.arguments?.getString("id") ?: ""
             val email = backStackEntry.arguments?.getString("email") ?: ""

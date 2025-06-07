@@ -21,7 +21,6 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.ByteArrayInputStream
-import java.net.URLEncoder
 
 class DeviceViewModel:ViewModel() {
 
@@ -31,9 +30,6 @@ class DeviceViewModel:ViewModel() {
 
     private val _device = MutableStateFlow<Device?>(null)
     val device: StateFlow<Device?> get() = _device
-
-    var listDeviceOfCustomer by mutableStateOf<List<Device>>(emptyList())
-        private set
 
     private val _listDevice = MutableStateFlow<List<Device>>(emptyList())
     val listDevice: StateFlow<List<Device>> get() = _listDevice.asStateFlow()
@@ -64,27 +60,6 @@ class DeviceViewModel:ViewModel() {
             } catch (e: Exception) {
                 _device.value = null
                 Log.e("DeviceViewModel", "Lỗi khi lấy thiết bị", e)
-            }
-        }
-    }
-    fun getDeviceByLiked(idCustomer: String) {
-        viewModelScope.launch {
-            try {
-                val response = withContext(Dispatchers.IO) {
-                    RetrofitClient.deviceAPIService.getDeviceByLiked(idCustomer)
-                }
-                // Giả sử API trả về một trường như `devices` hoặc `data`
-                val devices = response.data.data // Điều chỉnh dựa trên cấu trúc API
-                if (devices.isNotEmpty()) {
-                    listDeviceOfCustomer = devices
-                    Log.d("Device Success", "Lấy sản phẩm thành công: ${listDeviceOfCustomer.size} sản phẩm - Dữ liệu: $listDeviceOfCustomer")
-                } else {
-                    listDeviceOfCustomer = emptyList()
-                    Log.w("Device Warning", "Không có sản phẩm trong danh sách yêu thích")
-                }
-            } catch (e: Exception) {
-                Log.e("Device Error", "Lỗi khi lấy sản phẩm: ${e.message}")
-                listDeviceOfCustomer = emptyList() // Đảm bảo danh sách không null
             }
         }
     }
@@ -242,7 +217,7 @@ class DeviceViewModel:ViewModel() {
         return withContext(Dispatchers.IO) {
             device.images.mapNotNull { image ->
                 decodeBase64ToBitmap(image.image)
-            } ?: emptyList()
+            }
         }
     }
 }

@@ -27,6 +27,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.graphics.painter.BitmapPainter
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
@@ -40,6 +42,7 @@ import com.example.ungdungbanthietbi_iot.viewModels.CustomerViewModel
 import com.example.ungdungbanthietbi_iot.viewModels.ReviewViewModel
 import com.example.ungdungbanthietbi_iot.models.Review
 import com.example.ungdungbanthietbi_iot.models.Reviews
+import com.example.ungdungbanthietbi_iot.utils.base64ToBitmap
 import com.example.ungdungbanthietbi_iot.utils.formatDate
 import com.example.ungdungbanthietbi_iot.utils.formatDateTimeZone
 
@@ -168,13 +171,27 @@ fun ReviewCard(review: Reviews, id:Int) {
             Row (
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                //hình ảnh tạm
-                Image(
-                    painter = painterResource(id = android.R.drawable.ic_menu_gallery),
-                    contentDescription = "Product Image",
-                    modifier = Modifier.size(50.dp).padding(end = 8.dp),
-                    contentScale = ContentScale.Crop
-                )
+                val bitmap = base64ToBitmap(review.customer_image)
+                val customerName = "${review.surname} ${review.lastname}".trim()
+                if (bitmap != null) {
+                    Image(
+                        painter = BitmapPainter(bitmap.asImageBitmap()),
+                        contentDescription = customerName.ifEmpty { "Avatar" },
+                        modifier = Modifier
+                            .size(50.dp).padding(end = 8.dp),
+                        contentScale = ContentScale.Crop // Crop để hình ảnh lấp đầy khung
+                    )
+                }
+                else{
+                    //hình ảnh tạm
+                    Image(
+                        painter = painterResource(id = android.R.drawable.ic_menu_gallery),
+                        contentDescription = "Product Image",
+                        modifier = Modifier.size(50.dp).padding(end = 8.dp),
+                        contentScale = ContentScale.Crop
+                    )
+                }
+
                 Text(
                     text = "${review.surname} ${review.lastname}",
                     fontWeight = FontWeight.Bold,

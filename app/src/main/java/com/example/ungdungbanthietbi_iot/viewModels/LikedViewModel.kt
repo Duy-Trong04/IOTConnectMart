@@ -1,126 +1,102 @@
 package com.example.ungdungbanthietbi_iot.viewModels
 
 import android.util.Log
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.ungdungbanthietbi_iot.api.DeleteRequest
-import com.example.ungdungbanthietbi_iot.api.DeleteidDeviceResponse
+import com.example.ungdungbanthietbi_iot.api.AddLikedRequest
+import com.example.ungdungbanthietbi_iot.api.LikedProduct
 import com.example.ungdungbanthietbi_iot.config.RetrofitClient
-import com.example.ungdungbanthietbi_iot.models.Liked
-import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 
 class LikedViewModel:ViewModel() {
-    var listLiked by mutableStateOf<List<Liked>>(emptyList())
+    private val _listLiked = MutableStateFlow<List<LikedProduct>>(emptyList())
+    val listLiked: StateFlow<List<LikedProduct>> get() = _listLiked.asStateFlow()
+    private val _isLoading = MutableStateFlow(false)
+    val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
+    private val _error = MutableStateFlow<String?>(null)
+    val error: StateFlow<String?> = _error.asStateFlow()
 
-    private var likedAddResult by mutableStateOf("")
-
-    fun getLikedByIdCustomer(idCustomer: String) {
+    fun getLikedByIdCustomer(customer_id: String) {
         viewModelScope.launch {
             try {
-                val response = withContext(Dispatchers.IO) {
-                    RetrofitClient.likedAPIService.getLikedByIdCustomer(idCustomer)
+                val response = RetrofitClient.likedAPIService.getLikedProducts(customer_id)
+                if(response.status_code == 200){
+                    _listLiked.value = response.data.data
                 }
-                listLiked = response.liked
+                else{
+                    _listLiked.value = emptyList()
+                }
             } catch (e: Exception) {
-                listLiked = emptyList()
-                Log.e("Liked Error", "Lỗi khi lấy Liked: ${e.message}")
+                _listLiked.value = emptyList()
             }
         }
     }
 
-    //Xóa khỏi giỏ hàng
-    fun deleteLiked(id: Int) {
+    fun deleteLiked(customer_id: String, id: Int) {
         viewModelScope.launch {
             try {
-                val deleteRequest = DeleteRequest(id)
-                val response = RetrofitClient.likedAPIService.deleteLiked(deleteRequest)
-                if (response.isSuccessful) {
-                    val apiResponse = response.body()
-                    if (apiResponse?.message == "Liked Deleted") {
-                        // Cập nhật lại giỏ hàng trong ViewModel
-                        listLiked = listLiked.filter { it.id != id }
-                        Log.d("LikedViewModel", "Liked đã được xóa")
-                    } else {
-                        Log.e("LikedViewModel", "Lỗi: ${apiResponse?.message}")
-                    }
-                } else {
-                    Log.e("LikedViewModel", "Error: ${response.message()}")
+                val response = RetrofitClient.likedAPIService.deleteLikedProduct(customer_id, id)
+                if(response.status_code == 201){
+                    _error.value = null
+                }
+                else{
+                    _error.value = "Failed to deleted liked, status: ${response.status_code}"
+                    Log.e("LikedViewModel", "Failed to deleted liked, status: ${response.status_code}")
                 }
             } catch (e: Exception) {
-                Log.e("LikedViewModel", "Exception: ${e.message}")
+                _error.value = "Error deleted liked: ${e.message}"
+                Log.e("Deleted Liked", "Lỗi kết nối: ${e.message}")
+            }finally {
+                _isLoading.value = false
             }
         }
     }
 
-    //Them vào giỏ hàng
-    fun addLiked(liked: Liked) {
+    fun addLiked(request: AddLikedRequest) {
         viewModelScope.launch {
             try {
                 // Gọi API để thêm sản phẩm vào giỏ hàng trên server
-                val response = RetrofitClient.likedAPIService.addliked(liked)
-                likedAddResult = if (response.success) {
-                    getLikedByIdCustomer(liked.idCustomer)
-                    "Cập nhật thành công: ${response.message}"
-                } else {
-                    "Cập nhật thất bại: ${response.message}"
+                val response = RetrofitClient.likedAPIService.addLikedProduct(request)
+                if(response.status_code == 201){
+                    _error.value = null
+                }
+                else{
+                    _error.value = "Failed to create liked, status: ${response.status_code}"
+                    Log.e("LikedViewModel", "Failed to create liked, status: ${response.status_code}")
                 }
             } catch (e: Exception) {
-                likedAddResult = "Lỗi khi cập nhật giỏ hàng: ${e.message}"
-                Log.e("AddLiked", "Lỗi kết nối: ${e.message}")
+                _error.value = "Error creating liked: ${e.message}"
+                Log.e("Add Liked", "Lỗi kết nối: ${e.message}")
+            }finally {
+                _isLoading.value = false
             }
         }
     }
 
-    //Xóa khỏi giỏ hàng
-    fun deleteLikedByCustomer(idCustomer: String, idDevice: Int) {
-        viewModelScope.launch {
-            try {
-                val deleteRequest = DeleteidDeviceResponse(idCustomer, idDevice)
-                val response = RetrofitClient.likedAPIService.deleteLikedByCustomer(deleteRequest)
-                if (response.isSuccessful) {
-                    val apiResponse = response.body()
-                    if (apiResponse?.message == "Liked Deleted") {
-                        // Cập nhật lại giỏ hàng trong ViewModel
-                        listLiked = listLiked.filter { it.idCustomer != idCustomer && it.idDevice != idDevice }
-                        Log.d("LikedViewModel", "Liked đã được xóa")
-                    } else {
-                        Log.e("LikedViewModel", "Lỗi: ${apiResponse?.message}")
-                    }
-                } else {
-                    Log.e("LikedViewModel", "Error: ${response.message()}")
-                }
-            } catch (e: Exception) {
-                Log.e("LikedViewModel", "Exception: ${e.message}")
-            }
-        }
-    }
-
-//    suspend fun getLikedProducts(customerId: String): Result<LikedResponse1> {
-//        return try {
-//            Result.success(RetrofitClient.likedAPIService.getLikedProducts(customerId))
-//        } catch (e: Exception) {
-//            Result.failure(e)
-//        }
-//    }
-//
-//    suspend fun addLikedProduct(customerId: String, productId: String): Result<AddLikedResponse1> {
-//        return try {
-//            Result.success(RetrofitClient.likedAPIService.addLikedProduct(AddLikedRequest(customerId, productId)))
-//        } catch (e: Exception) {
-//            Result.failure(e)
-//        }
-//    }
-//
-//    suspend fun deleteLikedProduct(customerId: String, productId: String): Result<DeleteLikedResponse1> {
-//        return try {
-//            Result.success(RetrofitClient.likedAPIService.deleteLikedProduct(customerId, productId))
-//        } catch (e: Exception) {
-//            Result.failure(e)
+//    //Xóa khỏi giỏ hàng
+//    fun deleteLikedByCustomer(idCustomer: String, idDevice: Int) {
+//        viewModelScope.launch {
+//            try {
+//                val deleteRequest = DeleteidDeviceResponse(idCustomer, idDevice)
+//                val response = RetrofitClient.likedAPIService.deleteLikedByCustomer(deleteRequest)
+//                if (response.isSuccessful) {
+//                    val apiResponse = response.body()
+//                    if (apiResponse?.message == "Liked Deleted") {
+//                        // Cập nhật lại giỏ hàng trong ViewModel
+//                        listLiked = listLiked.filter { it.idCustomer != idCustomer && it.idDevice != idDevice }
+//                        Log.d("LikedViewModel", "Liked đã được xóa")
+//                    } else {
+//                        Log.e("LikedViewModel", "Lỗi: ${apiResponse?.message}")
+//                    }
+//                } else {
+//                    Log.e("LikedViewModel", "Error: ${response.message()}")
+//                }
+//            } catch (e: Exception) {
+//                Log.e("LikedViewModel", "Exception: ${e.message}")
+//            }
 //        }
 //    }
 }

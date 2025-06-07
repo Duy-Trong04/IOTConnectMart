@@ -1,15 +1,12 @@
 package com.example.ungdungbanthietbi_iot.views.home
 
 import android.graphics.Bitmap
-import android.util.Log
 import androidx.compose.animation.AnimatedContent
-import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.togetherWith
-import androidx.compose.animation.with
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -45,21 +42,17 @@ import androidx.compose.material.icons.filled.Category
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
-import androidx.compose.material.icons.filled.GridView
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Laptop
 import androidx.compose.material.icons.filled.LightMode
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Person
-import androidx.compose.material.icons.filled.Place
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.outlined.GridView
 import androidx.compose.material.icons.outlined.Home
 import androidx.compose.material.icons.outlined.Notifications
 import androidx.compose.material.icons.outlined.Person
 import androidx.compose.material.icons.outlined.ShoppingCart
-import androidx.compose.material.icons.outlined.ViewComfyAlt
-import androidx.compose.material.icons.outlined.ViewCozy
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -73,8 +66,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.ModalDrawerSheet
 import androidx.compose.material3.ModalNavigationDrawer
-import androidx.compose.material3.NavigationBar
-import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.NavigationDrawerItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -87,6 +78,7 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -96,13 +88,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
-import androidx.compose.ui.draw.scale
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
-import androidx.compose.ui.graphics.painter.Painter
+import androidx.compose.ui.graphics.painter.BitmapPainter
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
@@ -115,14 +106,12 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import coil.compose.AsyncImage
 import coil.compose.rememberAsyncImagePainter
-import coil.compose.rememberImagePainter
 import coil.request.ImageRequest
-import com.example.ungdungbanthietbi_iot.models.Account
+import com.example.ungdungbanthietbi_iot.api.AddLikedRequest
+import com.example.ungdungbanthietbi_iot.api.LikedProduct
 import com.example.ungdungbanthietbi_iot.models.Category
-import com.example.ungdungbanthietbi_iot.viewModels.AccountViewModel
 import com.example.ungdungbanthietbi_iot.models.Device
 import com.example.ungdungbanthietbi_iot.viewModels.DeviceViewModel
-import com.example.ungdungbanthietbi_iot.models.Liked
 import com.example.ungdungbanthietbi_iot.viewModels.LikedViewModel
 import com.example.ungdungbanthietbi_iot.models.SlideShow
 import com.example.ungdungbanthietbi_iot.viewModels.SlideShowViewModel
@@ -134,6 +123,7 @@ import com.example.ungdungbanthietbi_iot.viewModels.CartViewModel
 import com.example.ungdungbanthietbi_iot.views.notification.NotificationScreen
 import com.example.ungdungbanthietbi_iot.views.personal.PersonalScreen
 import com.example.ungdungbanthietbi_iot.utils.formatGiaTien
+import com.example.ungdungbanthietbi_iot.utils.formatGiaTienInt
 import com.example.ungdungbanthietbi_iot.viewModels.CategoryViewModel
 import com.example.ungdungbanthietbi_iot.views.components.AnimatedNavigationBar
 import com.example.ungdungbanthietbi_iot.views.components.ButtonData
@@ -145,7 +135,7 @@ fun getCategoryIcon(categoryName: String): ImageVector {
         "Công tắc thông minh" -> Icons.Filled.Category
         "Đèn thông minh" -> Icons.Filled.LightMode
         "Ổ cắm thông minh" -> Icons.Filled.Category
-        else -> Icons.Filled.Category // Biểu tượng mặc định
+        else -> Icons.Filled.Category
     }
 }
 @OptIn(ExperimentalMaterial3Api::class)
@@ -166,11 +156,16 @@ fun HomeScreen(
     val errorMessage by categoryViewModel.errorMessage.collectAsState()
     val listSlideShow by slideShowViewModel.listSlideShows.collectAsState()
 
-    LaunchedEffect(Unit) {
+    val likedViewModel: LikedViewModel = viewModel()
+    val listLiked by likedViewModel.listLiked.collectAsState()
+    LaunchedEffect(id) {
         slideShowViewModel.getAllSlideShow()
         deviceViewModel.getAllDevice()
         deviceViewModel.getDeviceFeatured()
         categoryViewModel.getCategories()
+        if(id != null){
+            likedViewModel.getLikedByIdCustomer(id)
+        }
     }
 
     val cartViewModel: CartViewModel = viewModel()
@@ -187,7 +182,7 @@ fun HomeScreen(
         isScrolling = listState.isScrollInProgress
     }
 
-    var selectedTabIndex by rememberSaveable { mutableStateOf(0) }
+    var selectedTabIndex by rememberSaveable { mutableIntStateOf(0) }
     //Log.d("Thành công", "Đổi mật khẩu thành công ${username}va ${password}")
     ModalNavigationDrawer(
         drawerState = navdrawerState,
@@ -282,7 +277,7 @@ fun HomeScreen(
                                         scope.launch {
                                             navdrawerState.close()
                                             val route = if (username != null)
-                                                Screen.HomeScreen.route + "?username=${username}&id=$id"
+                                                Screen.HomeScreen.route + "?username=${username}&id=$id&password=$password"
                                             else
                                                 Screen.HomeScreen.route
                                             navController.navigate(route)
@@ -313,7 +308,7 @@ fun HomeScreen(
                                         scope.launch {
                                             navdrawerState.close()
                                             val route = if (username != null)
-                                                Screen.Category_Screen.route + "?category=${category.name}&username=${username}&idCustomer=$id"
+                                                Screen.Category_Screen.route + "?category=${category.name}&username=${username}&idCustomer=$id&password=$password"
                                             else
                                                 Screen.Category_Screen.route + "?category=${category.name}"
                                             navController.navigate(route)
@@ -383,10 +378,7 @@ fun HomeScreen(
                     },
                     actions = {
                         IconButton(onClick = {
-                            val route = if (username != null)
-                                Screen.Search_Screen.route + "?username=${username}"
-                            else Screen.Search_Screen.route
-                            navController.navigate(route)
+                            navController.navigate(Screen.Search_Screen.route + "?username=${username}&idCustomer=$id&password=$password")
                         }) {
                             Icon(
                                 imageVector = Icons.Default.Search,
@@ -405,7 +397,7 @@ fun HomeScreen(
                                 } else {
                                     navController.navigate(
                                         Screen.Cart_Screen.route +
-                                                "?idCustomer=${id}&username=${username}"
+                                                "?idCustomer=${id}&username=${username}&password=$password"
                                     )
                                 }
                             }) {
@@ -614,7 +606,7 @@ fun HomeScreen(
                     isFavorite = isFavorite,
                     listAllDevice = listAllDevice,
                     listDeviceFeatured = listDeviceFeatured,
-                    listDeviceLiked = deviceViewModel.listDeviceOfCustomer,
+                    listDeviceLiked = listLiked,
                     categories = listCategories
                 )
                 2 -> if (username != null) NotificationScreen(navController = navController, idUser = id)
@@ -646,12 +638,13 @@ fun HomeContent(
     isFavorite: Boolean,
     listAllDevice: List<Device>,
     listDeviceFeatured: List<Device>,
-    listDeviceLiked: List<Device>,
+    listDeviceLiked: List<LikedProduct>,
     categories: List<Category>
 ) {
     val coroutineScope = rememberCoroutineScope()
     var isRefreshing by remember { mutableStateOf(false) }
 
+    val likedViewModel: LikedViewModel = viewModel()
     // Hàm xử lý refresh
     fun onRefresh() {
         isRefreshing = true
@@ -659,9 +652,11 @@ fun HomeContent(
             // Load lại dữ liệu
             deviceViewModel.getAllDevice()
 //            deviceViewModel.getDeviceFeatured()
-//            if (account != null) {
-//                deviceViewModel.getDeviceByLiked(account.idPerson.toString())
-//            }
+            if (username != null) {
+                if (id != null) {
+                    likedViewModel.getLikedByIdCustomer(id)
+                }
+            }
             // Giả lập thời gian load (có thể bỏ nếu API nhanh)
             delay(1000)
             isRefreshing = false
@@ -851,7 +846,7 @@ fun HomeContent(
                                 } else {
                                     navController.navigate(
                                         Screen.Favorites_Screen.route +
-                                                "?idCustomer=${id}&username=${username}"
+                                                "?idCustomer=${id}&username=${username}&password=$password"
                                     )
                                 }
                             }
@@ -882,7 +877,7 @@ fun HomeContent(
                                     isFavorite = isFavorite,
                                     idCustomer = id,
                                     username = username,
-                                    deviceViewModel = deviceViewModel,
+                                    password = password,
                                     navController = navController
                                 )
                             }
@@ -939,10 +934,10 @@ fun SectionTitle(text: String) {
 }
 
 @Composable
-fun CardFavorites(device: Device, isFavorite: Boolean, idCustomer: String?, username: String?, deviceViewModel: DeviceViewModel, navController: NavController) {
+fun CardFavorites(device: LikedProduct, isFavorite: Boolean, idCustomer: String?, username: String?, password: String?, navController: NavController) {
     var check by remember { mutableStateOf(isFavorite) }
     val likedViewModel: LikedViewModel = viewModel()
-    val listLiked = likedViewModel.listLiked
+    val listLiked by likedViewModel.listLiked.collectAsState()
     var isLoading by remember { mutableStateOf(false) } // Thêm trạng thái tải cục bộ
     LaunchedEffect(idCustomer) {
         if (idCustomer != null) {
@@ -950,95 +945,133 @@ fun CardFavorites(device: Device, isFavorite: Boolean, idCustomer: String?, user
         }
     }
     LaunchedEffect(listLiked) {
-        check = listLiked.any { it.idDevice == device.idDevice }
+        check = listLiked.any { it.product_id == device.product_id }
     }
     Card(
         modifier = Modifier
             .width(200.dp)
             .height(250.dp)
-            .padding(4.dp),
+            .padding(4.dp), // Tăng padding để tạo khoảng cách giữa các card
         onClick = {
             if (username != null) {
-                navController.navigate(Screen.ProductDetailsScreen.route + "?id=${device.idDevice}&idCustomer=${idCustomer}&username=${username}")
+                navController.navigate(
+                    Screen.ProductDetailsScreen.route +
+                            "?id=${device.product_id}&idCustomer=${idCustomer}&username=${username}&password=$password"
+                )
             } else {
-                navController.navigate(Screen.ProductDetailsScreen.route + "?id=${device.idDevice}&idCustomer=${idCustomer}")
+                navController.navigate(Screen.ProductDetailsScreen.route + "?id=${device.product_id}")
             }
         },
         colors = CardDefaults.cardColors(
             containerColor = Color.White
         ),
-        elevation = CardDefaults.cardElevation(1.dp),
-        shape = RoundedCornerShape(5.dp)
+        elevation = CardDefaults.cardElevation(
+            defaultElevation = 1.dp // Tăng bóng nhẹ để card nổi bật hơn
+        ),
+        shape = RoundedCornerShape(12.dp) // Bo góc lớn hơn cho cảm giác mềm mại
     ) {
-        Box(modifier = Modifier.fillMaxWidth()) {
-            Column(
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(8.dp), // Padding bên trong card đồng đều
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(4.dp),
-                horizontalAlignment = Alignment.CenterHorizontally
+                    .aspectRatio(1.2f) // Tỷ lệ 1:1 cho hình ảnh
+                    .clip(RoundedCornerShape(12.dp)) // Bo góc hình ảnh đồng bộ với card
+                    .background(Color(0xFFF5F5F5)) // Màu nền nhẹ khi chưa có hình
             ) {
-                //load hình ảnh từ API
-                AsyncImage(
-                    model = device.image,
-                    contentDescription = null,
-                    modifier = Modifier.fillMaxWidth().height(130.dp)
-                )
-                Spacer(modifier = Modifier.height(4.dp))
-                Text(
-                    text = device.name,
-                    modifier = Modifier.fillMaxWidth(),
-                    textAlign = TextAlign.Center,
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 15.sp
-                )
-                Spacer(modifier = Modifier.height(4.dp))
-                Text(
-                    text = formatGiaTien(device.sellingPrice),
-                    color = Color.Red,
-                    modifier = Modifier.fillMaxWidth(),
-                    textAlign = TextAlign.Center,
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 16.sp
-                )
-            }
-            IconButton(
-                onClick = {
-                    if (idCustomer == null) {
-                        navController.navigate(Screen.LoginScreen.route)
-                    } else if (!isLoading) {
-                        isLoading = true // Bắt đầu tải
-                        if (!check) {
-                            val likedNew = Liked(0, idCustomer, device.idDevice)
-                            likedViewModel.addLiked(likedNew)
-                            check = true // Cập nhật cục bộ
-                        } else {
-                            likedViewModel.deleteLikedByCustomer(idCustomer, device.idDevice)
-                            check = false // Cập nhật cục bộ
-                        }
-                        // Làm mới danh sách yêu thích
-                        likedViewModel.getLikedByIdCustomer(idCustomer)
-                        deviceViewModel.getDeviceByLiked(idCustomer)
-                        isLoading = false // Kết thúc tải
-                    }
-                },
-                enabled = !isLoading,
-                modifier = Modifier
-                    .size(24.dp)
-                    .align(Alignment.TopEnd)
-            ) {
-                if (isLoading) {
-                    CircularProgressIndicator(
-                        modifier = Modifier.size(24.dp),
-                        color = Color.Red
-                    )
-                } else {
-                    Icon(
-                        imageVector = if (check) Icons.Filled.Favorite else Icons.Filled.FavoriteBorder,
-                        contentDescription = "Favorite",
-                        tint = Color.Red
+                val bitmap = base64ToBitmap(device.image)
+                if (bitmap != null) {
+                    Image(
+                        painter = BitmapPainter(bitmap.asImageBitmap()),
+                        contentDescription = device.name.ifEmpty { "Hình ảnh sản phẩm" },
+                        modifier = Modifier
+                            .fillMaxSize(),
+                        contentScale = ContentScale.Crop // Crop để hình ảnh lấp đầy khung
                     )
                 }
+                IconButton(
+                    onClick = {
+                        if (idCustomer == null) {
+                            navController.navigate(Screen.LoginScreen.route)
+                        } else if (!isLoading) {
+                            isLoading = true // Bắt đầu tải
+                            if (!check) {
+                                val likedNew = AddLikedRequest(
+                                    customer_id = idCustomer,
+                                    product_id = device.product_id
+                                )
+                                likedViewModel.addLiked(likedNew)
+                                check = true // Cập nhật cục bộ
+                            } else {
+                                // Find the liked item by product_id to get its liked_id
+                                val likedItem =
+                                    listLiked.find { it.product_id == device.product_id }
+                                likedItem?.id?.let { likedId ->
+                                    likedViewModel.deleteLiked(
+                                        idCustomer,
+                                        likedId
+                                    ) // Pass liked_id to delete
+                                    check = false // Update locally
+                                }
+                                // Refresh the liked list
+                                likedViewModel.getLikedByIdCustomer(idCustomer)
+                            }
+                            isLoading = false // Kết thúc tải
+                        }
+                    },
+                    enabled = !isLoading,
+                    modifier = Modifier
+                        .size(32.dp) // Tăng kích thước nút
+                        .align(Alignment.TopEnd)
+                        .padding(4.dp) // Padding để nút không sát viền
+                        .background(
+                            color = Color.White.copy(alpha = 0.8f), // Nền trắng mờ
+                            shape = CircleShape
+                        )
+                ) {
+                    if (isLoading) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(20.dp),
+                            color = Color.Red,
+                            strokeWidth = 2.dp
+                        )
+                    } else {
+                        Icon(
+                            imageVector = if (check) Icons.Filled.Favorite else Icons.Filled.FavoriteBorder,
+                            contentDescription = "Favorite",
+                            tint = Color.Red,
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
+                }
             }
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(
+                text = device.name,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 4.dp),
+                textAlign = TextAlign.Center,
+                fontWeight = FontWeight.SemiBold, // Giảm độ đậm để tinh tế hơn
+                fontSize = 14.sp, // Giảm kích thước chữ
+                maxLines = 2, // Giới hạn 2 dòng để tránh tràn
+                overflow = TextOverflow.Ellipsis
+            )
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(
+                text = formatGiaTienInt(device.selling_price),
+                color = Color(0xFFE91E63), // Màu hồng đậm hơn để nổi bật
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 4.dp),
+                textAlign = TextAlign.Center,
+                fontWeight = FontWeight.Bold,
+                fontSize = 16.sp
+            )
         }
     }
 }
@@ -1056,7 +1089,7 @@ fun CardDevice(
     var bitmap by remember { mutableStateOf<Bitmap?>(null) }
     var check by remember { mutableStateOf(isFavorite) }
     val likedViewModel: LikedViewModel = viewModel()
-    val listLiked = likedViewModel.listLiked
+    val listLiked by likedViewModel.listLiked.collectAsState()
     var isLoading by remember { mutableStateOf(false) }
 
     // Tải hình ảnh bất đồng bộ
@@ -1071,7 +1104,7 @@ fun CardDevice(
     }
 
     LaunchedEffect(listLiked) {
-        check = listLiked.any { it.idDevice == device.idDevice }
+        check = listLiked.any { it.product_id == device.idDevice }
     }
 
     Card(
@@ -1138,15 +1171,21 @@ fun CardDevice(
                         } else if (!isLoading) {
                             isLoading = true
                             if (!check) {
-                                val likedNew = Liked(0, idCustomer, device.idDevice)
+                                val likedNew = AddLikedRequest(
+                                    customer_id = idCustomer,
+                                    product_id = device.idDevice
+                                )
                                 likedViewModel.addLiked(likedNew)
                                 check = true
                             } else {
-                                likedViewModel.deleteLikedByCustomer(idCustomer, device.idDevice)
-                                check = false
+                                val likedItem = listLiked.find { it.product_id == device.idDevice }
+                                likedItem?.id?.let { likedId ->
+                                    likedViewModel.deleteLiked(idCustomer, likedId) // Pass liked_id to delete
+                                    check = false // Update locally
+                                }
+                                // Refresh the liked list
+                                likedViewModel.getLikedByIdCustomer(idCustomer)
                             }
-                            likedViewModel.getLikedByIdCustomer(idCustomer)
-                            deviceViewModel.getDeviceByLiked(idCustomer)
                             isLoading = false
                         }
                     },
@@ -1255,7 +1294,6 @@ fun CategoryItem(category: Category, navController: NavController, username: Str
     }
 }
 
-@OptIn(ExperimentalAnimationApi::class)
 @Composable
 fun SlideImage(base64String: String) {
     val bitmap = base64ToBitmap(base64String)

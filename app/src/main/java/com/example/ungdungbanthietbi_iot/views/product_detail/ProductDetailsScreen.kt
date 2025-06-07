@@ -2,13 +2,8 @@
 package com.example.ungdungbanthietbi_iot.views.product_detail
 
 import android.graphics.Bitmap
-import androidx.compose.animation.AnimatedContent
-import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.with
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -66,13 +61,13 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.painter.BitmapPainter
-import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
@@ -82,20 +77,14 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
-import coil.compose.AsyncImage
-import coil.compose.rememberImagePainter
-import com.example.ungdungbanthietbi_iot.R
-import com.example.ungdungbanthietbi_iot.viewModels.AccountViewModel
+import com.example.ungdungbanthietbi_iot.api.AddLikedRequest
 import com.example.ungdungbanthietbi_iot.viewModels.AddressViewModel
 import com.example.ungdungbanthietbi_iot.models.CartEntity
 import com.example.ungdungbanthietbi_iot.viewModels.CartViewModel
-import com.example.ungdungbanthietbi_iot.viewModels.CustomerViewModel
 import com.example.ungdungbanthietbi_iot.models.Device
 import com.example.ungdungbanthietbi_iot.viewModels.DeviceViewModel
 import com.example.ungdungbanthietbi_iot.viewModels.ImageViewModel
-import com.example.ungdungbanthietbi_iot.models.Liked
 import com.example.ungdungbanthietbi_iot.viewModels.LikedViewModel
-import com.example.ungdungbanthietbi_iot.models.Review
 import com.example.ungdungbanthietbi_iot.models.Reviews
 import com.example.ungdungbanthietbi_iot.viewModels.ReviewViewModel
 import com.example.ungdungbanthietbi_iot.navigation.Screen
@@ -145,23 +134,15 @@ fun ProductDetailsScreen(
     val listAllDevice : List<Device> = deviceViewModel.listAllDevice
     val device = deviceViewModel.device.collectAsState().value
 
-//    val customerViewModel: CustomerViewModel = viewModel()
-//    val customer = customerViewModel.customer
-//    if(idCustomer != null){
-//        LaunchedEffect (idCustomer){
-//            customerViewModel.getCustomerById(idCustomer)
-//        }
-//    }
-
-//    val likedViewModel: LikedViewModel = viewModel()
-//    val listLiked = likedViewModel.listLiked
+    val likedViewModel: LikedViewModel = viewModel()
+    val listLiked by likedViewModel.listLiked.collectAsState()
 
     val listReview by reviewViewModel.listReviews.collectAsState()
     LaunchedEffect(id) {
         reviewViewModel.getReviewByIdDevice(id)
     }
 
-    var currentIndex by remember { mutableStateOf(0) }
+    var currentIndex by remember { mutableIntStateOf(0) }
     // Tự động chuyển hình sau mỗi 3 giây
     LaunchedEffect(key1 = currentIndex, key2 = device?.images?.size) {
         if (device?.images?.isNotEmpty() == true) {
@@ -192,12 +173,12 @@ fun ProductDetailsScreen(
         }
     }
 
-//    LaunchedEffect(idCustomer) {
-//        if(idCustomer!=null){
-//
-//            likedViewModel.getLikedByIdCustomer(idCustomer)
-//        }
-//    }
+    LaunchedEffect(idCustomer) {
+        if(idCustomer!=null){
+
+            likedViewModel.getLikedByIdCustomer(idCustomer)
+        }
+    }
 
 
     // Biến lưu trữ giá trị đánh giá
@@ -214,16 +195,16 @@ fun ProductDetailsScreen(
 
     // Biến trạng thái để sản phẩm yêu thích không
     var isFavorite by remember { mutableStateOf(false) }
-//    LaunchedEffect(listLiked) {
-//        isFavorite = listLiked.any { it.idDevice == device?.idDevice }
-//    }
+    LaunchedEffect(listLiked) {
+        isFavorite = listLiked.any { it.product_id == device?.idDevice }
+    }
     // Biến lưu trữ trạng thái hiển thị dialog
     var showDialog by remember { mutableStateOf(false) }
     var dialogType by remember { mutableStateOf<DialogType?>(null) }
 
     // Biến lưu trữ số lượng sản phẩm
-    var quantity by remember { mutableStateOf(1) }
-    var buyNowQuantity by remember { mutableStateOf(1) } // Biến mới cho số lượng khi mua ngay
+    var quantity by remember { mutableIntStateOf(1) }
+    var buyNowQuantity by remember { mutableIntStateOf(1) } // Biến mới cho số lượng khi mua ngay
     val snackbarHostState = remember { SnackbarHostState() }
     val showSnackbar = remember { mutableStateOf(false) }
     val snackbarMessage = remember { mutableStateOf("") }
@@ -245,7 +226,7 @@ fun ProductDetailsScreen(
         }
     }
 
-    val isLoading by remember { mutableStateOf(false) } // Thêm trạng thái tải cục bộ
+    var isLoading by remember { mutableStateOf(false) } // Thêm trạng thái tải cục bộ
 
     Scaffold(
         topBar = {
@@ -283,7 +264,7 @@ fun ProductDetailsScreen(
                         // Icon Tìm kiếm
                         IconButton(onClick = {
                             if(username != null){
-                                navController.navigate(Screen.Search_Screen.route + "?username=${username}")
+                                navController.navigate( Screen.Search_Screen.route + "?username=${username}&idCustomer=$id&password=$password")
                             }
                             else{
                                 navController.navigate(Screen.Search_Screen.route)
@@ -780,26 +761,35 @@ fun ProductDetailsScreen(
 
                                 IconButton(
                                     onClick = {
-//                                    if (idCustomer == null) {
-//                                        navController.navigate(Screen.LoginScreen.route)
-//                                    } else if (!isLoading) {
-//                                        isLoading = true // Bắt đầu tải
-//                                        if (!isFavorite) {
-//                                            val likedNew = Liked(0, idCustomer, device.idDevice)
-//                                            likedViewModel.addLiked(likedNew)
-//                                            snackbarMessage.value = "Thêm vào yêu thích thành công!"
-//                                            isFavorite = true // Cập nhật cục bộ
-//                                        } else {
-//                                            likedViewModel.deleteLikedByCustomer(idCustomer, device.idDevice)
-//                                            snackbarMessage.value = "Xóa khỏi yêu thích!"
-//                                            isFavorite = false // Cập nhật cục bộ
-//                                        }
-//                                        // Làm mới danh sách yêu thích
-//                                        likedViewModel.getLikedByIdCustomer(idCustomer)
-//                                        deviceViewModel.getDeviceByLiked(idCustomer)
-//                                        showSnackbar.value = true
-//                                        isLoading = false // Kết thúc tải
-//                                    }
+                                    if (idCustomer == null) {
+                                        navController.navigate(Screen.LoginScreen.route)
+                                    } else if (!isLoading) {
+                                        isLoading = true // Bắt đầu tải
+                                        if (!isFavorite) {
+                                            val likedNew = AddLikedRequest(
+                                                customer_id = idCustomer,
+                                                product_id = device.idDevice
+                                            )
+                                            likedViewModel.addLiked(likedNew)
+                                            snackbarMessage.value = "Thêm vào yêu thích thành công!"
+                                            isFavorite = true // Cập nhật cục bộ
+                                        } else {
+                                            val likedItem =
+                                                listLiked.find { it.product_id == device.idDevice }
+                                            likedItem?.id?.let { likedId ->
+                                                likedViewModel.deleteLiked(
+                                                    idCustomer,
+                                                    likedId
+                                                ) // Pass liked_id to delete
+                                            }
+                                            snackbarMessage.value = "Xóa khỏi yêu thích!"
+                                            isFavorite = false // Cập nhật cục bộ
+                                        }
+                                        // Làm mới danh sách yêu thích
+                                        likedViewModel.getLikedByIdCustomer(idCustomer)
+                                        showSnackbar.value = true
+                                        isLoading = false // Kết thúc tải
+                                    }
                                     },
                                     enabled = !isLoading,
                                 ) {
@@ -1045,7 +1035,7 @@ fun ProductDetailsScreen(
                                 CardDevice(device = it,
                                     isFavorite = isFavorite,
                                     null,
-                                    username,
+                                    null,
                                     password,
                                     deviceViewModel = deviceViewModel,
                                     navController
@@ -1063,8 +1053,6 @@ fun ProductDetailsScreen(
 fun CardReview(review: Reviews, onlick:() -> Unit, id:Int, listReviews: List<Reviews>){
     // Lấy thông tin customer từ review
     val customerName = "${review.surname} ${review.lastname}".trim()
-    // Lấy chữ cái đầu tiên cho avatar mặc định
-    val initial = customerName.takeIf { it.isNotEmpty() }?.substring(0, 1)?.uppercase() ?: "A"
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -1088,31 +1076,32 @@ fun CardReview(review: Reviews, onlick:() -> Unit, id:Int, listReviews: List<Rev
                 // Avatar
                 Box(
                     modifier = Modifier
-                        .size(20.dp)
+                        .size(28.dp)
                         .clip(CircleShape)
                         .background(Color(0xFF5D9EFF)) // Màu nền xanh
                 ) {
                     if (review.customer_image.isNullOrEmpty()) {
-                        // Hiển thị chữ cái đầu tiên
-                        Text(
-                            text = initial,
-                            color = Color.White,
-                            fontSize = 18.sp,
-                            fontWeight = FontWeight.Bold,
-                            modifier = Modifier.align(Alignment.Center)
+                        //hình ảnh tạm
+                        Image(
+                            painter = painterResource(id = android.R.drawable.ic_menu_gallery),
+                            contentDescription = "Product Image",
+                            modifier = Modifier.size(50.dp).padding(end = 8.dp),
+                            contentScale = ContentScale.Crop
                         )
                     } else {
-                        AsyncImage(
-                            model = review.customer_image,
-                            contentDescription = "User Avatar",
-                            modifier = Modifier
-                                .size(40.dp)
-                                .clip(CircleShape),
-                            contentScale = ContentScale.Crop,
-                        )
+                        val bitmap = base64ToBitmap(review.customer_image)
+                        if (bitmap != null) {
+                            Image(
+                                painter = BitmapPainter(bitmap.asImageBitmap()),
+                                contentDescription = customerName.ifEmpty { "Hình ảnh sản phẩm" },
+                                modifier = Modifier
+                                    .size(28.dp),
+                                contentScale = ContentScale.Crop // Crop để hình ảnh lấp đầy khung
+                            )
+                        }
                     }
                 }
-                Spacer(modifier = Modifier.width(12.dp))
+                Spacer(modifier = Modifier.width(10.dp))
                 Text(
                     text = customerName.ifEmpty { "Khách hàng ẩn danh" },
                     fontWeight = FontWeight.SemiBold,
@@ -1149,20 +1138,20 @@ fun CardReview(review: Reviews, onlick:() -> Unit, id:Int, listReviews: List<Rev
     }
 }
 
-@OptIn(ExperimentalAnimationApi::class)
-@Composable
-fun SlideImage(painter: Painter) {
-    AnimatedContent(
-        targetState = painter,
-        modifier = Modifier.fillMaxSize(),
-        transitionSpec = { fadeIn() with fadeOut() }, label = ""
-    ) { targetPainter ->
-        Image(
-            painter = targetPainter,
-            contentDescription = null,
-            modifier = Modifier
-                .size(360.dp),
-            contentScale = ContentScale.Crop
-        )
-    }
-}
+//@OptIn(ExperimentalAnimationApi::class)
+//@Composable
+//fun SlideImage(painter: Painter) {
+//    AnimatedContent(
+//        targetState = painter,
+//        modifier = Modifier.fillMaxSize(),
+//        transitionSpec = { fadeIn() with fadeOut() }, label = ""
+//    ) { targetPainter ->
+//        Image(
+//            painter = targetPainter,
+//            contentDescription = null,
+//            modifier = Modifier
+//                .size(360.dp),
+//            contentScale = ContentScale.Crop
+//        )
+//    }
+//}

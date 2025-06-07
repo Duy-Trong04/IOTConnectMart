@@ -5,13 +5,11 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -159,7 +157,8 @@ class SearchHistoryManager(context: Context) {
 fun SearchScreen(
     navController: NavController,
     username: String?,
-    idCustomer: String?
+    idCustomer: String?,
+    password: String?
 ) {
     val deviceViewModel: DeviceViewModel = viewModel()
     // Lấy từ khóa tìm kiếm từ ViewModel
@@ -257,11 +256,7 @@ fun SearchScreen(
                             // Điều hướng sang SearchResultsScreen
                             if (username != null) {
                                 navController.navigate(
-                                    Screen.Search_Results.route + "?query=${searchQuery}&username=${username}&idCustomer=$idCustomer"
-                                )
-                            } else {
-                                navController.navigate(
-                                    Screen.Search_Results.route + "?query=${searchQuery}"
+                                    Screen.Search_Results.route + "?query=${searchQuery}&username=${username}&idCustomer=$idCustomer&password=$password"
                                 )
                             }
                         }

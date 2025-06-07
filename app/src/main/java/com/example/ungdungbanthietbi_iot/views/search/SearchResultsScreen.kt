@@ -1,6 +1,5 @@
 package com.example.ungdungbanthietbi_iot.views.search
 
-import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -10,7 +9,6 @@ import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.FilterAlt
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
@@ -30,20 +28,18 @@ import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.zIndex
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
-import coil.compose.AsyncImage
-import com.example.ungdungbanthietbi_iot.viewModels.AccountViewModel
-import com.example.ungdungbanthietbi_iot.models.Device
 import com.example.ungdungbanthietbi_iot.viewModels.DeviceViewModel
-import com.example.ungdungbanthietbi_iot.navigation.Screen
 import com.example.ungdungbanthietbi_iot.utils.formatGiaTien
+import com.example.ungdungbanthietbi_iot.views.home.CardDevice
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SearchResultsScreen(
     navController: NavController,
-    query: String?,
+    query: String,
     username: String?,
-    idCustomer:String?
+    idCustomer:String?,
+    password: String?,
 ) {
     val deviceViewModel: DeviceViewModel = viewModel()
 
@@ -56,7 +52,7 @@ fun SearchResultsScreen(
     // Trạng thái cho khoảng giá lọc
     var priceRange by remember { mutableStateOf(0f..10000000f) } // Mặc định: 0 đến 10 triệu
     // Trạng thái tab được chọn
-    var selectedTabIndex by remember { mutableStateOf(0) }
+    var selectedTabIndex by remember { mutableIntStateOf(0) }
     // Trạng thái sắp xếp giá
     var isPriceAscending by remember { mutableStateOf(false) }
 
@@ -278,21 +274,14 @@ fun SearchResultsScreen(
                         columns = GridCells.Fixed(2),
                     ) {
                         items(sortedDevices) { device ->
-                            ProductCard(
+                            CardDevice(
                                 device = device,
-                                onClick = {
-                                    if (username != null) {
-                                        navController.navigate(
-                                            Screen.ProductDetailsScreen.route +
-                                                    "?id=${device.idDevice}&idCustomer=${idCustomer}&username=${username}"
-                                        )
-                                    } else {
-                                        navController.navigate(
-                                            Screen.ProductDetailsScreen.route +
-                                                    "?id=${device.idDevice}"
-                                        )
-                                    }
-                                }
+                                isFavorite = false,
+                                idCustomer = idCustomer,
+                                username = username,
+                                password = password,
+                                deviceViewModel = deviceViewModel,
+                                navController = navController
                             )
                         }
                     }
@@ -468,56 +457,6 @@ fun FilterDialog(
                     }
                 }
             }
-        }
-    }
-}
-
-@Composable
-fun ProductCard(
-    device: Device,
-    onClick: () -> Unit
-) {
-
-    Card(
-        modifier = Modifier
-            .width(200.dp)
-            .height(250.dp)
-            .padding(4.dp)
-            .clickable { onClick() },
-        shape = RoundedCornerShape(5.dp),
-        elevation = CardDefaults.cardElevation(1.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = Color.White
-        )
-    ) {
-        Column(
-            modifier = Modifier.padding(4.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            AsyncImage(
-                model = device.image,
-                contentDescription = device.name,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .size(130.dp)
-            )
-            Spacer(modifier = Modifier.height(4.dp))
-            Text(
-                text = device.name,
-                modifier = Modifier.fillMaxWidth(),
-                textAlign = TextAlign.Center,
-                fontWeight = FontWeight.Bold,
-                fontSize = 15.sp
-            )
-            Spacer(modifier = Modifier.height(4.dp))
-            Text(
-                text = formatGiaTien(device.sellingPrice),
-                color = Color.Red,
-                modifier = Modifier.fillMaxWidth(),
-                textAlign = TextAlign.Center,
-                fontWeight = FontWeight.Bold,
-                fontSize = 16.sp
-            )
         }
     }
 }
