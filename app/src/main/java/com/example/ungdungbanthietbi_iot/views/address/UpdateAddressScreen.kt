@@ -106,7 +106,6 @@ fun UpdateAddress(
             TopAppBar(
                 title = { Text("Cập nhật địa chỉ", textAlign = TextAlign.Start,
                     modifier = Modifier.fillMaxWidth(),
-                    fontWeight = FontWeight.Bold
                 )},
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = Color(0xFF5D9EFF),
@@ -128,176 +127,174 @@ fun UpdateAddress(
         },
         // Thanh điều hướng hoặc nút hành động ở dưới cùng (bottomBar)
         bottomBar = {
-            BottomAppBar (
-                containerColor = Color.White,
-                modifier = Modifier.fillMaxWidth().height(175.dp)
-            ){
-                Column(
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(Color.White)
+                    .padding(horizontal = 10.dp).padding(bottom = 10.dp)
+            ) {
+                // Nút Switch: Đặt làm địa chỉ mặc định
+                Row(
                     modifier = Modifier
-                        .fillMaxWidth()
-                        .background(Color.White)
-                        .padding(horizontal = 10.dp)
+                        .fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
                 ) {
-                    // Nút Switch: Đặt làm địa chỉ mặc định
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth(),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        Text(
-                            text = "Đặt làm địa chỉ mặc định",
-                            modifier = Modifier.weight(1f),
-                            fontSize = 18.sp
-                        )
-                        if(address != null){
-                            stateSwitch = address.is_default == false
-                        }
-                        Switch(
-                            checked = isDefault,
-                            onCheckedChange = { isDefault = it },
-                            colors = SwitchDefaults.colors(
-                                checkedThumbColor = Color.White,// Màu khi bật
-                                uncheckedThumbColor = Color.Gray, // Màu khi tắt
-                                checkedTrackColor = Color(0xFF5D9EFF),// Màu đường chạy khi bật
-                                disabledCheckedTrackColor = Color(0xFF5D9EFF),
-                                disabledCheckedThumbColor = Color.White
-                            ),
-                            enabled = stateSwitch,
-                            modifier = Modifier.scale(0.8f)// Thu nhỏ kích thước Switch
-                        )
+                    Text(
+                        text = "Đặt làm địa chỉ mặc định",
+                        modifier = Modifier.weight(1f),
+                        fontSize = 16.sp
+                    )
+                    if(address != null){
+                        stateSwitch = address.is_default == false
                     }
-                    Row (
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ){
-                        Button(
-                            onClick = {
-                                if(address != null){
-                                    openDialog = if(address.is_default){
-                                        true
-                                    } else{
-                                        true
-                                    }
-                                }
-                            },
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = Color(0xFF5D9EFF)
-                            ),
-                            shape = RoundedCornerShape(10.dp),// Bo góc nút
-                            elevation = ButtonDefaults.buttonElevation(1.dp)// Tạo độ nổi
-                        ) {
-                            Text(text = "Xóa địa chỉ", fontSize = 18.sp)
-                        }
-                        Button(
-                            onClick = {
-                                if(phone.length != 10){
-                                    validatePhone = true
-                                }
-                                val updateAddress = UpdateAddressRequest(
-                                    customer_id = idCustomer,
-                                    id = idAddress,
-                                    receiver_name = hoten,
-                                    phone = phone,
-                                    district = district,
-                                    city = city,
-                                    ward = ward,
-                                    street = street,
-                                    detail = detail,
-                                    is_default = isDefault
-                                )
-                                addressViewModel.updateAddress(updateAddress)
-                                navController.popBackStack()
-                            },
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = Color(0xFF5D9EFF)
-                            ),
-                            shape = RoundedCornerShape(10.dp),// Bo góc nút
-                            elevation = ButtonDefaults.buttonElevation(1.dp)// Tạo độ nổi
-                        ) {
-                            Text(text = "Lưu địa chỉ", fontSize = 18.sp)
-                        }
-                    }
-                    if (openDialog) {
-                        AlertDialog(
-                            containerColor = Color.White,
-                            modifier = Modifier.padding(10.dp),
-                            onDismissRequest = { openDialog = false },
-                            text = {
-                                if (address != null) {
-                                    if (address.is_default) {
-                                        Text(
-                                            "Bạn không thể xóa địa chỉ mặc định!",
-                                            fontSize = 17.sp
-                                        )
-                                    }
-                                    else{
-                                        Text(
-                                            "Bạn muốn xóa địa chỉ?",
-                                            fontSize = 17.sp,
-                                        )
-                                    }
-                                }
-                            },
-                            title = {
-                                Text(text = "Thông Báo")
-                            },
-                            confirmButton = {
-                                Button(
-                                    onClick = {
-                                        if (address != null) {
-                                            if (address.is_default) {
-                                                openDialog = false
-                                            } else {
-                                                openDialog = false
-                                                addressViewModel.deleteAddress(
-                                                    idCustomer,
-                                                    idAddress
-                                                )
-                                                navController.popBackStack()
-                                            }
-                                        }
-                                    },
-                                    shape = RoundedCornerShape(10.dp),
-                                    colors = ButtonDefaults.buttonColors(
-                                        containerColor = Color(0xFF5D9EFF)
-                                    )
-                                ) {
-                                    Text(
-                                        text = "Xác nhận",
-                                        fontSize = 16.sp
-                                    )
-                                }
-                            },
-                            dismissButton = {
-                                Button(
-                                    onClick = {
-                                        if (address != null) {
-                                            if (address.is_default) {
-                                                openDialog = false
-                                            } else {
-                                                openDialog = false
-                                            }
-                                        }
-                                    },
-                                    shape = RoundedCornerShape(10.dp),
-                                    colors = ButtonDefaults.buttonColors(
-                                        containerColor = Color.LightGray
-                                    )
-                                ) {
-                                    Text(
-                                        text = "Hủy",
-                                        fontSize = 16.sp
-                                    )
+                    Switch(
+                        checked = isDefault,
+                        onCheckedChange = { isDefault = it },
+                        colors = SwitchDefaults.colors(
+                            checkedThumbColor = Color.White,// Màu khi bật
+                            uncheckedThumbColor = Color.Gray, // Màu khi tắt
+                            checkedTrackColor = Color(0xFF5D9EFF),// Màu đường chạy khi bật
+                            disabledCheckedTrackColor = Color(0xFF5D9EFF),
+                            disabledCheckedThumbColor = Color.White
+                        ),
+                        enabled = stateSwitch,
+                        modifier = Modifier.scale(0.6f)// Thu nhỏ kích thước Switch
+                    )
+                }
+                Row (
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ){
+                    Button(
+                        onClick = {
+                            if(address != null){
+                                openDialog = if(address.is_default){
+                                    true
+                                } else{
+                                    true
                                 }
                             }
-                        )
+                        },
+                        modifier = Modifier.weight(1f).padding(end = 10.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = Color(0xFF5D9EFF)
+                        ),
+                        shape = RoundedCornerShape(10.dp),// Bo góc nút
+                        elevation = ButtonDefaults.buttonElevation(1.dp)// Tạo độ nổi
+                    ) {
+                        Text(text = "Xóa địa chỉ", fontSize = 16.sp)
+                    }
+                    Button(
+                        onClick = {
+                            if(phone.length != 10){
+                                validatePhone = true
+                            }
+                            val updateAddress = UpdateAddressRequest(
+                                customer_id = idCustomer,
+                                id = idAddress,
+                                receiver_name = hoten,
+                                phone = phone,
+                                district = district,
+                                city = city,
+                                ward = ward,
+                                street = street,
+                                detail = detail,
+                                is_default = isDefault
+                            )
+                            addressViewModel.updateAddress(updateAddress)
+                            navController.popBackStack()
+                        },
+                        modifier = Modifier.weight(1f),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = Color(0xFF5D9EFF)
+                        ),
+                        shape = RoundedCornerShape(10.dp),// Bo góc nút
+                        elevation = ButtonDefaults.buttonElevation(1.dp)// Tạo độ nổi
+                    ) {
+                        Text(text = "Lưu địa chỉ", fontSize = 16.sp)
                     }
                 }
             }
         }
     ) {
+        //Popup
+        if (openDialog) {
+            AlertDialog(
+                containerColor = Color.White,
+                modifier = Modifier.padding(10.dp),
+                onDismissRequest = { openDialog = false },
+                text = {
+                    if (address != null) {
+                        if (address.is_default) {
+                            Text(
+                                "Bạn không thể xóa địa chỉ mặc định!",
+                                fontSize = 17.sp
+                            )
+                        }
+                        else{
+                            Text(
+                                "Bạn muốn xóa địa chỉ?",
+                                fontSize = 17.sp,
+                            )
+                        }
+                    }
+                },
+                title = {
+                    Text(text = "Thông Báo")
+                },
+                confirmButton = {
+                    Button(
+                        onClick = {
+                            if (address != null) {
+                                if (address.is_default) {
+                                    openDialog = false
+                                } else {
+                                    openDialog = false
+                                    addressViewModel.deleteAddress(
+                                        idCustomer,
+                                        idAddress
+                                    )
+                                    navController.popBackStack()
+                                }
+                            }
+                        },
+                        shape = RoundedCornerShape(10.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = Color(0xFF5D9EFF)
+                        )
+                    ) {
+                        Text(
+                            text = "Xác nhận",
+                            fontSize = 16.sp
+                        )
+                    }
+                },
+                dismissButton = {
+                    Button(
+                        onClick = {
+                            if (address != null) {
+                                if (address.is_default) {
+                                    openDialog = false
+                                } else {
+                                    openDialog = false
+                                }
+                            }
+                        },
+                        shape = RoundedCornerShape(10.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = Color.LightGray
+                        )
+                    ) {
+                        Text(
+                            text = "Hủy",
+                            fontSize = 16.sp
+                        )
+                    }
+                }
+            )
+        }
         // Nội dung chính (LazyColumn) hiển thị danh sách các trường nhập liệu
         LazyColumn (
             modifier = Modifier.fillMaxSize().padding(it).background(Color.White)

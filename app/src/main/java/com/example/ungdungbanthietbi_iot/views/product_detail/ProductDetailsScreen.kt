@@ -35,6 +35,7 @@ import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material.icons.filled.Remove
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Star
+import androidx.compose.material.icons.outlined.AddShoppingCart
 import androidx.compose.material.icons.outlined.ShoppingCart
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
@@ -319,6 +320,108 @@ fun ProductDetailsScreen(
                 }
             )
         },
+        bottomBar = {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(Color.White)
+                    .padding(16.dp),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                if (device != null) {
+                    IconButton(
+                        onClick = {
+                            if (idCustomer == null) {
+                                navController.navigate(Screen.LoginScreen.route)
+                            } else if (!isLoading) {
+                                isLoading = true // Bắt đầu tải
+                                if (!isFavorite) {
+                                    val likedNew = AddLikedRequest(
+                                        customer_id = idCustomer,
+                                        product_id = device.idDevice
+                                    )
+                                    likedViewModel.addLiked(likedNew)
+                                    snackbarMessage.value = "Thêm vào yêu thích thành công!"
+                                    isFavorite = true // Cập nhật cục bộ
+                                } else {
+                                    val likedItem =
+                                        listLiked.find { it.product_id == device.idDevice }
+                                    likedItem?.id?.let { likedId ->
+                                        likedViewModel.deleteLiked(
+                                            idCustomer,
+                                            likedId
+                                        ) // Pass liked_id to delete
+                                    }
+                                    snackbarMessage.value = "Xóa khỏi yêu thích!"
+                                    isFavorite = false // Cập nhật cục bộ
+                                }
+                                // Làm mới danh sách yêu thích
+                                likedViewModel.getLikedByIdCustomer(idCustomer)
+                                showSnackbar.value = true
+                                isLoading = false // Kết thúc tải
+                            }
+                        },
+                        enabled = !isLoading,
+                    ) {
+                        if (isLoading) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(24.dp),
+                                color = Color.Red
+                            )
+                        } else {
+                            Icon(
+                                imageVector = if (isFavorite) Icons.Filled.Favorite else Icons.Filled.FavoriteBorder,
+                                contentDescription = "Favorite",
+                                tint = Color.Red
+                            )
+                        }
+                    }
+                }
+                Spacer(modifier = Modifier.width(10.dp))
+                IconButton(
+                    onClick = {
+                        if (idCustomer != null) {
+                            showDialog = true
+                            dialogType = DialogType.AddToCart
+                        } else {
+                            navController.navigate(Screen.LoginScreen.route)
+                        }
+                    }
+                ) {
+                    Icon(
+                        imageVector = Icons.Outlined.AddShoppingCart,
+                        contentDescription = "Thêm vào giỏ hàng",
+                        tint = Color(0xFF5D9EFF)
+                    )
+                }
+                Spacer(modifier = Modifier.width(10.dp))
+                Button(
+                    onClick = {
+                        if (idCustomer != null) {
+                            showDialog = true
+                            dialogType = DialogType.BuyNow
+                        } else {
+                            navController.navigate(Screen.LoginScreen.route)
+                        }
+                    },
+                    modifier = Modifier
+                        .weight(1f)
+                        .padding(start = 8.dp),
+                    shape = RoundedCornerShape(10.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        contentColor = Color.White,
+                        containerColor = Color(0xFF5D9EFF)
+                    ),
+                    enabled = !isLoadingAddress
+                ) {
+                    Text(
+                        text = "MUA NGAY",
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 18.sp
+                    )
+                }
+            }
+        },
         snackbarHost = {
             SnackbarHost(hostState = snackbarHostState) { data ->
                 Snackbar(
@@ -371,7 +474,7 @@ fun ProductDetailsScreen(
                                             Spacer(modifier = Modifier.height(8.dp))
                                             if (device != null) {
                                                 Text(
-                                                    text = "Tồn kho: ${device.stock - quantity}",
+                                                    text = "Tồn kho: ${device.stock}",
                                                     modifier = Modifier.padding(start = 16.dp)
                                                 )
                                             }
@@ -449,7 +552,7 @@ fun ProductDetailsScreen(
                                             contentColor = Color.White
                                         ),
                                         shape = RoundedCornerShape(5.dp),
-                                        elevation = ButtonDefaults.buttonElevation(5.dp),
+                                        elevation = ButtonDefaults.buttonElevation(1.dp),
                                         modifier = Modifier.fillMaxWidth()
                                     ) {
                                         Text(
@@ -488,11 +591,17 @@ fun ProductDetailsScreen(
                                         }
                                     },
                                     dismissButton = {
-                                        TextButton(
-                                            onClick = { showDialog = false },
-                                            colors = ButtonDefaults.textButtonColors(contentColor = Color.Gray)
+                                        Button(
+                                            onClick = {
+                                                showDialog = false
+                                            },
+                                            shape = RoundedCornerShape(10.dp),
+                                            colors = ButtonDefaults.buttonColors(
+                                                containerColor = Color.LightGray,
+                                                contentColor = Color.White
+                                            )
                                         ) {
-                                            Text(text = "Hủy")
+                                            Text(text = "Hủy", fontSize = 16.sp)
                                         }
                                     },
                                     modifier = Modifier.fillMaxWidth()
@@ -524,7 +633,7 @@ fun ProductDetailsScreen(
                                             Spacer(modifier = Modifier.height(8.dp))
                                             if (device != null) {
                                                 Text(
-                                                    text = "Tồn kho: ${device.stock - buyNowQuantity}",
+                                                    text = "Tồn kho: ${device.stock}",
                                                     modifier = Modifier.padding(start = 16.dp)
                                                 )
                                             }
@@ -598,7 +707,7 @@ fun ProductDetailsScreen(
                                             contentColor = Color.White
                                         ),
                                         shape = RoundedCornerShape(5.dp),
-                                        elevation = ButtonDefaults.buttonElevation(5.dp),
+                                        elevation = ButtonDefaults.buttonElevation(1.dp),
                                         modifier = Modifier.fillMaxWidth()
                                     ) {
                                         Text(
@@ -807,82 +916,51 @@ fun ProductDetailsScreen(
                                     }
                                 }
                             }
-                            Button(
-                                onClick = {
-                                    if (idCustomer != null) {
-                                        showDialog = true
-                                        dialogType = DialogType.AddToCart
-                                    } else {
-                                        navController.navigate(Screen.LoginScreen.route)
-                                    }
-                                },
-                                modifier = Modifier.fillMaxWidth(),
-                                shape = RoundedCornerShape(10.dp),
-                                colors = ButtonDefaults.buttonColors(
-                                    contentColor = Color.White,
-                                    containerColor = Color(0xFF5D9EFF)
-                                )
-                            ) {
-                                Text(
-                                    text = "THÊM VÀO GIỎ HÀNG",
-                                    fontWeight = FontWeight.Bold,
-                                    fontSize = 18.sp
-                                )
-                            }
-                            Button(
-                                onClick = {
-//                                    if (idCustomer == null) {
-//                                        navController.navigate(Screen.LoginScreen.route)
-//                                    } else if (isLoadingAddress) {
-//                                        // Hiển thị thông báo đang tải hoặc vô hiệu hóa nút
-//                                        snackbarMessage.value = "Đang tải thông tin địa chỉ..."
-//                                        showSnackbar.value = true
-//
-//                                    } else if (addressViewModel.errorMessage != null) {
-//                                        snackbarMessage.value = addressViewModel.errorMessage ?: "Lỗi không xác định"
-//                                        showSnackbar.value = true
-//                                    } else if (addressViewModel.addressDatas?.address_books?.isEmpty() == true) {
+//                            Button(
+//                                onClick = {
+//                                    if (idCustomer != null) {
 //                                        showDialog = true
-//                                        dialogType = DialogType.AddressRequired
-//
+//                                        dialogType = DialogType.AddToCart
 //                                    } else {
-//                                        // Logic mua hàng hiện tại
-//                                        selectedProducts.clear()
-//                                        selectedProducts.add(Triple(device.idDevice, quantity, 0))
-//                                        val totalPrice = device.sellingPrice * quantity
-//                                        val selectedProductsString = selectedProducts.joinToString(",") { "${it.first}:${it.second}:${it.third}" }
-//                                        println("selectedProductsString: $selectedProductsString")
-//                                        navController.navigate(
-//                                            Screen.Check_Out.route +
-//                                                    "?selectedProducts=$selectedProductsString" +
-//                                                    "&tongtien=$totalPrice" +
-//                                                    "&username=$username" + "&id=$idCustomer"
-//                                        )
-//                                        snackbarMessage.value = "Đã chọn sản phẩm để mua ngay!"
-//                                        showSnackbar.value = true
-//                                        quantity = 1
+//                                        navController.navigate(Screen.LoginScreen.route)
 //                                    }
-                                    if (idCustomer != null) {
-                                        showDialog = true
-                                        dialogType = DialogType.BuyNow
-                                    } else {
-                                        navController.navigate(Screen.LoginScreen.route)
-                                    }
-                                },
-                                modifier = Modifier.fillMaxWidth(),
-                                shape = RoundedCornerShape(10.dp),
-                                colors = ButtonDefaults.buttonColors(
-                                    contentColor = Color.White,
-                                    containerColor = Color.Red
-                                ),
-                                enabled = !isLoadingAddress // Vô hiệu hóa nút khi đang tải
-                            ) {
-                                Text(
-                                    text = "MUA NGAY",
-                                    fontWeight = FontWeight.Bold,
-                                    fontSize = 18.sp
-                                )
-                            }
+//                                },
+//                                modifier = Modifier.fillMaxWidth(),
+//                                shape = RoundedCornerShape(10.dp),
+//                                colors = ButtonDefaults.buttonColors(
+//                                    contentColor = Color.White,
+//                                    containerColor = Color(0xFF5D9EFF)
+//                                )
+//                            ) {
+//                                Text(
+//                                    text = "THÊM VÀO GIỎ HÀNG",
+//                                    fontWeight = FontWeight.Bold,
+//                                    fontSize = 18.sp
+//                                )
+//                            }
+//                            Button(
+//                                onClick = {
+//                                    if (idCustomer != null) {
+//                                        showDialog = true
+//                                        dialogType = DialogType.BuyNow
+//                                    } else {
+//                                        navController.navigate(Screen.LoginScreen.route)
+//                                    }
+//                                },
+//                                modifier = Modifier.fillMaxWidth(),
+//                                shape = RoundedCornerShape(10.dp),
+//                                colors = ButtonDefaults.buttonColors(
+//                                    contentColor = Color.White,
+//                                    containerColor = Color.Red
+//                                ),
+//                                enabled = !isLoadingAddress // Vô hiệu hóa nút khi đang tải
+//                            ) {
+//                                Text(
+//                                    text = "MUA NGAY",
+//                                    fontWeight = FontWeight.Bold,
+//                                    fontSize = 18.sp
+//                                )
+//                            }
                             Spacer(modifier = Modifier.height(12.dp))
                             Text(
                                 "Mô tả sản phẩm",
@@ -891,7 +969,7 @@ fun ProductDetailsScreen(
                             )
                             Spacer(modifier = Modifier.height(8.dp))
                             Text(
-                                text = device.description,
+                                text = device.descriptionNormal,
                                 color = Color.Black,
                                 fontSize = 16.sp
                             )
@@ -1132,7 +1210,8 @@ fun CardReview(review: Reviews, onlick:() -> Unit, id:Int, listReviews: List<Rev
             }
             Text(
                 text = formatDateTimeZone(review.created_at),
-                fontSize = 14.sp,
+                fontSize = 12.sp,
+                color = Color.LightGray
             )
         }
     }

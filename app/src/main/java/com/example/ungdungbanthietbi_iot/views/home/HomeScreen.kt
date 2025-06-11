@@ -66,6 +66,8 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.ModalDrawerSheet
 import androidx.compose.material3.ModalNavigationDrawer
+import androidx.compose.material3.NavigationBar
+import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.NavigationDrawerItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -428,143 +430,143 @@ fun HomeScreen(
                 )
             },
             bottomBar = {
-//                NavigationBar(
-//                    containerColor = Color.White,
-//                    contentColor = Color.Black,
-//                    modifier = Modifier
-//                        .fillMaxWidth()
-//                        .border(
-//                            width = 1.dp,
-//                            color = Color(0xFF5D9EFF),
-//                            shape = RoundedCornerShape(0.dp) // Hình chữ nhật, không bo góc
-//                        )
-//                ) {
-//                    Row(
-//                        modifier = Modifier
-//                            .fillMaxWidth()
-//                            .padding(start = 25.dp, end = 25.dp),
-//                        horizontalArrangement = Arrangement.SpaceAround,
-//                        verticalAlignment = Alignment.CenterVertically
-//                    ) {
-//                        NavigationBarItem(
-//                            icon = {
-//                                Icon(
-//                                    imageVector = if (selectedTabIndex == 0) Icons.Default.Home else Icons.Outlined.Home,
-//                                    contentDescription = "Trang chủ",
-//                                    modifier = Modifier.size(28.dp),
-//                                    tint = if (selectedTabIndex == 0) Color(0xFF1E88E5) else Color(0xFF616161)
-//                                )
-//                            },
-//                            label = {
-//                                Text(
-//                                    text = "Trang chủ",
-//                                    fontSize = 12.sp,
-//                                    color = if (selectedTabIndex == 0) Color(0xFF1E88E5) else Color(0xFF616161),
-//                                    fontWeight = if (selectedTabIndex == 0) FontWeight.Bold else FontWeight.Normal
-//                                )
-//                            },
-//                            selected = selectedTabIndex == 0,
-//                            onClick = { selectedTabIndex = 0 }
-//                        )
-//                        NavigationBarItem(
-//                            icon = {
-//                                Icon(
-//                                    imageVector = Icons.Outlined.GridView,
-//                                    contentDescription = "Danh mục",
-//                                    modifier = Modifier.size(28.dp),
-//                                    tint = if (selectedTabIndex == 1) Color(0xFF1E88E5) else Color(0xFF616161)
-//                                )
-//                            },
-//                            label = {
-//                                Text(
-//                                    text = "Danh mục",
-//                                    fontSize = 12.sp,
-//                                    color = if (selectedTabIndex == 1) Color(0xFF1E88E5) else Color(0xFF616161),
-//                                    fontWeight = if (selectedTabIndex == 1) FontWeight.Bold else FontWeight.Normal
-//                                )
-//                            },
-//                            selected = selectedTabIndex == 1,
-//                            onClick = {
-//                                scope.launch {
-//                                    navdrawerState.apply {
-//                                        if (isClosed) open() else close()
-//                                    }
-//                                }
-//                            }
-//                        )
-//                        NavigationBarItem(
-//                            icon = {
-//                                Icon(
-//                                    imageVector = if (selectedTabIndex == 2) Icons.Default.Notifications else Icons.Outlined.Notifications,
-//                                    contentDescription = "Thông báo",
-//                                    modifier = Modifier.size(28.dp),
-//                                    tint = if (selectedTabIndex == 2) Color(0xFF1E88E5) else Color(0xFF616161)
-//                                )
-//                            },
-//                            label = {
-//                                Text(
-//                                    text = "Thông báo",
-//                                    fontSize = 12.sp,
-//                                    color = if (selectedTabIndex == 2) Color(0xFF1E88E5) else Color(0xFF616161),
-//                                    fontWeight = if (selectedTabIndex == 2) FontWeight.Bold else FontWeight.Normal
-//                                )
-//                            },
-//                            selected = selectedTabIndex == 2,
-//                            onClick = { selectedTabIndex = 2 }
-//                        )
-//                        NavigationBarItem(
-//                            icon = {
-//                                Icon(
-//                                    imageVector = if (selectedTabIndex == 3) Icons.Default.Person else Icons.Outlined.Person,
-//                                    contentDescription = "Tôi",
-//                                    modifier = Modifier.size(28.dp),
-//                                    tint = if (selectedTabIndex == 3) Color(0xFF1E88E5) else Color(0xFF616161)
-//                                )
-//                            },
-//                            label = {
-//                                Text(
-//                                    text = "Tôi",
-//                                    fontSize = 12.sp,
-//                                    color = if (selectedTabIndex == 3) Color(0xFF1E88E5) else Color(0xFF616161),
-//                                    fontWeight = if (selectedTabIndex == 3) FontWeight.Bold else FontWeight.Normal
-//                                )
-//                            },
-//                            selected = selectedTabIndex == 3,
-//                            onClick = {
-//                                if (id != null) selectedTabIndex = 3
-//                                else {
-//                                    navController.navigate(Screen.LoginScreen.route)
-//                                }
-//                            }
-//                        )
-//                    }
-//                }
-                val buttons = listOf(
-                    ButtonData("Trang chủ", if (selectedTabIndex == 0) Icons.Default.Home else Icons.Outlined.Home) {
-                        selectedTabIndex = 0
-                    },
-                    ButtonData("Danh mục", Icons.Outlined.GridView) {
-                        scope.launch {
-                            navdrawerState.apply {
-                                if (isClosed) open() else close()
+                NavigationBar(
+                    containerColor = Color.White,
+                    contentColor = Color.Black,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .border(
+                            width = 1.dp,
+                            color = Color(0xFF5D9EFF),
+                            shape = RoundedCornerShape(0.dp) // Hình chữ nhật, không bo góc
+                        )
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(start = 25.dp, end = 25.dp),
+                        horizontalArrangement = Arrangement.SpaceAround,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        NavigationBarItem(
+                            icon = {
+                                Icon(
+                                    imageVector = if (selectedTabIndex == 0) Icons.Default.Home else Icons.Outlined.Home,
+                                    contentDescription = "Trang chủ",
+                                    modifier = Modifier.size(28.dp),
+                                    tint = if (selectedTabIndex == 0) Color(0xFF1E88E5) else Color(0xFF616161)
+                                )
+                            },
+                            label = {
+                                Text(
+                                    text = "Trang chủ",
+                                    fontSize = 12.sp,
+                                    color = if (selectedTabIndex == 0) Color(0xFF1E88E5) else Color(0xFF616161),
+                                    fontWeight = if (selectedTabIndex == 0) FontWeight.Bold else FontWeight.Normal
+                                )
+                            },
+                            selected = selectedTabIndex == 0,
+                            onClick = { selectedTabIndex = 0 }
+                        )
+                        NavigationBarItem(
+                            icon = {
+                                Icon(
+                                    imageVector = Icons.Outlined.GridView,
+                                    contentDescription = "Danh mục",
+                                    modifier = Modifier.size(28.dp),
+                                    tint = if (selectedTabIndex == 1) Color(0xFF1E88E5) else Color(0xFF616161)
+                                )
+                            },
+                            label = {
+                                Text(
+                                    text = "Danh mục",
+                                    fontSize = 12.sp,
+                                    color = if (selectedTabIndex == 1) Color(0xFF1E88E5) else Color(0xFF616161),
+                                    fontWeight = if (selectedTabIndex == 1) FontWeight.Bold else FontWeight.Normal
+                                )
+                            },
+                            selected = selectedTabIndex == 1,
+                            onClick = {
+                                scope.launch {
+                                    navdrawerState.apply {
+                                        if (isClosed) open() else close()
+                                    }
+                                }
                             }
-                        }
-                    },
-                    ButtonData("Thông báo", if (selectedTabIndex == 2) Icons.Default.Notifications else Icons.Outlined.Notifications) {
-                        selectedTabIndex = 2
-                    },
-                    ButtonData("Tôi", if (selectedTabIndex == 3) Icons.Default.Person else Icons.Outlined.Person) {
-                        if (id != null) selectedTabIndex = 3
-                        else navController.navigate(Screen.LoginScreen.route)
+                        )
+                        NavigationBarItem(
+                            icon = {
+                                Icon(
+                                    imageVector = if (selectedTabIndex == 2) Icons.Default.Notifications else Icons.Outlined.Notifications,
+                                    contentDescription = "Thông báo",
+                                    modifier = Modifier.size(28.dp),
+                                    tint = if (selectedTabIndex == 2) Color(0xFF1E88E5) else Color(0xFF616161)
+                                )
+                            },
+                            label = {
+                                Text(
+                                    text = "Thông báo",
+                                    fontSize = 12.sp,
+                                    color = if (selectedTabIndex == 2) Color(0xFF1E88E5) else Color(0xFF616161),
+                                    fontWeight = if (selectedTabIndex == 2) FontWeight.Bold else FontWeight.Normal
+                                )
+                            },
+                            selected = selectedTabIndex == 2,
+                            onClick = { selectedTabIndex = 2 }
+                        )
+                        NavigationBarItem(
+                            icon = {
+                                Icon(
+                                    imageVector = if (selectedTabIndex == 3) Icons.Default.Person else Icons.Outlined.Person,
+                                    contentDescription = "Tôi",
+                                    modifier = Modifier.size(28.dp),
+                                    tint = if (selectedTabIndex == 3) Color(0xFF1E88E5) else Color(0xFF616161)
+                                )
+                            },
+                            label = {
+                                Text(
+                                    text = "Tôi",
+                                    fontSize = 12.sp,
+                                    color = if (selectedTabIndex == 3) Color(0xFF1E88E5) else Color(0xFF616161),
+                                    fontWeight = if (selectedTabIndex == 3) FontWeight.Bold else FontWeight.Normal
+                                )
+                            },
+                            selected = selectedTabIndex == 3,
+                            onClick = {
+                                if (id != null) selectedTabIndex = 3
+                                else {
+                                    navController.navigate(Screen.LoginScreen.route)
+                                }
+                            }
+                        )
                     }
-                )
-                AnimatedNavigationBar(
-                    buttons = buttons,
-                    barColor = Color.White,
-                    circleColor = Color(0xFF5D9EFF),
-                    selectedColor = Color(0xFF1E88E5),
-                    unselectedColor = Color(0xFF616161)
-                )
+                }
+//                val buttons = listOf(
+//                    ButtonData("Trang chủ", if (selectedTabIndex == 0) Icons.Default.Home else Icons.Outlined.Home) {
+//                        selectedTabIndex = 0
+//                    },
+//                    ButtonData("Danh mục", Icons.Outlined.GridView) {
+//                        scope.launch {
+//                            navdrawerState.apply {
+//                                if (isClosed) open() else close()
+//                            }
+//                        }
+//                    },
+//                    ButtonData("Thông báo", if (selectedTabIndex == 2) Icons.Default.Notifications else Icons.Outlined.Notifications) {
+//                        selectedTabIndex = 2
+//                    },
+//                    ButtonData("Tôi", if (selectedTabIndex == 3) Icons.Default.Person else Icons.Outlined.Person) {
+//                        if (id != null) selectedTabIndex = 3
+//                        else navController.navigate(Screen.LoginScreen.route)
+//                    }
+//                )
+//                AnimatedNavigationBar(
+//                    buttons = buttons,
+//                    barColor = Color.White,
+//                    circleColor = Color(0xFF5D9EFF),
+//                    selectedColor = Color(0xFF1E88E5),
+//                    unselectedColor = Color(0xFF616161)
+//                )
             },
             floatingActionButton = {
                 if (selectedTabIndex == 0) {

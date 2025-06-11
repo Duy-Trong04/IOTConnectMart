@@ -8,14 +8,17 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.AddCircleOutline
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.Button
@@ -106,7 +109,6 @@ fun AddressSelectionScreen(
                         "Địa chỉ nhận hàng",
                         modifier = Modifier.fillMaxWidth(),
                         textAlign = TextAlign.Start,
-                        fontWeight = FontWeight.Bold
                     )
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -116,19 +118,15 @@ fun AddressSelectionScreen(
                 ),
                 navigationIcon = {
                     IconButton(onClick = { navController.popBackStack() }) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = null)
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = null)
                     }
                 }
             )
         }
     ) { paddingValues ->
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .background(Color(0xFFF6F6F6))
-                .padding(paddingValues)
-        ) {
-            LazyColumn(modifier = Modifier.weight(1f).padding(5.dp)) {
+            LazyColumn(modifier = Modifier.padding(paddingValues).padding(horizontal = 5.dp, vertical = 5.dp).fillMaxSize()
+                .background(Color.White)
+            ) {
                 listAddress?.address_books?.let {
                     items(listAddress!!.address_books) { address ->
                         if (idCustomer != null) {
@@ -143,9 +141,10 @@ fun AddressSelectionScreen(
                     }
                 }
                 item {
-                    Box(
+                    Row(
                         modifier = Modifier.fillMaxWidth(),
-                        contentAlignment = Alignment.Center
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.Center
                     ) {
                         TextButton(onClick = {
                             navController.navigate("${Screen.Add_Address.route}?idCustomer=${idCustomer}")
@@ -153,12 +152,13 @@ fun AddressSelectionScreen(
                             Icon(
                                 Icons.Default.AddCircleOutline,
                                 contentDescription = null,
-                                tint = Color(0xFF448AFF)
+                                tint = Color(0xFF448AFF),
+                                modifier = Modifier.size(14.dp)
                             )
-                            Spacer(modifier = Modifier.width(8.dp))
+                            Spacer(modifier = Modifier.width(5.dp))
                             Text(
-                                text = "Thêm Địa Chỉ Mới",
-                                fontSize = 18.sp,
+                                text = "Thêm địa chỉ mới",
+                                fontSize = 14.sp,
                                 color = Color(0xFF448AFF),
                                 fontWeight = FontWeight.Bold
                             )
@@ -166,7 +166,7 @@ fun AddressSelectionScreen(
                     }
                 }
             }
-        }
+
     }
 }
 
@@ -204,97 +204,95 @@ fun AddressItem(
             )
         }
     }
-            Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(5.dp)
-                    .clickable {
-                        if (selectedAddressId != null) onSelectClick(address.id)
-                        else {
-                            navController.navigate("${Screen.Update_Address.route}?idCustomer=${idCustomer}&id=${address.id}")
-                        }
-                    }, // Nhấn vào Card để chọn
-                colors = CardDefaults.cardColors(containerColor = Color.White),
-                elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
-                shape = RoundedCornerShape(5.dp)
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(2.dp)
+            .clickable {
+                if (selectedAddressId != null) onSelectClick(address.id)
+                else {
+                    navController.navigate("${Screen.Update_Address.route}?idCustomer=${idCustomer}&id=${address.id}")
+                }
+            }, // Nhấn vào Card để chọn
+        colors = CardDefaults.cardColors(containerColor = Color.White),
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+        shape = RoundedCornerShape(5.dp)
+    ) {
+        Row(
+            modifier = Modifier
+                .padding(2.dp)
+                .fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            // Hiển thị RadioButton chỉ khi selectedAddressId != null
+            if (selectedAddressId != null) {
+                RadioButton(
+                    selected = selectedAddressId == address.id,
+                    onClick = { onSelectClick(address.id) },
+                    colors = RadioButtonDefaults.colors(
+                        selectedColor = Color(0xFF5D9EFF),
+                        unselectedColor = Color.Gray
+                    )
+                )
+            } else {
+                Spacer(modifier = Modifier.width(2.dp)) // Giữ khoảng cách khi không có RadioButton
+            }
+            // Nội dung địa chỉ
+            Column(
+                modifier = Modifier.weight(1f)
             ) {
                 Row(
-                    modifier = Modifier
-                        .padding(12.dp)
-                        .fillMaxWidth(),
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    // Hiển thị RadioButton chỉ khi selectedAddressId != null
+                    Text(
+                        text = "Người nhận: ${address.receiver_name}",
+                        fontSize = 15.sp,
+                        fontWeight = FontWeight.Bold
+                    )
                     if (selectedAddressId != null) {
-                        RadioButton(
-                            selected = selectedAddressId == address.id,
-                            onClick = { onSelectClick(address.id) },
-                            colors = RadioButtonDefaults.colors(
-                                selectedColor = Color(0xFF5D9EFF),
-                                unselectedColor = Color.Gray
-                            )
-                        )
-                    } else {
-                        Spacer(modifier = Modifier.width(8.dp)) // Giữ khoảng cách khi không có RadioButton
-                    }
-                    // Nội dung địa chỉ
-                    Column(
-                        modifier = Modifier.weight(1f)
-                    ) {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
+                        TextButton(
+                            shape = RoundedCornerShape(10.dp),
+                            onClick = {
+                                navController.navigate("${Screen.Update_Address.route}?idCustomer=${idCustomer}&id=${address.id}")
+                            }
                         ) {
                             Text(
-                                text = "Người nhận: ${address.receiver_name}",
-                                fontSize = 18.sp,
-                                fontWeight = FontWeight.Bold
-                            )
-                            if (selectedAddressId != null) {
-                                TextButton(
-                                    shape = RoundedCornerShape(10.dp),
-                                    onClick = {
-                                        navController.navigate("${Screen.Update_Address.route}?idCustomer=${idCustomer}&id=${address.id}")
-                                    }
-                                ) {
-                                    Text(
-                                        text = "Sửa",
-                                        fontSize = 16.sp,
-                                        fontWeight = FontWeight.W500,
-                                        color = Color(0xFF5D9EFF)
-                                    )
-                                }
-                            } else {
-                                Spacer(modifier = Modifier.width(8.dp)) // Giữ khoảng cách khi không có RadioButton
-                            }
-                        }
-                        Text(
-                            text = "Số điện thoại: ${address.phone}",
-                            fontSize = 18.sp,
-                            modifier = Modifier.padding(bottom = 8.dp)
-                        )
-                        Text(
-                            text = "Địa chỉ: ${address.detail}, ${address.street}, ${address.ward}, ${address.district}, ${address.city}",
-                            modifier = Modifier.padding(bottom = 8.dp),
-                            fontSize = 18.sp
-                        )
-                        if (address.is_default) {
-                            Text(
-                                text = "Mặc định",
+                                text = "Sửa",
                                 fontSize = 13.sp,
-                                modifier = Modifier
-                                    .border(
-                                        1.dp,
-                                        Color(0xFF5D9EFF),
-                                        shape = RoundedCornerShape(10.dp)
-                                    )
-                                    .padding(3.dp),
+                                fontWeight = FontWeight.W500,
                                 color = Color(0xFF5D9EFF)
                             )
                         }
+                    } else {
+                        Spacer(modifier = Modifier.width(2.dp)) // Giữ khoảng cách khi không có RadioButton
                     }
                 }
+                Text(
+                    text = "Số điện thoại: ${address.phone}",
+                    fontSize = 15.sp,
+                    modifier = Modifier.padding(bottom = 5.dp)
+                )
+                Text(
+                    text = "Địa chỉ: ${address.detail}, ${address.street}, ${address.ward}, ${address.district}, ${address.city}",
+                    modifier = Modifier.padding(bottom = 5.dp),
+                    fontSize = 15.sp
+                )
+                if (address.is_default) {
+                    Text(
+                        text = "Mặc định",
+                        fontSize = 13.sp,
+                        modifier = Modifier
+                            .border(
+                                1.dp,
+                                Color(0xFF5D9EFF),
+                                shape = RoundedCornerShape(3.dp)
+                            ),
+                        color = Color(0xFF5D9EFF)
+                    )
+                }
             }
-
+        }
+    }
 }

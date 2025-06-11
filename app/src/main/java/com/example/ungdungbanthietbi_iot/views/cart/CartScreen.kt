@@ -442,15 +442,16 @@ fun CartScreen(
             )
         },
         bottomBar = {
-            BottomAppBar(
-                containerColor = Color.White,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(165.dp)
-            ) {
+//            BottomAppBar(
+//                containerColor = Color.White,
+//                modifier = Modifier
+//                    .fillMaxWidth()
+//                    .height(165.dp)
+//            ) {
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
+                        .background(Color.White)
                         .padding(10.dp)
                 ) {
                     Row(
@@ -494,7 +495,6 @@ fun CartScreen(
                             style = TextStyle(color = Color.Red, fontSize = 18.sp)
                         )
                     }
-                    Spacer(modifier = Modifier.height(4.dp))
                     // Nút mua hàng
                     Button(
                         modifier = Modifier.fillMaxWidth(),
@@ -508,8 +508,8 @@ fun CartScreen(
                                 navController.navigate(Screen.Check_Out.route + "?selectedProducts=${selectedProductsString}&tongtien=${totalPrice}&username=${username}&id=$idCustomer&password=$password")
                             }
                         },
-                        shape = RoundedCornerShape(10.dp),
-                        elevation = ButtonDefaults.buttonElevation(2.dp),
+                        shape = RoundedCornerShape(5.dp),
+                        elevation = ButtonDefaults.buttonElevation(1.dp),
                         colors = ButtonDefaults.buttonColors(
                             containerColor = Color(0xFF5D9EFF)
                         )
@@ -554,7 +554,7 @@ fun CartScreen(
                         )
                     }
                 }
-            }
+
         }
     ) { padding ->
         if (showDialog) {

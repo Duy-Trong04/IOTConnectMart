@@ -13,6 +13,7 @@ import com.example.ungdungbanthietbi_iot.api.OrderAPIService
 import com.example.ungdungbanthietbi_iot.api.OrderDetailAPIService
 import com.example.ungdungbanthietbi_iot.api.ReviewAPIService
 import com.example.ungdungbanthietbi_iot.api.SlideShowAPIService
+import com.example.ungdungbanthietbi_iot.api.VNPayAPIService
 import com.google.gson.GsonBuilder
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
@@ -141,5 +142,11 @@ object RetrofitClient {
             .build()
             .create(AccuntAPIService::class.java)
     }
-
+    val vnPayService: VNPayAPIService by lazy {
+        Retrofit.Builder()
+            .baseUrl(Constant.BASE_URL)
+            .addConverterFactory(GsonConverterFactory.create(GsonBuilder().create()))
+            .build()
+            .create(VNPayAPIService::class.java)
+    }
 }

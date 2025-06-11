@@ -13,6 +13,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.BottomAppBar
@@ -93,8 +94,7 @@ fun AddAddressScreen(
         topBar = {
             TopAppBar(
                 title = { Text("Thêm địa chỉ", textAlign = TextAlign.Start,
-                    modifier = Modifier.fillMaxWidth(),
-                    fontWeight = FontWeight.Bold
+                    modifier = Modifier.fillMaxWidth()
                 )},
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = Color(0xFF5D9EFF),
@@ -107,7 +107,7 @@ fun AddAddressScreen(
                         navController.popBackStack()
                     }) {
                         Icon(
-                            imageVector = Icons.Filled.ArrowBack,
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = "Back"
                         )
                     }
@@ -116,94 +116,89 @@ fun AddAddressScreen(
         },
         // Thanh điều hướng hoặc nút hành động ở dưới cùng (bottomBar)
         bottomBar = {
-            BottomAppBar (
-                containerColor = Color.White,
-                modifier = Modifier.fillMaxWidth().height(175.dp)
-            ){
-                Column(
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(Color.White)
+                    .padding(horizontal = 10.dp).padding(bottom = 10.dp)
+            ) {
+                // Nút Switch: Đặt làm địa chỉ mặc định
+                Row(
                     modifier = Modifier
-                        .fillMaxWidth()
-                        .background(Color.White)
-                        .padding(horizontal = 10.dp)
+                        .fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
                 ) {
-                    // Nút Switch: Đặt làm địa chỉ mặc định
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth(),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        Text(
-                            text = "Đặt làm địa chỉ mặc định",
-                            modifier = Modifier.weight(1f),
-                            fontSize = 18.sp
-                        )
-                        Switch(
-                            checked = isDefault,
-                            onCheckedChange = { isDefault = it },
-                            colors = SwitchDefaults.colors(
-                                checkedThumbColor = Color.White,// Màu khi bật
-                                uncheckedThumbColor = Color.Gray, // Màu khi tắt
-                                checkedTrackColor = Color(0xFF5D9EFF)// Màu đường chạy khi bật
-                            ),
-                            modifier = Modifier.scale(0.8f)// Thu nhỏ kích thước Switch
-                        )
-                    }
-                    // Nút thêm địa chỉ
-                    Button(
-                        modifier = Modifier.fillMaxWidth(),
-                        onClick = {
-                            if(phone.length != 10){
-                                validatePhone = true
-                            }
-                            if(city.trim() != "" || district.trim() != "" || ward != "" || street != "" || hoten.trim().isNotEmpty() || phone.isNotEmpty()){
-                                val createAddress = CreateAddressRequest(
-                                    customer_id = idCustomer,
-                                    receiver_name = hoten,
-                                    phone = phone,
-                                    district = district,
-                                    city = city,
-                                    ward = ward,
-                                    street = street,
-                                    detail = detail,
-                                    is_default = isDefault
-                                )
-                                addressViewModel.createAddress(createAddress)
-                                navController.popBackStack()
-                            }
-                            else{
-                                showDialog = true
-                            }
-                        },
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = Color(0xFF5D9EFF)
+                    Text(
+                        text = "Đặt làm địa chỉ mặc định",
+                        modifier = Modifier.weight(1f),
+                        fontSize = 16.sp
+                    )
+                    Switch(
+                        checked = isDefault,
+                        onCheckedChange = { isDefault = it },
+                        colors = SwitchDefaults.colors(
+                            checkedThumbColor = Color.White,// Màu khi bật
+                            uncheckedThumbColor = Color.Gray, // Màu khi tắt
+                            checkedTrackColor = Color(0xFF5D9EFF)// Màu đường chạy khi bật
                         ),
-                        shape = RoundedCornerShape(10.dp),// Bo góc nút
-                        elevation = ButtonDefaults.buttonElevation(1.dp)// Tạo độ nổi
-                    ) {
-                        Text("Thêm địa chỉ", fontSize = 20.sp)
-                    }
-                    if(showDialog){
-                        AlertDialog(
-                            onDismissRequest = { showDialog = false },
-                            title = { Text(text = "Thông báo") },
-                            text = { Text(text = "Vui lòng nhập đầy đủ thông tin địa chỉ.") },
-                            confirmButton = {
-                                Button(onClick = { showDialog = false },
-                                    colors = ButtonDefaults.buttonColors(
-                                        containerColor = Color(0xFF5D9EFF)
-                                    ),
-                                    shape = RoundedCornerShape(10.dp)
-                                ) {
-                                    Text("OK")
-                                }
-                            }
-                        )
-                    }
+                        modifier = Modifier.scale(0.6f)// Thu nhỏ kích thước Switch
+                    )
+                }
+                // Nút thêm địa chỉ
+                Button(
+                    modifier = Modifier.fillMaxWidth(),
+                    onClick = {
+                        if(phone.length != 10){
+                            validatePhone = true
+                        }
+                        if(city.trim() != "" || district.trim() != "" || ward != "" || street != "" || hoten.trim().isNotEmpty() || phone.isNotEmpty()){
+                            val createAddress = CreateAddressRequest(
+                                customer_id = idCustomer,
+                                receiver_name = hoten,
+                                phone = phone,
+                                district = district,
+                                city = city,
+                                ward = ward,
+                                street = street,
+                                detail = detail,
+                                is_default = isDefault
+                            )
+                            addressViewModel.createAddress(createAddress)
+                            navController.popBackStack()
+                        }
+                        else{
+                            showDialog = true
+                        }
+                    },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color(0xFF5D9EFF)
+                    ),
+                    shape = RoundedCornerShape(10.dp),// Bo góc nút
+                    elevation = ButtonDefaults.buttonElevation(1.dp)// Tạo độ nổi
+                ) {
+                    Text("Thêm địa chỉ", fontSize = 16.sp)
                 }
             }
         }
     ) {
+        if(showDialog){
+            AlertDialog(
+                onDismissRequest = { showDialog = false },
+                title = { Text(text = "Thông báo") },
+                text = { Text(text = "Vui lòng nhập đầy đủ thông tin địa chỉ.") },
+                confirmButton = {
+                    Button(onClick = { showDialog = false },
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = Color(0xFF5D9EFF)
+                        ),
+                        shape = RoundedCornerShape(10.dp)
+                    ) {
+                        Text("OK")
+                    }
+                }
+            )
+        }
         // Nội dung chính (LazyColumn) hiển thị danh sách các trường nhập liệu
         LazyColumn (
             modifier = Modifier.fillMaxSize().padding(it).background(Color.White)

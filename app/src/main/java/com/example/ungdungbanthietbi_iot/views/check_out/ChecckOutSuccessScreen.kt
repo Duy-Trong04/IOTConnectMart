@@ -1,5 +1,6 @@
 package com.example.ungdungbanthietbi_iot.views.check_out
 
+import android.annotation.SuppressLint
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
@@ -51,6 +52,7 @@ import com.example.ungdungbanthietbi_iot.utils.formatGiaTienInt
 import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
 
+@SuppressLint("NewApi")
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CheckOutSuccessScreen(

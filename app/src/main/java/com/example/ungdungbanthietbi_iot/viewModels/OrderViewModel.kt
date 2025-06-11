@@ -71,14 +71,23 @@ class OrderViewModel:ViewModel() {
             try {
                 val response: CheckoutResponse = RetrofitClient.orderAPIService.createOrder(checkoutRequest)
                 Log.d("OrderViewModel", "API Response: $response")
-                if (response.status_code == 200) {
-                    if (response.error_code == 0) {
-                        _checkoutState.value = CheckoutState.Success(response.data)
-                    } else {
-                        _checkoutState.value = CheckoutState.Error("API error: ${response.error_code}")
+                when (response.status_code) {
+                    200 -> {
+                        if (response.error_code == 0) {
+                            _checkoutState.value = CheckoutState.Success(response.data)
+                        } else {
+                            _checkoutState.value = CheckoutState.Error("Lỗi API: ${response.error_code}")
+                        }
                     }
-                } else {
-                    _checkoutState.value = CheckoutState.Error("API call failed: ${response.status_code}")
+                    400 -> {
+                        val errorMessages = response.data_errors?.joinToString { error ->
+                            "Sản phẩm ${error.product_name}: ${error.errors.joinToString { it.message }}"
+                        } ?: "Lỗi không xác định"
+                        _checkoutState.value = CheckoutState.Error("Yêu cầu không hợp lệ: $errorMessages")
+                    }
+                    else -> {
+                        _checkoutState.value = CheckoutState.Error("Gọi API thất bại: ${response.status_code}")
+                    }
                 }
             } catch (e: Exception) {
                 Log.e("OrderViewModel", "Error creating order: ${e.message}")

@@ -89,3 +89,14 @@ data class OrderRequest(
     val amount: Int,
     val status: Int
 )
+
+data class ProductError(
+    val product_id: Int,
+    val product_name: String,
+    val errors: List<Errors>
+)
+
+data class Errors(
+    val code: Int,
+    val message: String,
+)

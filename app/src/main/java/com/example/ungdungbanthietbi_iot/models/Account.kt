@@ -56,7 +56,7 @@ data class AccountData(
     val account_id: String,
     val customer_id: String?,
     val employee_id: String?,
-    val role_id: String,
+    val role_id: Int,
     val username: String,
     val password: String,
     val verification_code: String?,

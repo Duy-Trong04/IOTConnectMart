@@ -2,6 +2,7 @@ package com.example.ungdungbanthietbi_iot.api
 
 import com.example.ungdungbanthietbi_iot.models.CheckoutRequest
 import com.example.ungdungbanthietbi_iot.models.Order
+import com.example.ungdungbanthietbi_iot.models.ProductError
 import com.google.gson.annotations.SerializedName
 import retrofit2.Call
 import retrofit2.Response
@@ -22,9 +23,10 @@ data class OrderData(
 )
 
 data class CheckoutResponse(
-    val error_code: Int,
     val status_code: Int,
-    val data: OrderDataCheckOut
+    val error_code: Int? = null,
+    val data: OrderDataCheckOut, // Adjust type based on success data
+    val data_errors: List<ProductError>? = null
 )
 data class OrderRequestCancel(val id: String)
 

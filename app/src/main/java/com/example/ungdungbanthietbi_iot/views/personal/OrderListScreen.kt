@@ -1,7 +1,10 @@
 package com.example.ungdungbanthietbi_iot.views.personal
 
+import android.annotation.SuppressLint
 import android.util.Log
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -93,7 +96,6 @@ fun OrderListScreen(navController: NavController, idCustomer: String?) {
                 title = {
                     Text(
                         text = "Đơn đã mua",
-                        fontWeight = FontWeight.Bold,
                         modifier = Modifier.fillMaxWidth(),
                         textAlign = TextAlign.Start
                     )
@@ -113,7 +115,6 @@ fun OrderListScreen(navController: NavController, idCustomer: String?) {
         Column(
             modifier = Modifier
                 .padding(it)
-                .padding(3.dp),
         ) {
             ScrollableTabRow(
                 selectedTabIndex = selectedTabIndexItem,
@@ -139,12 +140,12 @@ fun OrderListScreen(navController: NavController, idCustomer: String?) {
                     ) {
                         Row(
                             verticalAlignment = Alignment.CenterVertically,
-                            modifier = Modifier.padding(8.dp)
+                            modifier = Modifier.padding(2.dp)
                         ) {
                             Text(
                                 text = title,
-                                fontSize = 18.sp,
-                                fontWeight = FontWeight.W600
+                                fontSize = 15.sp,
+                                fontWeight = FontWeight.W400
                             )
                         }
                     }
@@ -169,6 +170,7 @@ fun OrderListScreen(navController: NavController, idCustomer: String?) {
     }
 }
 
+@SuppressLint("NewApi")
 @Composable
 fun DaGiaoHangScreen(navController: NavController, idCustomer: String?) {
     val orderViewModel: OrderViewModel = viewModel()
@@ -278,6 +280,7 @@ fun DaGiaoHangScreen(navController: NavController, idCustomer: String?) {
     }
 }
 
+@SuppressLint("NewApi")
 @Composable
 fun HoanTatScreen(navController: NavController, idCustomer: String?) {
     val orderViewModel: OrderViewModel = viewModel()
@@ -387,6 +390,7 @@ fun HoanTatScreen(navController: NavController, idCustomer: String?) {
     }
 }
 
+@SuppressLint("NewApi")
 @Composable
 fun ChoGiaoHangScreen(navController: NavController, idCustomer: String?) {
     val orderViewModel: OrderViewModel = viewModel()
@@ -496,6 +500,7 @@ fun ChoGiaoHangScreen(navController: NavController, idCustomer: String?) {
     }
 }
 
+@SuppressLint("NewApi")
 @Composable
 fun HuyDonHangScreen(navController: NavController, idCustomer: String?) {
     val orderViewModel: OrderViewModel = viewModel()
@@ -607,6 +612,7 @@ fun HuyDonHangScreen(navController: NavController, idCustomer: String?) {
     }
 }
 
+@SuppressLint("NewApi")
 @Composable
 fun ChoLayHangScreen(navController: NavController, idCustomer: String?) {
     val orderViewModel: OrderViewModel = viewModel()
@@ -718,6 +724,7 @@ fun ChoLayHangScreen(navController: NavController, idCustomer: String?) {
     }
 }
 
+@SuppressLint("NewApi")
 @Composable
 fun ChoXacNhanScreen(navController: NavController, idCustomer: String?) {
     val orderViewModel: OrderViewModel = viewModel()
@@ -856,62 +863,33 @@ fun OrderItem(
     LaunchedEffect (Unit){
         reviewViewModel.getAllReviews()
     }
+    // Lọc các mục trùng product_id, giữ mục có quantity lớn nhất
+    val filteredDetails = listDetail.groupBy { it.product_id }
+        .map { (_, details) -> details.maxByOrNull { it.quantity }!! }
     Card(
         colors = CardDefaults.cardColors(
             containerColor = Color.White
         ),
         modifier = Modifier
             .fillMaxWidth()
-            .padding(5.dp),
+            .padding(2.dp),
         shape = RoundedCornerShape(5.dp),
         elevation = CardDefaults.cardElevation(1.dp),
         onClick = {
             navController.navigate("${Screen.Order_Detail.route}?id=${encodedOrderId}&totalAmount=${order.totalAmount}&idCustomer=$idCustomer")
         }
     ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
             Column(
-                modifier = Modifier.weight(1f)
+                modifier = Modifier.fillMaxWidth().padding(5.dp),
+                horizontalAlignment = Alignment.Start,
+                verticalArrangement = Arrangement.Top
             ) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-
-                    Text(
-                        text = "Mã đơn hàng: #HD${encodedOrderId}",
-                    )
-                    if (isCancel) {
-                        Box(
-                            modifier = Modifier
-                                .fillMaxHeight()
-                                .padding(start = 8.dp)
-                        ) {
-                            Button(
-                                modifier = Modifier.fillMaxHeight(),
-                                colors = ButtonDefaults.buttonColors(
-                                    containerColor = Color(0xFF5D9EFF)
-                                ),
-                                shape = RoundedCornerShape(5.dp),
-                                onClick = {
-                                    orderViewModel.cancelOrder(order.id)
-                                }
-                            ) {
-                                Text("Hủy")
-                            }
-                        }
-                    }
-                }
-
+                Text(
+                    text = "Mã đơn hàng: #HD${encodedOrderId}",
+                )
+                Spacer(modifier = Modifier.height(8.dp))
                 Column {
-                    listDetail.forEach { detail ->
+                    filteredDetails.forEach { detail ->
                         val existingReview = listReviews.find { review ->
                             review.idCustomer == idCustomer && review.idDevice == detail.product_id
                         }
@@ -1013,13 +991,63 @@ fun OrderItem(
                                 }
                             }
                         }
-                        HorizontalDivider()
+                        HorizontalDivider(modifier = Modifier.padding(top = 3.dp))
                     }
                 }
                 Spacer(modifier = Modifier.height(8.dp))
-                Text(text = "Tổng Tiền: ${formatGiaTien(order.totalAmount)}", color = Color.Red)
-                Text(text = "Ngày Đặt Hàng: ${formatDateTimeZone(order.created_at)}")
+                Text(
+                    text = "Tổng Tiền: ${formatGiaTien(order.totalAmount)}",
+                    fontSize = 15.sp,
+                    color = Color.Red
+                )
+                Text(
+                    text = "Ngày đặt hàng: ${formatDateTimeZone(order.created_at)}",
+                    fontSize = 14.sp
+                )
+
+                Row (
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.End
+                ){
+                    if (isCancel) {
+                        Button(
+                            modifier = Modifier
+                                .height(40.dp) // Đặt chiều cao cố định
+                                .padding(end = 5.dp), // Padding giữa các nút
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = Color(0xFF5D9EFF),
+                                contentColor = Color.White
+                            ),
+                            shape = RoundedCornerShape(5.dp),
+                            onClick = {
+                                orderViewModel.cancelOrder(order.id)
+                            },
+                        ) {
+                            Text(text = "Hủy", fontSize = 13.sp)
+                        }
+                    }
+                    Button(
+                        onClick = {
+                            // Thêm hành động khi nhấn nút Xem chi tiết
+                            navController.navigate("${Screen.Order_Detail.route}?id=${order.id}&totalAmount=${order.totalAmount}&idCustomer=$idCustomer")
+                        },
+                        modifier = Modifier
+                            .height(40.dp), // Đặt chiều cao cố định
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = Color.White,
+                            contentColor = Color(0xFF5D9EFF)
+                        ),
+                        border = BorderStroke(1.dp, Color(0xFF5D9EFF)),
+                        shape = RoundedCornerShape(5.dp)
+                    ) {
+                        Text(
+                            text = "Xem chi tiết",
+                            fontSize = 13.sp
+                        )
+                    }
+                }
             }
-        }
+
     }
 }

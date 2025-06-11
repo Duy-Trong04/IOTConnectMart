@@ -116,7 +116,7 @@ interface AccuntAPIService {
         @Query("password") password: String
     ): CheckLoginResponse
 
-    @POST("/api/auth/login")
+    @POST("auth/login")
     suspend fun login(@Body request: LoginRequest): LoginResponse
 
     @POST("account/check_Dk.php")

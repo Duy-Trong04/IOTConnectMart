@@ -1,5 +1,6 @@
 package com.example.ungdungbanthietbi_iot.views.order_detail
 
+import android.annotation.SuppressLint
 import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -36,6 +37,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -101,6 +104,7 @@ fun OrderDetailsScreen(
     }
     // Tìm đơn hàng từ listOrder dựa trên idOrder
     val order = listOrder?.data?.data?.find { it.id == decodedId }
+    val amount by remember { mutableStateOf(totalAmount + 30000) }
     // Debug log
     LaunchedEffect(idOrder, listOrder) {
         Log.d(
@@ -121,7 +125,6 @@ fun OrderDetailsScreen(
                         "Thông tin đơn hàng",
                         textAlign = TextAlign.Start,
                         modifier = Modifier.fillMaxWidth(),
-                        fontWeight = FontWeight.Bold
                     )
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -144,11 +147,11 @@ fun OrderDetailsScreen(
         bottomBar = {
             if (order != null) {
                 if (order.status == 3) {
-                    BottomAppBar(
-                        containerColor = Color.White,
-                        modifier = Modifier.fillMaxWidth().height(100.dp)
-                    ) {
-
+                    Row(
+                        modifier = Modifier.fillMaxWidth().padding(10.dp),
+                        horizontalArrangement = Arrangement.Center,
+                        verticalAlignment = Alignment.CenterVertically
+                    ){
                         Button(
                             onClick = {
                                 // Vô hiệu hóa logic API, chỉ log hành động
@@ -171,10 +174,7 @@ fun OrderDetailsScreen(
                     }
                 }
                 else{
-                    BottomAppBar(
-                        containerColor = Color.White,
-                        modifier = Modifier.fillMaxWidth().height(100.dp)
-                    ) {}
+                    //TODO
                 }
             }
         }
@@ -289,7 +289,9 @@ fun OrderDetailsScreen(
                             )
                         ) {
                             Column(modifier = Modifier.padding(8.dp)) {
-                                order.details.forEach { detail ->
+                                val filteredDetails = order.details.groupBy { it.product_id }
+                                    .map { (_, details) -> details.maxByOrNull { it.quantity }!! }
+                                filteredDetails.forEach { detail ->
                                     // Kiểm tra xem sản phẩm đã được đánh giá chưa
                                     val existingReview = listReviews.find { review ->
                                         review.idCustomer == idCustomer && review.idDevice == detail.product_id
@@ -423,7 +425,7 @@ fun OrderDetailsScreen(
                                         fontSize = 18.sp
                                     )
                                     Text(
-                                        text = "0 VNĐ",
+                                        text = "30000 VNĐ",
                                         fontWeight = FontWeight.Bold,
                                         fontSize = 18.sp
                                     )
@@ -441,7 +443,7 @@ fun OrderDetailsScreen(
                                         fontSize = 18.sp
                                     )
                                     Text(
-                                        text = formatGiaTien(totalAmount),
+                                        text = formatGiaTien(amount),
                                         fontWeight = FontWeight.Bold,
                                         fontSize = 18.sp,
                                         color = Color.Red
@@ -456,6 +458,7 @@ fun OrderDetailsScreen(
     }
 }
 
+@SuppressLint("NewApi")
 fun calculateDaysSinceReceived(receivedDate: String?): Int {
     try {
         if (receivedDate.isNullOrEmpty()) {

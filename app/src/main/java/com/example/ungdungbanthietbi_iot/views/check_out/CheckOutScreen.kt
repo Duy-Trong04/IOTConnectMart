@@ -1,6 +1,25 @@
 package com.example.ungdungbanthietbi_iot.views.check_out
 
+import android.annotation.SuppressLint
+import android.app.Activity
+import android.content.BroadcastReceiver
+import android.content.Context
+import android.content.Intent
+import android.content.IntentFilter
+import android.graphics.Bitmap
+import android.net.Uri
 import android.util.Log
+import android.view.WindowManager
+import android.webkit.ConsoleMessage
+import android.webkit.WebChromeClient
+import android.webkit.WebResourceError
+import android.webkit.WebResourceRequest
+import android.webkit.WebSettings
+import android.webkit.WebView
+import android.webkit.WebViewClient
+import androidx.activity.ComponentActivity
+import androidx.activity.compose.BackHandler
+import androidx.browser.customtabs.CustomTabsIntent
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -38,6 +57,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -51,14 +71,24 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.painter.BitmapPainter
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.viewinterop.AndroidView
+import androidx.core.content.ContextCompat
+import androidx.datastore.preferences.core.edit
+import androidx.datastore.preferences.core.intPreferencesKey
+import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import coil.compose.AsyncImage
+import com.example.ungdungbanthietbi_iot.MainActivity
+import com.example.ungdungbanthietbi_iot.api.PaymentRequest
+import com.example.ungdungbanthietbi_iot.dataStore
+import com.example.ungdungbanthietbi_iot.models.AddressBook
 import com.example.ungdungbanthietbi_iot.models.CheckoutRequest
 import com.example.ungdungbanthietbi_iot.viewModels.AccountViewModel
 import com.example.ungdungbanthietbi_iot.viewModels.AddressViewModel
@@ -81,7 +111,11 @@ import com.example.ungdungbanthietbi_iot.utils.base64ToBitmap
 import com.example.ungdungbanthietbi_iot.utils.formatGiaTien
 import com.example.ungdungbanthietbi_iot.utils.getCurrentTimestamp
 import com.example.ungdungbanthietbi_iot.utils.getCurrentTimestampEX
+import com.example.ungdungbanthietbi_iot.utils.isNetworkAvailable
 import com.example.ungdungbanthietbi_iot.viewModels.CheckoutState
+import com.example.ungdungbanthietbi_iot.viewModels.VNPayViewModel
+import kotlinx.coroutines.flow.first
+import kotlinx.serialization.json.Json
 import java.net.URLEncoder
 import java.text.DecimalFormat
 
@@ -102,6 +136,7 @@ import java.text.DecimalFormat
  * Nội dung cập nhật:
  *
  */
+@SuppressLint("NewApi")
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CheckoutScreen(
@@ -112,6 +147,8 @@ fun CheckoutScreen(
     idCustomer: String,
     password: String,
 ) {
+
+    val context = LocalContext.current
     val deviceViewModel: DeviceViewModel = viewModel()
     val cartViewModel: CartViewModel = viewModel()
     val addressViewModel: AddressViewModel = viewModel()
@@ -123,11 +160,11 @@ fun CheckoutScreen(
     val address = addressViewModel.address
     val isLoadingAddress by addressViewModel.isLoading.collectAsState()
     val errorMessage = addressViewModel.errorMessage
-
+    val amount by remember { mutableStateOf(tongtien + 30000) }
     // State để theo dõi việc loading sản phẩm
     var isLoadingProducts by remember { mutableStateOf(true) }
     // State để kích hoạt cuộc gọi API
-    var triggerCheckout by remember { mutableStateOf<CheckoutRequest?>(null) }
+    var checkoutRequest by remember { mutableStateOf<CheckoutRequest?>(null) }
     // Lấy selectedAddressId từ savedStateHandle
     val selectedAddressId by navController.currentBackStackEntry
         ?.savedStateHandle
@@ -180,106 +217,285 @@ fun CheckoutScreen(
         }
     }
 
-    // Theo dõi trạng thái API
+//    // Theo dõi trạng thái API
+//    LaunchedEffect(Unit) {
+//        orderViewModel.checkoutState.collect { state ->
+//            when (state) {
+//                is CheckoutState.Success -> {
+//                    Log.d("CheckoutScreen", "Dữ liệu đơn hàng: ${state.orderData}")
+//
+//                    // Xóa giỏ hàng
+//                    selectedProducts.forEach { triple ->
+//                        if (triple.third != 0) {
+//                            cartViewModel.deleteCart(triple.third, idCustomer)
+//                        }else {
+//                            Log.e("CheckoutScreen", "ID giỏ hàng không hợp lệ cho sản phẩm ID: ${triple.first}")
+//                        }
+//                    }
+//
+//                    // Chuyển hướng đến màn hình thành công
+//                    val orderData = state.orderData
+//                    val encodedOrderId = orderData.orderId.let { URLEncoder.encode(it, "UTF-8") } ?: ""
+//                    val encodedCreatedAt = orderData.createdAt?.let { URLEncoder.encode(it, "UTF-8") } ?: ""
+//                    navController.navigate(
+//                        "${Screen.CheckOutSuccess.route}?" +
+//                                "username=$username&" +
+//                                "id=$idCustomer&" +
+//                                "orderId=$encodedOrderId&" +
+//                                "totalMoney=${orderData.totalMoney}&" +
+//                                "createdAt=$encodedCreatedAt&password=$password"
+//                    ) {
+//                        popUpTo(0) { inclusive = true }
+//                    }
+//                }
+//                is CheckoutState.Error -> {
+//                    // Hiển thị thông báo lỗi
+//                    //noticeViewModel.setNotice(Notice("Lỗi", state.message, true))
+//                    Log.e("CheckoutScreen", "API Error: ${state.message}")
+//                }
+//                is CheckoutState.Loading -> {
+//                    Log.d("CheckoutScreen", "Đang tạo đơn hàng...")
+//                }
+//                is CheckoutState.Idle -> {
+//                    // Không làm gì khi ở trạng thái Idle
+//                }
+//            }
+//        }
+//    }
+    val vnPayViewModel: VNPayViewModel = viewModel()
+    val paymentUrl by vnPayViewModel.paymentUrl.collectAsState()
+    val isLoadingPayment by vnPayViewModel.isLoading.collectAsState()
+    // Mở Chrome Custom Tabs khi có paymentUrl
+    LaunchedEffect(paymentUrl) {
+        if (paymentUrl != null && selectedPaymentMethod == "VNPay") {
+            val customTabsIntent = CustomTabsIntent.Builder()
+                .setShowTitle(true)
+                .setToolbarColor(ContextCompat.getColor(context, android.R.color.holo_blue_dark))
+                .setStartAnimations(context, android.R.anim.fade_in, android.R.anim.fade_out)
+                .setExitAnimations(context, android.R.anim.fade_out, android.R.anim.fade_in)
+                .build()
+            try {
+                customTabsIntent.launchUrl(context, Uri.parse(paymentUrl))
+            } catch (e: Exception) {
+                Log.e("CheckoutScreen", "Lỗi mở Custom Tabs: ${e.message}")
+                addressViewModel.updateErrorMessage("Không thể mở trình duyệt. Vui lòng kiểm tra Chrome.")
+            }
+        }
+    }
+    // Lấy paymentStatus từ MainActivity
+    val mainActivity = context as? MainActivity
+    val paymentStatus by mainActivity?.paymentStatus?.collectAsState() ?: remember { mutableStateOf<String?>(null) }
+
+    // Lưu checkoutRequest vào DataStore để khôi phục
+//    LaunchedEffect(checkoutRequest) {
+//        if (checkoutRequest != null) {
+//            context.dataStore.edit { preferences ->
+//                preferences[stringPreferencesKey("checkout_request")] = Json.encodeToString(CheckoutRequest.serializer(), checkoutRequest!!)
+//            }
+//        }
+//    }
+    // Kiểm tra DataStore khi khởi tạo
     LaunchedEffect(Unit) {
+        val preferences = context.dataStore.data.first()
+        val status = preferences[stringPreferencesKey("payment_status")]
+        if (status != null && checkoutRequest != null) {
+            Log.d("CheckoutScreen", "Payment Status from DataStore: $status")
+            when (status) {
+                "success" -> {
+                    Log.d("CheckoutScreen", "Gọi createOrder từ DataStore với request: $checkoutRequest")
+                    orderViewModel.createOrder(checkoutRequest!!)
+                    vnPayViewModel.clearPaymentUrl()
+                }
+                "fail" -> {
+                    addressViewModel.updateErrorMessage("Thanh toán thất bại.")
+                    vnPayViewModel.clearPaymentUrl()
+                }
+                "invalid" -> {
+                    addressViewModel.updateErrorMessage("Chữ ký không hợp lệ.")
+                    vnPayViewModel.clearPaymentUrl()
+                }
+                "cancelled" -> {
+                    addressViewModel.updateErrorMessage("Thanh toán bị hủy.")
+                    vnPayViewModel.clearPaymentUrl()
+                }
+                "expired" -> {
+                    addressViewModel.updateErrorMessage("Thanh toán hết hạn.")
+                    vnPayViewModel.clearPaymentUrl()
+                }
+            }
+            context.dataStore.edit {
+                it.remove(stringPreferencesKey("payment_status"))
+                it.remove(stringPreferencesKey("checkout_request"))
+            }
+        }
+    }
+    // Xử lý paymentStatus
+    LaunchedEffect(paymentStatus) {
+        paymentStatus?.let { status ->
+            Log.d("CheckoutScreen", "Payment Status: $status")
+            when (status) {
+                "success" -> {
+                    checkoutRequest?.let { request ->
+                        Log.d("CheckoutScreen", "Gọi createOrder với request: $request")
+                        orderViewModel.createOrder(request)
+                    } ?: run {
+                        Log.e("CheckoutScreen", "checkoutRequest is null")
+                        addressViewModel.updateErrorMessage("Không thể tạo đơn hàng: Dữ liệu thanh toán bị thiếu.")
+                    }
+                    vnPayViewModel.clearPaymentUrl()
+                }
+                "fail" -> {
+                    addressViewModel.updateErrorMessage("Thanh toán thất bại.")
+                    vnPayViewModel.clearPaymentUrl()
+                }
+                "invalid" -> {
+                    addressViewModel.updateErrorMessage("Chữ ký không hợp lệ.")
+                    vnPayViewModel.clearPaymentUrl()
+                }
+                "cancelled" -> {
+                    addressViewModel.updateErrorMessage("Thanh toán bị hủy.")
+                    vnPayViewModel.clearPaymentUrl()
+                }
+                "expired" -> {
+                    addressViewModel.updateErrorMessage("Thanh toán hết hạn.")
+                    vnPayViewModel.clearPaymentUrl()
+                }
+            }
+            mainActivity?._paymentStatus?.value = null
+        }
+    }
+    // Xử lý trạng thái API
+    LaunchedEffect(paymentStatus) {
         orderViewModel.checkoutState.collect { state ->
             when (state) {
                 is CheckoutState.Success -> {
                     Log.d("CheckoutScreen", "Dữ liệu đơn hàng: ${state.orderData}")
-
-                    // Xóa giỏ hàng
                     selectedProducts.forEach { triple ->
                         if (triple.third != 0) {
                             cartViewModel.deleteCart(triple.third, idCustomer)
-                        }else {
+                        } else {
                             Log.e("CheckoutScreen", "ID giỏ hàng không hợp lệ cho sản phẩm ID: ${triple.first}")
                         }
                     }
-
-                    // Chuyển hướng đến màn hình thành công
                     val orderData = state.orderData
-                    val encodedOrderId = orderData.orderId.let { URLEncoder.encode(it, "UTF-8") } ?: ""
+                    val encodedOrderId = URLEncoder.encode(orderData.orderId, "UTF-8")
                     val encodedCreatedAt = orderData.createdAt?.let { URLEncoder.encode(it, "UTF-8") } ?: ""
-                    navController.navigate(
-                        "${Screen.CheckOutSuccess.route}?" +
-                                "username=$username&" +
-                                "id=$idCustomer&" +
-                                "orderId=$encodedOrderId&" +
-                                "totalMoney=${orderData.totalMoney}&" +
-                                "createdAt=$encodedCreatedAt&password=$password"
-                    ) {
-                        popUpTo(0) { inclusive = true }
+                    // Lưu thông tin đơn hàng vào DataStore
+                    context.dataStore.edit {
+                        it[stringPreferencesKey("order_id")] = orderData.orderId
+                        it[intPreferencesKey("total_money")] = orderData.totalMoney
+                        it[stringPreferencesKey("created_at")] = orderData.createdAt ?: ""
+                    }
+                    // Điều hướng đến CheckOutSuccessScreen
+                    if(selectedPaymentMethod == "Thanh toán khi nhận hàng (COD)") {
+                        navController.navigate(
+                            "${Screen.CheckOutSuccess.route}?" +
+                                    "username=$username&" +
+                                    "id=$idCustomer&" +
+                                    "orderId=$encodedOrderId&" +
+                                    "totalMoney=${orderData.totalMoney}&" +
+                                    "createdAt=$encodedCreatedAt&password=$password"
+                        ) {
+                            navController.currentDestination?.let {
+                                popUpTo(it.id) {
+                                    inclusive = true
+                                }
+                            }
+                            launchSingleTop = true
+                        }
+                    }
+                    // Xóa trạng thái
+                    mainActivity?._paymentStatus?.value = null
+                    context.dataStore.edit {
+                        it.remove(stringPreferencesKey("payment_status"))
+                        it.remove(stringPreferencesKey("checkout_request"))
                     }
                 }
                 is CheckoutState.Error -> {
-                    // Hiển thị thông báo lỗi
-                    //noticeViewModel.setNotice(Notice("Lỗi", state.message, true))
                     Log.e("CheckoutScreen", "API Error: ${state.message}")
+                    addressViewModel.updateErrorMessage("Lỗi khi tạo đơn hàng: ${state.message}")
                 }
                 is CheckoutState.Loading -> {
-                    Log.d("CheckoutScreen", "Đang gọi API...")
+                    Log.d("CheckoutScreen", "Đang tạo đơn hàng...")
                 }
-                is CheckoutState.Idle -> {
-                    // Không làm gì khi ở trạng thái Idle
-                }
+                is CheckoutState.Idle -> {}
             }
         }
     }
-
-    // Gọi API khi triggerCheckout thay đổi
-    LaunchedEffect(triggerCheckout) {
-        triggerCheckout?.let { request ->
-            orderViewModel.createOrder(request)
-            triggerCheckout = null // Reset trigger để tránh gọi lại
-        }
-    }
-
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = {
-                    Text(
-                        "Thanh toán",
-                        modifier = Modifier.fillMaxWidth(),
-                        textAlign = TextAlign.Start,
-                        fontWeight = FontWeight.Bold
-                    )
-                },
-                navigationIcon = {
-                    IconButton(onClick = { navController.popBackStack() }) {
-                        Icon(imageVector = Icons.Filled.ArrowBack, contentDescription = "Back")
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = Color(0xFF5D9EFF),
-                    titleContentColor = Color.White,
-                    navigationIconContentColor = Color.White
-                )
+    if (isLoadingAddress || isLoadingProducts || isLoadingPayment) {
+        Box(
+            modifier = Modifier.fillMaxSize().background(Color.White),
+            contentAlignment = Alignment.Center
+        ) {
+            CircularProgressIndicator(
+                color = Color(0xFF5D9EFF),
             )
-        },
-        bottomBar = {
-            BottomAppBar(
-                containerColor = Color.White,
-                modifier = Modifier.fillMaxWidth().height(165.dp)
-            ) {
+        }
+    } else if (errorMessage != null) {
+        Box(
+            modifier = Modifier.fillMaxSize(),
+            contentAlignment = Alignment.Center
+        ) {
+            Text(
+                text = errorMessage,
+                color = Color.Red,
+                textAlign = TextAlign.Center
+            )
+        }
+    } else {
+        Scaffold(
+            topBar = {
+                TopAppBar(
+                    title = {
+                        Text(
+                            "Thanh toán",
+                            modifier = Modifier.fillMaxWidth(),
+                            textAlign = TextAlign.Start
+                        )
+                    },
+                    navigationIcon = {
+                        IconButton(onClick = { navController.popBackStack() }) {
+                            Icon(imageVector = Icons.Filled.ArrowBack, contentDescription = "Back")
+                        }
+                    },
+                    colors = TopAppBarDefaults.topAppBarColors(
+                        containerColor = Color(0xFF5D9EFF),
+                        titleContentColor = Color.White,
+                        navigationIconContentColor = Color.White
+                    )
+                )
+            },
+            bottomBar = {
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(10.dp)
+                        .background(Color.White)
+                        .padding(horizontal = 5.dp)
+                        .padding(bottom = 10.dp)
                 ) {
                     Text(
-                        "Tổng thanh toán: ${formatGiaTien(tongtien)}",
+                        "Tổng thanh toán: ${formatGiaTien(amount)}",
                         style = TextStyle(color = Color.Red, fontSize = 18.sp)
                     )
-                    Spacer(modifier = Modifier.height(4.dp))
+                    Spacer(modifier = Modifier.height(10.dp))
                     Button(
                         onClick = {
                             if (address != null) {
+                                if (selectedPaymentMethod == "VNPay" && !isNetworkAvailable(
+                                        context
+                                    )
+                                ) {
+                                    addressViewModel.updateErrorMessage("Không có kết nối internet. Vui lòng kiểm tra và thử lại.")
+                                    return@Button
+                                }
                                 Log.d("CheckoutScreen", "ListDevice: $listDevice")
                                 listDevice.forEach { device ->
-                                    Log.d("CheckoutScreen", "Device ID: ${device.idDevice}, Name: ${device.name}, Price: ${device.sellingPrice}")
+                                    Log.d(
+                                        "CheckoutScreen",
+                                        "Device ID: ${device.idDevice}, Name: ${device.name}, Price: ${device.sellingPrice}"
+                                    )
                                 }
-                                val checkoutRequest = CheckoutRequest(
+                                val request = CheckoutRequest(
                                     shipping = Shipping(
                                         addressType = "saved",
                                         savedAddressId = address.id.toString(),
@@ -294,69 +510,62 @@ fun CheckoutScreen(
                                         note = ""
                                     ),
                                     payment = Payment(
-                                        paymentMethod = "cod",
+                                        paymentMethod = selectedPaymentMethod,
                                         sameAsShipping = true,
                                         cardNumber = "",
                                         cardName = "",
                                         cardExpiry = "",
                                         cardCvc = ""
                                     ),
-                                    products = selectedProducts.distinctBy { it.first }.map { triple ->
-                                        val device = listDevice.find { it.idDevice == triple.first }
-                                        Product(
-                                            id = triple.first,
-                                            name = device?.name ?: "Unknown Product",
-                                            price = device?.sellingPrice ?: 0.0,
-                                            quantity = triple.second,
-                                            selected = true
-                                        )
-                                    },
+                                    products = selectedProducts.distinctBy { it.first }
+                                        .map { triple ->
+                                            val device =
+                                                listDevice.find { it.idDevice == triple.first }
+                                            Product(
+                                                id = triple.first,
+                                                name = device?.name ?: "Unknown Product",
+                                                price = device?.sellingPrice ?: 0.0,
+                                                quantity = triple.second,
+                                                selected = true
+                                            )
+                                        },
                                     order = OrderRequest(
                                         customer_id = idCustomer,
                                         export_date = getCurrentTimestampEX(),
                                         total_money = tongtien.toInt(),
                                         discount = 0,
                                         vat = 0,
-                                        amount = tongtien.toInt() + 30000,
+                                        amount = amount.toInt(),
                                         status = 0
                                     )
                                 )
-                                Log.d("CheckoutScreen", "Danh sách sản phẩm trong CheckoutRequest: ${checkoutRequest.products}")
-                                triggerCheckout = checkoutRequest
+                                checkoutRequest = request
+                                if (selectedPaymentMethod == "VNPay") {
+                                    vnPayViewModel.createPaymentUrl(
+                                        PaymentRequest(
+                                            amount = amount.toString(),
+                                            bankCode = "",
+                                            returnUrl = "myapp://payment"
+                                        )
+                                    )
+                                    orderViewModel.createOrder(request)
+                                } else {
+                                    orderViewModel.createOrder(request)
+                                }
                             }
                         },
                         shape = RoundedCornerShape(10.dp),
-                        modifier = Modifier.fillMaxWidth(),
+                        modifier = Modifier.weight(1f),
                         elevation = ButtonDefaults.buttonElevation(1.dp),
                         colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF5D9EFF))
                     ) {
-                        Text("ĐẶT HÀNG", fontSize = 20.sp)
+                        Text("ĐẶT HÀNG", fontSize = 18.sp)
                     }
                 }
+
             }
-        }
-    ) { paddingValues ->
-        if (isLoadingAddress || isLoadingProducts) {
-            Box(
-                modifier = Modifier.fillMaxSize().background(Color.White),
-                contentAlignment = Alignment.Center
-            ) {
-                CircularProgressIndicator(
-                    color = Color(0xFF5D9EFF),
-                )
-            }
-        }else if (errorMessage != null) {
-            Box(
-                modifier = Modifier.fillMaxSize(),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(
-                    text = errorMessage,
-                    color = Color.Red,
-                    textAlign = TextAlign.Center
-                )
-            }
-        } else {
+        ) { paddingValues ->
+
             LazyColumn(
                 modifier = Modifier
                     .padding(paddingValues)
@@ -367,7 +576,7 @@ fun CheckoutScreen(
                     if (address != null) {
                         Card(
                             modifier = Modifier
-                                .padding(4.dp)
+                                .padding(horizontal = 5.dp, vertical = 4.dp)
                                 .fillMaxWidth(),
                             elevation = CardDefaults.cardElevation(1.dp),
                             colors = CardDefaults.cardColors(containerColor = Color.White)
@@ -382,7 +591,7 @@ fun CheckoutScreen(
                                 Column(
                                     modifier = Modifier
                                         .fillMaxHeight()
-                                        .padding(10.dp),
+                                        .padding(horizontal = 5.dp),
                                     verticalArrangement = Arrangement.Top
                                 ) {
                                     Icon(
@@ -420,7 +629,7 @@ fun CheckoutScreen(
                     } else {
                         Card(
                             modifier = Modifier
-                                .padding(4.dp)
+                                .padding(horizontal = 5.dp, vertical = 4.dp)
                                 .fillMaxWidth(),
                             elevation = CardDefaults.cardElevation(1.dp),
                             colors = CardDefaults.cardColors(containerColor = Color.White)
@@ -455,7 +664,7 @@ fun CheckoutScreen(
                 item {
                     Card(
                         modifier = Modifier
-                            .padding(4.dp)
+                            .padding(horizontal = 5.dp, vertical = 4.dp)
                             .fillMaxWidth(),
                         elevation = CardDefaults.cardElevation(1.dp),
                         colors = CardDefaults.cardColors(containerColor = Color.White)
@@ -463,77 +672,44 @@ fun CheckoutScreen(
                         Text(
                             text = "Phương thức thanh toán",
                             fontWeight = FontWeight.Bold,
-                            modifier = Modifier.padding(start = 15.dp, top = 10.dp, bottom = 5.dp)
+                            modifier = Modifier.padding(
+                                start = 15.dp,
+                                top = 10.dp,
+                                bottom = 5.dp
+                            )
                         )
                         Column(
                             modifier = Modifier
-                                .padding(10.dp)
+                                .padding(horizontal = 5.dp, vertical = 4.dp)
                                 .fillMaxWidth()
-                                .fillMaxHeight()
                         ) {
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.SpaceBetween
-                            ) {
-                                Text(
-                                    text = "Thanh toán khi nhận hàng (COD)",
-                                    modifier = Modifier.padding(start = 25.dp)
-                                )
-                                RadioButton(
-                                    selected = selectedPaymentMethod == "Thanh toán khi nhận hàng (COD)",
-                                    onClick = {
-                                        selectedPaymentMethod = "Thanh toán khi nhận hàng (COD)"
-                                    },
-                                    colors = RadioButtonDefaults.colors(
-                                        unselectedColor = Color(0xFF5D9EFF),
-                                        selectedColor = Color(0xFF5D9EFF)
-                                    )
-                                )
-                            }
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.SpaceBetween
-                            ) {
-                                Text(
-                                    text = "Chuyển khoản ngân hàng",
-                                    modifier = Modifier.padding(start = 25.dp)
-                                )
-                                RadioButton(
-                                    selected = selectedPaymentMethod == "Chuyển khoản ngân hàng",
-                                    onClick = { selectedPaymentMethod = "Chuyển khoản ngân hàng" },
-                                    colors = RadioButtonDefaults.colors(
-                                        unselectedColor = Color(0xFF5D9EFF),
-                                        selectedColor = Color(0xFF5D9EFF)
-                                    )
-                                )
-                            }
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.SpaceBetween
-                            ) {
-                                Text(
-                                    text = "Momo",
-                                    modifier = Modifier.padding(start = 25.dp)
-                                )
-                                RadioButton(
-                                    selected = selectedPaymentMethod == "Momo",
-                                    onClick = { selectedPaymentMethod = "Momo" },
-                                    colors = RadioButtonDefaults.colors(
-                                        unselectedColor = Color(0xFF5D9EFF),
-                                        selectedColor = Color(0xFF5D9EFF)
-                                    )
-                                )
-                            }
+                            PaymentMethodOption(
+                                method = "Thanh toán khi nhận hàng (COD)",
+                                selected = selectedPaymentMethod,
+                                onSelected = { selectedPaymentMethod = it }
+                            )
+                            PaymentMethodOption(
+                                method = "Chuyển khoản ngân hàng",
+                                selected = selectedPaymentMethod,
+                                onSelected = { selectedPaymentMethod = it }
+                            )
+                            PaymentMethodOption(
+                                method = "Momo",
+                                selected = selectedPaymentMethod,
+                                onSelected = { selectedPaymentMethod = it }
+                            )
+                            PaymentMethodOption(
+                                method = "VNPay",
+                                selected = selectedPaymentMethod,
+                                onSelected = { selectedPaymentMethod = it }
+                            )
                         }
                     }
                 }
                 item {
                     Card(
                         modifier = Modifier
-                            .padding(4.dp)
+                            .padding(horizontal = 5.dp, vertical = 4.dp)
                             .fillMaxWidth()
                             .height(140.dp),
                         elevation = CardDefaults.cardElevation(1.dp),
@@ -558,23 +734,51 @@ fun CheckoutScreen(
                                 horizontalArrangement = Arrangement.SpaceBetween
                             ) {
                                 Text("Tổng tiền vận chuyển")
-                                Text("0đ")
+                                Text("30000 VNĐ")
                             }
                             Row(
                                 modifier = Modifier.fillMaxWidth(),
                                 horizontalArrangement = Arrangement.SpaceBetween
                             ) {
                                 Text("Tổng thanh toán")
-                                Text(text = formatGiaTien(tongtien))
+                                Text(text = formatGiaTien(amount))
                             }
                         }
                     }
                 }
             }
+
         }
     }
 }
 
+@Composable
+fun PaymentMethodOption(
+    method: String,
+    selected: String,
+    onSelected: (String) -> Unit
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(bottom = 10.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.SpaceBetween
+    ) {
+        Text(
+            text = method,
+            modifier = Modifier.padding(start = 25.dp)
+        )
+        RadioButton(
+            selected = selected == method,
+            onClick = { onSelected(method) },
+            colors = RadioButtonDefaults.colors(
+                unselectedColor = Color(0xFF5D9EFF),
+                selectedColor = Color(0xFF5D9EFF)
+            )
+        )
+    }
+}
 
 /** Card chứa thông tin sản phẩm của màn hình thanh toán (CheckoutItem)
  * -------------------------------------------

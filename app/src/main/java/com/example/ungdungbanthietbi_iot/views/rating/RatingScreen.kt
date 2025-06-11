@@ -104,9 +104,9 @@ fun RatingScreen(navController: NavController, idCustomer: String, idDevice: Int
         },
         bottomBar = {
             BottomAppBar(
-                containerColor = Color.Transparent,
                 modifier = Modifier
                     .fillMaxWidth()
+                    .background(Color.White)
                     .height(170.dp)
             ) {
                 Column(
@@ -170,6 +170,7 @@ fun RatingScreen(navController: NavController, idCustomer: String, idDevice: Int
         LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
+                .background(Color.White)
                 .padding(paddingValues)
                 .padding(16.dp)
         ) {
