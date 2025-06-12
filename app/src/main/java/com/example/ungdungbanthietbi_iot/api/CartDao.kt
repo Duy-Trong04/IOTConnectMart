@@ -5,8 +5,8 @@ import com.example.ungdungbanthietbi_iot.models.CartEntity
 
 @Dao
 interface CartDao {
-    @Query("SELECT * FROM cart WHERE idCustomer = :idCustomer")
-    suspend fun getCartByIdCustomer(idCustomer: String): List<CartEntity>
+    @Query("SELECT * FROM cart WHERE customer_id = :customer_id")
+    suspend fun getCartByIdCustomer(customer_id: String): List<CartEntity>
 
     @Insert
     suspend fun insertCart(cart: CartEntity)
@@ -20,6 +20,6 @@ interface CartDao {
     @Query("DELETE FROM cart WHERE id = :id")
     suspend fun deleteCartById(id: Int)
 
-    @Query("DELETE FROM cart WHERE idCustomer = :idCustomer")
-    suspend fun deleteAllCartsByCustomer(idCustomer: String)
+    @Query("DELETE FROM cart WHERE customer_id = :customer_id")
+    suspend fun deleteAllCartsByCustomer(customer_id: String)
 }

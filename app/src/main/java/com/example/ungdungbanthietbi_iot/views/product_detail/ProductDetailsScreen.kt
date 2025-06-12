@@ -78,6 +78,7 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+import com.example.ungdungbanthietbi_iot.api.AddCartRequest
 import com.example.ungdungbanthietbi_iot.api.AddLikedRequest
 import com.example.ungdungbanthietbi_iot.viewModels.AddressViewModel
 import com.example.ungdungbanthietbi_iot.models.CartEntity
@@ -153,11 +154,11 @@ fun ProductDetailsScreen(
     }
 
     val cartViewModel: CartViewModel = viewModel()
-    val listCart = cartViewModel.listCart
+    val listCart by cartViewModel.listProductCart.collectAsState()
 
     if(idCustomer != null){
         LaunchedEffect (listCart.size) {
-            cartViewModel.getCartByIdCustomer(idCustomer)
+            cartViewModel.getCartProducts(idCustomer)
         }
     }
     var bitmap by remember { mutableStateOf<Bitmap?>(null) }
@@ -519,29 +520,35 @@ fun ProductDetailsScreen(
                                                 navController.navigate(Screen.LoginScreen.route)
                                             } else {
                                                 val cartNew: CartEntity?
-                                                var isProductFound = false
-
-                                                for (cart in listCart) {
-                                                    if (device != null) {
-                                                        if (device.idDevice == cart.idDevice) {
-                                                            cart.stock += quantity
-                                                            cartViewModel.updateCart(cart)
-                                                            isProductFound = true
-                                                            quantity = 1
-                                                            break
-                                                        }
-                                                    }
-                                                }
-
-                                                if (!isProductFound) {
-                                                    cartNew = CartEntity(
-                                                        idCustomer = idCustomer,
-                                                        idDevice = device!!.idDevice,
-                                                        stock = quantity
+//                                                var isProductFound = false
+//
+//                                                for (cart in listCart) {
+//                                                    if (device != null) {
+//                                                        if (device.idDevice == cart.idDevice) {
+//                                                            cart.stock += quantity
+//                                                            cartViewModel.updateCart(cart)
+//                                                            isProductFound = true
+//                                                            quantity = 1
+//                                                            break
+//                                                        }
+//                                                    }
+//                                                }
+//
+//                                                if (!isProductFound) {
+//                                                    cartNew = CartEntity(
+//                                                        idCustomer = idCustomer,
+//                                                        idDevice = device!!.idDevice,
+//                                                        stock = quantity
+//                                                    )
+                                                    val addToCart = AddCartRequest(
+                                                        customer_id = idCustomer,
+                                                        product_id = device!!.idDevice,
+                                                        quantity = quantity
                                                     )
-                                                    cartViewModel.addToCart(cartNew)
+//                                                    cartViewModel.addToCart(cartNew)
+                                                    cartViewModel.addCart(addToCart)
                                                     quantity = 1
-                                                }
+//                                                }
                                             }
                                             showDialog = false
                                             snackbarMessage.value = "Thêm thành công!"
@@ -916,51 +923,6 @@ fun ProductDetailsScreen(
                                     }
                                 }
                             }
-//                            Button(
-//                                onClick = {
-//                                    if (idCustomer != null) {
-//                                        showDialog = true
-//                                        dialogType = DialogType.AddToCart
-//                                    } else {
-//                                        navController.navigate(Screen.LoginScreen.route)
-//                                    }
-//                                },
-//                                modifier = Modifier.fillMaxWidth(),
-//                                shape = RoundedCornerShape(10.dp),
-//                                colors = ButtonDefaults.buttonColors(
-//                                    contentColor = Color.White,
-//                                    containerColor = Color(0xFF5D9EFF)
-//                                )
-//                            ) {
-//                                Text(
-//                                    text = "THÊM VÀO GIỎ HÀNG",
-//                                    fontWeight = FontWeight.Bold,
-//                                    fontSize = 18.sp
-//                                )
-//                            }
-//                            Button(
-//                                onClick = {
-//                                    if (idCustomer != null) {
-//                                        showDialog = true
-//                                        dialogType = DialogType.BuyNow
-//                                    } else {
-//                                        navController.navigate(Screen.LoginScreen.route)
-//                                    }
-//                                },
-//                                modifier = Modifier.fillMaxWidth(),
-//                                shape = RoundedCornerShape(10.dp),
-//                                colors = ButtonDefaults.buttonColors(
-//                                    contentColor = Color.White,
-//                                    containerColor = Color.Red
-//                                ),
-//                                enabled = !isLoadingAddress // Vô hiệu hóa nút khi đang tải
-//                            ) {
-//                                Text(
-//                                    text = "MUA NGAY",
-//                                    fontWeight = FontWeight.Bold,
-//                                    fontSize = 18.sp
-//                                )
-//                            }
                             Spacer(modifier = Modifier.height(12.dp))
                             Text(
                                 "Mô tả sản phẩm",
@@ -1077,9 +1039,9 @@ fun ProductDetailsScreen(
                 items(listReview.take(2)){
                     CardReview(
                         review = it,
-                        onlick = { navController.navigate(Screen.Product_Reviews.route + "?idDevice=${it.idDevice}") },
-                        id.toInt(),
-                        listReview
+                        onClick = {
+                            navController.navigate(Screen.Product_Reviews.route + "?idDevice=${it.idDevice}")
+                        }
                     )
                 }
                 item {
@@ -1128,7 +1090,7 @@ fun ProductDetailsScreen(
 }
 
 @Composable
-fun CardReview(review: Reviews, onlick:() -> Unit, id:Int, listReviews: List<Reviews>){
+fun CardReview(review: Reviews, onClick:() -> Unit){
     // Lấy thông tin customer từ review
     val customerName = "${review.surname} ${review.lastname}".trim()
     Card(
@@ -1138,7 +1100,7 @@ fun CardReview(review: Reviews, onlick:() -> Unit, id:Int, listReviews: List<Rev
         colors = CardDefaults.cardColors(
             containerColor = Color.White
         ),
-        onClick = onlick
+        onClick = onClick
     )
     {
         Spacer(modifier = Modifier.height(4.dp))
@@ -1216,21 +1178,3 @@ fun CardReview(review: Reviews, onlick:() -> Unit, id:Int, listReviews: List<Rev
         }
     }
 }
-
-//@OptIn(ExperimentalAnimationApi::class)
-//@Composable
-//fun SlideImage(painter: Painter) {
-//    AnimatedContent(
-//        targetState = painter,
-//        modifier = Modifier.fillMaxSize(),
-//        transitionSpec = { fadeIn() with fadeOut() }, label = ""
-//    ) { targetPainter ->
-//        Image(
-//            painter = targetPainter,
-//            contentDescription = null,
-//            modifier = Modifier
-//                .size(360.dp),
-//            contentScale = ContentScale.Crop
-//        )
-//    }
-//}

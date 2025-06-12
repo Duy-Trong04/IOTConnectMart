@@ -15,15 +15,6 @@ import retrofit2.http.PUT
 import retrofit2.http.Query
 
 
-data class CheckLoginResponse(
-    val result: Boolean,
-    val message: String? = null
-)
-
-data class AddAccountResponse(
-    val success: Boolean,
-    val message: String
-)
 data class accountUpdateResponse(
     val success: Boolean,
     val message: String
@@ -110,29 +101,9 @@ data class ResetPasswordResponse(
 )
 
 interface AccuntAPIService {
-    @GET("account/check_account.php")
-    suspend fun check_Login(
-        @Query("username") username: String,
-        @Query("password") password: String
-    ): CheckLoginResponse
 
     @POST("auth/login")
     suspend fun login(@Body request: LoginRequest): LoginResponse
-
-    @POST("account/check_Dk.php")
-    suspend fun checkAccount_Dk(
-        @Body account: AddAccount
-    ): Boolean
-
-    @GET("account/show.php")
-    suspend fun getAccountByUsername(
-        @Query("username") username: String
-    ): Account
-
-    @GET("account/getAccountById.php")
-    suspend fun getAccountById(
-        @Query("idPerson") idPerson: String
-    ): Account
 
     @POST("auth/register")
     suspend fun addAccount(
@@ -143,11 +114,6 @@ interface AccuntAPIService {
     suspend fun updatePassword(
         @Body account: UpdatePassword
     ): Boolean
-
-    @PUT("account/update.php")
-    suspend fun updateAccount(
-        @Body account: Account
-    ): accountUpdateResponse
 
     @PATCH("auth/account/changed-password")
     suspend fun changePassword(
@@ -164,7 +130,7 @@ interface AccuntAPIService {
         @Body request: VerifyOtpRequest
     ): Response<VerifyOtpResponse>
 
-    @POST("auth/account/change-password")
+    @POST("auth/account/change-password-forgot")
     suspend fun resetPassword(
         @Body request: ResetPasswordRequest
     ): Response<ResetPasswordResponse>

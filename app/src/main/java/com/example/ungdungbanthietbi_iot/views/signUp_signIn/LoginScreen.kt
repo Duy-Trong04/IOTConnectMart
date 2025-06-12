@@ -3,6 +3,8 @@ package com.example.ungdungbanthietbi_iot.views.signUp_signIn
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -11,8 +13,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Lock
@@ -56,8 +56,9 @@ import com.example.ungdungbanthietbi_iot.navigation.Screen
 import kotlinx.coroutines.launch
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.collectAsState
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.style.TextDecoration
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
 import com.example.ungdungbanthietbi_iot.dataStore
@@ -87,9 +88,9 @@ fun LoginScreen(navController: NavController, accountViewModel: AccountViewModel
         SnackbarHostState()
     }
     // Biến nhận dữ liệu email từ người dùng
-    var username by remember { mutableStateOf("ptthang") }
+    var username by remember { mutableStateOf("") }
     // Biến nhận dữ liệu password từ người dùng
-    var password by remember { mutableStateOf("123456") }
+    var password by remember { mutableStateOf("") }
 
     val scope = rememberCoroutineScope()
     //val loginResult = accountViewModel.loginResult.value
@@ -104,37 +105,27 @@ fun LoginScreen(navController: NavController, accountViewModel: AccountViewModel
     val usernameKey = stringPreferencesKey("username")
     val passwordKey = stringPreferencesKey("password")
     Scaffold(
-        modifier = Modifier.fillMaxWidth(),
         content = { padding ->
-            LazyColumn(
+            Column (
                 modifier = Modifier
                     .fillMaxSize()
                     .background(Color.White),
                 horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center
             ) {
-                item {
-                    Spacer(modifier = Modifier.height(50.dp))
-
-                    Text(
-                        text = "ĐĂNG NHẬP",
-                        fontSize = 27.sp,
-                        color = Color(0xFF085979),
-                        fontWeight = FontWeight.Bold
-                    )
-                    Spacer(modifier = Modifier.height(16.dp))
                     // Hiển thị logo từ file drawable
                     Image(
                         // Thay "logo" bằng tên file ảnh
-                        painter = painterResource(id = R.drawable.logo9),
+                        painter = painterResource(id = R.drawable.ecom_logo),
                         contentDescription = "Logo",
-                        modifier = Modifier.size(240.dp).clip(CircleShape) // Đặt hình dạng là hình tròn
+                        modifier = Modifier.size(100.dp) // Đặt hình dạng là hình tròn
                     )
-                    Spacer(modifier = Modifier.height(16.dp))
+                    Spacer(modifier = Modifier.height(35.dp))
                     //email
                     TextField(
                         value = username,
                         onValueChange = {username = it},
-                        modifier = Modifier.width(350.dp).padding(4.dp),
+                        modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp),
                         placeholder = { Text(text = "Username") },
                         leadingIcon = {
                             Icon(imageVector = Icons.Default.Person,
@@ -144,7 +135,7 @@ fun LoginScreen(navController: NavController, accountViewModel: AccountViewModel
                         colors = TextFieldDefaults.colors(
                             focusedContainerColor = Color.White,
                             unfocusedContainerColor = Color.White,
-                            focusedIndicatorColor = Color(0xFF00C3FF)
+                            focusedIndicatorColor = Color(0xFF5D9EFF)
                         ),
                         singleLine = true,
                         keyboardOptions = KeyboardOptions(
@@ -155,7 +146,7 @@ fun LoginScreen(navController: NavController, accountViewModel: AccountViewModel
                     TextField(
                         value = password,
                         onValueChange = {password = it},
-                        modifier = Modifier.width(350.dp).padding(4.dp),
+                        modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp),
                         placeholder = { Text(text = "Password") },
                         leadingIcon = {
                             Icon(imageVector = Icons.Default.Lock,
@@ -181,16 +172,19 @@ fun LoginScreen(navController: NavController, accountViewModel: AccountViewModel
                         )
                     )
 
-                    Spacer(modifier = Modifier.height(16.dp))
+                    Spacer(modifier = Modifier.height(20.dp))
                     Text(
                         text = "Quên mật khẩu?",
                         fontSize = 15.sp,
-                        color = Color.Black,
+                        color = Color(0xFF5D9EFF),
                         fontWeight = FontWeight.Bold,
                         modifier = Modifier.clickable{
                             /* Chuyển sang màn hình quên mật khẩu(ForgotPasswordScreen)*/
                             navController.navigate(Screen.ForgotPasswordScreen.route)
                         }
+                            .fillMaxWidth()
+                            .padding(horizontal = 20.dp),
+                        textAlign = TextAlign.Right
                     )
 
                     //Button
@@ -224,15 +218,13 @@ fun LoginScreen(navController: NavController, accountViewModel: AccountViewModel
                             }
                         },
                         modifier = Modifier
-                            .width(350.dp)
-                            .padding(horizontal = 10.dp)
-                            .height(45.dp),
+                            .fillMaxWidth().padding(horizontal = 20.dp),
                         shape = MaterialTheme.shapes.small,
                         colors = ButtonDefaults.buttonColors(
-                            containerColor = Color(0xFF00C3FF)
+                            containerColor = Color(0xFF5D9EFF)
                         )
                     ) {
-                        Text(text = "ĐĂNG NHẬP", fontSize = 23.sp, fontWeight = FontWeight.Bold)
+                        Text(text = "ĐĂNG NHẬP", fontSize = 18.sp, fontWeight = FontWeight.Bold)
                     }
 
                     Spacer(modifier = Modifier.height(16.dp))
@@ -247,13 +239,14 @@ fun LoginScreen(navController: NavController, accountViewModel: AccountViewModel
                         Text(
                             text = "Đăng ký",
                             fontSize = 15.sp,
-                            color = Color.Red,
+                            color = Color(0xFF5D9EFF),
                             textAlign = TextAlign.Center,
                             fontWeight = FontWeight.Bold,
                             modifier = Modifier.clickable {
                                 /* Chuyển sang màn hình đăng ký(RegisterScreen) */
                                 navController.navigate(Screen.RegisterScreen.route)
-                            }
+                            },
+                            textDecoration = TextDecoration.Underline
                         )
                     }
                     SnackbarHost(
@@ -310,9 +303,17 @@ fun LoginScreen(navController: NavController, accountViewModel: AccountViewModel
                             }
                         )
                     }
-                }
+
             }
         }
     )
-
 }
+
+//@Preview(showBackground = true)
+//@Composable
+//fun LoginScreenPreview() {
+//    // Tạo mock NavController và AccountViewModel cho preview
+//    val navController = androidx.navigation.compose.rememberNavController()
+//    val accountViewModel = AccountViewModel() // Giả định AccountViewModel có constructor mặc định
+//    LoginScreen(navController = navController, accountViewModel = accountViewModel)
+//}

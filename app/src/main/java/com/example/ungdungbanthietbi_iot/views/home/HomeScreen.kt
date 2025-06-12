@@ -1,6 +1,8 @@
 package com.example.ungdungbanthietbi_iot.views.home
 
 import android.graphics.Bitmap
+import android.os.Build
+import androidx.annotation.RequiresApi
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
@@ -140,6 +142,7 @@ fun getCategoryIcon(categoryName: String): ImageVector {
         else -> Icons.Filled.Category
     }
 }
+@RequiresApi(Build.VERSION_CODES.O)
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(
@@ -171,7 +174,12 @@ fun HomeScreen(
     }
 
     val cartViewModel: CartViewModel = viewModel()
-    val listCart = cartViewModel.listCart
+    val listCart by cartViewModel.listProductCart.collectAsState()
+    if(id != null){
+        LaunchedEffect (listCart.size) {
+            cartViewModel.getCartProducts(id)
+        }
+    }
     val navdrawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     val scope = rememberCoroutineScope()
 

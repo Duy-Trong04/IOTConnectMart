@@ -372,7 +372,7 @@ fun CheckoutScreen(
                     Log.d("CheckoutScreen", "Dữ liệu đơn hàng: ${state.orderData}")
                     selectedProducts.forEach { triple ->
                         if (triple.third != 0) {
-                            cartViewModel.deleteCart(triple.third, idCustomer)
+                            cartViewModel.removeCart(idCustomer, triple.first)
                         } else {
                             Log.e("CheckoutScreen", "ID giỏ hàng không hợp lệ cho sản phẩm ID: ${triple.first}")
                         }
@@ -555,7 +555,7 @@ fun CheckoutScreen(
                             }
                         },
                         shape = RoundedCornerShape(10.dp),
-                        modifier = Modifier.weight(1f),
+                        modifier = Modifier.fillMaxWidth(),
                         elevation = ButtonDefaults.buttonElevation(1.dp),
                         colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF5D9EFF))
                     ) {

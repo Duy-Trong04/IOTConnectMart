@@ -4,10 +4,12 @@ import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.net.Uri
+import android.os.Build
 import android.util.Base64
 import android.util.Log
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.annotation.RequiresApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -57,12 +59,10 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import coil.compose.AsyncImage
 import com.example.ungdungbanthietbi_iot.R
-import com.example.ungdungbanthietbi_iot.models.Account
 import com.example.ungdungbanthietbi_iot.viewModels.AccountViewModel
 import com.example.ungdungbanthietbi_iot.viewModels.CartViewModel
 import com.example.ungdungbanthietbi_iot.models.Customer
 import com.example.ungdungbanthietbi_iot.viewModels.CustomerViewModel
-import com.example.ungdungbanthietbi_iot.models.Device
 import com.example.ungdungbanthietbi_iot.viewModels.DeviceViewModel
 import com.example.ungdungbanthietbi_iot.navigation.Screen
 import com.example.ungdungbanthietbi_iot.utils.getCurrentTimestamp
@@ -72,6 +72,7 @@ import java.io.ByteArrayOutputStream
 import java.time.LocalDate
 
 
+@RequiresApi(Build.VERSION_CODES.O)
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PersonalScreen(
@@ -85,9 +86,9 @@ fun PersonalScreen(
     val navdrawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     val scope = rememberCoroutineScope()
     val cartViewModel: CartViewModel = viewModel()
-    val listCart = cartViewModel.listCart
+    val listCart by cartViewModel.listProductCart.collectAsState()
     LaunchedEffect(username) {
-        cartViewModel.getCartByIdCustomer(id)
+        cartViewModel.getCartProducts(id)
     }
 
     var currentTab by remember { mutableStateOf("accountInfo") }
@@ -213,6 +214,7 @@ fun PersonalScreen(
     }
 }
 
+@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun AccountInfoSection(
     id: String?,
@@ -222,7 +224,6 @@ fun AccountInfoSection(
 ){
 
     var selectedImageUri by remember { mutableStateOf<Uri?>(null) }
-    var base64Image by remember { mutableStateOf<String?>(null) }
     var showDialog by remember { mutableStateOf(false) }
 
     var originalBitmap by remember { mutableStateOf<Bitmap?>(null) }
@@ -234,7 +235,6 @@ fun AccountInfoSection(
     val customerViewModel: CustomerViewModel = viewModel()
 
     val customerState by customerViewModel.customerState.collectAsState()
-    val updateCustomer by customerViewModel.updateCustomerUiState.collectAsState()
 
     var isFocused by remember { mutableStateOf(false) }
     var isButtonEnabled by remember { mutableStateOf(false) }
@@ -261,7 +261,6 @@ fun AccountInfoSection(
             customerViewModel.getCustomerById9(id)
         }
     }
-    var bitmap by remember { mutableStateOf<Bitmap?>(null) }
 
     // Tải hình ảnh bất đồng bộ
 //    LaunchedEffect(device) {
@@ -834,6 +833,7 @@ fun DropdownMenuField(
         }
     }
 }
+@RequiresApi(Build.VERSION_CODES.O)
 fun isValidDate(day: String, month: String, year: String): Boolean {
     return try {
         val date = LocalDate.of(year.toInt(), month.toInt(), day.toInt())
@@ -856,12 +856,6 @@ fun AccountOptionsSection(
     val scope = rememberCoroutineScope()
     // Lấy ViewModel
     val accountViewModel: AccountViewModel = viewModel()
-
-    LaunchedEffect(username) {
-        if (username.isNotEmpty()) {
-            accountViewModel.getUserByUsername(username)
-        }
-    }
     Card(
         shape = RoundedCornerShape(5.dp),
         elevation = CardDefaults.cardElevation(1.dp),

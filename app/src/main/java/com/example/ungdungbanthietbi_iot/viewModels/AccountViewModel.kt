@@ -2,7 +2,6 @@ package com.example.ungdungbanthietbi_iot.viewModels
 
 import android.content.Context
 import android.util.Log
-import android.view.PixelCopy.request
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -14,7 +13,6 @@ import com.example.ungdungbanthietbi_iot.api.ChangePasswordRequest
 import com.example.ungdungbanthietbi_iot.api.ChangePasswordResponse
 import com.example.ungdungbanthietbi_iot.api.ChangePasswordUiState
 import com.example.ungdungbanthietbi_iot.config.RetrofitClient
-import com.example.ungdungbanthietbi_iot.api.CheckLoginResponse
 import com.example.ungdungbanthietbi_iot.api.RegisterRequest
 import com.example.ungdungbanthietbi_iot.api.RegisterResponse
 import com.example.ungdungbanthietbi_iot.api.ResetPasswordRequest
@@ -25,60 +23,25 @@ import com.example.ungdungbanthietbi_iot.api.VerifyOtpRequest
 import com.example.ungdungbanthietbi_iot.api.VerifyOtpResponse
 import com.example.ungdungbanthietbi_iot.dataStore
 import com.example.ungdungbanthietbi_iot.models.Account
-import com.example.ungdungbanthietbi_iot.models.AddAccount
 import com.example.ungdungbanthietbi_iot.models.LoginRequest
 import com.example.ungdungbanthietbi_iot.models.LoginResponse
 import com.example.ungdungbanthietbi_iot.models.UpdatePassword
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import retrofit2.Response
 
 class AccountViewModel:ViewModel() {
     var account: Account? by mutableStateOf(null)
         private set
-
-    var accountById: Account? by mutableStateOf(null)
-        private set
-
-    private var accountAddResult by mutableStateOf("")
-
-
-    private val _loginResult = MutableStateFlow<CheckLoginResponse?>(null)
-    val loginResult: StateFlow<CheckLoginResponse?> = _loginResult
-
-
-    private var accountUpdateResult by mutableStateOf("")
-
     var username: String? = null
-    var idPerson: String? = null
 
     private val _loginUiState = MutableStateFlow(LoginUiState())
     val loginUiState: StateFlow<LoginUiState> = _loginUiState
 
     private val _accountCheckResult = mutableStateOf<Boolean?>(null)
     val accountCheckResult: State<Boolean?> = _accountCheckResult
-
-
-    fun CheckLogin(username: String, password: String) {
-        viewModelScope.launch {
-            try {
-                // Thực hiện yêu cầu API
-                val response = withContext(Dispatchers.IO) {
-                    RetrofitClient.accountAPIService.check_Login(username, password)
-                }
-                // Cập nhật kết quả API vào state
-                _loginResult.value = response
-            } catch (e: Exception) {
-                // Xử lý lỗi nếu có
-                Log.e("TaiKhoanViewModel", "Đã xảy ra lỗi: ${e.message}")
-                _loginResult.value = CheckLoginResponse(result = false, message = e.message)
-            }
-        }
-    }
 
     suspend fun logout(context: Context) {
         try {
@@ -106,29 +69,6 @@ class AccountViewModel:ViewModel() {
             )
             Log.e("AccountViewModel", "Lỗi khi đăng xuất: ${e.message}", e)
         }
-
-    }
-
-    fun getUserByUsername(username: String) {
-        this.username = username
-        viewModelScope.launch(Dispatchers.IO) {
-            try {
-                account = RetrofitClient.accountAPIService.getAccountByUsername(username)
-            } catch (e: Exception) {
-                Log.e("AccountViewModel", "Error getting SanPham", e)
-            }
-        }
-    }
-
-    fun getAccountById(idPerson: String) {
-        this.idPerson = idPerson
-        viewModelScope.launch(Dispatchers.IO) {
-            try {
-                accountById = RetrofitClient.accountAPIService.getAccountById(idPerson)
-            } catch (e: Exception) {
-                Log.e("AccountViewModel", "Error getting account", e)
-            }
-        }
     }
 
 
@@ -152,34 +92,19 @@ class AccountViewModel:ViewModel() {
             }
         }
     }
-
-        fun check_Dk(account: AddAccount) {
-            viewModelScope.launch {
-                try {
-                    val response = RetrofitClient.accountAPIService.checkAccount_Dk(account)
-                    // Giả sử response.success là một Boolean xác nhận xem khách hàng có hợp lệ không
-                    _accountCheckResult.value = response
-                    Log.d("AccountViewModel", "check_Dka: $response")
-                } catch (e: Exception) {
-                    Log.e("AccountViewModel", "Lỗi kết nối: ${e.message}")
-                    _accountCheckResult.value = false
-                }
+    fun updatePassword(account: UpdatePassword) {
+        viewModelScope.launch {
+            try {
+                val response = RetrofitClient.accountAPIService.updatePassword(account)
+                // Giả sử response.success là một Boolean xác nhận xem khách hàng có hợp lệ không
+                //_customerCheckResult.value = response
+                Log.d("AccountViewModel", "check_Dkc: $response")
+            } catch (e: Exception) {
+                Log.e("AccountViewModel", "Lỗi kết nối: ${e.message}")
+            //_customerCheckResult.value = false
             }
         }
-
-        fun updatePassword(account: UpdatePassword) {
-            viewModelScope.launch {
-                try {
-                    val response = RetrofitClient.accountAPIService.updatePassword(account)
-                    // Giả sử response.success là một Boolean xác nhận xem khách hàng có hợp lệ không
-                    //_customerCheckResult.value = response
-                    Log.d("AccountViewModel", "check_Dkc: $response")
-                } catch (e: Exception) {
-                    Log.e("AccountViewModel", "Lỗi kết nối: ${e.message}")
-                    //_customerCheckResult.value = false
-                }
-            }
-        }
+    }
 
 
     private val _uiState = MutableStateFlow(ChangePasswordUiState())
@@ -344,8 +269,8 @@ data class LoginUiState(
 )
 
 sealed class UiState {
-    object Idle : UiState()
-    object Loading : UiState()
+    data object Idle : UiState()
+    data object Loading : UiState()
     data class Success(val response: ChangePasswordResponse) : UiState()
     data class Error(val message: String) : UiState()
 }
