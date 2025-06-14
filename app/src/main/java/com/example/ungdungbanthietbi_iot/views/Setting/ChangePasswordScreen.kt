@@ -200,9 +200,6 @@ fun ChangePassword(onBack: () -> Unit = {}, id: String, password: String) {
                         Text("Mật khẩu mới và xác nhận mật khẩu không trùng khớp")
                     } else {
                         Text("Đổi mật khẩu thành công.")
-                        var account: UpdatePassword
-                        account = UpdatePassword(id, matkhaumoi2.value)
-                        updatePass.updatePassword(account)
                     }
                 } else {
                     Text("Mật khẩu cũ không đúng")

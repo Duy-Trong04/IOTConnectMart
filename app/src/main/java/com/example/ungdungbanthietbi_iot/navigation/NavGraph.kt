@@ -1,5 +1,6 @@
 package com.example.ungdungbanthietbi_iot.navigation
 
+import android.annotation.SuppressLint
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -72,6 +73,7 @@ import com.example.ungdungbanthietbi_iot.views.search.CategoriesScreen
  *
  */
 
+@SuppressLint("NewApi")
 @Composable
 fun NavGraph(
     startDestination: String, // Thêm tham số startDestination động
@@ -197,8 +199,14 @@ fun NavGraph(
         }
 
         //Màn hình Reset Pass
-        composable(route = Screen.ResetPasswordScreen.route + "?email={email}") {
-            ResetPasswordScreen(navController, accountViewModel, email = it.arguments?.getString("email"))
+        composable(
+            route = Screen.ResetPasswordScreen.route + "?email={email}",
+            arguments = listOf(
+                navArgument("email") {type = NavType.StringType },
+            )
+        ) {
+            val email = it.arguments?.getString("email") ?: ""
+            ResetPasswordScreen(navController, accountViewModel, email = email)
         }
         //Màn hình chọn địa chỉ
         composable(

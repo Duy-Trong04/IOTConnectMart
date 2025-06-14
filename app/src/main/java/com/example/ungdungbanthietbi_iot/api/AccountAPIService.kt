@@ -78,6 +78,13 @@ data class VerifyOtpRequest(
     val otp: String
 )
 
+// Yêu cầu xác minh OTP
+data class VerifyOtpChangeEmailRequest(
+    val account_id: String,
+    val email: String,
+    val otp: String
+)
+
 // Phản hồi từ API xác minh OTP
 data class VerifyOtpResponse(
     val status_code: Int,
@@ -110,11 +117,6 @@ interface AccuntAPIService {
         @Body account: RegisterRequest
     ): Response<RegisterResponse>
 
-    @PUT("account/updatePassword.php")
-    suspend fun updatePassword(
-        @Body account: UpdatePassword
-    ): Boolean
-
     @PATCH("auth/account/changed-password")
     suspend fun changePassword(
         @Body request: ChangePasswordRequest
@@ -128,6 +130,11 @@ interface AccuntAPIService {
     @POST("auth/verify-otp")
     suspend fun verifyOtp(
         @Body request: VerifyOtpRequest
+    ): Response<VerifyOtpResponse>
+
+    @POST("auth/verify-otp-change-email")
+    suspend fun verifyOtpChangeEmail(
+        @Body request: VerifyOtpChangeEmailRequest
     ): Response<VerifyOtpResponse>
 
     @POST("auth/account/change-password-forgot")

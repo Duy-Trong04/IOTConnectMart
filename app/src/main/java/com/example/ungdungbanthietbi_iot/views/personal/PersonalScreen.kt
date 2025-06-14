@@ -48,6 +48,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
@@ -59,6 +60,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import coil.compose.AsyncImage
 import com.example.ungdungbanthietbi_iot.R
+import com.example.ungdungbanthietbi_iot.api.VerifyOtpChangeEmailRequest
 import com.example.ungdungbanthietbi_iot.viewModels.AccountViewModel
 import com.example.ungdungbanthietbi_iot.viewModels.CartViewModel
 import com.example.ungdungbanthietbi_iot.models.Customer
@@ -67,6 +69,7 @@ import com.example.ungdungbanthietbi_iot.viewModels.DeviceViewModel
 import com.example.ungdungbanthietbi_iot.navigation.Screen
 import com.example.ungdungbanthietbi_iot.utils.getCurrentTimestamp
 import com.example.ungdungbanthietbi_iot.viewModels.CustomerState
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.io.ByteArrayOutputStream
 import java.time.LocalDate
@@ -229,9 +232,8 @@ fun AccountInfoSection(
     var originalBitmap by remember { mutableStateOf<Bitmap?>(null) }
     var compressedBitmap by remember { mutableStateOf<Bitmap?>(null) }
     var base64String by remember { mutableStateOf<String?>(null) }
-
     val maxLength = 10
-
+    val accountViewModel: AccountViewModel = viewModel()
     val customerViewModel: CustomerViewModel = viewModel()
 
     val customerState by customerViewModel.customerState.collectAsState()
@@ -258,14 +260,20 @@ fun AccountInfoSection(
             customerViewModel.setErrorState("Lỗi: ID khách hàng không hợp lệ")
         }
         else{
-            customerViewModel.getCustomerById9(id)
+            customerViewModel.getCustomerById(id)
         }
     }
-
-    // Tải hình ảnh bất đồng bộ
-//    LaunchedEffect(device) {
-//        bitmap = deviceViewModel.getDeviceImageBitmap(device)
-//    }
+    var verificationCode by remember { mutableStateOf(List(6) { "" }) }
+    var countdown by remember { mutableStateOf(60) }
+    var isResendEnabled by remember { mutableStateOf(false) }
+    // Bộ đếm ngược cho nút gửi lại mã
+    LaunchedEffect(countdown) {
+        if (countdown > 0) {
+            delay(1000)
+            countdown--
+            isResendEnabled = countdown == 0
+        }
+    }
     Card(
         shape = RoundedCornerShape(5.dp),
         elevation = CardDefaults.cardElevation(1.dp),
@@ -291,16 +299,6 @@ fun AccountInfoSection(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.Center
                     ){
-                        //                    AsyncImage(
-                        //                        model = "",
-                        //                        contentDescription = "Avatar",
-                        //                        modifier = Modifier
-                        //                            .size(100.dp)
-                        //                            .clip(CircleShape),
-                        //                        contentScale = ContentScale.Crop
-                        //                    )
-
-
                         LaunchedEffect(customer) {
                             selectedImageUri = null // Reset để ưu tiên customer.image
                             if (customer.image != null && isValidBase64(customer.image)) {
@@ -463,7 +461,7 @@ fun AccountInfoSection(
 
 
                     // Họ tên
-                    Text("Họ Tên: ", fontWeight = FontWeight.Bold)
+                    Text("Họ và Tên: ", fontWeight = FontWeight.Bold)
                     OutlinedTextField(
                         value = fullName.value,
                         onValueChange = {
@@ -531,25 +529,60 @@ fun AccountInfoSection(
                     )
 
                     Spacer(modifier = Modifier.height(8.dp))
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ){
+                        // Email
+                        Text("Email: ", fontWeight = FontWeight.Bold)
+                        if (!customer.email_verified) {
+                            Text(text = "Chưa xác thực!", color = Color.Red)
+                        }
+                        else{
+                            Text(text = "Đã xác thực!", color = Color.Green)
+                        }
+                    }
 
-                    // Email
-                    Text("Email: ", fontWeight = FontWeight.Bold)
-                    OutlinedTextField(
-                        value = email.value,
-                        onValueChange = {
-                            email.value = it
-                            isButtonEnabled = checkIfChanged()},
-                        keyboardOptions = KeyboardOptions.Default.copy(keyboardType = KeyboardType.Email),
-                        modifier = Modifier.fillMaxWidth().onFocusChanged {
-                            if (it.isFocused) isFocused = true
-                        },
-                        colors = OutlinedTextFieldDefaults.colors(
-                            focusedBorderColor = Color(0xFF5F9EFF),
-                            unfocusedBorderColor = Color(0xFF5F9EFF),
-                            focusedLabelColor = Color(0xFF5F9EFF)
-                        ),
-                        shape = RoundedCornerShape(17.dp),
-                    )
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        OutlinedTextField(
+                            value = email.value,
+                            onValueChange = {
+                                email.value = it
+                                isButtonEnabled = checkIfChanged()
+                            },
+                            keyboardOptions = KeyboardOptions.Default.copy(keyboardType = KeyboardType.Email),
+                            modifier = Modifier
+                                .weight(1f)
+                                .onFocusChanged { isFocused = it.isFocused },
+                            colors = OutlinedTextFieldDefaults.colors(
+                                focusedBorderColor = Color(0xFF5F9EFF),
+                                unfocusedBorderColor = Color(0xFF5F9EFF),
+                                focusedLabelColor = Color(0xFF5F9EFF)
+                            ),
+                            shape = RoundedCornerShape(17.dp),
+                        )
+                        if (!customer.email_verified) {
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(
+                                text = "Xác thực",
+                                color = Color(0xFF5F9EFF),
+                                fontSize = 14.sp,
+                                modifier = Modifier
+                                    .clickable {
+                                        accountViewModel.sendOtp(email.value)
+                                        showDialog = true
+                                        countdown = 60
+                                        isResendEnabled = false
+                                        verificationCode = List(6) { "" }
+                                    }
+                                    .padding(8.dp)
+                            )
+                        }
+                    }
 
                     Spacer(modifier = Modifier.height(8.dp))
 
@@ -592,6 +625,107 @@ fun AccountInfoSection(
                         )
                     }
                     Spacer(modifier = Modifier.height(16.dp))
+                    // Dialog xác thực email
+                    if (showDialog) {
+                        AlertDialog(
+                            onDismissRequest = {  },
+                            title = { Text("Xác thực email") },
+                            text = {
+                                Column(
+                                    horizontalAlignment = Alignment.CenterHorizontally,
+                                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                                ) {
+                                    Text("Nhập mã xác thực được gửi đến ${email.value}")
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.SpaceEvenly
+                                    ) {
+                                        verificationCode.forEachIndexed { index, digit ->
+                                            OutlinedTextField(
+                                                value = digit,
+                                                onValueChange = { newValue ->
+                                                    if (newValue.length <= 1 && newValue.all { it.isDigit() }) {
+                                                        verificationCode = verificationCode.toMutableList().apply {
+                                                            this[index] = newValue
+                                                        }
+                                                    }
+                                                },
+                                                modifier = Modifier
+                                                    .width(48.dp)
+                                                    .height(48.dp),
+                                                textStyle = TextStyle(
+                                                    textAlign = TextAlign.Center,
+                                                    fontSize = 18.sp
+                                                ),
+                                                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                                                singleLine = true
+                                            )
+                                        }
+                                    }
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.SpaceBetween
+                                    ) {
+                                        Button(
+                                            onClick = {
+                                                if (isResendEnabled) {
+                                                    accountViewModel.sendOtp(email.value)
+                                                    countdown = 60
+                                                    isResendEnabled = false
+                                                    scope.launch {
+                                                        snackbarHostState.showSnackbar(
+                                                            message = "Đã gửi lại mã xác thực",
+                                                            duration = SnackbarDuration.Short
+                                                        )
+                                                    }
+                                                }
+                                            },
+                                            enabled = isResendEnabled,
+                                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF5F9EFF))
+                                        ) {
+                                            Text("Gửi lại ${if (countdown > 0) "($countdown)" else ""}")
+                                        }
+                                        Button(
+                                            onClick = {
+                                                val code = verificationCode.joinToString("")
+                                                if (code.length == 6) {
+                                                    val accountId = customer.account.firstOrNull()?.account_id ?: ""
+                                                    val request = VerifyOtpChangeEmailRequest(
+                                                        account_id = accountId,
+                                                        email = email.value,
+                                                        otp = code
+                                                    )
+                                                    accountViewModel.verifyOtpChangeEmail(request)
+                                                    scope.launch {
+                                                        snackbarHostState.showSnackbar(
+                                                            message = "Xác thực email thành công",
+                                                            duration = SnackbarDuration.Short
+                                                        )
+                                                        showDialog = false
+                                                        if (id != null) {
+                                                            customerViewModel.getCustomerById(id)
+                                                        }
+                                                    }
+                                                } else {
+                                                    scope.launch {
+                                                        snackbarHostState.showSnackbar(
+                                                            message = "Vui lòng nhập đủ 6 chữ số",
+                                                            duration = SnackbarDuration.Short
+                                                        )
+                                                    }
+                                                }
+                                            },
+                                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF5F9EFF))
+                                        ) {
+                                            Text("Xác nhận")
+                                        }
+                                    }
+                                }
+                            },
+                            confirmButton = {},
+                            dismissButton = {}
+                        )
+                    }
                     Box(
                         modifier = Modifier.fillMaxWidth(),
                         contentAlignment = Alignment.Center
@@ -708,7 +842,7 @@ fun AccountInfoSection(
                                                     )
                                                     selectedImageUri = null
                                                     if (id != null) {
-                                                        customerViewModel.getCustomerById9(id)
+                                                        customerViewModel.getCustomerById(id)
                                                     }
                                                 }
                                                 customerViewModel.resetUpdateState()
@@ -756,7 +890,7 @@ fun AccountInfoSection(
                         Button(
                             onClick = {
                                 if (id != null) {
-                                    customerViewModel.getCustomerById9(id)
+                                    customerViewModel.getCustomerById(id)
 
                                 }
                             },

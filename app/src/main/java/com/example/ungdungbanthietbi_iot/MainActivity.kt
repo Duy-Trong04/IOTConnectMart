@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import android.util.Log
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -42,6 +43,8 @@ import com.example.ungdungbanthietbi_iot.viewModels.CustomerViewModel
 import com.example.ungdungbanthietbi_iot.navigation.NavGraph
 import com.example.ungdungbanthietbi_iot.navigation.Screen
 import com.example.ungdungbanthietbi_iot.ui.theme.UngDungBanThietBi_IOTTheme
+import com.google.android.gms.tasks.OnCompleteListener
+import com.google.firebase.messaging.FirebaseMessaging
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -88,6 +91,19 @@ class MainActivity : ComponentActivity() {
                     val totalMoney = preferences[intPreferencesKey("total_money")] ?: 0
                     val createdAt = preferences[stringPreferencesKey("created_at")] ?: ""
                     val status = preferences[stringPreferencesKey("payment_status")]
+
+                    FirebaseMessaging.getInstance().token
+                        .addOnCompleteListener(OnCompleteListener { task ->
+                            if (!task.isSuccessful) {
+                                Log.d("FCM Notify", "Fetching FCM registration token failed", task.exception)
+                                return@OnCompleteListener
+                            }
+
+                            //Get new FCM registration token
+                            val token: String? = task.result
+                            Log.d("FCM Token", token, task.exception)
+                            Toast.makeText(context, token, Toast.LENGTH_SHORT).show()
+                        })
 
                     if (!savedUsername.isNullOrEmpty() && !savedPassword.isNullOrEmpty()) {
                         // Thực hiện đăng nhập tự động

@@ -31,7 +31,6 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.annotation.ExperimentalCoilApi
 import com.example.ungdungbanthietbi_iot.viewModels.CustomerViewModel
-import com.example.ungdungbanthietbi_iot.models.Phone
 
 
 /*Người thực hiện: Nguyễn Mạnh Cường
@@ -74,15 +73,7 @@ fun EditPhoneScreen(id: String,onBack: () -> Unit = {}, phoneNumber:String ) {
                 },
                 actions = {
                     IconButton(onClick = {
-                    /* Chức năng lưu lại thông tin đã sửa */
-                        // Kiểm tra tính hợp lệ của số điện thoại
-                        if (phone1.length != 10 || !phone1.matches(Regex("\\d+"))) {
-                            errorMessage = "Số điện thoại phải có đúng 10 chữ số!"
-                        } else {
-                            val phone = Phone(id, phone1)
-                            phoneModel.updatePhone(phone)
-                            onBack()
-                        }
+
                     }) {
                         Icon(
                             imageVector = Icons.Default.Done,

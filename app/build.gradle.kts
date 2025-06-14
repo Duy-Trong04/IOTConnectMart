@@ -4,6 +4,7 @@ plugins {
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.kotlin.serialization)
     id("com.google.devtools.ksp") version "2.0.0-1.0.24"
+    id("com.google.gms.google-services")
 }
 
 android {
@@ -95,4 +96,13 @@ dependencies {
     ksp("androidx.room:room-compiler:2.6.1")
 
     implementation ("androidx.browser:browser:1.8.0")
+
+    // firebase
+    implementation(platform("com.google.firebase:firebase-bom:33.15.0"))
+    implementation("com.google.firebase:firebase-analytics")
+    // messaging
+    implementation("com.google.firebase:firebase-messaging-ktx:24.1.1")
+
+    // notification permission
+    implementation("com.google.accompanist:accompanist-permissions:0.31.1-alpha")
 }

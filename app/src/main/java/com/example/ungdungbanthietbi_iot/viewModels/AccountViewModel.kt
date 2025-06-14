@@ -19,6 +19,7 @@ import com.example.ungdungbanthietbi_iot.api.ResetPasswordRequest
 import com.example.ungdungbanthietbi_iot.api.ResetPasswordResponse
 import com.example.ungdungbanthietbi_iot.api.SendOtpRequest
 import com.example.ungdungbanthietbi_iot.api.SendOtpResponse
+import com.example.ungdungbanthietbi_iot.api.VerifyOtpChangeEmailRequest
 import com.example.ungdungbanthietbi_iot.api.VerifyOtpRequest
 import com.example.ungdungbanthietbi_iot.api.VerifyOtpResponse
 import com.example.ungdungbanthietbi_iot.dataStore
@@ -92,20 +93,6 @@ class AccountViewModel:ViewModel() {
             }
         }
     }
-    fun updatePassword(account: UpdatePassword) {
-        viewModelScope.launch {
-            try {
-                val response = RetrofitClient.accountAPIService.updatePassword(account)
-                // Giả sử response.success là một Boolean xác nhận xem khách hàng có hợp lệ không
-                //_customerCheckResult.value = response
-                Log.d("AccountViewModel", "check_Dkc: $response")
-            } catch (e: Exception) {
-                Log.e("AccountViewModel", "Lỗi kết nối: ${e.message}")
-            //_customerCheckResult.value = false
-            }
-        }
-    }
-
 
     private val _uiState = MutableStateFlow(ChangePasswordUiState())
     val uiState: StateFlow<ChangePasswordUiState> = _uiState.asStateFlow()
@@ -223,6 +210,23 @@ class AccountViewModel:ViewModel() {
                 val request = VerifyOtpRequest(email = email, otp = otp)
                 Log.d("AuthViewModel", "Verify OTP request: $request")
                 val response = RetrofitClient.verifyOtp.verifyOtp(request)
+                _verifyOtpResult.value = response
+                if (response.isSuccessful) {
+                    Log.d("AuthViewModel", "Verify OTP successful: ${response.body()?.data}")
+                } else {
+                    Log.e("AuthViewModel", "Verify OTP failed: ${response.errorBody()?.string()}")
+                }
+            } catch (e: Exception) {
+                Log.e("AuthViewModel", "Verify OTP error: ${e.message}")
+                _verifyOtpResult.value = null
+            }
+        }
+    }
+
+    fun verifyOtpChangeEmail(request: VerifyOtpChangeEmailRequest) {
+        viewModelScope.launch {
+            try {
+                val response = RetrofitClient.verifyOtp.verifyOtpChangeEmail(request)
                 _verifyOtpResult.value = response
                 if (response.isSuccessful) {
                     Log.d("AuthViewModel", "Verify OTP successful: ${response.body()?.data}")

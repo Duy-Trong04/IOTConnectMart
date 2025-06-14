@@ -29,7 +29,6 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.annotation.ExperimentalCoilApi
 import com.example.ungdungbanthietbi_iot.viewModels.CustomerViewModel
-import com.example.ungdungbanthietbi_iot.models.Email
 
 
 /*Người thực hiện: Nguyễn Mạnh Cường
@@ -70,11 +69,7 @@ fun EditEmailScreen(id: String,onBack: () -> Unit = {}, email: String) {
                 },
                 actions = {
                     IconButton(onClick = {
-                    /* Chức năng lưu lại thông tin đã sửa */
-                        val email: Email
-                        email = Email(id,email1)
-                        emailModel.updateEmail(email)
-                        onBack()
+
                     },
                         enabled = emailError.isEmpty()
                     ) {

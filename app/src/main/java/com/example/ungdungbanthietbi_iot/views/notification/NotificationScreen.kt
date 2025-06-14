@@ -490,7 +490,7 @@ fun NotificationItem(
                         color = Color.Black,
                         modifier = Modifier.padding(top = 8.dp)
                     )
-                    Divider()
+                    HorizontalDivider()
                 }
             }
         }

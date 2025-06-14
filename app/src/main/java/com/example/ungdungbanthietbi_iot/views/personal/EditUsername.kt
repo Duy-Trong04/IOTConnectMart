@@ -30,7 +30,6 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.annotation.ExperimentalCoilApi
 import com.example.ungdungbanthietbi_iot.viewModels.CustomerViewModel
-import com.example.ungdungbanthietbi_iot.models.Username
 
 
 /*Người thực hiện: Nguyễn Mạnh Cường
@@ -71,11 +70,7 @@ fun EditUsername(onBack: () -> Unit = {},  id:String, username:String) {
                 },
                 actions = {
                     IconButton(onClick = {
-                    /* Chức năng lưu lại thông tin đã sửa */
-                        val userName: Username
-                        userName = Username(id,surname,lastName)
-                        userViewModel.updateUsername(userName)
-                        onBack()
+
                     }) {
                         Icon(
                             imageVector = Icons.Default.Done,
