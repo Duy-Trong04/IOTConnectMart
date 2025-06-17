@@ -1,5 +1,6 @@
 package com.example.ungdungbanthietbi_iot.views.favorite
 
+import android.graphics.Bitmap
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -15,8 +16,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
-import androidx.compose.ui.graphics.painter.BitmapPainter
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -25,8 +26,8 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.example.ungdungbanthietbi_iot.viewModels.LikedViewModel
 import com.example.ungdungbanthietbi_iot.navigation.Screen
-import com.example.ungdungbanthietbi_iot.utils.base64ToBitmap
 import com.example.ungdungbanthietbi_iot.utils.formatGiaTienInt
+import com.example.ungdungbanthietbi_iot.viewModels.DeviceViewModel
 
 /** Giao diện màn hình yêu thích (FavoritesScreen)
  * -------------------------------------------
@@ -61,6 +62,10 @@ fun FavoritesScreen(
         likedViewModel.getLikedByIdCustomer(idCustomer)
     }
 
+    val deviceViewModel: DeviceViewModel = viewModel()
+    var bitmap by remember { mutableStateOf<Bitmap?>(null) }
+
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -93,14 +98,20 @@ fun FavoritesScreen(
         }
     ) { padding ->
         // Danh sách sản phẩm
-        LazyColumn(modifier = Modifier.padding(padding)) {
+        LazyColumn(
+            modifier = Modifier.padding(padding).fillMaxSize().background(Color.White)
+        ) {
             if(listLiked.isNotEmpty()) {
                 items(listLiked) { liked ->
+                    // Tải hình ảnh
+                    LaunchedEffect(liked) {
+                        bitmap = liked.image?.let { deviceViewModel.getDeviceImageBitmapImage(it) }
+                    }
                     Card(
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(8.dp)
-                            .height(190.dp),
+                            .height(170.dp),
                         elevation = CardDefaults.cardElevation(1.dp),
                         shape = RoundedCornerShape(5.dp),
                         colors = CardDefaults.cardColors(containerColor = Color.White),
@@ -116,14 +127,21 @@ fun FavoritesScreen(
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.Start
                         ) {
-                            val bitmap = base64ToBitmap(liked.image)
-                            if (bitmap != null) {
+                            bitmap?.let {
                                 Image(
-                                    painter = BitmapPainter(bitmap.asImageBitmap()),
+                                    bitmap = it.asImageBitmap(),
                                     contentDescription = liked.name.ifEmpty { "Hình ảnh sản phẩm" },
                                     modifier = Modifier
+                                        .size(140.dp),
+                                    contentScale = ContentScale.Fit
+                                )
+                            } ?: run {
+                                Image(
+                                    painter = painterResource(id = android.R.drawable.ic_menu_gallery),
+                                    contentDescription = "Product Image",
+                                    modifier = Modifier
                                         .size(150.dp),
-                                    contentScale = ContentScale.Fit // Crop để hình ảnh lấp đầy khung
+                                    contentScale = ContentScale.Fit
                                 )
                             }
                             Column(modifier = Modifier.weight(1f)) {

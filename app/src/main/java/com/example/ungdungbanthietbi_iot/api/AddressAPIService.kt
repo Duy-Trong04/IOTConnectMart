@@ -1,12 +1,14 @@
 package com.example.ungdungbanthietbi_iot.api
 
-import androidx.room.Update
-import com.example.ungdungbanthietbi_iot.models.Address
 import com.example.ungdungbanthietbi_iot.models.AddressBook
-import retrofit2.Response
+import com.example.ungdungbanthietbi_iot.models.AddressResponsePublic
+import com.example.ungdungbanthietbi_iot.models.District
+import com.example.ungdungbanthietbi_iot.models.Province
+import com.example.ungdungbanthietbi_iot.models.Ward
 import retrofit2.http.Body
 import retrofit2.http.DELETE
 import retrofit2.http.GET
+import retrofit2.http.Header
 import retrofit2.http.POST
 import retrofit2.http.PUT
 import retrofit2.http.Path
@@ -98,4 +100,26 @@ interface AddressAPIService {
         @Path ("customer_id") customer_id: String,
         @Path ("id") id: Int,
     ): deleteResponse
+}
+
+interface AddressPublic {
+    @GET("shiip/public-api/master-data/province")
+    suspend fun getProvinces(
+        @Header("Content-Type") contentType: String = "application/json",
+        @Header("Token") token: String
+    ): AddressResponsePublic<List<Province>>
+
+    @GET("shiip/public-api/master-data/district")
+    suspend fun getDistricts(
+        @Header("Content-Type") contentType: String = "application/json",
+        @Header("Token") token: String,
+        @Query("province_id") provinceId: Int
+    ): AddressResponsePublic<List<District>>
+
+    @GET("shiip/public-api/master-data/ward")
+    suspend fun getWards(
+        @Header("Content-Type") contentType: String = "application/json",
+        @Header("Token") token: String,
+        @Query("district_id") districtId: Int
+    ): AddressResponsePublic<List<Ward>>
 }

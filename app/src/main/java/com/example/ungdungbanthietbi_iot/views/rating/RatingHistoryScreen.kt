@@ -1,5 +1,6 @@
 package com.example.ungdungbanthietbi_iot.views.rating
 
+import android.graphics.Bitmap
 import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
@@ -8,40 +9,32 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
-import androidx.compose.ui.graphics.painter.BitmapPainter
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.LifecycleEventObserver
-import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
-import coil.compose.AsyncImage
-import com.example.ungdungbanthietbi_iot.viewModels.AccountViewModel
-import com.example.ungdungbanthietbi_iot.viewModels.CustomerViewModel
 import com.example.ungdungbanthietbi_iot.viewModels.DeviceViewModel
-import com.example.ungdungbanthietbi_iot.models.Review
 import com.example.ungdungbanthietbi_iot.models.Reviews
 import com.example.ungdungbanthietbi_iot.viewModels.ReviewViewModel
 import com.example.ungdungbanthietbi_iot.navigation.Screen
-import com.example.ungdungbanthietbi_iot.utils.base64ToBitmap
 import com.example.ungdungbanthietbi_iot.views.order_detail.calculateDaysSinceReceived
-import com.example.ungdungbanthietbi_iot.utils.formatDate
 import com.example.ungdungbanthietbi_iot.utils.formatDateTimeZone
 
 /** Giao diện màn hình lịch sử đánh giá (RatingHistoryScreen)
@@ -98,7 +91,7 @@ fun RatingHistoryScreen(navController: NavController, idCustomer: String, userna
                             navController.popBackStack()
                         }
                     ) {
-                        Icon(imageVector = Icons.Filled.ArrowBack, contentDescription = "")
+                        Icon(imageVector = Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "")
                     }
                 }
             )
@@ -158,19 +151,25 @@ fun RatingHistoryScreen(navController: NavController, idCustomer: String, userna
 }
 
 @Composable
-fun ReviewItem(review: Reviews, idCustomer: String, idDevice: Int, username:String, navController: NavController) {
+fun ReviewItem(review: Reviews, idCustomer: String, idDevice: String, username:String, navController: NavController) {
 
     val deviceViewModel: DeviceViewModel = viewModel()
     val device = deviceViewModel.deviceMap[idDevice] // Lấy thiết bị theo ID
+    val customerName = "${review.surname} ${review.lastname}".trim()
     // Gọi API lấy device khi idDevice thay đổi
     LaunchedEffect(idDevice) {
         if (device == null) {
             deviceViewModel.getDeviceBySlug2(idDevice)
         }
     }
+    var bitmap by remember { mutableStateOf<Bitmap?>(null) }
+    // Tải hình ảnh
+    LaunchedEffect(review) {
+        bitmap = review.image?.let { deviceViewModel.getDeviceImageBitmapImage(it) }
+    }
     // Tính số ngày kể từ khi tạo đánh giá
     val daysSinceReviewCreated = remember(review.created_at) {
-        calculateDaysSinceReceived(review.created_at) ?: Int.MAX_VALUE
+        calculateDaysSinceReceived(review.created_at)
     }
 
     Card(
@@ -236,20 +235,26 @@ fun ReviewItem(review: Reviews, idCustomer: String, idDevice: Int, username:Stri
                     },
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    val bitmap = base64ToBitmap(device?.image)
-                    if (bitmap != null) {
+                    bitmap?.let {
                         Image(
-                            painter = BitmapPainter(bitmap.asImageBitmap()),
-                            contentDescription = "Hình ảnh sản phẩm",
+                            bitmap = it.asImageBitmap(),
+                            contentDescription = customerName.ifEmpty { "Hình ảnh sản phẩm" },
+                            modifier = Modifier
+                                .width(50.dp)
+                                .height(50.dp),
+                            contentScale = ContentScale.Fit
+                        )
+                    } ?: run {
+                        Image(
+                            painter = painterResource(id = android.R.drawable.ic_menu_gallery),
+                            contentDescription = "Product Image",
                             modifier = Modifier
                                 .width(50.dp)
                                 .height(50.dp),
                             contentScale = ContentScale.Fit
                         )
                     }
-
                     Spacer(modifier = Modifier.width(8.dp))
-
                     if (device != null) {
                         Text(
                             text = device.name,

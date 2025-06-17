@@ -3,7 +3,6 @@ package com.example.ungdungbanthietbi_iot.views.check_out
 import android.annotation.SuppressLint
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
@@ -18,6 +17,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+//noinspection UsingMaterialAndMaterial3Libraries
 import androidx.compose.material.Icon
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CheckCircle
@@ -26,11 +26,8 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -53,7 +50,6 @@ import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
 
 @SuppressLint("NewApi")
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CheckOutSuccessScreen(
     navController: NavHostController,
@@ -75,22 +71,7 @@ fun CheckOutSuccessScreen(
     }
 
     Scaffold(
-        topBar = {
-            TopAppBar(
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = Color(0xFF1A73E8)
-                ),
-                title = {
-                    Text(
-                        text = "Hoàn tất đơn hàng",
-                        color = Color.White,
-                        fontWeight = FontWeight.SemiBold,
-                        fontSize = 20.sp
-                    )
-                }
-            )
-        },
-        containerColor = Color(0xFFF5F7FA)
+        containerColor = Color.White
     ) { paddingValues ->
         Column(
             modifier = Modifier
@@ -142,8 +123,8 @@ fun CheckOutSuccessScreen(
                     containerColor = Color.White
                 ),
                 elevation = CardDefaults.cardElevation(
-                    defaultElevation = 6.dp,
-                    pressedElevation = 8.dp
+                    defaultElevation = 3.dp,
+                    pressedElevation = 4.dp
                 ),
                 shape = RoundedCornerShape(16.dp)
             ) {
@@ -179,7 +160,7 @@ fun CheckOutSuccessScreen(
                             fontWeight = FontWeight.Medium
                         )
                         Text(
-                            text = formatGiaTienInt(totalMoney) ?: "N/A",
+                            text = formatGiaTienInt(totalMoney),
                             fontSize = 16.sp,
                             fontWeight = FontWeight.SemiBold,
                             color = Color(0xFF212121)
@@ -230,8 +211,8 @@ fun CheckOutSuccessScreen(
                 ),
                 shape = RoundedCornerShape(16.dp),
                 elevation = ButtonDefaults.buttonElevation(
-                    defaultElevation = 6.dp,
-                    pressedElevation = 8.dp
+                    defaultElevation = 3.dp,
+                    pressedElevation = 4.dp
                 )
             ) {
                 Row(

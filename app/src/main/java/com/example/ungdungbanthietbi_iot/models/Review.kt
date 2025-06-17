@@ -2,23 +2,10 @@ package com.example.ungdungbanthietbi_iot.models
 
 import com.google.gson.annotations.SerializedName
 
-data class Review(
-    val idReview:Int,
-    val idCustomer:String,
-    val idEmployee:String,
-    val idDevice:Int,
-    val comment:String,
-    val rating:Int,
-    val response:String,
-    val note:String,
-    val created_at:String,
-    val updated_at:String,
-    val status:Int
-)
 data class Reviews(
     @SerializedName("id") val idReview:Int,
     @SerializedName("customer_id") val idCustomer:String,
-    @SerializedName("product_id") val idDevice:Int,
+    @SerializedName("product_id") val idDevice: String,
     val comment:String?,
     val image: String?,
     val rating:Int,
@@ -35,7 +22,7 @@ data class Reviews(
 data class ReviewDetail(
     @SerializedName("id") val idReview:Int,
     @SerializedName("customer_id") val idCustomer:String,
-    @SerializedName("product_id") val idDevice:Int,
+    @SerializedName("product_id") val idDevice: String,
     val comment:String?,
     val image: String?,
     val rating:Int,

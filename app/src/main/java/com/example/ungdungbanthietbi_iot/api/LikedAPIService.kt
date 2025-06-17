@@ -10,7 +10,7 @@ import retrofit2.http.Path
 // Data class cho sản phẩm yêu thích
 data class LikedProduct(
     val id: Int,
-    val product_id: Int,
+    val product_id: String,
     val name: String,
     val image: String?,
     val selling_price: Int,
@@ -34,9 +34,9 @@ data class LikedData(
 // Data class cho yêu cầu thêm yêu thích
 data class AddLikedRequest(
     val customer_id: String,
-    val product_id: Int
+    val product_id: String
 )
-//
+
 // Data class cho phản hồi thêm yêu thích
 data class AddLikedResponse(
     val status_code: Int,
@@ -46,12 +46,12 @@ data class AddLikedResponse(
 data class LikedItem(
     val id: Int,
     val customer_id: String,
-    val product_id: Int,
+    val product_id: String,
     val created_at: String,
     val updated_at: String,
     val deleted_at: String?
 )
-//
+
 // Data class cho phản hồi xóa yêu thích
 data class DeleteLikedResponse(
     val status_code: Int,

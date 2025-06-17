@@ -1,6 +1,5 @@
 package com.example.ungdungbanthietbi_iot.api
 
-import com.example.ungdungbanthietbi_iot.models.Review
 import com.example.ungdungbanthietbi_iot.models.ReviewDetail
 import com.example.ungdungbanthietbi_iot.models.Reviews
 import retrofit2.http.Body
@@ -8,22 +7,6 @@ import retrofit2.http.GET
 import retrofit2.http.POST
 import retrofit2.http.PUT
 import retrofit2.http.Path
-import retrofit2.http.Query
-
-data class AddReviewResponse(
-    val success: Boolean,
-    val message: String
-)
-
-data class getReviewResponse(
-    val success: Boolean,
-    val review: Review?
-)
-
-data class CheckReviewResponse(
-    val success: Boolean,
-    val review_exists: Boolean
-)
 
 data class ReviewResponse(
     val status_code: Int,
@@ -51,7 +34,7 @@ data class ReviewDetailResponse(
 )
 data class ReviewRequestCreate(
     val customer_id: String,
-    val product_id: Int,
+    val product_id: String,
     val comment: String?,
     val image: String?,
     val rating: Int
@@ -63,7 +46,7 @@ interface ReviewAPIService {
         @Path("id") id: String
     ): ReviewResponse
 
-    @GET ("review/{id}")
+    @GET ("review/detail/{id}")
     suspend fun getReviewByIdReview(
         @Path("id") id: Int
     ): ReviewDetailResponse

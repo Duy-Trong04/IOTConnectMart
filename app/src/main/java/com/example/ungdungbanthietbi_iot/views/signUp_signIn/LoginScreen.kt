@@ -8,8 +8,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -19,23 +17,21 @@ import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
+//noinspection UsingMaterialAndMaterial3Libraries
 import androidx.compose.material.Divider
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Lock
+import androidx.compose.material.icons.outlined.Password
 import androidx.compose.material.icons.outlined.Person
-import androidx.compose.material.icons.outlined.Visibility
-import androidx.compose.material.icons.outlined.VisibilityOff
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -48,9 +44,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
-import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.text.input.PasswordVisualTransformation
-import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
@@ -59,16 +52,11 @@ import com.example.ungdungbanthietbi_iot.viewModels.AccountViewModel
 import com.example.ungdungbanthietbi_iot.navigation.Screen
 import kotlinx.coroutines.launch
 import androidx.compose.material3.TextButton
-import androidx.compose.ui.ExperimentalComposeUiApi
-import androidx.compose.ui.focus.FocusRequester
-import androidx.compose.ui.focus.focusRequester
-import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.runtime.collectAsState
+import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
-import androidx.compose.ui.platform.LocalSoftwareKeyboardController
-import androidx.compose.ui.text.style.TextDecoration
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
 import com.example.ungdungbanthietbi_iot.dataStore
@@ -294,7 +282,8 @@ import com.example.ungdungbanthietbi_iot.views.components.CustomerTextField
 fun LoginScreen(navController: NavController, accountViewModel: AccountViewModel){
     val context = LocalContext.current
     val focusManager = LocalFocusManager.current
-
+    // Observe loginUiState
+    val loginUiState by accountViewModel.loginUiState.collectAsState()
     // Biến nhận dữ liệu email từ người dùng
     var username by remember { mutableStateOf("") }
     // Biến nhận dữ liệu password từ người dùng
@@ -313,22 +302,22 @@ fun LoginScreen(navController: NavController, accountViewModel: AccountViewModel
             horizontalAlignment = Alignment.CenterHorizontally,
             modifier = Modifier.padding(horizontal = 24.dp)
         ) {
-            Box(modifier = Modifier.height(24.dp))
+            Box(modifier = Modifier.height(40.dp))
             Image(
                 painter = painterResource(id = R.drawable.ill_signin),
                 contentDescription = "Sign in Illustration",
                 modifier = Modifier
-                    .weight(3f)
+                    .weight(3.5f)
                     .padding(
                         horizontal = 32.dp,
                     ),
                 contentScale = ContentScale.Fit,
             )
             Column(
-                verticalArrangement = Arrangement.SpaceAround,
+                verticalArrangement = Arrangement.Center,
                 horizontalAlignment = Alignment.Start,
                 modifier = Modifier
-                    .weight(7f)
+                    .weight(6.5f)
             ) {
                 Text(
                     text = "Đăng nhập",
@@ -337,6 +326,7 @@ fun LoginScreen(navController: NavController, accountViewModel: AccountViewModel
                         color = Color(0xFF5D9EFF)
                     )
                 )
+                Spacer(modifier = Modifier.height(10.dp))
                 CustomerTextField(
                     value = username,
                     onValueChange = {
@@ -350,12 +340,13 @@ fun LoginScreen(navController: NavController, accountViewModel: AccountViewModel
                         )
                     },
                     keyboardOptions = KeyboardOptions.Default.copy(
-                        imeAction = ImeAction.Done,
+                        imeAction = ImeAction.Next,
                     ),
                     keyboardActions = KeyboardActions(
-                        onDone = { focusManager.clearFocus() }
+                        onNext = { focusManager.moveFocus(FocusDirection.Next) }
                     )
                 )
+                Spacer(modifier = Modifier.height(4.dp))
                 CustomerTextField(
                     value = password,
                     onValueChange = {
@@ -364,13 +355,13 @@ fun LoginScreen(navController: NavController, accountViewModel: AccountViewModel
                     hint = "Mật khẩu",
                     leadingIcon = {
                         Icon(
-                            imageVector = Icons.Outlined.Lock,
+                            imageVector = Icons.Outlined.Password,
                             contentDescription = "Mật khẩu",
                         )
                     },
                     trailingIcon = {
-                        Icon(painter = if (passwordObscure) painterResource(id = R.drawable.ic_outline_visibility) else painterResource(
-                            id = R.drawable.ic_outline_visibility_off
+                        Icon(painter = if (passwordObscure) painterResource(id = R.drawable.ic_outline_visibility_off) else painterResource(
+                            id = R.drawable.ic_outline_visibility
                         ), contentDescription = "Show Password", modifier = Modifier.clickable {
                             passwordObscure = !passwordObscure
                         }
@@ -384,6 +375,7 @@ fun LoginScreen(navController: NavController, accountViewModel: AccountViewModel
                         onDone = { focusManager.clearFocus() }
                     )
                 )
+                Spacer(modifier = Modifier.height(10.dp))
                 TextButton(
                     onClick = {
                         /* Chuyển sang màn hình quên mật khẩu(ForgotPasswordScreen)*/
@@ -396,6 +388,7 @@ fun LoginScreen(navController: NavController, accountViewModel: AccountViewModel
                 ) {
                     Text("Quên mật khẩu ?")
                 }
+                Spacer(modifier = Modifier.height(10.dp))
                 Button(
                     onClick = {
                         /* Chuyển sang màn hình trang chủ(HomeScreen) */
@@ -432,47 +425,56 @@ fun LoginScreen(navController: NavController, accountViewModel: AccountViewModel
                         containerColor = Color(0xFF5D9EFF)
                     )
                 ) {
-                    Text(
-                        text = "Đăng nhập",
-                        fontSize = 18.sp
-                    )
+                    if (loginUiState.isLoading) {
+                        CircularProgressIndicator(
+                            color = Color.White,
+                            strokeWidth = 4.dp,
+                            modifier = Modifier.size(22.dp)
+                        )
+                    } else {
+                        Text(
+                            text = "Đăng nhập",
+                            fontSize = 18.sp
+                        )
+                    }
                 }
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .wrapContentHeight(),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    Divider(
-                        modifier = Modifier.weight(1f)
-                    )
-                    Text(
-                        "HOẶC",
-                        style = MaterialTheme.typography.bodyMedium,
-                        modifier = Modifier.padding(horizontal = 16.dp)
-                    )
-                    Divider(
-                        modifier = Modifier.weight(1f)
-                    )
-                }
-                OutlinedButton(
-                    onClick = {},
-                    shape = RoundedCornerShape(16.dp),
-                    modifier = Modifier
-                        .height(48.dp)
-                        .fillMaxWidth(),
-                ) {
-                    Image(
-                        painter = painterResource(id = R.drawable.ic_google),
-                        contentDescription = "",
-                        modifier = Modifier.padding(vertical = 8.dp)
-                    )
-                    Box(modifier = Modifier.width(32.dp))
-                    Text(
-                        text = "Đăng nhập với Google",
-                        style = MaterialTheme.typography.bodyLarge.copy(Color.Black)
-                    )
-                }
+//                Row(
+//                    modifier = Modifier
+//                        .fillMaxWidth()
+//                        .wrapContentHeight(),
+//                    verticalAlignment = Alignment.CenterVertically,
+//                ) {
+//                    Divider(
+//                        modifier = Modifier.weight(1f)
+//                    )
+//                    Text(
+//                        "HOẶC",
+//                        style = MaterialTheme.typography.bodyMedium,
+//                        modifier = Modifier.padding(horizontal = 16.dp)
+//                    )
+//                    Divider(
+//                        modifier = Modifier.weight(1f)
+//                    )
+//                }
+//                OutlinedButton(
+//                    onClick = {},
+//                    shape = RoundedCornerShape(16.dp),
+//                    modifier = Modifier
+//                        .height(48.dp)
+//                        .fillMaxWidth(),
+//                ) {
+//                    Image(
+//                        painter = painterResource(id = R.drawable.ic_google),
+//                        contentDescription = "",
+//                        modifier = Modifier.padding(vertical = 8.dp)
+//                    )
+//                    Box(modifier = Modifier.width(32.dp))
+//                    Text(
+//                        text = "Đăng nhập với Google",
+//                        style = MaterialTheme.typography.bodyLarge.copy(Color.Black)
+//                    )
+//                }
+                Spacer(modifier = Modifier.height(10.dp))
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -507,11 +509,12 @@ fun LoginScreen(navController: NavController, accountViewModel: AccountViewModel
             },
             text = {
                 if (username.isEmpty() || password.isEmpty()) {
-                    Text("Vui lòng nhập đầy đủ thông tin")
+                    Text("Vui lòng nhập đầy đủ thông tin !")
                 } else {
                     Text("Tài khoản hoặc mật khẩu không chính xác")
                 }
             },
+            containerColor = Color.White,
             shape = RoundedCornerShape(15.dp),
             confirmButton = {
                 Button(
@@ -519,6 +522,7 @@ fun LoginScreen(navController: NavController, accountViewModel: AccountViewModel
                     colors = ButtonDefaults.buttonColors(
                         containerColor = Color(0xFF5D9EFF)
                     ),
+                    modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(10.dp)
                 ) {
                     Text("Xác nhận")

@@ -31,11 +31,6 @@ data class AddAccount(
     @SerializedName("locked_at") val lockedAt: String?
 )
 
-data class UpdatePassword(
-    @SerializedName("idPerson") var idPerson:String?,
-    @SerializedName("password") var password:String,
-)
-
 data class LoginRequest(
     val username: String,
     val password: String,

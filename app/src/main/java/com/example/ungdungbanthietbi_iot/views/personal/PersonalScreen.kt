@@ -537,40 +537,9 @@ fun AccountInfoSection(
                         // Email
                         Text("Email: ", fontWeight = FontWeight.Bold)
                         if (!customer.email_verified) {
-                            Text(text = "Chưa xác thực!", color = Color.Red)
-                        }
-                        else{
-                            Text(text = "Đã xác thực!", color = Color.Green)
-                        }
-                    }
-
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        OutlinedTextField(
-                            value = email.value,
-                            onValueChange = {
-                                email.value = it
-                                isButtonEnabled = checkIfChanged()
-                            },
-                            keyboardOptions = KeyboardOptions.Default.copy(keyboardType = KeyboardType.Email),
-                            modifier = Modifier
-                                .weight(1f)
-                                .onFocusChanged { isFocused = it.isFocused },
-                            colors = OutlinedTextFieldDefaults.colors(
-                                focusedBorderColor = Color(0xFF5F9EFF),
-                                unfocusedBorderColor = Color(0xFF5F9EFF),
-                                focusedLabelColor = Color(0xFF5F9EFF)
-                            ),
-                            shape = RoundedCornerShape(17.dp),
-                        )
-                        if (!customer.email_verified) {
-                            Spacer(modifier = Modifier.width(8.dp))
                             Text(
-                                text = "Xác thực",
-                                color = Color(0xFF5F9EFF),
-                                fontSize = 14.sp,
+                                text = "Xác thực !",
+                                color = Color.Red,
                                 modifier = Modifier
                                     .clickable {
                                         accountViewModel.sendOtp(email.value)
@@ -579,10 +548,30 @@ fun AccountInfoSection(
                                         isResendEnabled = false
                                         verificationCode = List(6) { "" }
                                     }
-                                    .padding(8.dp)
                             )
                         }
+                        else{
+                            Text(text = "Đã xác thực !", color = Color.Green)
+                        }
                     }
+                    OutlinedTextField(
+                        value = email.value,
+                        onValueChange = {
+                            email.value = it
+                            isButtonEnabled = checkIfChanged()
+                        },
+                        keyboardOptions = KeyboardOptions.Default.copy(keyboardType = KeyboardType.Email),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .onFocusChanged { if (it.isFocused) isFocused = true },
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = Color(0xFF5F9EFF),
+                            unfocusedBorderColor = Color(0xFF5F9EFF),
+                            focusedLabelColor = Color(0xFF5F9EFF)
+                        ),
+                        readOnly = true,
+                        shape = RoundedCornerShape(17.dp),
+                    )
 
                     Spacer(modifier = Modifier.height(8.dp))
 
@@ -815,7 +804,7 @@ fun AccountInfoSection(
                                         id = customer.id,
                                         surname = surnameValue,
                                         lastname = lastnameValue,
-                                        image = base64String, // TODO: Sau chuyển ảnh thành base64 (chưa làm)
+                                        image = base64String,
                                         email = email.value,
                                         email_verified = customer.email_verified,
                                         phone = phone.value,
@@ -1059,9 +1048,8 @@ fun AccountOptionsSection(
                                 // Đóng dialog
                                 openDialog.value = false
                                 // Điều hướng về IntroScreen sau khi đăng xuất
-                                navController.navigate(Screen.IntroScreen.route) {
-                                    // Xóa toàn bộ back stack để người dùng không quay lại HomeScreen
-                                    popUpTo(0) { inclusive = true }
+                                navController.navigate(Screen.LoginScreen.route) {
+                                    popUpTo(navController.graph.startDestinationId) { inclusive = true }
                                 }
                                 //Log.d("AccountOptions", "Navigated to IntroScreen after logout")
                             } catch (e: Exception) {
@@ -1166,11 +1154,6 @@ fun ChangePasswordSection(
     var kiemtramkmoi by remember { mutableStateOf("") }
 
     val accountViewModel: AccountViewModel = viewModel()
-
-    val account = accountViewModel.account
-
-//    accountViewModel.getUserByUsername(username)
-//    val password by remember { mutableStateOf(account?.password) }
 
     var isPasswordVisible by remember { mutableStateOf(false) }
     var isPasswordVisible1 by remember { mutableStateOf(false) }

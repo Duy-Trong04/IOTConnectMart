@@ -2,61 +2,48 @@ package com.example.ungdungbanthietbi_iot.views.signUp_signIn
 
 import android.annotation.SuppressLint
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.filled.Done
-import androidx.compose.material.icons.filled.Email
-import androidx.compose.material.icons.filled.Error
 import androidx.compose.material.icons.outlined.Email
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextField
-import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
-import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.example.ungdungbanthietbi_iot.R
 import com.example.ungdungbanthietbi_iot.navigation.Screen
@@ -81,122 +68,6 @@ import com.example.ungdungbanthietbi_iot.views.components.CustomerTextField
  *
  */
 
-//@OptIn(ExperimentalMaterial3Api::class)
-//@Composable
-//
-//fun ForgotPasswordScreen(navController: NavController,
-//                         accountViewModel: AccountViewModel) {
-//    // Biến nhận dữ liệu email từ người dùng
-//    var email by remember { mutableStateOf("") }
-//    // Khởi tạo FocusRequester cho các trường nhập liệu
-//    val focusRequesterEmail = remember { FocusRequester() }
-//
-//    var showErrorDialog by remember { mutableStateOf(false) }
-//    var errorMessage by remember { mutableStateOf("") }
-//
-//
-//    Scaffold(
-//        modifier = Modifier.fillMaxWidth(),
-//        content = { padding ->
-//            LazyColumn(
-//                modifier = Modifier
-//                    .fillMaxSize()
-//                    .padding(16.dp)
-//                    .background(Color.White),
-//                horizontalAlignment = Alignment.CenterHorizontally,
-//            ) {
-//                item {
-//                    Spacer(modifier = Modifier.height(50.dp))
-//
-//                    Text(
-//                        text = "KHÔI PHỤC MẬT KHẨU",
-//                        fontSize = 27.sp,
-//                        color = Color(0xFF085979),
-//                        fontWeight = FontWeight.Bold
-//                    )
-//
-//                    // Hiển thị logo từ file drawable
-//                    Image(
-//                        // Thay "logo" bằng tên file ảnh
-//                        painter = painterResource(id = R.drawable.logo),
-//                        contentDescription = "Logo",
-//                        modifier = Modifier.size(300.dp)
-//                    )
-//
-//                    Text(
-//                        text = "IOT Connect Mart",
-//                        fontSize = 27.sp,
-//                        color = Color(0xFF085979),
-//                        fontWeight = FontWeight.Bold
-//                    )
-//
-//                    Spacer(modifier = Modifier.height(16.dp))
-//                    //email
-//                    TextField(
-//                        value = email,
-//                        onValueChange = {email = it},
-//                        modifier = Modifier.width(350.dp).padding(4.dp),
-//                        placeholder = { Text(text = "Email") },
-//                        leadingIcon = {
-//                            Icon(imageVector = Icons.Default.Email,
-//                                contentDescription = "Email"
-//                            )
-//                        },
-//                        colors = TextFieldDefaults.colors(
-//                            focusedContainerColor = Color.White,
-//                            unfocusedContainerColor = Color.White,
-//                            focusedIndicatorColor = Color(0xFF00C3FF)
-//                        ),
-//                        singleLine = true,
-//                        keyboardOptions = KeyboardOptions.Default.copy(
-//                            keyboardType = KeyboardType.Email,
-//                            imeAction = ImeAction.Done
-//                        )
-//                    )
-//
-//                    //Button
-//                    Spacer(modifier = Modifier.height(16.dp))
-//                    Button(
-//                        onClick = { /* Chuyển sang màn hình xác thực OTP(VerifyOTPScreen) */
-//                            if (email.isNotEmpty()) {
-//                                accountViewModel.sendOtp(email)
-//                                navController.navigate(Screen.VerifyOTPScreen.route + "?email=$email")
-//                            } else {
-//                                errorMessage = "Vui lòng nhập email"
-//                                showErrorDialog = true
-//                            }
-//                        },
-//                        modifier = Modifier
-//                            .width(350.dp)
-//                            .padding(horizontal = 10.dp)
-//                            .height(45.dp),
-//                        shape = MaterialTheme.shapes.small,
-//                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF00C3FF))
-//                    ) {
-//                        Text(text = "GỬI YÊU CẦU", fontSize = 23.sp, fontWeight = FontWeight.Bold)
-//                    }
-//
-//                    // Error Dialog
-//                    if (showErrorDialog) {
-//                        AlertDialog(
-//                            onDismissRequest = { showErrorDialog = false },
-//                            title = { Text("Lỗi") },
-//                            text = { Text(errorMessage) },
-//                            confirmButton = {
-//                                Button(onClick = { showErrorDialog = false }) {
-//                                    Text("OK")
-//                                }
-//                            }
-//                        )
-//                    }
-//                }
-//            }
-//
-//        }
-//    )
-//
-//}
-
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -208,8 +79,25 @@ fun ForgotPasswordScreen(
     var email by remember { mutableStateOf("") }
 
     var showErrorDialog by remember { mutableStateOf(false) }
+    var showSuccessDialog by remember { mutableStateOf(false) }
     var errorMessage by remember { mutableStateOf("") }
+    // Lấy trạng thái từ ViewModel
+    val isLoading by accountViewModel.isLoading.collectAsState()
+    val sendOtpResult by accountViewModel.sendOtpResult.collectAsState()
 
+    // Theo dõi kết quả gửi OTP
+    LaunchedEffect(sendOtpResult) {
+        sendOtpResult?.let { response ->
+            if (response.isSuccessful) {
+                showSuccessDialog = true
+            } else {
+                errorMessage = "Không tìm thấy email"
+                showErrorDialog = true
+            }
+            // Reset trạng thái trong ViewModel để tránh lặp lại
+            accountViewModel.resetSendOtpResult()
+        }
+    }
     Scaffold(
         topBar = {
             TopAppBar(
@@ -285,9 +173,8 @@ fun ForgotPasswordScreen(
                     onClick = {
                         if (email.isNotEmpty()) {
                             accountViewModel.sendOtp(email)
-                            navController.navigate(Screen.VerifyOTPScreen.route + "?email=$email")
                         } else {
-                            errorMessage = "Vui lòng nhập email!"
+                            errorMessage = "Vui lòng nhập email !"
                             showErrorDialog = true
                         }
                     },
@@ -296,13 +183,23 @@ fun ForgotPasswordScreen(
                         .height(48.dp)
                         .fillMaxWidth(),
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = Color(0xFF5D9EFF)
-                    )
+                        containerColor = Color(0xFF5D9EFF),
+                        disabledContainerColor = Color(0xFF5D9EFF)
+                    ),
+                    enabled = !isLoading // Vô hiệu hóa nút khi đang loading
                 ) {
-                    Text(
-                        text = "Gửi yêu cầu",
-                        fontSize = 18.sp
-                    )
+                    if (isLoading) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(22.dp),
+                            strokeWidth = 4.dp,
+                            color = Color.White
+                        )
+                    } else {
+                        Text(
+                            text = "Gửi yêu cầu",
+                            fontSize = 18.sp
+                        )
+                    }
                 }
                 Box(modifier = Modifier.height(16.dp))
                 // Error Dialog
@@ -310,16 +207,15 @@ fun ForgotPasswordScreen(
                     AlertDialog(
                         onDismissRequest = { showErrorDialog = false },
                         title = { Text("Lỗi") },
-                        titleContentColor = Color.Red,
-                        icon = { Icon(Icons.Filled.Error, contentDescription = "") },
-                        iconContentColor =  Color.Red,
                         text = { Text(errorMessage) },
+                        containerColor = Color.White,
                         confirmButton = {
                             Button(
                                 onClick = { showErrorDialog = false },
                                 colors = ButtonDefaults.buttonColors(
                                     containerColor = Color(0xFF5D9EFF)
-                                )
+                                ),
+                                shape = RoundedCornerShape(10.dp)
                             ) {
                                 Text("Xác nhận")
                             }
@@ -329,9 +225,35 @@ fun ForgotPasswordScreen(
                                 onClick = { showErrorDialog = false },
                                 colors = ButtonDefaults.buttonColors(
                                     containerColor = Color.LightGray
-                                )
+                                ),
+                                shape = RoundedCornerShape(10.dp)
                             ) {
                                 Text("Hủy")
+                            }
+                        }
+                    )
+                }
+                if (showSuccessDialog) {
+                    AlertDialog(
+                        onDismissRequest = { showSuccessDialog = false },
+                        title = { Text("Thông báo") },
+                        containerColor = Color.White,
+                        text = { Text(text = "Mã OTP đã được gửi đến email của bạn.\nVui lòng kiểm tra và nhập mã OTP vào ô bên dưới") },
+                        confirmButton = {
+                            Button(
+                                onClick = {
+                                    showSuccessDialog = false
+                                    navController.navigate(Screen.VerifyOTPScreen.route + "?email=$email"){
+                                        popUpTo(0) { inclusive = true }
+                                    }
+                                          },
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = Color(0xFF5D9EFF)
+                                ),
+                                modifier = Modifier.fillMaxWidth(),
+                                shape = RoundedCornerShape(10.dp)
+                            ) {
+                                Text("Tiếp tục")
                             }
                         }
                     )

@@ -97,10 +97,10 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
-import androidx.compose.ui.graphics.painter.BitmapPainter
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -120,7 +120,6 @@ import com.example.ungdungbanthietbi_iot.viewModels.LikedViewModel
 import com.example.ungdungbanthietbi_iot.models.SlideShow
 import com.example.ungdungbanthietbi_iot.viewModels.SlideShowViewModel
 import com.example.ungdungbanthietbi_iot.navigation.Screen
-import com.example.ungdungbanthietbi_iot.utils.base64ToBitmap
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import com.example.ungdungbanthietbi_iot.viewModels.CartViewModel
@@ -129,8 +128,6 @@ import com.example.ungdungbanthietbi_iot.views.personal.PersonalScreen
 import com.example.ungdungbanthietbi_iot.utils.formatGiaTien
 import com.example.ungdungbanthietbi_iot.utils.formatGiaTienInt
 import com.example.ungdungbanthietbi_iot.viewModels.CategoryViewModel
-import com.example.ungdungbanthietbi_iot.views.components.AnimatedNavigationBar
-import com.example.ungdungbanthietbi_iot.views.components.ButtonData
 
 @Composable
 fun getCategoryIcon(categoryName: String): ImageVector {
@@ -166,7 +163,6 @@ fun HomeScreen(
     LaunchedEffect(id) {
         slideShowViewModel.getAllSlideShow()
         deviceViewModel.getAllDevice()
-        deviceViewModel.getDeviceFeatured()
         categoryViewModel.getCategories()
         if(id != null){
             likedViewModel.getLikedByIdCustomer(id)
@@ -815,27 +811,27 @@ fun HomeContent(
                     }
                 }
             }
-            item {
-                SectionTitle("Sản phẩm nổi bật")
-                LazyRow(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 12.dp),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    items(listDeviceFeatured) { device ->
-                        CardDevice(
-                            device = device,
-                            isFavorite = isFavorite,
-                            idCustomer = id,
-                            username = username,
-                            password = password,
-                            deviceViewModel = deviceViewModel,
-                            navController = navController
-                        )
-                    }
-                }
-            }
+//            item {
+//                SectionTitle("Sản phẩm nổi bật")
+//                LazyRow(
+//                    modifier = Modifier
+//                        .fillMaxWidth()
+//                        .padding(horizontal = 12.dp),
+//                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+//                ) {
+//                    items(listDeviceFeatured) { device ->
+//                        CardDevice(
+//                            device = device,
+//                            isFavorite = isFavorite,
+//                            idCustomer = id,
+//                            username = username,
+//                            password = password,
+//                            deviceViewModel = deviceViewModel,
+//                            navController = navController
+//                        )
+//                    }
+//                }
+//            }
             item {
                 Row(
                     modifier = Modifier
@@ -937,9 +933,8 @@ fun SectionTitle(text: String) {
     Text(
         text = text,
         modifier = Modifier.padding(start = 16.dp, top = 16.dp, bottom = 12.dp),
-        color = Color(0xFF0D47A1),
-        fontSize = 20.sp,
-        fontWeight = FontWeight.Bold
+        color = Color(0xFF5D9EFF),
+        fontSize = 18.sp
     )
 }
 
@@ -956,6 +951,12 @@ fun CardFavorites(device: LikedProduct, isFavorite: Boolean, idCustomer: String?
     }
     LaunchedEffect(listLiked) {
         check = listLiked.any { it.product_id == device.product_id }
+    }
+    val deviceViewModel: DeviceViewModel = viewModel()
+    var bitmap by remember { mutableStateOf<Bitmap?>(null) }
+    // Tải hình ảnh
+    LaunchedEffect(device) {
+        bitmap = device.image?.let { deviceViewModel.getDeviceImageBitmapImage(it) }
     }
     Card(
         modifier = Modifier
@@ -993,14 +994,21 @@ fun CardFavorites(device: LikedProduct, isFavorite: Boolean, idCustomer: String?
                     .clip(RoundedCornerShape(12.dp)) // Bo góc hình ảnh đồng bộ với card
                     .background(Color(0xFFF5F5F5)) // Màu nền nhẹ khi chưa có hình
             ) {
-                val bitmap = base64ToBitmap(device.image)
-                if (bitmap != null) {
+                bitmap?.let {
                     Image(
-                        painter = BitmapPainter(bitmap.asImageBitmap()),
+                        bitmap = it.asImageBitmap(),
                         contentDescription = device.name.ifEmpty { "Hình ảnh sản phẩm" },
                         modifier = Modifier
                             .fillMaxSize(),
-                        contentScale = ContentScale.Crop // Crop để hình ảnh lấp đầy khung
+                        contentScale = ContentScale.Crop
+                    )
+                } ?: run {
+                    Image(
+                        painter = painterResource(id = android.R.drawable.ic_menu_gallery),
+                        contentDescription = "Product Image",
+                        modifier = Modifier
+                            .fillMaxSize(),
+                        contentScale = ContentScale.Crop
                     )
                 }
                 IconButton(
@@ -1261,6 +1269,12 @@ fun CategoryItem(category: Category, navController: NavController, username: Str
         "Đèn thông minh" -> "https://cdn2.cellphones.com.vn/insecure/rs:fill:358:358/q:90/plain/https://cellphones.com.vn/media/catalog/product/a/p/apple-watch-se-2023-lte-40mm.png"
         else -> "https://via.placeholder.com/150" // Ảnh mặc định
     }
+    val deviceViewModel: DeviceViewModel = viewModel()
+    var bitmap by remember { mutableStateOf<Bitmap?>(null) }
+    // Tải hình ảnh
+    LaunchedEffect(category) {
+        bitmap = category.image?.let { deviceViewModel.getDeviceImageBitmapImage(it) }
+    }
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = Modifier
@@ -1275,22 +1289,28 @@ fun CategoryItem(category: Category, navController: NavController, username: Str
     ) {
         Box(
             modifier = Modifier
-                .size(80.dp)
+                .size(70.dp)
                 .clip(CircleShape)
                 .background(Color(0xFFF5F5F5))
                 .border(1.dp, Color(0xFFE0E0E0), CircleShape)
-                .padding(12.dp),
+                .padding(10.dp),
             contentAlignment = Alignment.Center
         ) {
-            AsyncImage(
-                model = ImageRequest.Builder(LocalContext.current)
-                    .data(imageUrl)
-                    .crossfade(true)
-                    .build(),
-                contentDescription = category.name,
-                modifier = Modifier.size(60.dp),
-                contentScale = ContentScale.Fit
-            )
+            bitmap?.let {
+                Image(
+                    bitmap = it.asImageBitmap(),
+                    contentDescription = category.name.ifEmpty { "Hình ảnh sản phẩm" },
+                    modifier = Modifier.size(60.dp),
+                    contentScale = ContentScale.Fit
+                )
+            } ?: run {
+                Image(
+                    painter = painterResource(id = android.R.drawable.ic_menu_gallery),
+                    contentDescription = "Product Image",
+                    modifier = Modifier.size(60.dp),
+                    contentScale = ContentScale.Fit
+                )
+            }
         }
         Spacer(modifier = Modifier.height(8.dp))
         Text(
@@ -1306,7 +1326,11 @@ fun CategoryItem(category: Category, navController: NavController, username: Str
 
 @Composable
 fun SlideImage(base64String: String) {
-    val bitmap = base64ToBitmap(base64String)
+    val deviceViewModel: DeviceViewModel = viewModel()
+    var bitmap by remember { mutableStateOf<Bitmap?>(null) }
+    LaunchedEffect (Unit){
+        bitmap = deviceViewModel.getDeviceImageBitmapImage(base64String)
+    }
     AnimatedContent(
         targetState = bitmap,
         modifier = Modifier.fillMaxSize(),

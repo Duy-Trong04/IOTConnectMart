@@ -35,7 +35,7 @@ class DeviceViewModel:ViewModel() {
     val listDevice: StateFlow<List<Device>> get() = _listDevice.asStateFlow()
 
 
-    var deviceMap = mutableStateMapOf<Int, Device>()
+    var deviceMap = mutableStateMapOf<String, Device>()
         private set
 
     private val _listDeviceSearch = MutableStateFlow<List<Device>>(emptyList())
@@ -44,7 +44,7 @@ class DeviceViewModel:ViewModel() {
     val searchQuery: StateFlow<String> get() = _searchQuery
     private val _searchError = MutableStateFlow<String?>(null)
     val searchError: StateFlow<String?> get() = _searchError
-    fun getDeviceBySlug2(id: Int) {
+    fun getDeviceBySlug2(id: String) {
         viewModelScope.launch(Dispatchers.IO) {
             try {
                 val response = RetrofitClient.deviceAPIService.getDeviceById(id)
@@ -75,17 +75,7 @@ class DeviceViewModel:ViewModel() {
         }
     }
 
-    fun getDeviceFeatured(){
-        viewModelScope.launch(Dispatchers.IO) {
-            try {
-                listDeviceFeatured = RetrofitClient.deviceAPIService.getDeviceFeatured()
-            } catch (e: Exception) {
-                e.printStackTrace() // Xử lý lỗi
-            }
-        }
-    }
-
-    fun getDeviceBySlug(id: Int){
+    fun getDeviceBySlug(id: String){
         viewModelScope.launch{
             try {
                 val response = RetrofitClient.deviceAPIService.getDeviceById(id)
@@ -158,7 +148,7 @@ class DeviceViewModel:ViewModel() {
         _searchQuery.value = query
     }
 
-    fun getDeviceCheckOut(id: Int) {
+    fun getDeviceCheckOut(id: String) {
         viewModelScope.launch {
             try {
                 val response = RetrofitClient.deviceAPIService.getDeviceById(id)
@@ -209,6 +199,12 @@ class DeviceViewModel:ViewModel() {
     suspend fun getDeviceImageBitmap(device: Device): Bitmap? {
         return withContext(Dispatchers.IO) {
             decodeBase64ToBitmap(device.image)
+        }
+    }
+
+    suspend fun getDeviceImageBitmapImage(image: String): Bitmap? {
+        return withContext(Dispatchers.IO) {
+            decodeBase64ToBitmap(image)
         }
     }
 

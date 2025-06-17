@@ -1,10 +1,10 @@
 package com.example.ungdungbanthietbi_iot.views.personal
 
 import android.annotation.SuppressLint
+import android.graphics.Bitmap
 import android.util.Log
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -48,6 +48,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -55,17 +56,15 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.asImageBitmap
-import androidx.compose.ui.graphics.painter.BitmapPainter
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.example.ungdungbanthietbi_iot.viewModels.OrderViewModel
 import com.example.ungdungbanthietbi_iot.navigation.Screen
-import com.example.ungdungbanthietbi_iot.utils.base64ToBitmap
 import com.example.ungdungbanthietbi_iot.utils.formatDateTimeZone
 import com.example.ungdungbanthietbi_iot.utils.formatGiaTien
-import com.example.ungdungbanthietbi_iot.utils.getCurrentTimestampEX
+import com.example.ungdungbanthietbi_iot.viewModels.DeviceViewModel
 import com.example.ungdungbanthietbi_iot.viewModels.ReviewViewModel
 import com.example.ungdungbanthietbi_iot.views.order_detail.calculateDaysSinceReceived
 import java.net.URLEncoder
@@ -74,9 +73,10 @@ import java.time.OffsetDateTime
 enum class OrderStatus(val value: Int, val displayName: String) {
     CHO_XAC_NHAN(0, "Chờ xác nhận"),
     CHO_LAY_HANG(1, "Đang chuẩn bị hàng"),
-    CHO_GIAO_HANG(2, "Đang giao hàng"),
-    DA_GIAO(3, "Đã giao"),
-    HOAN_TAT(4, "Hoàn tất"),
+    CHO_GIAO_HANG(2, "Chờ giao hàng"),
+    DANG_GIAO_HANG(3, "Đang giao hàng"),
+    DA_GIAO(4, "Đã giao"),
+    HOAN_TAT(5, "Hoàn tất"),
     DA_HUY(-1, "Đã hủy")
 }
 
@@ -162,9 +162,10 @@ fun OrderListScreen(navController: NavController, idCustomer: String?) {
                     0 -> ChoXacNhanScreen(navController, idCustomer)
                     1 -> ChoLayHangScreen(navController, idCustomer)
                     2 -> ChoGiaoHangScreen(navController, idCustomer)
-                    3 -> DaGiaoHangScreen(navController, idCustomer)
-                    4 -> HoanTatScreen(navController, idCustomer)
-                    5 -> HuyDonHangScreen(navController, idCustomer)
+                    3 -> DangGiaoHangScreen(navController, idCustomer)
+                    4 -> DaGiaoHangScreen(navController, idCustomer)
+                    5 -> HoanTatScreen(navController, idCustomer)
+                    6 -> HuyDonHangScreen(navController, idCustomer)
                 }
             }
         }
@@ -476,6 +477,116 @@ fun ChoGiaoHangScreen(navController: NavController, idCustomer: String?) {
                             item {
                                 Text(
                                     text = "Không có hóa đơn nào đang được giao hàng.",
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(16.dp),
+                                    textAlign = TextAlign.Center
+                                )
+                            }
+                        } else {
+                            items(pendingOrders) { order ->
+                                if (idCustomer != null) {
+                                    OrderItem(
+                                        order,
+                                        navController,
+                                        false,
+                                        idCustomer,
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+@SuppressLint("NewApi")
+@Composable
+fun DangGiaoHangScreen(navController: NavController, idCustomer: String?) {
+    val orderViewModel: OrderViewModel = viewModel()
+    val listOrder by orderViewModel.listOrders.collectAsState()
+
+    val isLoading = remember { mutableStateOf(false) }
+    val errorMessage = remember { mutableStateOf<String?>(null) }
+
+    LaunchedEffect(key1 = idCustomer) {
+        if (idCustomer != null) {
+            isLoading.value = true
+            errorMessage.value = null
+            try {
+                //tìm order có status bằng 1
+                orderViewModel.getOrdersByCustomer(idCustomer)
+                Log.d("ChoXacNhanScreen", "Successfully triggered order fetch for customer: $idCustomer")
+            } catch (e: Exception) {
+                val userFriendlyError = when (e) {
+                    is java.net.UnknownHostException -> "Không thể kết nối đến server. Vui lòng kiểm tra kết nối mạng."
+                    is retrofit2.HttpException -> {
+                        val httpCode = e.code()
+                        Log.e("ChoXacNhanScreen", "HTTP error $httpCode: ${e.message()}")
+                        when (httpCode) {
+                            400 -> "Yêu cầu không hợp lệ. Vui lòng thử lại."
+                            401 -> "Không có quyền truy cập. Vui lòng đăng nhập lại."
+                            404 -> "Không tìm thấy đơn hàng cho khách hàng này."
+                            500 -> "Lỗi server. Vui lòng thử lại sau."
+                            else -> "Lỗi server: ${e.message}"
+                        }
+                    }
+                    else -> "Lỗi không xác định: ${e.message}"
+                }
+                errorMessage.value = userFriendlyError
+            } finally {
+                isLoading.value = false
+            }
+        }
+    }
+
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(4.dp)
+    ) {
+        when {
+            isLoading.value -> {
+                CircularProgressIndicator(
+                    modifier = Modifier.align(Alignment.Center)
+                )
+            }
+
+            errorMessage.value != null -> {
+                Text(
+                    text = errorMessage.value ?: "Đã xảy ra lỗi",
+                    color = Color.Red,
+                    modifier = Modifier.align(Alignment.Center),
+                    textAlign = TextAlign.Center
+                )
+            }
+
+            listOrder?.data?.data?.isEmpty() == true -> {
+                Text(
+                    text = "Không có hóa đơn nào đang giao hàng.",
+                    modifier = Modifier.align(Alignment.Center),
+                    textAlign = TextAlign.Center,
+                )
+            }
+
+            else -> {
+                LazyColumn(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(4.dp)
+                ) {
+                    listOrder?.data?.let { orderData ->
+                        // Filter orders with status == 1
+                        val pendingOrders = orderData.data
+                            .filter { it.status == OrderStatus.DANG_GIAO_HANG.value  }
+                            .sortedByDescending { OffsetDateTime.parse(it.created_at) }
+                        Log.d("ChoXacNhanScreen", "Filtered ${pendingOrders.size} orders with status == 3")
+                        if (pendingOrders.isEmpty()) {
+                            item {
+                                Text(
+                                    text = "Không có hóa đơn nào đang giao hàng.",
                                     modifier = Modifier
                                         .fillMaxWidth()
                                         .padding(16.dp),
@@ -867,6 +978,9 @@ fun OrderItem(
     // Lọc các mục trùng product_id, giữ mục có quantity lớn nhất
     val filteredDetails = listDetail.groupBy { it.product_id }
         .map { (_, details) -> details.maxByOrNull { it.quantity }!! }
+    val deviceViewModel: DeviceViewModel = viewModel()
+    // Map để lưu trữ bitmap theo product_id
+    val bitmapMap = remember { mutableStateMapOf<String, Bitmap?>() }
     Card(
         colors = CardDefaults.cardColors(
             containerColor = Color.White
@@ -891,6 +1005,13 @@ fun OrderItem(
                 Spacer(modifier = Modifier.height(8.dp))
                 Column {
                     filteredDetails.forEach { detail ->
+                        // Tải hình ảnh cho từng product_id
+                        LaunchedEffect(detail.product_id) {
+                            if (bitmapMap[detail.product_id] == null) {
+                                val bitmap = deviceViewModel.getDeviceImageBitmapImage(detail.image)
+                                bitmapMap[detail.product_id] = bitmap
+                            }
+                        }
                         val existingReview = listReviews.find { review ->
                             review.idCustomer == idCustomer && review.idDevice == detail.product_id
                         }
@@ -913,17 +1034,22 @@ fun OrderItem(
                                 modifier = Modifier.weight(1f),
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
-                                val bitmap = base64ToBitmap(detail.image)
-                                if (bitmap != null) {
+                                bitmapMap[detail.product_id]?.let { bitmap ->
                                     Image(
-                                        painter = BitmapPainter(bitmap.asImageBitmap()),
-                                        contentDescription = "Hình ảnh sản phẩm",
-                                        modifier = Modifier
-                                            .size(80.dp)
-                                            .padding(end = 8.dp),
-                                        contentScale = ContentScale.Fit
+                                        bitmap = bitmap.asImageBitmap(),
+                                        contentDescription = detail.product_name.ifEmpty { "Hình ảnh sản phẩm" },
+                                        modifier = Modifier.size(100.dp),
+                                        contentScale = ContentScale.Crop
+                                    )
+                                } ?: run {
+                                    Image(
+                                        painter = painterResource(id = android.R.drawable.ic_menu_gallery),
+                                        contentDescription = "Product Image",
+                                        modifier = Modifier.size(100.dp),
+                                        contentScale = ContentScale.Crop
                                     )
                                 }
+                                Spacer(modifier = Modifier.width(4.dp))
                                 Column {
                                     Text(
                                         text = detail.product_name,
@@ -952,23 +1078,24 @@ fun OrderItem(
                                     }
                                 }
                             }
-                            if (order.status == 4) {
+                            if (order.status == 5) {
                                 if (isReviewed && existingReview != null) {
                                     if (canEditReview) {
                                         Button(
                                             onClick = {
                                                 navController.navigate(Screen.Update_Rating_Screen.route+"?idReview=${existingReview.idReview}&idCustomer=$idCustomer")
                                             },
-                                            shape = RoundedCornerShape(8.dp),
+                                            modifier = Modifier.padding(start = 8.dp), // Đặt chiều cao cố định
                                             colors = ButtonDefaults.buttonColors(
-                                                containerColor = Color(0xFF5D9EFF),
-                                                contentColor = Color.White
+                                                containerColor = Color.White,
+                                                contentColor = Color(0xFF5D9EFF)
                                             ),
-                                            modifier = Modifier.padding(start = 8.dp)
+                                            border = BorderStroke(1.dp, Color(0xFF5D9EFF)),
+                                            shape = RoundedCornerShape(5.dp)
                                         ) {
                                             Text(
                                                 text = "Chỉnh sửa",
-                                                fontSize = 14.sp
+                                                fontSize = 13.sp
                                             )
                                         }
                                     }
@@ -976,17 +1103,20 @@ fun OrderItem(
                                 }
                                 else {
                                     Button(
-                                        onClick = { navController.navigate(Screen.Rating_Screen.route + "?idCustomer=$idCustomer&idDevice=${detail.product_id}") },
-                                        shape = RoundedCornerShape(8.dp),
+                                        onClick = {
+                                            navController.navigate(Screen.Rating_Screen.route + "?idCustomer=$idCustomer&idDevice=${detail.product_id}")
+                                                  },
+                                        modifier = Modifier.padding(start = 8.dp), // Đặt chiều cao cố định
                                         colors = ButtonDefaults.buttonColors(
-                                            containerColor = Color(0xFF5D9EFF),
-                                            contentColor = Color.White
+                                            containerColor = Color.White,
+                                            contentColor = Color(0xFF5D9EFF)
                                         ),
-                                        modifier = Modifier.padding(start = 8.dp)
+                                        border = BorderStroke(1.dp, Color(0xFF5D9EFF)),
+                                        shape = RoundedCornerShape(5.dp)
                                     ) {
                                         Text(
                                             text = "Đánh giá",
-                                            fontSize = 14.sp
+                                            fontSize = 13.sp
                                         )
                                     }
                                 }

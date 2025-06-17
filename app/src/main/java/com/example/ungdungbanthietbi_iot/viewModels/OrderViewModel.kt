@@ -1,9 +1,7 @@
 package com.example.ungdungbanthietbi_iot.viewModels
 
 import android.util.Log
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.ungdungbanthietbi_iot.config.RetrofitClient
@@ -12,20 +10,14 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import android.content.Context
-import android.content.SharedPreferences
 import androidx.compose.runtime.State
-import androidx.compose.runtime.mutableIntStateOf
 import com.example.ungdungbanthietbi_iot.api.CheckoutResponse
 import com.example.ungdungbanthietbi_iot.api.OrderData
 import com.example.ungdungbanthietbi_iot.api.OrderDataCheckOut
 import com.example.ungdungbanthietbi_iot.api.OrderRequestCancel
 import com.example.ungdungbanthietbi_iot.api.OrderResponse
 import com.example.ungdungbanthietbi_iot.models.CheckoutRequest
-import com.example.ungdungbanthietbi_iot.models.Notice
 import com.example.ungdungbanthietbi_iot.models.Order
-import com.example.ungdungbanthietbi_iot.utils.getCurrentTimestamp
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.asStateFlow
 
 sealed class CheckoutState {

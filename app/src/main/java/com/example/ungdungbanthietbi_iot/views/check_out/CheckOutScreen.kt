@@ -1,24 +1,9 @@
 package com.example.ungdungbanthietbi_iot.views.check_out
 
 import android.annotation.SuppressLint
-import android.app.Activity
-import android.content.BroadcastReceiver
-import android.content.Context
-import android.content.Intent
-import android.content.IntentFilter
 import android.graphics.Bitmap
 import android.net.Uri
 import android.util.Log
-import android.view.WindowManager
-import android.webkit.ConsoleMessage
-import android.webkit.WebChromeClient
-import android.webkit.WebResourceError
-import android.webkit.WebResourceRequest
-import android.webkit.WebSettings
-import android.webkit.WebView
-import android.webkit.WebViewClient
-import androidx.activity.ComponentActivity
-import androidx.activity.compose.BackHandler
 import androidx.browser.customtabs.CustomTabsIntent
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -39,9 +24,8 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.LocationOn
-import androidx.compose.material3.BottomAppBar
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -57,10 +41,10 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableDoubleStateOf
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -69,55 +53,41 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
-import androidx.compose.ui.graphics.painter.BitmapPainter
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
-import coil.compose.AsyncImage
 import com.example.ungdungbanthietbi_iot.MainActivity
 import com.example.ungdungbanthietbi_iot.api.PaymentRequest
 import com.example.ungdungbanthietbi_iot.dataStore
-import com.example.ungdungbanthietbi_iot.models.AddressBook
 import com.example.ungdungbanthietbi_iot.models.CheckoutRequest
-import com.example.ungdungbanthietbi_iot.viewModels.AccountViewModel
 import com.example.ungdungbanthietbi_iot.viewModels.AddressViewModel
 import com.example.ungdungbanthietbi_iot.viewModels.CartViewModel
-import com.example.ungdungbanthietbi_iot.viewModels.CustomerViewModel
 import com.example.ungdungbanthietbi_iot.models.Device
 import com.example.ungdungbanthietbi_iot.viewModels.DeviceViewModel
-import com.example.ungdungbanthietbi_iot.models.Notice
-import com.example.ungdungbanthietbi_iot.viewModels.NoticeViewModel
-import com.example.ungdungbanthietbi_iot.models.Order
 import com.example.ungdungbanthietbi_iot.viewModels.OrderViewModel
-import com.example.ungdungbanthietbi_iot.models.OrderDetail
 import com.example.ungdungbanthietbi_iot.models.OrderRequest
 import com.example.ungdungbanthietbi_iot.models.Payment
 import com.example.ungdungbanthietbi_iot.models.Product
 import com.example.ungdungbanthietbi_iot.models.Shipping
-import com.example.ungdungbanthietbi_iot.viewModels.OrderDetailViewModel
 import com.example.ungdungbanthietbi_iot.navigation.Screen
-import com.example.ungdungbanthietbi_iot.utils.base64ToBitmap
 import com.example.ungdungbanthietbi_iot.utils.formatGiaTien
-import com.example.ungdungbanthietbi_iot.utils.getCurrentTimestamp
 import com.example.ungdungbanthietbi_iot.utils.getCurrentTimestampEX
 import com.example.ungdungbanthietbi_iot.utils.isNetworkAvailable
 import com.example.ungdungbanthietbi_iot.viewModels.CheckoutState
 import com.example.ungdungbanthietbi_iot.viewModels.VNPayViewModel
 import kotlinx.coroutines.flow.first
-import kotlinx.serialization.json.Json
 import java.net.URLEncoder
-import java.text.DecimalFormat
 
 
 /** Giao diện màn hình thanh toán (CheckoutScreen)
@@ -141,7 +111,7 @@ import java.text.DecimalFormat
 @Composable
 fun CheckoutScreen(
     navController: NavController,
-    selectedProducts: List<Triple<Int, Int, Int>>,
+    selectedProducts: List<Triple<String, Int, Int>>,
     tongtien: Double,
     username: String,
     idCustomer: String,
@@ -160,7 +130,7 @@ fun CheckoutScreen(
     val address = addressViewModel.address
     val isLoadingAddress by addressViewModel.isLoading.collectAsState()
     val errorMessage = addressViewModel.errorMessage
-    val amount by remember { mutableStateOf(tongtien + 30000) }
+    val amount by remember { mutableDoubleStateOf(tongtien + 30000) }
     // State để theo dõi việc loading sản phẩm
     var isLoadingProducts by remember { mutableStateOf(true) }
     // State để kích hoạt cuộc gọi API
@@ -196,9 +166,9 @@ fun CheckoutScreen(
         selectedProducts.forEach { triple ->
             Log.d("CheckoutScreen", "Sản phẩm: idDevice=${triple.first}, số lượng=${triple.second}, cartId=${triple.third}")
             val deviceId = triple.first
-            if (!loadedDeviceIds.contains(deviceId.toString())) {
+            if (!loadedDeviceIds.contains(deviceId)) {
                 deviceViewModel.getDeviceCheckOut(deviceId)
-                loadedDeviceIds.add(deviceId.toString())
+                loadedDeviceIds.add(deviceId)
             }
         }
     }
@@ -455,7 +425,7 @@ fun CheckoutScreen(
                     },
                     navigationIcon = {
                         IconButton(onClick = { navController.popBackStack() }) {
-                            Icon(imageVector = Icons.Filled.ArrowBack, contentDescription = "Back")
+                            Icon(imageVector = Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
                         }
                     },
                     colors = TopAppBarDefaults.topAppBarColors(
@@ -510,7 +480,7 @@ fun CheckoutScreen(
                                         note = ""
                                     ),
                                     payment = Payment(
-                                        paymentMethod = selectedPaymentMethod,
+                                        paymentMethod = if(selectedPaymentMethod == "Thanh toán khi nhận hàng (COD)") "COD" else "VNPay",
                                         sameAsShipping = true,
                                         cardNumber = "",
                                         cardName = "",
@@ -689,16 +659,6 @@ fun CheckoutScreen(
                                 onSelected = { selectedPaymentMethod = it }
                             )
                             PaymentMethodOption(
-                                method = "Chuyển khoản ngân hàng",
-                                selected = selectedPaymentMethod,
-                                onSelected = { selectedPaymentMethod = it }
-                            )
-                            PaymentMethodOption(
-                                method = "Momo",
-                                selected = selectedPaymentMethod,
-                                onSelected = { selectedPaymentMethod = it }
-                            )
-                            PaymentMethodOption(
                                 method = "VNPay",
                                 selected = selectedPaymentMethod,
                                 onSelected = { selectedPaymentMethod = it }
@@ -801,7 +761,12 @@ fun DeviceItem(
     device: Device,
     stock:Int
 ) {
-    val bitmap = base64ToBitmap(device.image)
+    val deviceViewModel: DeviceViewModel = viewModel()
+    var bitmap by remember { mutableStateOf<Bitmap?>(null) }
+    // Tải hình ảnh
+    LaunchedEffect(device) {
+        bitmap = deviceViewModel.getDeviceImageBitmap(device)
+    }
     Card(
         modifier = Modifier
             .padding(4.dp)
@@ -821,10 +786,18 @@ fun DeviceItem(
                     .fillMaxWidth(),
                 verticalAlignment = Alignment.Top
             ) {
-                if (bitmap != null) {
+                bitmap?.let {
                     Image(
-                        painter = BitmapPainter(bitmap.asImageBitmap()),
-                        contentDescription = "Hình ảnh sản phẩm",
+                        bitmap = it.asImageBitmap(),
+                        contentDescription = device.name.ifEmpty { "Hình ảnh sản phẩm" },
+                        modifier = Modifier
+                            .size(100.dp),
+                        contentScale = ContentScale.Fit
+                    )
+                } ?: run {
+                    Image(
+                        painter = painterResource(id = android.R.drawable.ic_menu_gallery),
+                        contentDescription = "Product Image",
                         modifier = Modifier
                             .size(100.dp),
                         contentScale = ContentScale.Fit

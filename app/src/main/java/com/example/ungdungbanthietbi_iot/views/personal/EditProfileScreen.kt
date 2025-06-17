@@ -1,5 +1,6 @@
 package com.example.ungdungbanthietbi_iot.views.personal
 
+import android.annotation.SuppressLint
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -38,14 +39,13 @@ import java.time.format.DateTimeFormatter
  Output: Hiện thị Màn hình Hồ sơ cá nhân của người dùng
 */
 
+@SuppressLint("NewApi")
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalCoilApi::class)
 //@Preview(showBackground = true)
 @Composable
 fun EditProfileScreen(navController: NavHostController, username:String) {
     var openDialog by remember { mutableStateOf(false) }
     val customerViewModel: CustomerViewModel = viewModel()
-    val accountViewModel: AccountViewModel = viewModel()
-    val account = accountViewModel.account
     val customer = customerViewModel.customer
 
     var userName = remember { mutableStateOf("ABC") }

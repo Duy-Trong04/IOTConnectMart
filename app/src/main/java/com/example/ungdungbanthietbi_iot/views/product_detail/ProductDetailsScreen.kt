@@ -68,7 +68,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
-import androidx.compose.ui.graphics.painter.BitmapPainter
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
@@ -90,7 +89,6 @@ import com.example.ungdungbanthietbi_iot.viewModels.LikedViewModel
 import com.example.ungdungbanthietbi_iot.models.Reviews
 import com.example.ungdungbanthietbi_iot.viewModels.ReviewViewModel
 import com.example.ungdungbanthietbi_iot.navigation.Screen
-import com.example.ungdungbanthietbi_iot.utils.base64ToBitmap
 import com.example.ungdungbanthietbi_iot.utils.formatDateTimeZone
 import com.example.ungdungbanthietbi_iot.views.home.CardDevice
 import com.example.ungdungbanthietbi_iot.utils.formatGiaTien
@@ -131,8 +129,7 @@ fun ProductDetailsScreen(
     imageViewModel: ImageViewModel,
     reviewViewModel: ReviewViewModel
 ) {
-    id.toIntOrNull()?.let { deviceViewModel.getDeviceBySlug(it) }
-    deviceViewModel.getAllDevice()
+
     val listAllDevice : List<Device> = deviceViewModel.listAllDevice
     val device = deviceViewModel.device.collectAsState().value
 
@@ -142,6 +139,8 @@ fun ProductDetailsScreen(
     val listReview by reviewViewModel.listReviews.collectAsState()
     LaunchedEffect(id) {
         reviewViewModel.getReviewByIdDevice(id)
+        deviceViewModel.getDeviceBySlug(id)
+        deviceViewModel.getAllDevice()
     }
 
     var currentIndex by remember { mutableIntStateOf(0) }
@@ -193,7 +192,7 @@ fun ProductDetailsScreen(
     }
 
     //Lưu thông tin sản phẩm để truyền qua màn hình thanh toán
-    val selectedProducts = remember { mutableListOf<Triple<Int, Int, Int>>() }
+    val selectedProducts = remember { mutableListOf<Triple<String, Int, Int>>() }
 
     // Biến trạng thái để sản phẩm yêu thích không
     var isFavorite by remember { mutableStateOf(false) }
@@ -454,14 +453,23 @@ fun ProductDetailsScreen(
                                     modifier = Modifier.fillMaxWidth(),
                                 ) {
                                     Row {
-                                        val bitmapCart = base64ToBitmap(device?.image)
-                                        if (bitmapCart != null) {
+                                        bitmap?.let {
+                                            if (device != null) {
+                                                Image(
+                                                    bitmap = it.asImageBitmap(),
+                                                    contentDescription = device.name.ifEmpty { "Hình ảnh sản phẩm" },
+                                                    modifier = Modifier
+                                                        .size(100.dp),
+                                                    contentScale = ContentScale.Crop
+                                                )
+                                            }
+                                        } ?: run {
                                             Image(
-                                                painter = BitmapPainter(bitmapCart.asImageBitmap()),
-                                                contentDescription = "Hình ảnh sản phẩm",
+                                                painter = painterResource(id = android.R.drawable.ic_menu_gallery),
+                                                contentDescription = "Product Image",
                                                 modifier = Modifier
                                                     .size(100.dp),
-                                                contentScale = ContentScale.Fit
+                                                contentScale = ContentScale.Crop
                                             )
                                         }
                                         Column {
@@ -519,7 +527,7 @@ fun ProductDetailsScreen(
                                             if (idCustomer == null) {
                                                 navController.navigate(Screen.LoginScreen.route)
                                             } else {
-                                                val cartNew: CartEntity?
+//                                                val cartNew: CartEntity?
 //                                                var isProductFound = false
 //
 //                                                for (cart in listCart) {
@@ -546,7 +554,7 @@ fun ProductDetailsScreen(
                                                         quantity = quantity
                                                     )
 //                                                    cartViewModel.addToCart(cartNew)
-                                                    cartViewModel.addCart(addToCart)
+                                                    cartViewModel.addCart(idCustomer, addToCart)
                                                     quantity = 1
 //                                                }
                                             }
@@ -565,7 +573,6 @@ fun ProductDetailsScreen(
                                         Text(
                                             "Thêm vào giỏ hàng",
                                             color = Color.White,
-                                            fontWeight = FontWeight.Bold,
                                             fontSize = 18.sp
                                         )
                                     }
@@ -586,7 +593,7 @@ fun ProductDetailsScreen(
                                         Button(
                                             onClick = {
                                                 showDialog = false
-                                                navController.navigate("${Screen.Address_Selection.route}?idCustomer=${idCustomer}")
+                                                navController.navigate("${Screen.Add_Address.route}?idCustomer=${idCustomer}")
                                             },
                                             colors = ButtonDefaults.buttonColors(
                                                 containerColor = Color(0xFF5D9EFF),
@@ -619,14 +626,23 @@ fun ProductDetailsScreen(
                                     modifier = Modifier.fillMaxWidth(),
                                 ) {
                                     Row {
-                                        val bitmapBuy = base64ToBitmap(device?.image)
-                                        if (bitmapBuy != null) {
+                                        bitmap?.let {
+                                            if (device != null) {
+                                                Image(
+                                                    bitmap = it.asImageBitmap(),
+                                                    contentDescription = device.name.ifEmpty { "Hình ảnh sản phẩm" },
+                                                    modifier = Modifier
+                                                        .size(100.dp),
+                                                    contentScale = ContentScale.Crop
+                                                )
+                                            }
+                                        } ?: run {
                                             Image(
-                                                painter = BitmapPainter(bitmapBuy.asImageBitmap()),
-                                                contentDescription = "Hình ảnh sản phẩm",
+                                                painter = painterResource(id = android.R.drawable.ic_menu_gallery),
+                                                contentDescription = "Product Image",
                                                 modifier = Modifier
                                                     .size(100.dp),
-                                                contentScale = ContentScale.Fit
+                                                contentScale = ContentScale.Crop
                                             )
                                         }
                                         Column {
@@ -735,7 +751,7 @@ fun ProductDetailsScreen(
                 modifier = Modifier
                     .fillMaxSize()
                     .background(Color.White)
-                    .padding(padding),
+                    .padding(padding).padding(horizontal = 12.dp),
             )
             {
                 item {
@@ -820,8 +836,7 @@ fun ProductDetailsScreen(
                             Box(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .height(250.dp)
-                                    .padding(16.dp),
+                                    .height(250.dp),
                                 contentAlignment = Alignment.Center
                             ) {
                                 bitmap?.let {
@@ -829,7 +844,8 @@ fun ProductDetailsScreen(
                                         bitmap = it.asImageBitmap(),
                                         contentDescription = device.name.ifEmpty { "Hình ảnh sản phẩm" },
                                         modifier = Modifier
-                                            .size(250.dp)
+                                            .size(250.dp),
+                                        contentScale = ContentScale.Crop
                                         //.align(Alignment.CenterHorizontally)
                                     )
                                 } ?: run {
@@ -1091,6 +1107,12 @@ fun ProductDetailsScreen(
 
 @Composable
 fun CardReview(review: Reviews, onClick:() -> Unit){
+    val deviceViewModel: DeviceViewModel = viewModel()
+    var bitmap by remember { mutableStateOf<Bitmap?>(null) }
+    // Tải hình ảnh
+    LaunchedEffect(review) {
+        bitmap = review.image?.let { deviceViewModel.getDeviceImageBitmapImage(it) }
+    }
     // Lấy thông tin customer từ review
     val customerName = "${review.surname} ${review.lastname}".trim()
     Card(
@@ -1120,25 +1142,22 @@ fun CardReview(review: Reviews, onClick:() -> Unit){
                         .clip(CircleShape)
                         .background(Color(0xFF5D9EFF)) // Màu nền xanh
                 ) {
-                    if (review.customer_image.isNullOrEmpty()) {
-                        //hình ảnh tạm
+                    bitmap?.let {
+                        Image(
+                            bitmap = it.asImageBitmap(),
+                            contentDescription = customerName.ifEmpty { "Hình ảnh sản phẩm" },
+                            modifier = Modifier
+                                .size(28.dp),
+                            contentScale = ContentScale.Crop
+                        )
+                    } ?: run {
                         Image(
                             painter = painterResource(id = android.R.drawable.ic_menu_gallery),
                             contentDescription = "Product Image",
-                            modifier = Modifier.size(50.dp).padding(end = 8.dp),
+                            modifier = Modifier
+                                .size(28.dp),
                             contentScale = ContentScale.Crop
                         )
-                    } else {
-                        val bitmap = base64ToBitmap(review.customer_image)
-                        if (bitmap != null) {
-                            Image(
-                                painter = BitmapPainter(bitmap.asImageBitmap()),
-                                contentDescription = customerName.ifEmpty { "Hình ảnh sản phẩm" },
-                                modifier = Modifier
-                                    .size(28.dp),
-                                contentScale = ContentScale.Crop // Crop để hình ảnh lấp đầy khung
-                            )
-                        }
                     }
                 }
                 Spacer(modifier = Modifier.width(10.dp))

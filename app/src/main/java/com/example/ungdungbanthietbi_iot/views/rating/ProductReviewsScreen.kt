@@ -1,5 +1,6 @@
 package com.example.ungdungbanthietbi_iot.views.rating
 
+import android.graphics.Bitmap
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -7,7 +8,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -28,7 +29,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
-import androidx.compose.ui.graphics.painter.BitmapPainter
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
@@ -38,13 +38,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
-import com.example.ungdungbanthietbi_iot.viewModels.CustomerViewModel
 import com.example.ungdungbanthietbi_iot.viewModels.ReviewViewModel
-import com.example.ungdungbanthietbi_iot.models.Review
 import com.example.ungdungbanthietbi_iot.models.Reviews
-import com.example.ungdungbanthietbi_iot.utils.base64ToBitmap
-import com.example.ungdungbanthietbi_iot.utils.formatDate
 import com.example.ungdungbanthietbi_iot.utils.formatDateTimeZone
+import com.example.ungdungbanthietbi_iot.viewModels.DeviceViewModel
 
 /** Giao diện màn hình danh sách đánh giá của sản phẩm (ProductReviewsScreen)
  * -------------------------------------------
@@ -72,10 +69,7 @@ fun ProductReviewsScreen(
     LaunchedEffect(id) {
         reviewViewModel.getReviewByIdDevice(id)
     }
-    // Biến trạng thái để sản phẩm yêu thích không
-    var isUseful by remember { mutableStateOf(false) }
-    // Hiển thị màn hình danh sách đánh giá với các đánh giá mẫu
-    ReviewListScreen(reviews = listReview, navController = navController, isUseful = isUseful, id.toInt())
+    ReviewListScreen(reviews = listReview, navController = navController)
 }
 
 /** Giao diện màn hình danh sách đánh giá của sản phẩm (ReviewListScreen)
@@ -96,7 +90,7 @@ fun ProductReviewsScreen(
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ReviewListScreen(reviews: List<Reviews>, navController: NavController, isUseful: Boolean, id:Int) {
+fun ReviewListScreen(reviews: List<Reviews>, navController: NavController) {
     Scaffold(
         topBar = {
             TopAppBar(
@@ -109,7 +103,7 @@ fun ReviewListScreen(reviews: List<Reviews>, navController: NavController, isUse
                     IconButton(onClick = {
                         navController.popBackStack()
                     }) {
-                        Icon(imageVector = Icons.Default.ArrowBack,
+                        Icon(imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = "Back"
                         )
                     }
@@ -130,7 +124,7 @@ fun ReviewListScreen(reviews: List<Reviews>, navController: NavController, isUse
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             items(reviews) { index ->
-                ReviewCard(review = index, id)// Hiển thị từng bài đánh giá
+                ReviewCard(review = index)// Hiển thị từng bài đánh giá
             }
         }
     }
@@ -153,7 +147,14 @@ fun ReviewListScreen(reviews: List<Reviews>, navController: NavController, isUse
  *
  */
 @Composable
-fun ReviewCard(review: Reviews, id:Int) {
+fun ReviewCard(review: Reviews) {
+    val deviceViewModel: DeviceViewModel = viewModel()
+    var bitmap by remember { mutableStateOf<Bitmap?>(null) }
+    // Tải hình ảnh
+    LaunchedEffect(review) {
+        bitmap = review.image?.let { deviceViewModel.getDeviceImageBitmapImage(it) }
+    }
+    val customerName = "${review.surname} ${review.lastname}".trim()
     Card(
         shape = RoundedCornerShape(8.dp),
         elevation = CardDefaults.cardElevation(1.dp),
@@ -171,27 +172,23 @@ fun ReviewCard(review: Reviews, id:Int) {
             Row (
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                val bitmap = base64ToBitmap(review.customer_image)
-                val customerName = "${review.surname} ${review.lastname}".trim()
-                if (bitmap != null) {
+                bitmap?.let {
                     Image(
-                        painter = BitmapPainter(bitmap.asImageBitmap()),
-                        contentDescription = customerName.ifEmpty { "Avatar" },
+                        bitmap = it.asImageBitmap(),
+                        contentDescription = customerName.ifEmpty { "Hình ảnh sản phẩm" },
                         modifier = Modifier
                             .size(50.dp).padding(end = 8.dp),
-                        contentScale = ContentScale.Crop // Crop để hình ảnh lấp đầy khung
+                        contentScale = ContentScale.Crop
                     )
-                }
-                else{
-                    //hình ảnh tạm
+                } ?: run {
                     Image(
                         painter = painterResource(id = android.R.drawable.ic_menu_gallery),
                         contentDescription = "Product Image",
-                        modifier = Modifier.size(50.dp).padding(end = 8.dp),
+                        modifier = Modifier
+                            .size(50.dp).padding(end = 8.dp),
                         contentScale = ContentScale.Crop
                     )
                 }
-
                 Text(
                     text = "${review.surname} ${review.lastname}",
                     fontWeight = FontWeight.Bold,

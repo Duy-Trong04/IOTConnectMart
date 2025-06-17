@@ -3,7 +3,7 @@ package com.example.ungdungbanthietbi_iot.models
 import com.google.gson.annotations.SerializedName
 
 data class Device(
-    @SerializedName("id") val idDevice: Int,
+    @SerializedName("id") val idDevice: String,
     val name: String,
     val slug: String,
     val description: String,
@@ -24,9 +24,10 @@ data class Device(
     val created_at: String,
     val updated_at: String?,
     val deleted_at: String?,
-    val reviews: List<Review>,
+    val reviews: List<Reviews>,
     val images: List<Images>,
-    val image: String,
+    val image: String?,
+    val warrenty_time_id: Int?,
     val specifications: List<Specification>
 )
 

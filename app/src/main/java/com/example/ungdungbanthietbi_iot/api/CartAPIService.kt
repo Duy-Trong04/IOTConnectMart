@@ -10,7 +10,7 @@ import retrofit2.http.Path
 
 data class AddCartRequest(
     val customer_id :String,
-    val product_id: Int,
+    val product_id: String,
     val quantity: Int,
 )
 data class AddToCartResponse(
@@ -27,7 +27,7 @@ data class CartResponse(
     val errors: List<ErrorToCart>
 )
 data class ProductInCart(
-    val id: Int,
+    val id: String,
     val image: String?,
     val name: String,
     val selling_price: Int,
@@ -38,8 +38,9 @@ data class ProductInCart(
 )
 
 interface CartAPIService {
-    @POST("cart/")
+    @POST("cart/customer/{customer_id}")
     suspend fun addToCart(
+        @Path ("customer_id") customer_id: String,
         @Body request: AddCartRequest
     ): AddToCartResponse
 
@@ -56,6 +57,6 @@ interface CartAPIService {
     @DELETE("cart/customer/{customer_id}/product/{product_id}")
     suspend fun removeCart(
         @Path("customer_id") customer_id: String,
-        @Path("product_id") product_id: Int
+        @Path("product_id") product_id: String
     ): AddToCartResponse
 }

@@ -1,6 +1,9 @@
 package com.example.ungdungbanthietbi_iot.views.rating
 
+import android.annotation.SuppressLint
 import android.net.Uri
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -20,16 +23,13 @@ import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.outlined.Star
-import androidx.compose.material.rememberScaffoldState
 import androidx.compose.material3.BottomAppBar
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Checkbox
-import androidx.compose.material3.CheckboxDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -46,23 +46,23 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+import coil.compose.AsyncImage
 import com.example.ungdungbanthietbi_iot.api.ReviewRequestUpdate
 import com.example.ungdungbanthietbi_iot.viewModels.ReviewViewModel
-import com.example.ungdungbanthietbi_iot.utils.getCurrentTimestamp
 import kotlinx.coroutines.delay
 
 /** Giao diện màn hình đánh giá, bình luận (RatingScreen)
@@ -82,18 +82,25 @@ import kotlinx.coroutines.delay
  * Nội dung cập nhật:
  *
  */
+@SuppressLint("MutableCollectionMutableState")
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun UpdateRatingScreen(navController: NavController, idReview: Int, idCustomer: String?){
 
     val reviewViewModel: ReviewViewModel = viewModel()
     val review = reviewViewModel.review
+    var selectedImage by remember { mutableStateOf<Uri?>(null) }
+    // Launcher để chọn ảnh từ thư viện
+    val launcher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri: Uri? ->
+        uri?.let {
+            selectedImage = it
+        }
+    }
 
-
-
-    var rating by remember { mutableStateOf(0) } // Lưu trạng thái số sao được đánh giá
+    var rating by remember { mutableIntStateOf(0) } // Lưu trạng thái số sao được đánh giá
     var comment by remember { mutableStateOf("") } // Lưu nội dung bình luận
-    val images by remember { mutableStateOf(mutableListOf<Uri>()) } // Lưu danh sách ảnh
     val error by reviewViewModel.error.collectAsState()
     val isLoading by reviewViewModel.isLoading.collectAsState()
     LaunchedEffect (idReview){
@@ -117,7 +124,7 @@ fun UpdateRatingScreen(navController: NavController, idReview: Int, idCustomer: 
                 )},
                 navigationIcon = {
                     IconButton(onClick = { navController.popBackStack() }) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Back")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -128,72 +135,67 @@ fun UpdateRatingScreen(navController: NavController, idReview: Int, idCustomer: 
             )
         },
         bottomBar = {
-            BottomAppBar (
-                containerColor = Color.Transparent,
-                modifier = Modifier.fillMaxWidth().height(170.dp)
-            ){
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(10.dp)
-                ) {
-                    if (showSnackbar.value) {
-                        LaunchedEffect(Unit) {
-                            delay(3000) // Chờ 3000ms (3 giây)
-                            showSnackbar.value = false // Đặt giá trị để tắt Snackbar
-                        }
-                        Snackbar(
-                            modifier = Modifier.padding(16.dp),
-                            containerColor = Color.White,
-                            contentColor = Color.Gray
-                        ) {
-                            Text(snackbarMessage.value)
-                        }
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(10.dp)
+            ) {
+                if (showSnackbar.value) {
+                    LaunchedEffect(Unit) {
+                        delay(3000) // Chờ 3000ms (3 giây)
+                        showSnackbar.value = false // Đặt giá trị để tắt Snackbar
                     }
-                    if (error != null) {
-                        Text(
-                            text = "Lỗi: $error",
-                            color = MaterialTheme.colorScheme.error,
-                            modifier = Modifier.padding(8.dp)
-                        )
-                    }
-                    Spacer(modifier = Modifier.height(8.dp))
-                    // Nút Gửi
-                    Button(
-                        onClick = {
-                            if (!isLoading) {
-                                if (idCustomer != null) {
-                                    review?.let {
-                                        val updatedReview = ReviewRequestUpdate(
-                                            id = idReview,
-                                            customer_id = idCustomer,
-                                            comment = comment,
-                                            image = "images",
-                                            rating = rating
-                                        )
-                                        reviewViewModel.updateReview(updatedReview)
-                                    }
-                                    showSnackbar.value = true
-                                    snackbarMessage.value =
-                                        "Đánh giá của bạn đã được gửi thành công!"
-                                    navController.previousBackStackEntry
-                                        ?.savedStateHandle
-                                        ?.set("needRefreshReviews", true)
-                                    navController.popBackStack()
-                                }
-                            }
-                        },
-                        modifier = Modifier
-                            .fillMaxWidth(),
-                        shape = RoundedCornerShape(10.dp),
-                        elevation = ButtonDefaults.buttonElevation(1.dp),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = Color(0xFF5D9EFF),
-                            contentColor = Color.White
-                        )
+                    Snackbar(
+                        modifier = Modifier.padding(16.dp),
+                        containerColor = Color.White,
+                        contentColor = Color.Gray
                     ) {
-                        Text(text = if (isLoading) "Đang gửi..." else "Gửi đánh giá", fontSize = 20.sp)
+                        Text(snackbarMessage.value)
                     }
+                }
+                if (error != null) {
+                    Text(
+                        text = "Lỗi: $error",
+                        color = MaterialTheme.colorScheme.error,
+                        modifier = Modifier.padding(8.dp)
+                    )
+                }
+                Spacer(modifier = Modifier.height(8.dp))
+                // Nút Gửi
+                Button(
+                    onClick = {
+                        if (!isLoading) {
+                            if (idCustomer != null) {
+                                review?.let {
+                                    val updatedReview = ReviewRequestUpdate(
+                                        id = idReview,
+                                        customer_id = idCustomer,
+                                        comment = comment,
+                                        image = "images",
+                                        rating = rating
+                                    )
+                                    reviewViewModel.updateReview(updatedReview)
+                                }
+                                showSnackbar.value = true
+                                snackbarMessage.value =
+                                    "Đánh giá của bạn đã được gửi thành công!"
+                                navController.previousBackStackEntry
+                                    ?.savedStateHandle
+                                    ?.set("needRefreshReviews", true)
+                                navController.popBackStack()
+                            }
+                        }
+                    },
+                    modifier = Modifier
+                        .fillMaxWidth(),
+                    shape = RoundedCornerShape(10.dp),
+                    elevation = ButtonDefaults.buttonElevation(1.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color(0xFF5D9EFF),
+                        contentColor = Color.White
+                    )
+                ) {
+                    Text(text = if (isLoading) "Đang gửi..." else "Gửi đánh giá", fontSize = 20.sp)
                 }
             }
         }
@@ -202,6 +204,7 @@ fun UpdateRatingScreen(navController: NavController, idReview: Int, idCustomer: 
             Box(
                 modifier = Modifier
                     .fillMaxSize()
+                    .background(Color.White)
                     .padding(paddingValues),
                 contentAlignment = Alignment.Center
             ) {
@@ -215,7 +218,7 @@ fun UpdateRatingScreen(navController: NavController, idReview: Int, idCustomer: 
                     .fillMaxSize()
                     .background(Color.White)
                     .padding(paddingValues)
-                    .padding(16.dp)
+                    .padding(10.dp)
             ) {
                 item {
                     // Tiêu đề
@@ -274,39 +277,45 @@ fun UpdateRatingScreen(navController: NavController, idReview: Int, idCustomer: 
                         fontWeight = FontWeight.Bold,
                         modifier = Modifier.padding(bottom = 8.dp)
                     )
-                    LazyRow(
-                        contentPadding = PaddingValues(horizontal = 8.dp),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    // Thay thế LazyRow bằng một Box đơn lẻ và phóng to kích thước
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(200.dp) // Phóng to chiều cao ảnh
+                            .clip(RoundedCornerShape(8.dp))
+                            .border(1.dp, Color.Gray, RoundedCornerShape(8.dp))
+                            .background(Color.White)
+                            .clickable {
+                                launcher.launch("image/*")
+                            },
+                        contentAlignment = Alignment.Center
                     ) {
-                        // Nút thêm ảnh
-                        item {
-                            Box(
-                                modifier = Modifier
-                                    .size(100.dp)
-                                    .border(1.dp, Color.Gray, RoundedCornerShape(8.dp))
-                                    .clickable {
-                                        // Thêm logic chọn ảnh ở đây (giả lập bằng mã bên dưới)
-                                        images.add(Uri.parse("android.resource://com.example.app/drawable/sample_image"))
-                                    },
-                                contentAlignment = Alignment.Center
+                        if (selectedImage == null) {
+                            // Hiển thị icon thêm nếu chưa có ảnh
+                            Column(
+                                horizontalAlignment = Alignment.CenterHorizontally
                             ) {
                                 Icon(
                                     imageVector = Icons.Default.Add,
                                     contentDescription = "Thêm ảnh",
                                     tint = Color.Gray,
-                                    modifier = Modifier.size(40.dp)
+                                    modifier = Modifier.size(60.dp)
+                                )
+                                Spacer(modifier = Modifier.height(8.dp))
+                                Text(
+                                    text = "Thêm ảnh",
+                                    color = Color.Gray,
+                                    fontSize = 16.sp
                                 )
                             }
-                        }
-                        // Hiển thị danh sách ảnh
-                        items(images) { image ->
-                            Box(
-                                modifier = Modifier
-                                    .size(100.dp)
-                                    .clip(RoundedCornerShape(8.dp))
-                                    .background(Color.LightGray)
-                            ) {
-                            }
+                        } else {
+                            // Hiển thị ảnh đã chọn, lấp đầy toàn bộ không gian
+                            AsyncImage(
+                                model = selectedImage,
+                                contentDescription = "Ảnh đánh giá",
+                                modifier = Modifier.fillMaxSize(),
+                                contentScale = ContentScale.Fit  // Đảm bảo ảnh lắp đầy ô chứa
+                            )
                         }
                     }
                 }

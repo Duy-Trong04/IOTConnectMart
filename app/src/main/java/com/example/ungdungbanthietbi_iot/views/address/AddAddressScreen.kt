@@ -8,18 +8,20 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.BottomAppBar
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExposedDropdownMenuBox
+import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Scaffold
@@ -32,6 +34,7 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
@@ -48,9 +51,10 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.example.ungdungbanthietbi_iot.api.CreateAddressRequest
-import com.example.ungdungbanthietbi_iot.models.Address
+import com.example.ungdungbanthietbi_iot.models.District
+import com.example.ungdungbanthietbi_iot.models.Province
+import com.example.ungdungbanthietbi_iot.models.Ward
 import com.example.ungdungbanthietbi_iot.viewModels.AddressViewModel
-import com.example.ungdungbanthietbi_iot.viewModels.CustomerViewModel
 
 /** Giao diện màn hình thêm địa chỉ (AddAddressScreen)
  * -------------------------------------------
@@ -77,19 +81,32 @@ fun AddAddressScreen(
 ){
 
     var showDialog by remember { mutableStateOf(false) }
-
+    var errorMessage by remember { mutableStateOf("") }
+    var showProvinceRequiredDialog by remember { mutableStateOf(false) }
+    var showDistrictRequiredDialog by remember { mutableStateOf(false) }
     val addressViewModel: AddressViewModel = viewModel()
+    val uiState by addressViewModel.uiState.collectAsState()
 
     // Biến trạng thái lưu thông tin nhập vào
     var hoten by remember { mutableStateOf("") }// Tên đầy đủ
     var phone by remember { mutableStateOf("") }// Số điện thoại
-    var district by remember { mutableStateOf("") }// Tỉnh/Thành phố
-    var city by remember { mutableStateOf("") }// Quận/Huyện
-    var ward by remember { mutableStateOf("") }// Phường/Xã
     var street by remember { mutableStateOf("") }// Địa chỉ chi tiết
     var detail by remember { mutableStateOf("") }// Địa chỉ chi tiết
     var isDefault by remember { mutableStateOf(false) } // Trạng thái của Switch đặt làm địa chỉ mặc định
-    var validatePhone by remember { mutableStateOf(false) }
+    val validatePhone by remember { mutableStateOf(false) }
+
+    // Biến trạng thái cho dropdown
+    var selectedProvince by remember { mutableStateOf<Province?>(null) }
+    var selectedDistrict by remember { mutableStateOf<District?>(null) }
+    var selectedWard by remember { mutableStateOf<Ward?>(null) }
+
+    // Hiển thị lỗi từ ViewModel
+    LaunchedEffect(uiState.error) {
+        uiState.error?.let {
+            errorMessage = it
+            showDialog = true
+        }
+    }
     Scaffold (
         topBar = {
             TopAppBar(
@@ -149,27 +166,31 @@ fun AddAddressScreen(
                 Button(
                     modifier = Modifier.fillMaxWidth(),
                     onClick = {
-                        if(phone.length != 10){
-                            validatePhone = true
-                        }
-                        if(city.trim() != "" || district.trim() != "" || ward != "" || street != "" || hoten.trim().isNotEmpty() || phone.isNotEmpty()){
-                            val createAddress = CreateAddressRequest(
-                                customer_id = idCustomer,
-                                receiver_name = hoten,
-                                phone = phone,
-                                district = district,
-                                city = city,
-                                ward = ward,
-                                street = street,
-                                detail = detail,
-                                is_default = isDefault
-                            )
-                            addressViewModel.createAddress(createAddress)
-                            navController.popBackStack()
-                        }
-                        else{
+                        if (hoten.trim().isEmpty() || phone.trim().isEmpty() ||
+                            selectedProvince == null || selectedDistrict == null || selectedWard == null ||
+                            street.trim().isEmpty()
+                        ) {
+                            errorMessage = "Vui lòng nhập đầy đủ thông tin địa chỉ"
                             showDialog = true
+                            return@Button
                         }
+                        if (phone.length != 10) {
+                            errorMessage = "Số điện thoại phải đủ 10 số"
+                            return@Button
+                        }
+                        val createAddress = CreateAddressRequest(
+                            customer_id = idCustomer,
+                            receiver_name = hoten,
+                            phone = phone,
+                            district = selectedDistrict!!.DistrictName,
+                            city = selectedProvince!!.ProvinceName,
+                            ward = selectedWard!!.WardName,
+                            street = street,
+                            detail = detail,
+                            is_default = isDefault
+                        )
+                        addressViewModel.createAddress(createAddress)
+                        navController.popBackStack()
                     },
                     colors = ButtonDefaults.buttonColors(
                         containerColor = Color(0xFF5D9EFF)
@@ -186,15 +207,53 @@ fun AddAddressScreen(
             AlertDialog(
                 onDismissRequest = { showDialog = false },
                 title = { Text(text = "Thông báo") },
-                text = { Text(text = "Vui lòng nhập đầy đủ thông tin địa chỉ.") },
+                containerColor = Color.White,
+                text = { Text(text = errorMessage) },
                 confirmButton = {
                     Button(onClick = { showDialog = false },
                         colors = ButtonDefaults.buttonColors(
                             containerColor = Color(0xFF5D9EFF)
                         ),
+                        modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(10.dp)
                     ) {
-                        Text("OK")
+                        Text("Xác nhận")
+                    }
+                }
+            )
+        }
+        if (showProvinceRequiredDialog) {
+            AlertDialog(
+                onDismissRequest = { showProvinceRequiredDialog = false },
+                title = { Text("Thông báo") },
+                containerColor = Color.White,
+                text = { Text("Vui lòng chọn tỉnh/thành phố trước") },
+                confirmButton = {
+                    Button(
+                        onClick = { showProvinceRequiredDialog = false },
+                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF5D9EFF)),
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(10.dp)
+                    ) {
+                        Text("Xác nhận")
+                    }
+                }
+            )
+        }
+        if (showDistrictRequiredDialog) {
+            AlertDialog(
+                onDismissRequest = { showDistrictRequiredDialog = false },
+                title = { Text("Thông báo") },
+                containerColor = Color.White,
+                text = { Text("Vui lòng chọn quận/huyện trước") },
+                confirmButton = {
+                    Button(
+                        onClick = { showDistrictRequiredDialog = false },
+                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF5D9EFF)),
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(10.dp)
+                    ) {
+                        Text("Xác nhận")
                     }
                 }
             )
@@ -256,47 +315,44 @@ fun AddAddressScreen(
                     fontWeight = FontWeight.W500,
                     modifier = Modifier.padding(bottom = 6.dp)
                 )
-                TextField(
-                    value = city,
-                    onValueChange = { city = it },
-                    label = { Text("Tỉnh/Thành phố") },
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = TextFieldDefaults.colors(
-                        unfocusedContainerColor = Color.Transparent,
-                        focusedContainerColor = Color.Transparent,
-                        focusedIndicatorColor = Color(0xFF5D9EFF),
-                        focusedLabelColor = Color(0xFF5D9EFF),
-                        cursorColor = Color(0xFF5D9EFF)
-                    ),
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text)
+                ProvinceDropdown(
+                    provinces = uiState.provinces,
+                    selectedProvince = selectedProvince,
+                    onProvinceSelected = { province ->
+                        if (selectedProvince?.ProvinceID != province.ProvinceID) {
+                            selectedProvince = province
+                            selectedDistrict = null
+                            selectedWard = null
+                            addressViewModel.fetchDistricts(province.ProvinceID)
+                        }
+                    },
+                    isLoading = uiState.isLoading
                 )
-                TextField(
-                    value = district,
-                    onValueChange = { district = it },
-                    label = { Text("Quận/Huyện") },
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = TextFieldDefaults.colors(
-                        unfocusedContainerColor = Color.Transparent,
-                        focusedContainerColor = Color.Transparent,
-                        focusedIndicatorColor = Color(0xFF5D9EFF),
-                        focusedLabelColor = Color(0xFF5D9EFF),
-                        cursorColor = Color(0xFF5D9EFF)
-                    ),
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text)
+                DistrictDropdown(
+                    districts = uiState.districts,
+                    selectedDistrict = selectedDistrict,
+                    onDistrictSelected = { district ->
+                        if (selectedDistrict?.DistrictID != district.DistrictID) {
+                            selectedDistrict = district
+                            selectedWard = null
+                            addressViewModel.fetchWards(district.DistrictID)
+                        }
+                    },
+                    isLoading = uiState.isLoading,
+                    enabled = selectedProvince != null,
+                    onProvinceRequired = { showProvinceRequiredDialog = true }
                 )
-                TextField(
-                    value = ward,
-                    onValueChange = { ward = it },
-                    label = { Text("Phường/Xã") },
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = TextFieldDefaults.colors(
-                        unfocusedContainerColor = Color.Transparent,
-                        focusedContainerColor = Color.Transparent,
-                        focusedIndicatorColor = Color(0xFF5D9EFF),
-                        focusedLabelColor = Color(0xFF5D9EFF),
-                        cursorColor = Color(0xFF5D9EFF)
-                    ),
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text)
+                WardDropdown(
+                    wards = uiState.wards,
+                    selectedWard = selectedWard,
+                    selectedProvince = selectedProvince,
+                    onWardSelected = { ward ->
+                        selectedWard = ward
+                    },
+                    isLoading = uiState.isLoading,
+                    enabled = selectedDistrict != null,
+                    onProvinceRequired = { showProvinceRequiredDialog = true },
+                    onDistrictRequired = { showDistrictRequiredDialog = true }
                 )
                 TextField(
                     value = street,
@@ -329,6 +385,196 @@ fun AddAddressScreen(
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text)// Bàn phím văn bản
                 )
             }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun ProvinceDropdown(
+    provinces: List<Province>,
+    selectedProvince: Province?,
+    onProvinceSelected: (Province) -> Unit,
+    isLoading: Boolean
+) {
+    var expanded by remember { mutableStateOf(false) }
+
+    ExposedDropdownMenuBox(
+        expanded = expanded,
+        onExpandedChange = { if (!isLoading && provinces.isNotEmpty()) expanded = !expanded }
+    ) {
+        TextField(
+            value = selectedProvince?.ProvinceName ?: "Chọn tỉnh/thành phố",
+            onValueChange = {},
+            readOnly = true,
+            label = { Text("Tỉnh/Thành phố") },
+            modifier = Modifier
+                .fillMaxWidth()
+                .menuAnchor(),
+            colors = TextFieldDefaults.colors(
+                unfocusedContainerColor = Color.White,
+                focusedContainerColor = Color.White,
+                focusedIndicatorColor = Color(0xFF5D9EFF),
+                focusedLabelColor = Color(0xFF5D9EFF),
+                cursorColor = Color(0xFF5D9EFF)
+            ),
+            trailingIcon = {
+                ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded)
+            },
+        )
+        ExposedDropdownMenu(
+            expanded = expanded,
+            onDismissRequest = { expanded = false },
+            modifier = Modifier
+                .background(Color.White)
+                .heightIn(max = 400.dp)
+        ) {
+            provinces
+                .forEach { province ->
+                    DropdownMenuItem(
+                        text = { Text(province.ProvinceName) },
+                        onClick = {
+                            onProvinceSelected(province)
+                            expanded = false
+                        }
+                    )
+                }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun DistrictDropdown(
+    districts: List<District>,
+    selectedDistrict: District?,
+    onDistrictSelected: (District) -> Unit,
+    isLoading: Boolean,
+    enabled: Boolean,
+    onProvinceRequired: () -> Unit
+) {
+    var expanded by remember { mutableStateOf(false) }
+
+    ExposedDropdownMenuBox(
+        expanded = expanded,
+        onExpandedChange = {
+            if (enabled && !isLoading && districts.isNotEmpty()) {
+                expanded = !expanded
+            } else if (!enabled) {
+                onProvinceRequired()
+            }
+        },
+        //modifier = Modifier.alpha(if (enabled) 1f else 0.5f)
+    ) {
+        TextField(
+            value = selectedDistrict?.DistrictName ?: "Chọn quận/huyện",
+            onValueChange = {},
+            readOnly = true,
+            label = { Text("Quận/Huyện") },
+            modifier = Modifier
+                .fillMaxWidth()
+                .menuAnchor(),
+            colors = TextFieldDefaults.colors(
+                unfocusedContainerColor = Color.White,
+                focusedContainerColor = Color.White,
+                disabledContainerColor = Color.Transparent,
+                focusedIndicatorColor = Color(0xFF5D9EFF),
+                focusedLabelColor = Color(0xFF5D9EFF),
+                cursorColor = Color(0xFF5D9EFF)
+            ),
+            trailingIcon = {
+                ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded)
+            },
+            //enabled = enabled && !isLoading
+        )
+        ExposedDropdownMenu(
+            expanded = expanded,
+            onDismissRequest = { expanded = false },
+            modifier = Modifier
+                .background(Color.White)
+                .heightIn(max = 400.dp),
+        ) {
+            districts
+                .forEach { district ->
+                    DropdownMenuItem(
+                        text = { Text(district.DistrictName) },
+                        onClick = {
+                            onDistrictSelected(district)
+                            expanded = false
+                        }
+                    )
+                }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun WardDropdown(
+    wards: List<Ward>,
+    selectedWard: Ward?,
+    selectedProvince: Province?,
+    onWardSelected: (Ward) -> Unit,
+    isLoading: Boolean,
+    enabled: Boolean,
+    onProvinceRequired: () -> Unit,
+    onDistrictRequired: () -> Unit
+) {
+    var expanded by remember { mutableStateOf(false) }
+
+    ExposedDropdownMenuBox(
+        expanded = expanded,
+        onExpandedChange = {
+            if (enabled && !isLoading && wards.isNotEmpty()) {
+                expanded = !expanded
+            } else if (!enabled) {
+                if (selectedProvince == null) {
+                    onProvinceRequired()
+                } else {
+                    onDistrictRequired()
+                }
+            }
+        },
+        //modifier = Modifier.alpha(if (enabled) 1f else 0.5f)
+    ) {
+        TextField(
+            value = selectedWard?.WardName ?: "Chọn phường/xã",
+            onValueChange = {},
+            readOnly = true,
+            label = { Text("Phường/Xã") },
+            modifier = Modifier
+                .fillMaxWidth()
+                .menuAnchor(),
+            colors = TextFieldDefaults.colors(
+                unfocusedContainerColor = Color.White,
+                focusedContainerColor = Color.White,
+                disabledContainerColor = Color.Transparent,
+                focusedIndicatorColor = Color(0xFF5D9EFF),
+                focusedLabelColor = Color(0xFF5D9EFF),
+                cursorColor = Color(0xFF5D9EFF)
+            ),
+            trailingIcon = {
+                ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded)
+            },
+            //enabled = enabled && !isLoading
+        )
+        ExposedDropdownMenu(
+            expanded = expanded,
+            onDismissRequest = { expanded = false },
+            modifier = Modifier
+                .background(Color.White)
+                .heightIn(max = 400.dp)
+        ) {
+            wards
+                .forEach { ward ->
+                    DropdownMenuItem(
+                        text = { Text(ward.WardName) },
+                        onClick = {
+                            onWardSelected(ward)
+                            expanded = false
+                        }
+                    )
+                }
         }
     }
 }

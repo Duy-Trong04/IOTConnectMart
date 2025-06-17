@@ -35,7 +35,7 @@ data class Order(
 )
 
 data class DetailsOrders(
-    val product_id: Int,
+    val product_id: String,
     val product_name: String,
     val image: String,
     val quantity: Int,
@@ -73,7 +73,7 @@ data class Payment(
 )
 
 data class Product(
-    val id: Int,
+    val id: String,
     val name: String,
     val price: Double,
     val quantity: Int,
@@ -91,7 +91,7 @@ data class OrderRequest(
 )
 
 data class ProductError(
-    val product_id: Int,
+    val product_id: String,
     val product_name: String,
     val errors: List<Errors>
 )

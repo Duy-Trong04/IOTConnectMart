@@ -2,40 +2,25 @@ package com.example.ungdungbanthietbi_iot.views.signUp_signIn
 
 import android.annotation.SuppressLint
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
 import android.util.Log
-import android.widget.Toast
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.AccountBox
-import androidx.compose.material.icons.filled.AccountCircle
-import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.filled.Done
-import androidx.compose.material.icons.filled.Email
-import androidx.compose.material.icons.filled.Lock
-import androidx.compose.material.icons.filled.Phone
-import androidx.compose.material.icons.filled.Visibility
-import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material.icons.outlined.Email
-import androidx.compose.material.icons.outlined.Lock
+import androidx.compose.material.icons.outlined.Password
 import androidx.compose.material.icons.outlined.Person
 import androidx.compose.material.icons.outlined.Person2
 import androidx.compose.material.icons.outlined.PhoneAndroid
@@ -46,14 +31,12 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextField
-import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -65,10 +48,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
-import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.text.input.PasswordVisualTransformation
-import androidx.compose.ui.text.input.VisualTransformation
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
@@ -76,14 +55,9 @@ import com.example.ungdungbanthietbi_iot.R
 import com.example.ungdungbanthietbi_iot.viewModels.AccountViewModel
 import com.example.ungdungbanthietbi_iot.viewModels.CustomerViewModel
 import com.example.ungdungbanthietbi_iot.navigation.Screen
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalFocusManager
-import androidx.compose.ui.text.SpanStyle
-import androidx.compose.ui.text.buildAnnotatedString
-import androidx.compose.ui.text.withStyle
-import androidx.compose.ui.tooling.preview.Preview
 import com.example.ungdungbanthietbi_iot.api.RegisterRequest
 import com.example.ungdungbanthietbi_iot.views.components.CustomerTextField
 
@@ -530,9 +504,11 @@ fun RegisterScreen(
 
     var openDialog by remember { mutableStateOf(false) }
     var openDialog_Dk by remember { mutableStateOf(false) }
-
+    var errorMessage by remember { mutableStateOf("") }
 
     var phoneError by remember { mutableStateOf("") }
+    // Observe isLoading state
+    val isLoading by accountViewModel.isLoading.collectAsState()
     Scaffold(
         topBar = {
             TopAppBar(
@@ -564,7 +540,7 @@ fun RegisterScreen(
                 painter = painterResource(id = R.drawable.ill_signup),
                 contentDescription = "Sign up Illustration",
                 modifier = Modifier
-                    .weight(3f)
+                    .weight(2.7f)
                     .padding(
                         horizontal = 32.dp,
                     ),
@@ -573,7 +549,7 @@ fun RegisterScreen(
             Column(
                 verticalArrangement = Arrangement.SpaceAround,
                 horizontalAlignment = Alignment.Start,
-                modifier = Modifier.weight(7f),
+                modifier = Modifier.weight(7.3f),
             ) {
                 Text(
                     text = "Đăng ký", style = MaterialTheme.typography.headlineLarge.copy(
@@ -699,13 +675,13 @@ fun RegisterScreen(
                     hint = "Mật khẩu",
                     leadingIcon = {
                         Icon(
-                            imageVector = Icons.Outlined.Lock,
+                            imageVector = Icons.Outlined.Password,
                             contentDescription = "Password Field",
                         )
                     },
                     trailingIcon = {
-                        Icon(painter = if (passwordObscure) painterResource(id = R.drawable.ic_outline_visibility) else painterResource(
-                            id = R.drawable.ic_outline_visibility_off
+                        Icon(painter = if (passwordObscure) painterResource(id = R.drawable.ic_outline_visibility_off) else painterResource(
+                            id = R.drawable.ic_outline_visibility
                         ), contentDescription = "Show Password", modifier = Modifier.clickable {
                             passwordObscure = !passwordObscure
                         })
@@ -726,13 +702,13 @@ fun RegisterScreen(
                     hint = "Nhập lại mật khẩu",
                     leadingIcon = {
                         Icon(
-                            imageVector = Icons.Outlined.Lock,
+                            imageVector = Icons.Outlined.Password,
                             contentDescription = "Password Field",
                         )
                     },
                     trailingIcon = {
-                        Icon(painter = if (comFirmPasswordObscure) painterResource(id = R.drawable.ic_outline_visibility) else painterResource(
-                            id = R.drawable.ic_outline_visibility_off
+                        Icon(painter = if (comFirmPasswordObscure) painterResource(id = R.drawable.ic_outline_visibility_off) else painterResource(
+                            id = R.drawable.ic_outline_visibility
                         ), contentDescription = "Show Password", modifier = Modifier.clickable {
                             comFirmPasswordObscure = !comFirmPasswordObscure
                         })
@@ -758,13 +734,17 @@ fun RegisterScreen(
                             email = email,
                             gender = true
                         )
-                        if (username.isNotEmpty() && password.isNotEmpty() && comFirmPassword.isNotEmpty() && phone.isNotEmpty() && surname.isNotEmpty() && lastname.isNotEmpty()) {
-                            accountViewModel.register(accountNew)
-                            Log.d("AccountViewModel", "Đăng ký thành công")
-                            openDialog_Dk = true
-                        }
-                        else {
+                        if (username.isEmpty() && password.isEmpty() && comFirmPassword.isEmpty() && phone.isEmpty() && surname.isEmpty() && lastname.isEmpty()) {
+                            errorMessage = "Vui lòng nhập đầy đủ thông tin !"
                             openDialog = true
+                        }
+                        else if(password != comFirmPassword){
+                            errorMessage = "Mật khẩu và Xác nhận mật khẩu không trùng khớp!"
+                            openDialog = true
+                        }
+                        else{
+                            accountViewModel.register(accountNew)
+                            openDialog_Dk = true
                         }
                     },
                     shape = RoundedCornerShape(16.dp),
@@ -775,10 +755,18 @@ fun RegisterScreen(
                         containerColor = Color(0xFF5D9EFF)
                     )
                 ) {
-                    Text(
-                        text = "Đăng ký",
-                        fontSize = 18.sp
-                    )
+                    if (isLoading) {
+                        CircularProgressIndicator(
+                            color = Color.White,
+                            strokeWidth = 4.dp,
+                            modifier = Modifier.size(22.dp)
+                        )
+                    } else {
+                        Text(
+                            text = "Đăng ký",
+                            fontSize = 18.sp
+                        )
+                    }
                 }
 
                 Row(
@@ -804,21 +792,17 @@ fun RegisterScreen(
                         }
                     )
                 }
+                Box(modifier = Modifier.height(24.dp))
             }
         }
         if (openDialog) {
             AlertDialog(
                 onDismissRequest = { openDialog = false }, // Đóng khi nhấn ngoài dialog
-                text = {
-                    if (username == "" || password == "" || comFirmPassword == "" || phone == "" || surname == "" || lastname == "") {
-                        Text("Vui lòng nhập đầy đủ thông tin!")
-                    } else if (password != comFirmPassword) {
-                        Text("Mật khẩu và Xác nhận mật khẩu không trùng khớp!")
-                    }
-                    else {
-                        Text("Tài khoản đã tồn tại")
-                    }
+                title = {
+                    Text(text = "Thông báo")
                 },
+                containerColor = Color.White,
+                text = { Text(errorMessage) },
                 confirmButton = {
                     Button(
                         onClick = {
@@ -826,7 +810,8 @@ fun RegisterScreen(
                         },
                         colors = ButtonDefaults.buttonColors(
                             containerColor = Color(0xFF5F9EFF)
-                        )
+                        ),
+                        shape = RoundedCornerShape(10.dp)
                     ) {
                         Text("Xác nhận")
                     }
@@ -838,7 +823,8 @@ fun RegisterScreen(
                         },
                         colors = ButtonDefaults.buttonColors(
                             containerColor = Color.LightGray
-                        )
+                        ),
+                        shape = RoundedCornerShape(10.dp)
                     ) {
                         Text("Hủy")
                     }
@@ -851,14 +837,12 @@ fun RegisterScreen(
                     openDialog_Dk = false
                     navController.navigate(Screen.LoginScreen.route)
                 }, // Đóng khi nhấn ngoài dialog
-                icon = { Icon(Icons.Filled.Done, contentDescription = "") },
-                iconContentColor =  Color.Green,
                 title = {
                     Text("Thông báo")
                 },
-                titleContentColor = Color.Green,
+                containerColor = Color.White,
                 text = {
-                    Text("Đăng ký thành công")
+                    Text("Đăng ký thành công!\nBạn có thể đăng nhập vào ứng dụng")
                 },
                 confirmButton = {
                     Button(
@@ -869,6 +853,7 @@ fun RegisterScreen(
                         colors = ButtonDefaults.buttonColors(
                             containerColor = Color(0xFF5F9EFF)
                         ),
+                        modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(10.dp)
                     ) {
                         Text("Đăng nhập")

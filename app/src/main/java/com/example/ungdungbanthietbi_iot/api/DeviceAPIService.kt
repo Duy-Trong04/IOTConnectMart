@@ -20,17 +20,9 @@ interface DeviceAPIService {
     @GET ("product/")
     suspend fun getAllDevice(): DeviceResponse
 
-    @GET ("device/getDevicePriceThan5M.php")
-    suspend fun getDeviceFeatured(): List<Device>
-
     @GET("product/detail/{id}")
     suspend fun getDeviceById(
-        @Path("id") id: Int
-    ): DeviceResponse
-
-    @GET("device/getDeviceByLiked.php")
-    suspend fun getDeviceByLiked(
-        @Query("idCustomer") idCustomer: String
+        @Path("id") id: String
     ): DeviceResponse
 
     @GET("product")

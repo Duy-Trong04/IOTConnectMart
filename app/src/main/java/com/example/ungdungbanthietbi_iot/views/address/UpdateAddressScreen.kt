@@ -4,10 +4,8 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -15,7 +13,6 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.BottomAppBar
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -31,6 +28,7 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
@@ -47,6 +45,9 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.example.ungdungbanthietbi_iot.api.UpdateAddressRequest
+import com.example.ungdungbanthietbi_iot.models.District
+import com.example.ungdungbanthietbi_iot.models.Province
+import com.example.ungdungbanthietbi_iot.models.Ward
 import com.example.ungdungbanthietbi_iot.viewModels.AddressViewModel
 
 /** Giao diện màn hình thêm địa chỉ (AddAddressScreen)
@@ -76,31 +77,84 @@ fun UpdateAddress(
 
     val addressViewModel: AddressViewModel = viewModel()
     val address = addressViewModel.address
+    val uiState by addressViewModel.uiState.collectAsState()
     LaunchedEffect (idCustomer){
         addressViewModel.getAddressById(idAddress)
+        addressViewModel.fetchProvinces()
     }
     // Biến trạng thái lưu thông tin nhập vào
     var hoten by remember { mutableStateOf("") }// Tên đầy đủ
     var phone by remember { mutableStateOf("") }// Số điện thoại
-    var district by remember { mutableStateOf("") }// Tỉnh/Thành phố
-    var city by remember { mutableStateOf("") }// Quận/Huyện
-    var ward by remember { mutableStateOf("") }// Phường/Xã
     var street by remember { mutableStateOf("") }// Địa chỉ chi tiết
     var detail by remember { mutableStateOf("") }// Địa chỉ chi tiết
     var isDefault by remember { mutableStateOf(false) } // Trạng thái của Switch đặt làm địa chỉ mặc định
     var validatePhone by remember { mutableStateOf(false) }
     var openDialog by remember { mutableStateOf(false) }
     var stateSwitch by remember { mutableStateOf(true) }
-    if(address != null){
-        hoten = address.receiver_name
-        phone = address.phone
-        district = address.district
-        city = address.city
-        ward = address.ward
-        street = address.street
-        detail = address.detail
-        isDefault = address.is_default
+    var showProvinceRequiredDialog by remember { mutableStateOf(false) }
+    var showDistrictRequiredDialog by remember { mutableStateOf(false) }
+    var errorMessage by remember { mutableStateOf("") }
+    var showErrorDialog by remember { mutableStateOf(false) }
+
+    // Biến trạng thái cho dropdown
+    var selectedProvince by remember { mutableStateOf<Province?>(null) }
+    var selectedDistrict by remember { mutableStateOf<District?>(null) }
+    var selectedWard by remember { mutableStateOf<Ward?>(null) }
+
+    // Biến kiểm soát trạng thái khởi tạo
+    var isInitialized by remember { mutableStateOf(false) }
+
+    // Initialize UI fields only once when address and provinces are loaded
+    LaunchedEffect(address, uiState.provinces) {
+        if (address != null && uiState.provinces.isNotEmpty() && !isInitialized) {
+            hoten = address.receiver_name
+            phone = address.phone
+            street = address.street
+            detail = address.detail
+            isDefault = address.is_default
+            stateSwitch = !address.is_default
+
+            // Find matching Province
+            uiState.provinces.find { it.ProvinceName == address.city }?.let { province ->
+                selectedProvince = province
+                addressViewModel.fetchDistricts(province.ProvinceID)
+            }
+
+            isInitialized = true // Prevent reinitialization
+        }
     }
+
+    // Load districts when province is selected
+    LaunchedEffect(selectedProvince, uiState.districts) {
+        if (selectedProvince != null && uiState.districts.isNotEmpty() && isInitialized) {
+            if (address != null && selectedDistrict == null) {
+                uiState.districts.find { it.DistrictName == address.district }?.let { district ->
+                    selectedDistrict = district
+                    addressViewModel.fetchWards(district.DistrictID)
+                }
+            }
+        }
+    }
+
+    // Load wards when district is selected
+    LaunchedEffect(selectedDistrict, uiState.wards) {
+        if (selectedDistrict != null && uiState.wards.isNotEmpty() && isInitialized) {
+            if (address != null && selectedWard == null) {
+                uiState.wards.find { it.WardName == address.ward }?.let { ward ->
+                    selectedWard = ward
+                }
+            }
+        }
+    }
+
+    // Handle errors from ViewModel
+    LaunchedEffect(uiState.error) {
+        uiState.error?.let {
+            errorMessage = it
+            showErrorDialog = true
+        }
+    }
+
     Scaffold (
         topBar = {
             TopAppBar(
@@ -169,13 +223,7 @@ fun UpdateAddress(
                 ){
                     Button(
                         onClick = {
-                            if(address != null){
-                                openDialog = if(address.is_default){
-                                    true
-                                } else{
-                                    true
-                                }
-                            }
+                            openDialog = true
                         },
                         modifier = Modifier.weight(1f).padding(end = 10.dp),
                         colors = ButtonDefaults.buttonColors(
@@ -188,17 +236,28 @@ fun UpdateAddress(
                     }
                     Button(
                         onClick = {
-                            if(phone.length != 10){
+                            if (hoten.trim().isEmpty() || phone.trim().isEmpty() ||
+                                selectedProvince == null || selectedDistrict == null || selectedWard == null ||
+                                street.trim().isEmpty()
+                            ) {
+                                errorMessage = "Vui lòng nhập đầy đủ thông tin địa chỉ"
+                                showErrorDialog = true
+                                return@Button
+                            }
+                            if (phone.length != 10) {
                                 validatePhone = true
+                                errorMessage = "Số điện thoại phải đủ 10 số"
+                                showErrorDialog = true
+                                return@Button
                             }
                             val updateAddress = UpdateAddressRequest(
                                 customer_id = idCustomer,
                                 id = idAddress,
                                 receiver_name = hoten,
                                 phone = phone,
-                                district = district,
-                                city = city,
-                                ward = ward,
+                                district = selectedDistrict!!.DistrictName,
+                                city = selectedProvince!!.ProvinceName,
+                                ward = selectedWard!!.WardName,
                                 street = street,
                                 detail = detail,
                                 is_default = isDefault
@@ -219,7 +278,26 @@ fun UpdateAddress(
             }
         }
     ) {
-        //Popup
+        // Error Dialog
+        if (showErrorDialog) {
+            AlertDialog(
+                onDismissRequest = { showErrorDialog = false },
+                title = { Text("Thông báo") },
+                containerColor = Color.White,
+                text = { Text(errorMessage) },
+                confirmButton = {
+                    Button(
+                        onClick = { showErrorDialog = false },
+                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF5D9EFF)),
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(10.dp)
+                    ) {
+                        Text("Xác nhận")
+                    }
+                }
+            )
+        }
+        // Delete Address Dialog
         if (openDialog) {
             AlertDialog(
                 containerColor = Color.White,
@@ -227,23 +305,14 @@ fun UpdateAddress(
                 onDismissRequest = { openDialog = false },
                 text = {
                     if (address != null) {
-                        if (address.is_default) {
-                            Text(
-                                "Bạn không thể xóa địa chỉ mặc định!",
-                                fontSize = 17.sp
-                            )
-                        }
-                        else{
-                            Text(
-                                "Bạn muốn xóa địa chỉ?",
-                                fontSize = 17.sp,
-                            )
-                        }
+                        Text(
+                            if (address.is_default) "Bạn không thể xóa địa chỉ mặc định!"
+                            else "Bạn muốn xóa địa chỉ?",
+                            fontSize = 17.sp
+                        )
                     }
                 },
-                title = {
-                    Text(text = "Thông Báo")
-                },
+                title = { Text("Thông Báo") },
                 confirmButton = {
                     Button(
                         onClick = {
@@ -252,45 +321,61 @@ fun UpdateAddress(
                                     openDialog = false
                                 } else {
                                     openDialog = false
-                                    addressViewModel.deleteAddress(
-                                        idCustomer,
-                                        idAddress
-                                    )
+                                    addressViewModel.deleteAddress(idCustomer, idAddress)
                                     navController.popBackStack()
                                 }
                             }
                         },
                         shape = RoundedCornerShape(10.dp),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = Color(0xFF5D9EFF)
-                        )
+                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF5D9EFF))
                     ) {
-                        Text(
-                            text = "Xác nhận",
-                            fontSize = 16.sp
-                        )
+                        Text("Xác nhận", fontSize = 16.sp)
                     }
                 },
                 dismissButton = {
                     Button(
-                        onClick = {
-                            if (address != null) {
-                                if (address.is_default) {
-                                    openDialog = false
-                                } else {
-                                    openDialog = false
-                                }
-                            }
-                        },
+                        onClick = { openDialog = false },
                         shape = RoundedCornerShape(10.dp),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = Color.LightGray
-                        )
+                        colors = ButtonDefaults.buttonColors(containerColor = Color.LightGray)
                     ) {
-                        Text(
-                            text = "Hủy",
-                            fontSize = 16.sp
-                        )
+                        Text("Hủy", fontSize = 16.sp)
+                    }
+                }
+            )
+        }
+        // Province/District Required Dialogs
+        if (showProvinceRequiredDialog) {
+            AlertDialog(
+                onDismissRequest = { showProvinceRequiredDialog = false },
+                title = { Text("Thông báo") },
+                containerColor = Color.White,
+                text = { Text("Vui lòng chọn tỉnh/thành phố trước") },
+                confirmButton = {
+                    Button(
+                        onClick = { showProvinceRequiredDialog = false },
+                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF5D9EFF)),
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(10.dp)
+                    ) {
+                        Text("Xác nhận")
+                    }
+                }
+            )
+        }
+        if (showDistrictRequiredDialog) {
+            AlertDialog(
+                onDismissRequest = { showDistrictRequiredDialog = false },
+                title = { Text("Thông báo") },
+                containerColor = Color.White,
+                text = { Text("Vui lòng chọn quận/huyện trước") },
+                confirmButton = {
+                    Button(
+                        onClick = { showDistrictRequiredDialog = false },
+                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF5D9EFF)),
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(10.dp)
+                    ) {
+                        Text("Xác nhận")
                     }
                 }
             )
@@ -336,12 +421,6 @@ fun UpdateAddress(
                     ),
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone)
                 )
-                if(validatePhone){
-                    Text(
-                        text = "Số điện thoại phải đủ 10 số",
-                        color = Color.Red
-                    )
-                }
             }
             // Nhóm trường "Địa chỉ"
             item {
@@ -351,44 +430,42 @@ fun UpdateAddress(
                     fontWeight = FontWeight.W500,
                     modifier = Modifier.padding(bottom = 6.dp, top = 10.dp)
                 )
-                TextField(
-                    value = city,
-                    onValueChange = { city = it },
-                    label = { Text("Tỉnh/Thành phố") },
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = TextFieldDefaults.colors(
-                        unfocusedContainerColor = Color.Transparent,
-                        focusedContainerColor = Color.Transparent,
-                        focusedIndicatorColor = Color(0xFF5D9EFF),
-                        focusedLabelColor = Color(0xFF5D9EFF),
-                        cursorColor = Color(0xFF5D9EFF)
-                    )
+                ProvinceDropdown(
+                    provinces = uiState.provinces,
+                    selectedProvince = selectedProvince,
+                    onProvinceSelected = { province ->
+                        if (selectedProvince?.ProvinceID != province.ProvinceID) {
+                            selectedProvince = province
+                            selectedDistrict = null
+                            selectedWard = null
+                            addressViewModel.fetchDistricts(province.ProvinceID)
+                        }
+                    },
+                    isLoading = uiState.isLoading
                 )
-                TextField(
-                    value = district,
-                    onValueChange = { district = it },
-                    label = { Text("Quận/Huyện") },
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = TextFieldDefaults.colors(
-                        unfocusedContainerColor = Color.Transparent,
-                        focusedContainerColor = Color.Transparent,
-                        focusedIndicatorColor = Color(0xFF5D9EFF),
-                        focusedLabelColor = Color(0xFF5D9EFF),
-                        cursorColor = Color(0xFF5D9EFF)
-                    ),
+                DistrictDropdown(
+                    districts = uiState.districts,
+                    selectedDistrict = selectedDistrict,
+                    onDistrictSelected = { district ->
+                        if (selectedDistrict?.DistrictID != district.DistrictID) {
+                            selectedDistrict = district
+                            selectedWard = null
+                            addressViewModel.fetchWards(district.DistrictID)
+                        }
+                    },
+                    isLoading = uiState.isLoading,
+                    enabled = selectedProvince != null,
+                    onProvinceRequired = { showProvinceRequiredDialog = true }
                 )
-                TextField(
-                    value = ward,
-                    onValueChange = { ward = it },
-                    label = { Text("Phường/Xã") },
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = TextFieldDefaults.colors(
-                        unfocusedContainerColor = Color.Transparent,
-                        focusedContainerColor = Color.Transparent,
-                        focusedIndicatorColor = Color(0xFF5D9EFF),
-                        focusedLabelColor = Color(0xFF5D9EFF),
-                        cursorColor = Color(0xFF5D9EFF)
-                    ),
+                WardDropdown(
+                    wards = uiState.wards,
+                    selectedWard = selectedWard,
+                    selectedProvince = selectedProvince,
+                    onWardSelected = { ward -> selectedWard = ward },
+                    isLoading = uiState.isLoading,
+                    enabled = selectedDistrict != null,
+                    onProvinceRequired = { showProvinceRequiredDialog = true },
+                    onDistrictRequired = { showDistrictRequiredDialog = true }
                 )
                 TextField(
                     value = street,

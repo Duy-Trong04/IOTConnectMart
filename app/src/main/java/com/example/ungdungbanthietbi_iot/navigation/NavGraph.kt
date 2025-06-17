@@ -83,7 +83,8 @@ fun NavGraph(
     imageViewModel: ImageViewModel,
     reviewViewModel: ReviewViewModel,
     accountViewModel: AccountViewModel,
-    customerViewModel: CustomerViewModel
+    customerViewModel: CustomerViewModel,
+    splashDuration: Long = 3000L
 ){
     NavHost(
         navController = navController,
@@ -117,8 +118,12 @@ fun NavGraph(
         }
     ){
         // Màn hình IntroScreen sau khoảng thời gian quy định thì chuyển sang màn hình trang chủ HomeScreen
-        composable(route = Screen.IntroScreen.route){
-            IntroScreen(accountViewModel, navController)
+        composable(Screen.IntroScreen.route) {
+            IntroScreen(
+                accountViewModel = accountViewModel,
+                navController = navController,
+                splashDuration = splashDuration
+            )
         }
 
         //Home chưa đăng nhập
@@ -202,7 +207,10 @@ fun NavGraph(
         composable(
             route = Screen.ResetPasswordScreen.route + "?email={email}",
             arguments = listOf(
-                navArgument("email") {type = NavType.StringType },
+                navArgument("email") {
+                    type = NavType.StringType
+                    nullable = true
+                }
             )
         ) {
             val email = it.arguments?.getString("email") ?: ""
@@ -233,8 +241,17 @@ fun NavGraph(
             )
         }
         //Màn hình Xác nhận OTP
-        composable(route = Screen.VerifyOTPScreen.route + "?email={email}") {
-            VerifyOTPScreen(navController, accountViewModel, email = it.arguments?.getString("email"))
+        composable(
+            route = Screen.VerifyOTPScreen.route + "?email={email}",
+            arguments = listOf(
+                navArgument("email") {
+                    type = NavType.StringType
+                    nullable = true
+                }
+            )
+        ) {
+            val email = it.arguments?.getString("email") ?: ""
+            VerifyOTPScreen(navController, accountViewModel, email = email)
         }
         //Màn hình quên mật khẩu
         composable(route = Screen.ForgotPasswordScreen.route) {
@@ -334,11 +351,11 @@ fun NavGraph(
         composable(route = Screen.Rating_Screen.route + "?idCustomer={idCustomer}&idDevice={idDevice}",
             arguments = listOf(
                 navArgument("idCustomer") {type = NavType.StringType },
-                navArgument("idDevice") {type = NavType.IntType }
+                navArgument("idDevice") {type = NavType.StringType }
             )
         ) {
             val idCustomer = it.arguments?.getString("idCustomer") ?: ""
-            val idDevice = it.arguments?.getInt("idDevice") ?: 0
+            val idDevice = it.arguments?.getString("idDevice") ?: ""
             RatingScreen(navController, idCustomer, idDevice)
         }
 

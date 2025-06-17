@@ -1,7 +1,9 @@
 package com.example.ungdungbanthietbi_iot.views.order_detail
 
 import android.annotation.SuppressLint
+import android.graphics.Bitmap
 import android.util.Log
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -37,8 +39,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -55,8 +59,8 @@ import androidx.navigation.NavController
 import com.example.ungdungbanthietbi_iot.viewModels.OrderViewModel
 import com.example.ungdungbanthietbi_iot.viewModels.ReviewViewModel
 import com.example.ungdungbanthietbi_iot.navigation.Screen
-import com.example.ungdungbanthietbi_iot.utils.base64ToBitmap
 import com.example.ungdungbanthietbi_iot.utils.formatGiaTien
+import com.example.ungdungbanthietbi_iot.viewModels.DeviceViewModel
 import java.net.URLDecoder
 import java.time.Instant
 import java.time.temporal.ChronoUnit
@@ -116,6 +120,9 @@ fun OrderDetailsScreen(
                     "idCustomer: $idCustomer"
         )
     }
+    val deviceViewModel: DeviceViewModel = viewModel()
+    // Map để lưu trữ bitmap theo product_id
+    val bitmapMap = remember { mutableStateMapOf<String, Bitmap?>() }
 
     Scaffold(
         topBar = {
@@ -147,7 +154,7 @@ fun OrderDetailsScreen(
         },
         bottomBar = {
             if (order != null) {
-                if (order.status == 3) {
+                if (order.status == 4) {
                     Row(
                         modifier = Modifier.fillMaxWidth().padding(10.dp),
                         horizontalArrangement = Arrangement.Center,
@@ -234,9 +241,10 @@ fun OrderDetailsScreen(
                                 text = when (order.status) {
                                     0 -> "Chờ xác nhận"
                                     1 -> "Đang chuẩn bị hàng"
-                                    2 -> "Đang giao hàng"
-                                    3 -> "Đã giao"
-                                    4 -> "Hoàn tất"
+                                    2 -> "Chờ giao hàng"
+                                    3 -> "Đang giao hàng"
+                                    4 -> "Đã giao"
+                                    5 -> "Hoàn tất"
                                     else -> "Đã hủy"
                                 },
                                 fontSize = 16.sp,
@@ -293,6 +301,13 @@ fun OrderDetailsScreen(
                                 val filteredDetails = order.details.groupBy { it.product_id }
                                     .map { (_, details) -> details.maxByOrNull { it.quantity }!! }
                                 filteredDetails.forEach { detail ->
+                                    // Tải hình ảnh cho từng product_id
+                                    LaunchedEffect(detail.product_id) {
+                                        if (bitmapMap[detail.product_id] == null) {
+                                            val bitmap = deviceViewModel.getDeviceImageBitmapImage(detail.image)
+                                            bitmapMap[detail.product_id] = bitmap
+                                        }
+                                    }
                                     // Kiểm tra xem sản phẩm đã được đánh giá chưa
                                     val existingReview = listReviews.find { review ->
                                         review.idCustomer == idCustomer && review.idDevice == detail.product_id
@@ -318,18 +333,45 @@ fun OrderDetailsScreen(
                                             modifier = Modifier.weight(1f),
                                             verticalAlignment = Alignment.CenterVertically
                                         ) {
-                                            // Hiển thị hình ảnh từ Base64
-                                            val bitmap = base64ToBitmap(detail.image)
-                                            if (bitmap != null) {
+//                                            bitmap?.let {
+//                                                Image(
+//                                                    bitmap = it.asImageBitmap(),
+//                                                    contentDescription = detail.product_name.ifEmpty { "Hình ảnh sản phẩm" },
+//                                                    modifier = Modifier
+//                                                        .size(80.dp)
+//                                                        .padding(end = 8.dp),
+//                                                    contentScale = ContentScale.Fit
+//                                                )
+//                                            } ?: run {
+//                                                Image(
+//                                                    painter = painterResource(id = android.R.drawable.ic_menu_gallery),
+//                                                    contentDescription = "Product Image",
+//                                                    modifier = Modifier
+//                                                        .size(80.dp)
+//                                                        .padding(end = 8.dp),
+//                                                    contentScale = ContentScale.Fit
+//                                                )
+//                                            }
+                                            bitmapMap[detail.product_id]?.let { bitmap ->
                                                 Image(
-                                                    painter = BitmapPainter(bitmap.asImageBitmap()),
-                                                    contentDescription = "Hình ảnh sản phẩm",
+                                                    bitmap = bitmap.asImageBitmap(),
+                                                    contentDescription = detail.product_name.ifEmpty { "Hình ảnh sản phẩm" },
+                                                    modifier = Modifier
+                                                        .size(80.dp)
+                                                        .padding(end = 8.dp),
+                                                    contentScale = ContentScale.Fit
+                                                )
+                                            } ?: run {
+                                                Image(
+                                                    painter = painterResource(id = android.R.drawable.ic_menu_gallery),
+                                                    contentDescription = "Product Image",
                                                     modifier = Modifier
                                                         .size(80.dp)
                                                         .padding(end = 8.dp),
                                                     contentScale = ContentScale.Fit
                                                 )
                                             }
+                                            Spacer(modifier = Modifier.width(4.dp))
                                             Column {
                                                 Text(
                                                     text = detail.product_name,
@@ -353,23 +395,24 @@ fun OrderDetailsScreen(
                                             }
                                         }
                                         // Hiển thị nút "Đánh giá" nếu chưa được đánh giá và đơn hàng đã giao/hoàn tất
-                                        if (order.status == 4) {
+                                        if (order.status == 5) {
                                             if (isReviewed && existingReview != null) {
                                                 if (canEditReview) {
                                                     Button(
                                                         onClick = {
                                                             navController.navigate(Screen.Update_Rating_Screen.route+"?idReview=${existingReview.idReview}&idCustomer=$idCustomer")
                                                         },
-                                                        shape = RoundedCornerShape(8.dp),
+                                                        modifier = Modifier.padding(start = 8.dp), // Đặt chiều cao cố định
                                                         colors = ButtonDefaults.buttonColors(
-                                                            containerColor = Color(0xFF5D9EFF),
-                                                            contentColor = Color.White
+                                                            containerColor = Color.White,
+                                                            contentColor = Color(0xFF5D9EFF)
                                                         ),
-                                                        modifier = Modifier.padding(start = 8.dp)
+                                                        border = BorderStroke(1.dp, Color(0xFF5D9EFF)),
+                                                        shape = RoundedCornerShape(5.dp)
                                                     ) {
                                                         Text(
                                                             text = "Chỉnh sửa",
-                                                            fontSize = 14.sp
+                                                            fontSize = 13.sp
                                                         )
                                                     }
                                                 }
@@ -377,17 +420,20 @@ fun OrderDetailsScreen(
                                             }
                                             else {
                                                 Button(
-                                                    onClick = { navController.navigate(Screen.Rating_Screen.route + "?idCustomer=$idCustomer&idDevice=${detail.product_id}") },
-                                                    shape = RoundedCornerShape(8.dp),
+                                                    onClick = {
+                                                        navController.navigate(Screen.Rating_Screen.route + "?idCustomer=$idCustomer&idDevice=${detail.product_id}")
+                                                    },
+                                                    modifier = Modifier.padding(start = 8.dp), // Đặt chiều cao cố định
                                                     colors = ButtonDefaults.buttonColors(
-                                                        containerColor = Color(0xFF5D9EFF),
-                                                        contentColor = Color.White
+                                                        containerColor = Color.White,
+                                                        contentColor = Color(0xFF5D9EFF)
                                                     ),
-                                                    modifier = Modifier.padding(start = 8.dp)
+                                                    border = BorderStroke(1.dp, Color(0xFF5D9EFF)),
+                                                    shape = RoundedCornerShape(5.dp)
                                                 ) {
                                                     Text(
                                                         text = "Đánh giá",
-                                                        fontSize = 14.sp
+                                                        fontSize = 13.sp
                                                     )
                                                 }
                                             }

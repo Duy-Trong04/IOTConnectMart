@@ -19,15 +19,12 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.outlined.Star
-import androidx.compose.material3.BottomAppBar
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Checkbox
-import androidx.compose.material3.CheckboxDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -43,6 +40,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -58,17 +56,15 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import coil.compose.AsyncImage
 import com.example.ungdungbanthietbi_iot.api.ReviewRequestCreate
-import com.example.ungdungbanthietbi_iot.models.Review
 import com.example.ungdungbanthietbi_iot.viewModels.ReviewViewModel
-import com.example.ungdungbanthietbi_iot.utils.getCurrentTimestamp
 import kotlinx.coroutines.delay
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun RatingScreen(navController: NavController, idCustomer: String, idDevice: Int) {
+fun RatingScreen(navController: NavController, idCustomer: String, idDevice: String) {
     val reviewViewModel: ReviewViewModel = viewModel()
 
-    var rating by remember { mutableStateOf(0) }
+    var rating by remember { mutableIntStateOf(0) }
     var comment by remember { mutableStateOf("") }
     var selectedImage by remember { mutableStateOf<Uri?>(null) }
 
@@ -92,7 +88,7 @@ fun RatingScreen(navController: NavController, idCustomer: String, idDevice: Int
                 title = { Text("Đánh giá sản phẩm", fontWeight = FontWeight.Bold) },
                 navigationIcon = {
                     IconButton(onClick = { navController.popBackStack() }) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Back")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -103,16 +99,17 @@ fun RatingScreen(navController: NavController, idCustomer: String, idDevice: Int
             )
         },
         bottomBar = {
-            BottomAppBar(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .background(Color.White)
-                    .height(170.dp)
-            ) {
+//            BottomAppBar(
+//                modifier = Modifier
+//                    .fillMaxWidth()
+//                    .background(Color.White)
+//                    .height(170.dp)
+//            ) {
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(10.dp)
+                        .background(Color.White)
+                        .padding(horizontal = 10.dp).padding(bottom = 10.dp)
                 ) {
                     if (showSnackbar.value) {
                         LaunchedEffect(Unit) {
@@ -164,7 +161,6 @@ fun RatingScreen(navController: NavController, idCustomer: String, idDevice: Int
                         Text(text = if (isLoading) "Đang gửi..." else "Gửi đánh giá", fontSize = 20.sp)
                     }
                 }
-            }
         }
     ) { paddingValues ->
         LazyColumn(

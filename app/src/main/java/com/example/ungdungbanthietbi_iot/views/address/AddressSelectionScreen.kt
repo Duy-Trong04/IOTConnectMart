@@ -1,11 +1,12 @@
 package com.example.ungdungbanthietbi_iot.views.address
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -20,15 +21,13 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.AddCircleOutline
-import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.RadioButtonDefaults
 import androidx.compose.material3.Scaffold
@@ -52,12 +51,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
-import com.example.ungdungbanthietbi_iot.models.Address
 import com.example.ungdungbanthietbi_iot.models.AddressBook
 import com.example.ungdungbanthietbi_iot.viewModels.AddressViewModel
-import com.example.ungdungbanthietbi_iot.viewModels.CustomerViewModel
 import com.example.ungdungbanthietbi_iot.navigation.Screen
-import com.example.ungdungbanthietbi_iot.viewModels.CustomerState
 import androidx.compose.material3.CircularProgressIndicator as CircularProgressIndicator1
 
 /** Giao diện màn hình chọn địa chỉ (AddressSelectionScreen)
@@ -153,12 +149,12 @@ fun AddressSelectionScreen(
                                 Icons.Default.AddCircleOutline,
                                 contentDescription = null,
                                 tint = Color(0xFF448AFF),
-                                modifier = Modifier.size(14.dp)
+                                modifier = Modifier.size(16.dp)
                             )
                             Spacer(modifier = Modifier.width(5.dp))
                             Text(
                                 text = "Thêm địa chỉ mới",
-                                fontSize = 14.sp,
+                                fontSize = 16.sp,
                                 color = Color(0xFF448AFF),
                                 fontWeight = FontWeight.Bold
                             )
@@ -280,17 +276,25 @@ fun AddressItem(
                     fontSize = 15.sp
                 )
                 if (address.is_default) {
-                    Text(
-                        text = "Mặc định",
-                        fontSize = 13.sp,
+                    OutlinedButton(
+                        onClick = {},
                         modifier = Modifier
-                            .border(
-                                1.dp,
-                                Color(0xFF5D9EFF),
-                                shape = RoundedCornerShape(3.dp)
-                            ),
-                        color = Color(0xFF5D9EFF)
-                    )
+                            .height(28.dp) // Chiều cao nhỏ để giống nhãn
+                            .padding(bottom = 3.dp),
+                        shape = RoundedCornerShape(5.dp),
+                        border = BorderStroke(1.dp, Color(0xFF5D9EFF)),
+                        colors = ButtonDefaults.outlinedButtonColors(
+                            contentColor = Color(0xFF5D9EFF),
+                            disabledContentColor = Color(0xFF5D9EFF)
+                        ),
+                        contentPadding = PaddingValues(horizontal = 8.dp, vertical = 0.dp)
+                    ) {
+                        Text(
+                            text = "Mặc định",
+                            fontSize = 14.sp,
+                            fontWeight = FontWeight.Medium
+                        )
+                    }
                 }
             }
         }

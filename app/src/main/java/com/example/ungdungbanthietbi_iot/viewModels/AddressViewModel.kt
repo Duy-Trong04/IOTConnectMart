@@ -11,6 +11,9 @@ import com.example.ungdungbanthietbi_iot.api.CustomerData
 import com.example.ungdungbanthietbi_iot.api.UpdateAddressRequest
 import com.example.ungdungbanthietbi_iot.config.RetrofitClient
 import com.example.ungdungbanthietbi_iot.models.AddressBook
+import com.example.ungdungbanthietbi_iot.models.District
+import com.example.ungdungbanthietbi_iot.models.Province
+import com.example.ungdungbanthietbi_iot.models.Ward
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -18,7 +21,105 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
+data class AddressUiState(
+    val isLoading: Boolean = false,
+    val provinces: List<Province> = emptyList(),
+    val districts: List<District> = emptyList(),
+    val wards: List<Ward> = emptyList(),
+    val error: String? = null
+)
+
 class AddressViewModel : ViewModel() {
+    private val _uiState = MutableStateFlow(AddressUiState())
+    val uiState: StateFlow<AddressUiState> = _uiState
+
+    // Thay bằng token thực tế
+    private val token = "d6376023-4b27-11f0-b0ff-1a4123e86e09"
+
+    init {
+        fetchProvinces()
+    }
+
+    fun fetchProvinces() {
+        viewModelScope.launch {
+            _uiState.value = _uiState.value.copy(isLoading = true, error = null)
+            try {
+                val response = RetrofitClient.addressPublic.getProvinces(token = token)
+                if (response.code == 200) {
+                    _uiState.value = _uiState.value.copy(
+                        isLoading = false,
+                        provinces = response.data,
+                        districts = emptyList(),
+                        wards = emptyList(),
+                        error = null
+                    )
+                } else {
+                    _uiState.value = _uiState.value.copy(
+                        isLoading = false,
+                        error = response.message ?: "Lỗi tải tỉnh/thành phố"
+                    )
+                }
+            } catch (e: Exception) {
+                _uiState.value = _uiState.value.copy(
+                    isLoading = false,
+                    error = e.message ?: "Lỗi không xác định"
+                )
+            }
+        }
+    }
+
+    fun fetchDistricts(provinceId: Int) {
+        viewModelScope.launch {
+            _uiState.value = _uiState.value.copy(isLoading = true, error = null)
+            try {
+                val response = RetrofitClient.addressPublic.getDistricts(token = token, provinceId = provinceId)
+                if (response.code == 200) {
+                    _uiState.value = _uiState.value.copy(
+                        isLoading = false,
+                        districts = response.data,
+                        wards = emptyList(),
+                        error = null
+                    )
+                } else {
+                    _uiState.value = _uiState.value.copy(
+                        isLoading = false,
+                        error = response.message ?: "Lỗi tải quận/huyện"
+                    )
+                }
+            } catch (e: Exception) {
+                _uiState.value = _uiState.value.copy(
+                    isLoading = false,
+                    error = e.message ?: "Lỗi không xác định"
+                )
+            }
+        }
+    }
+
+    fun fetchWards(districtId: Int) {
+        viewModelScope.launch {
+            _uiState.value = _uiState.value.copy(isLoading = true, error = null)
+            try {
+                val response = RetrofitClient.addressPublic.getWards(token = token, districtId = districtId)
+                if (response.code == 200) {
+                    _uiState.value = _uiState.value.copy(
+                        isLoading = false,
+                        wards = response.data,
+                        error = null
+                    )
+                } else {
+                    _uiState.value = _uiState.value.copy(
+                        isLoading = false,
+                        error = response.message ?: "Lỗi tải phường/xã"
+                    )
+                }
+            } catch (e: Exception) {
+                _uiState.value = _uiState.value.copy(
+                    isLoading = false,
+                    error = e.message ?: "Lỗi không xác định"
+                )
+            }
+        }
+    }
     var listAddress by mutableStateOf<List<AddressBook>>(emptyList())
         private set
 

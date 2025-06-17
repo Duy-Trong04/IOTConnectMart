@@ -2,9 +2,7 @@ package com.example.ungdungbanthietbi_iot.viewModels
 
 import android.content.Context
 import android.util.Log
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.compose.runtime.State
 import androidx.datastore.preferences.core.edit
@@ -23,10 +21,8 @@ import com.example.ungdungbanthietbi_iot.api.VerifyOtpChangeEmailRequest
 import com.example.ungdungbanthietbi_iot.api.VerifyOtpRequest
 import com.example.ungdungbanthietbi_iot.api.VerifyOtpResponse
 import com.example.ungdungbanthietbi_iot.dataStore
-import com.example.ungdungbanthietbi_iot.models.Account
 import com.example.ungdungbanthietbi_iot.models.LoginRequest
 import com.example.ungdungbanthietbi_iot.models.LoginResponse
-import com.example.ungdungbanthietbi_iot.models.UpdatePassword
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -34,8 +30,6 @@ import kotlinx.coroutines.launch
 import retrofit2.Response
 
 class AccountViewModel:ViewModel() {
-    var account: Account? by mutableStateOf(null)
-        private set
     var username: String? = null
 
     private val _loginUiState = MutableStateFlow(LoginUiState())
@@ -43,6 +37,8 @@ class AccountViewModel:ViewModel() {
 
     private val _accountCheckResult = mutableStateOf<Boolean?>(null)
     val accountCheckResult: State<Boolean?> = _accountCheckResult
+    private val _isLoading = MutableStateFlow(false)
+    val isLoading: StateFlow<Boolean> = _isLoading
 
     suspend fun logout(context: Context) {
         try {
@@ -80,6 +76,7 @@ class AccountViewModel:ViewModel() {
     fun register(request: RegisterRequest) {
         viewModelScope.launch {
             try {
+                _isLoading.value = true
                 val response = RetrofitClient.accountAPIService.addAccount(request)
                 _registerResult.value = response
                 if (response.isSuccessful) {
@@ -90,6 +87,8 @@ class AccountViewModel:ViewModel() {
             } catch (e: Exception) {
                 Log.e("AccountViewModel", "Registration error: ${e.message}")
                 _registerResult.value = null
+            } finally {
+                _isLoading.value = false
             }
         }
     }
@@ -185,9 +184,11 @@ class AccountViewModel:ViewModel() {
     private val _resetPasswordResult = MutableStateFlow<Response<ResetPasswordResponse>?>(null)
     val resetPasswordResult: StateFlow<Response<ResetPasswordResponse>?> = _resetPasswordResult
 
+
     fun sendOtp(email: String) {
         viewModelScope.launch {
             try {
+                _isLoading.value = true // Bắt đầu loading
                 val request = SendOtpRequest(email = email)
                 Log.d("AuthViewModel", "Sending OTP request: $request")
                 val response = RetrofitClient.authApiService.sendOtp(request)
@@ -200,13 +201,19 @@ class AccountViewModel:ViewModel() {
             } catch (e: Exception) {
                 Log.e("AuthViewModel", "Send OTP error: ${e.message}")
                 _sendOtpResult.value = null
+            }finally {
+                _isLoading.value = false // Kết thúc loading
             }
         }
+    }
+    fun resetSendOtpResult() {
+        _sendOtpResult.value = null
     }
 
     fun verifyOtp(email: String, otp: String) {
         viewModelScope.launch {
             try {
+                _isLoading.value = true
                 val request = VerifyOtpRequest(email = email, otp = otp)
                 Log.d("AuthViewModel", "Verify OTP request: $request")
                 val response = RetrofitClient.verifyOtp.verifyOtp(request)
@@ -219,6 +226,8 @@ class AccountViewModel:ViewModel() {
             } catch (e: Exception) {
                 Log.e("AuthViewModel", "Verify OTP error: ${e.message}")
                 _verifyOtpResult.value = null
+            } finally {
+                _isLoading.value = false
             }
         }
     }

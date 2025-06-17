@@ -1,5 +1,6 @@
 package com.example.ungdungbanthietbi_iot.viewModels
 
+import android.annotation.SuppressLint
 import android.util.Log
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -9,7 +10,6 @@ import androidx.lifecycle.viewModelScope
 import com.example.ungdungbanthietbi_iot.api.ReviewRequestCreate
 import com.example.ungdungbanthietbi_iot.api.ReviewRequestUpdate
 import com.example.ungdungbanthietbi_iot.config.RetrofitClient
-import com.example.ungdungbanthietbi_iot.models.Review
 import com.example.ungdungbanthietbi_iot.models.ReviewDetail
 import com.example.ungdungbanthietbi_iot.models.Reviews
 import kotlinx.coroutines.Dispatchers
@@ -33,8 +33,6 @@ class ReviewViewModel:ViewModel() {
     private val _error = MutableStateFlow<String?>(null)
     val error: StateFlow<String?> = _error.asStateFlow()
 
-    private var reviewAddResult by mutableStateOf("")
-
     var review by mutableStateOf<ReviewDetail?>(null)
         private set
 
@@ -50,6 +48,7 @@ class ReviewViewModel:ViewModel() {
         }
     }
 
+    @SuppressLint("NewApi")
     fun getAllReviews(){
         viewModelScope.launch {
             _isLoading.value = true

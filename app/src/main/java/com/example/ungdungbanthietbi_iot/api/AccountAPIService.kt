@@ -1,24 +1,12 @@
 package com.example.ungdungbanthietbi_iot.api
 
-import com.example.ungdungbanthietbi_iot.models.Account
 import com.example.ungdungbanthietbi_iot.models.AddAccount
 import com.example.ungdungbanthietbi_iot.models.LoginRequest
 import com.example.ungdungbanthietbi_iot.models.LoginResponse
-import com.example.ungdungbanthietbi_iot.models.UpdatePassword
-import com.google.gson.annotations.SerializedName
 import retrofit2.Response
 import retrofit2.http.Body
-import retrofit2.http.GET
 import retrofit2.http.PATCH
 import retrofit2.http.POST
-import retrofit2.http.PUT
-import retrofit2.http.Query
-
-
-data class accountUpdateResponse(
-    val success: Boolean,
-    val message: String
-)
 
 // ChangePasswordRequest.kt
 data class ChangePasswordRequest(

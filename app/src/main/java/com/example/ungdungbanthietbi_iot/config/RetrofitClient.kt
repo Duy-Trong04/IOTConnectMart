@@ -2,6 +2,7 @@ package com.example.ungdungbanthietbi_iot.config
 
 import com.example.ungdungbanthietbi_iot.api.AccuntAPIService
 import com.example.ungdungbanthietbi_iot.api.AddressAPIService
+import com.example.ungdungbanthietbi_iot.api.AddressPublic
 import com.example.ungdungbanthietbi_iot.api.CartAPIService
 import com.example.ungdungbanthietbi_iot.api.CategoryApi
 import com.example.ungdungbanthietbi_iot.api.CustomerAPIService
@@ -10,7 +11,6 @@ import com.example.ungdungbanthietbi_iot.api.ImageAPIService
 import com.example.ungdungbanthietbi_iot.api.LikedAPIService
 import com.example.ungdungbanthietbi_iot.api.NoticeAPIService
 import com.example.ungdungbanthietbi_iot.api.OrderAPIService
-import com.example.ungdungbanthietbi_iot.api.OrderDetailAPIService
 import com.example.ungdungbanthietbi_iot.api.ReviewAPIService
 import com.example.ungdungbanthietbi_iot.api.SlideShowAPIService
 import com.example.ungdungbanthietbi_iot.api.VNPayAPIService
@@ -21,6 +21,7 @@ import retrofit2.converter.gson.GsonConverterFactory
 
 object Constant{
     const val BASE_URL = "http://10.0.2.2:8081/api/" //10.0.2.2
+    const val BASE_URL_ADDRESS_PUBLIC = "https://online-gateway.ghn.vn/"
 }
 
 object RetrofitClient {
@@ -80,13 +81,6 @@ object RetrofitClient {
             .addConverterFactory(GsonConverterFactory.create(GsonBuilder().create()))
             .build()
             .create(OrderAPIService::class.java)
-    }
-    val orderDetailAPIService: OrderDetailAPIService by lazy {
-        Retrofit.Builder()
-            .baseUrl(Constant.BASE_URL)
-            .addConverterFactory(GsonConverterFactory.create(GsonBuilder().create()))
-            .build()
-            .create(OrderDetailAPIService::class.java)
     }
 
     val addressAPIService: AddressAPIService by lazy {
@@ -148,5 +142,13 @@ object RetrofitClient {
             .addConverterFactory(GsonConverterFactory.create(GsonBuilder().create()))
             .build()
             .create(VNPayAPIService::class.java)
+    }
+
+    val addressPublic: AddressPublic by lazy {
+        Retrofit.Builder()
+            .baseUrl(Constant.BASE_URL_ADDRESS_PUBLIC)
+            .addConverterFactory(GsonConverterFactory.create(GsonBuilder().create()))
+            .build()
+            .create(AddressPublic::class.java)
     }
 }
