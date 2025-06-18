@@ -39,31 +39,33 @@ import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowUpward
-import androidx.compose.material.icons.filled.Category
-import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.automirrored.outlined.Logout
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material.icons.filled.Home
-import androidx.compose.material.icons.filled.Laptop
-import androidx.compose.material.icons.filled.LightMode
+import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.outlined.GridView
 import androidx.compose.material.icons.outlined.Home
+import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material.icons.outlined.Notifications
 import androidx.compose.material.icons.outlined.Person
+import androidx.compose.material.icons.outlined.PersonOutline
 import androidx.compose.material.icons.outlined.ShoppingCart
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DrawerDefaults
 import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FabPosition
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.FloatingActionButtonDefaults
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.ModalDrawerSheet
@@ -91,13 +93,10 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.draw.shadow
-import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
@@ -108,9 +107,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
-import coil.compose.AsyncImage
 import coil.compose.rememberAsyncImagePainter
-import coil.request.ImageRequest
 import com.example.ungdungbanthietbi_iot.api.AddLikedRequest
 import com.example.ungdungbanthietbi_iot.api.LikedProduct
 import com.example.ungdungbanthietbi_iot.models.Category
@@ -127,18 +124,12 @@ import com.example.ungdungbanthietbi_iot.views.notification.NotificationScreen
 import com.example.ungdungbanthietbi_iot.views.personal.PersonalScreen
 import com.example.ungdungbanthietbi_iot.utils.formatGiaTien
 import com.example.ungdungbanthietbi_iot.utils.formatGiaTienInt
+import com.example.ungdungbanthietbi_iot.viewModels.AccountViewModel
 import com.example.ungdungbanthietbi_iot.viewModels.CategoryViewModel
+import com.example.ungdungbanthietbi_iot.viewModels.CustomerState
+import com.example.ungdungbanthietbi_iot.viewModels.CustomerViewModel
+import com.example.ungdungbanthietbi_iot.views.components.ParentCategoryItem
 
-@Composable
-fun getCategoryIcon(categoryName: String): ImageVector {
-    return when (categoryName) {
-        "Laptop" -> Icons.Filled.Laptop
-        "Công tắc thông minh" -> Icons.Filled.Category
-        "Đèn thông minh" -> Icons.Filled.LightMode
-        "Ổ cắm thông minh" -> Icons.Filled.Category
-        else -> Icons.Filled.Category
-    }
-}
 @RequiresApi(Build.VERSION_CODES.O)
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -150,7 +141,10 @@ fun HomeScreen(
     id: String?,
     password: String?
 ) {
+    val context = LocalContext.current
     val categoryViewModel:CategoryViewModel = viewModel()
+    val accountViewModel: AccountViewModel = viewModel()
+    val customerViewModel: CustomerViewModel = viewModel()
     val listAllDevice: List<Device> = deviceViewModel.listAllDevice
     val listDeviceFeatured: List<Device> = deviceViewModel.listDeviceFeatured
     val listCategories by categoryViewModel.listCategories.collectAsState()
@@ -166,6 +160,7 @@ fun HomeScreen(
         categoryViewModel.getCategories()
         if(id != null){
             likedViewModel.getLikedByIdCustomer(id)
+            customerViewModel.getCustomerById(id)
         }
     }
 
@@ -189,35 +184,146 @@ fun HomeScreen(
     }
 
     var selectedTabIndex by rememberSaveable { mutableIntStateOf(0) }
-    //Log.d("Thành công", "Đổi mật khẩu thành công ${username}va ${password}")
+    var selectedCategory by remember { mutableStateOf<String?>(null) }
+    val openDialog = remember { mutableStateOf(false) }
+
+    var bitmap by remember { mutableStateOf<Bitmap?>(null) }
     ModalNavigationDrawer(
         drawerState = navdrawerState,
         drawerContent = {
-            ModalDrawerSheet {
-                // Header
-                Row(
+            ModalDrawerSheet (
+                modifier = Modifier.width(300.dp),
+                drawerContainerColor = Color.White,
+                drawerTonalElevation = DrawerDefaults.ModalDrawerElevation
+            ){
+                // Header hiển thị thông tin khách hàng
+                Column(
                     modifier = Modifier
                         .fillMaxWidth()
                         .background(Color(0xFF5D9EFF))
-                        .padding(12.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
+                        .padding(horizontal = 16.dp, vertical = 8.dp)
                 ) {
-                    Text(
-                        text = "Danh mục sản phẩm",
-                        color = Color.White,
-                        fontSize = 22.sp,
-                        fontWeight = FontWeight.Bold
-                    )
-                    IconButton(onClick = { scope.launch { navdrawerState.close() } }) {
-                        Icon(
-                            imageVector = Icons.Default.Close,
-                            contentDescription = "Đóng danh mục",
-                            tint = Color.White
+                    val customerState by customerViewModel.customerState.collectAsState()
+                    when (val state = customerState) {
+                        is CustomerState.Loading -> {
+                            CircularProgressIndicator(
+                                color = Color.White,
+                                modifier = Modifier
+                                    .size(24.dp)
+                                    .align(Alignment.CenterHorizontally)
+                            )
+                        }
+                        is CustomerState.Success -> {
+                            val customer = state.customer
+                            // Tải hình ảnh bất đồng bộ
+                            LaunchedEffect(customer) {
+                                bitmap = customer.image?.let {
+                                    deviceViewModel.getDeviceImageBitmapImage(
+                                        it
+                                    )
+                                }
+                            }
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.Start,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                bitmap?.let {
+                                    Image(
+                                        bitmap = it.asImageBitmap(),
+                                        contentDescription = customer.fullname.ifEmpty { "Hình ảnh sản phẩm" },
+                                        modifier = Modifier.size(80.dp).clip(CircleShape),
+                                        contentScale = ContentScale.Crop
+                                    )
+                                } ?: run {
+                                    Image(
+                                        painter = painterResource(id = android.R.drawable.ic_menu_gallery),
+                                        contentDescription = "Product Image",
+                                        modifier = Modifier.size(80.dp).clip(CircleShape),
+                                        contentScale = ContentScale.Crop
+                                    )
+                                }
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Column (
+                                    modifier = Modifier.fillMaxWidth(),
+                                    verticalArrangement = Arrangement.Center,
+                                    horizontalAlignment = Alignment.Start
+                                ){
+                                    Text(
+                                        text = customer.fullname,
+                                        color = Color.White,
+                                        fontSize = 18.sp,
+                                        fontWeight = FontWeight.Medium
+                                    )
+                                    Spacer(modifier = Modifier.height(4.dp))
+                                    Text(
+                                        text = "SĐT: ${customer.phone}",
+                                        color = Color.White,
+                                        fontSize = 14.sp
+                                    )
+                                    customer.email.let {
+                                        Spacer(modifier = Modifier.height(4.dp))
+                                        Text(
+                                            text = "Email: $it",
+                                            color = Color.White,
+                                            fontSize = 14.sp
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                        is CustomerState.Error -> {
+                            Text(
+                                text = "Lỗi: ${state.message}",
+                                color = Color(0xFFFF4444),
+                                fontSize = 14.sp,
+                                textAlign = TextAlign.Center,
+                                modifier = Modifier.fillMaxWidth()
+                            )
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Button(
+                                onClick = {
+                                    scope.launch {
+                                        navdrawerState.close()
+                                        navController.navigate(Screen.LoginScreen.route)
+                                    }
+                                },
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = Color.White,
+                                    contentColor = Color(0xFF5D9EFF)
+                                ),
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                Text(text = "Đăng nhập lại")
+                            }
+                        }
+                    }
+                    if (customerState !is CustomerState.Success && id.isNullOrBlank()) {
+                        Text(
+                            text = "Vui lòng đăng nhập để xem thông tin",
+                            color = Color.White,
+                            fontSize = 14.sp,
+                            textAlign = TextAlign.Center,
+                            modifier = Modifier.fillMaxWidth()
                         )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Button(
+                            onClick = {
+                                scope.launch {
+                                    navdrawerState.close()
+                                    navController.navigate(Screen.LoginScreen.route)
+                                }
+                            },
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = Color.White,
+                                contentColor = Color(0xFF5D9EFF)
+                            ),
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Text(text = "Đăng nhập ngay")
+                        }
                     }
                 }
-                HorizontalDivider(color = Color(0xFFE0E0E0))
 
                 // Xử lý trạng thái tải và lỗi
                 when {
@@ -259,13 +365,12 @@ fun HomeScreen(
                     else -> {
                         LazyColumn(
                             modifier = Modifier.fillMaxWidth(),
-                            contentPadding = PaddingValues(vertical = 8.dp)
                         ) {
                             item {
                                 NavigationDrawerItem(
                                     icon = {
                                         Icon(
-                                            imageVector = Icons.Default.Home,
+                                            imageVector = Icons.Outlined.Home,
                                             contentDescription = "Trang chủ",
                                             tint = Color(0xFF5D9EFF)
                                         )
@@ -282,28 +387,22 @@ fun HomeScreen(
                                     onClick = {
                                         scope.launch {
                                             navdrawerState.close()
-                                            val route = if (username != null)
-                                                Screen.HomeScreen.route + "?username=${username}&id=$id&password=$password"
-                                            else
-                                                Screen.HomeScreen.route
-                                            navController.navigate(route)
+                                            selectedTabIndex = 0
                                         }
                                     },
-                                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp)
+                                    modifier = Modifier.padding( vertical = 4.dp)
                                 )
-                            }
-                            items(listCategories) { category ->
                                 NavigationDrawerItem(
                                     icon = {
                                         Icon(
-                                            imageVector = getCategoryIcon(category.name),
-                                            contentDescription = category.name,
+                                            imageVector = Icons.Default.FavoriteBorder,
+                                            contentDescription = "Yêu thích",
                                             tint = Color(0xFF5D9EFF)
                                         )
                                     },
                                     label = {
                                         Text(
-                                            text = category.name,
+                                            text = "Yêu thích",
                                             color = Color.Black,
                                             fontSize = 16.sp,
                                             fontWeight = FontWeight.Medium
@@ -313,23 +412,181 @@ fun HomeScreen(
                                     onClick = {
                                         scope.launch {
                                             navdrawerState.close()
-                                            val route = if (username != null)
-                                                Screen.Category_Screen.route + "?category=${category.name}&username=${username}&idCustomer=$id&password=$password"
-                                            else
-                                                Screen.Category_Screen.route + "?category=${category.name}"
-                                            navController.navigate(route)
+                                            if (username != null) {
+                                                navController.navigate(
+                                                    Screen.Favorites_Screen.route +
+                                                            "?idCustomer=${id}&username=${username}&password=$password"
+                                                )
+                                            }
+                                            else {
+                                                navController.navigate(Screen.LoginScreen.route)
+                                            }
                                         }
                                     },
-                                    modifier = Modifier
-                                        .padding(horizontal = 16.dp, vertical = 4.dp)
-                                        .drawBehind {
-                                            drawLine(
-                                                color = Color(0xFFE0E0E0),
-                                                start = Offset(0f, size.height),
-                                                end = Offset(size.width, size.height),
-                                                strokeWidth = 1.dp.toPx()
-                                            )
+                                    modifier = Modifier.padding(vertical = 4.dp)
+                                )
+                                NavigationDrawerItem(
+                                    icon = {
+                                        Icon(
+                                            imageVector = Icons.Outlined.ShoppingCart,
+                                            contentDescription = "Giỏ hàng",
+                                            tint = Color(0xFF5D9EFF)
+                                        )
+                                    },
+                                    label = {
+                                        Text(
+                                            text = "Giỏ hàng",
+                                            color = Color.Black,
+                                            fontSize = 16.sp,
+                                            fontWeight = FontWeight.Medium
+                                        )
+                                    },
+                                    selected = false,
+                                    onClick = {
+                                        scope.launch {
+                                            navdrawerState.close()
+                                            if (username != null) {
+                                                navController.navigate(
+                                                    Screen.Cart_Screen.route +
+                                                            "?idCustomer=${id}&username=${username}&password=$password"
+                                                )
+                                            }
+                                            else {
+                                                navController.navigate(Screen.LoginScreen.route)
+                                            }
                                         }
+                                    },
+                                    modifier = Modifier.padding(vertical = 4.dp)
+                                )
+                                NavigationDrawerItem(
+                                    icon = {
+                                        Icon(
+                                            imageVector = Icons.Outlined.Notifications,
+                                            contentDescription = "Thông báo",
+                                            tint = Color(0xFF5D9EFF)
+                                        )
+                                    },
+                                    label = {
+                                        Text(
+                                            text = "Thông báo",
+                                            color = Color.Black,
+                                            fontSize = 16.sp,
+                                            fontWeight = FontWeight.Medium
+                                        )
+                                    },
+                                    selected = false,
+                                    onClick = {
+                                        scope.launch {
+                                            navdrawerState.close()
+                                            selectedTabIndex = 2
+                                        }
+                                    },
+                                    modifier = Modifier.padding(vertical = 4.dp)
+                                )
+                                NavigationDrawerItem(
+                                    icon = {
+                                        Icon(
+                                            imageVector = Icons.Outlined.PersonOutline,
+                                            contentDescription = "Thông tin cá nhân",
+                                            tint = Color(0xFF5D9EFF)
+                                        )
+                                    },
+                                    label = {
+                                        Text(
+                                            text = "Thông tin cá nhân",
+                                            color = Color.Black,
+                                            fontSize = 16.sp,
+                                            fontWeight = FontWeight.Medium
+                                        )
+                                    },
+                                    selected = false,
+                                    onClick = {
+                                        scope.launch {
+                                            navdrawerState.close()
+                                            selectedTabIndex = 3
+                                        }
+                                    },
+                                    modifier = Modifier.padding(vertical = 4.dp)
+                                )
+                                NavigationDrawerItem(
+                                    icon = {
+                                        Icon(
+                                            imageVector = Icons.Outlined.Info,
+                                            contentDescription = "Giới thiệu",
+                                            tint = Color(0xFF5D9EFF)
+                                        )
+                                    },
+                                    label = {
+                                        Text(
+                                            text = "Giới thiệu",
+                                            color = Color.Black,
+                                            fontSize = 16.sp,
+                                            fontWeight = FontWeight.Medium
+                                        )
+                                    },
+                                    selected = false,
+                                    onClick = {
+                                        scope.launch {
+                                            //Chuyển sang màn hình giới thiệu
+                                        }
+                                    },
+                                    modifier = Modifier.padding(vertical = 4.dp)
+                                )
+                                if(id != null && username != null) {
+                                    NavigationDrawerItem(
+                                        icon = {
+                                            Icon(
+                                                imageVector = Icons.AutoMirrored.Outlined.Logout,
+                                                contentDescription = "Đăng xuất",
+                                                tint = Color.Red
+                                            )
+                                        },
+                                        label = {
+                                            Text(
+                                                text = "Đăng xuất",
+                                                color = Color.Red,
+                                                fontSize = 16.sp,
+                                                fontWeight = FontWeight.Medium
+                                            )
+                                        },
+                                        selected = false,
+                                        onClick = {
+                                            scope.launch {
+                                                openDialog.value = true
+                                            }
+                                        },
+                                        modifier = Modifier.padding(vertical = 4.dp)
+                                    )
+                                }
+                            }
+                            item{
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .background(Color(0xFF5D9EFF)),
+                                    horizontalArrangement = Arrangement.Start,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Text(
+                                        text = "Danh mục sản phẩm",
+                                        color = Color.White,
+                                        fontSize = 18.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        modifier = Modifier.fillMaxWidth().padding(start = 10.dp)
+                                    )
+                                }
+                            }
+                            items(listCategories.filter { !it.is_hide }) { category ->
+                                ParentCategoryItem(
+                                    category = category,
+                                    navController = navController,
+                                    username = username,
+                                    idCustomer = id,
+                                    password = password,
+                                    depth = 0,
+                                    navdrawerState = navdrawerState,
+                                    selectedCategory = selectedCategory,
+                                    onCategorySelected = { selectedCategory = it }
                                 )
                             }
                         }
@@ -351,7 +608,7 @@ fun HomeScreen(
                             )
                         } else {
                             Text(
-                                text = "IOT Connect Mart",
+                                text = "SNS Store",
                                 fontWeight = FontWeight.Bold,
                                 fontSize = 20.sp,
                                 color = Color.White
@@ -590,7 +847,7 @@ fun HomeScreen(
                         containerColor = Color(0xFF5D9EFF).copy(alpha = if (isScrolling) 0.2f else 0.8f)
                     ) {
                         Icon(
-                            imageVector = Icons.Default.ArrowUpward,
+                            imageVector = Icons.Default.KeyboardArrowUp,
                             contentDescription = "Nút lên",
                             modifier = Modifier.size(25.dp)
                         )
@@ -599,6 +856,57 @@ fun HomeScreen(
             },
             floatingActionButtonPosition = FabPosition.End
         ) { padding ->
+            if (openDialog.value) {
+                AlertDialog(
+                    containerColor = Color.White,
+                    onDismissRequest = { openDialog.value = false },
+                    title = { Text("Đăng xuất") },
+                    text = { Text("Bạn chắc chắn muốn đăng xuất?", fontSize = 17.sp) },
+                    confirmButton = {
+                        Button(
+                            onClick = {
+                                scope.launch {
+                                    try {
+                                        // Gọi hàm logout để xóa dữ liệu trong DataStore
+                                        accountViewModel.logout(context)
+                                        // Đóng dialog
+                                        openDialog.value = false
+                                        // Điều hướng về IntroScreen sau khi đăng xuất
+                                        navController.navigate(Screen.LoginScreen.route) {
+                                            popUpTo(0) { inclusive = true }
+                                        }
+                                        //Log.d("AccountOptions", "Navigated to IntroScreen after logout")
+                                    } catch (e: Exception) {
+                                        //Log.e("AccountOptions", "Error during logout: ${e.message}", e)
+                                        openDialog.value = false
+                                    }
+                                }
+                            },
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = Color.Red,
+                                contentColor = Color.White
+                            ),
+                            shape = RoundedCornerShape(10.dp)
+                        ) {
+                            Text("Đăng xuất", fontSize = 14.sp)
+                        }
+                    },
+                    dismissButton = {
+                        Button(
+                            onClick = {
+                                openDialog.value = false
+                            },
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = Color.LightGray,
+                                contentColor = Color.White
+                            ),
+                            shape = RoundedCornerShape(10.dp)
+                        ) {
+                            Text("Hủy", fontSize = 14.sp)
+                        }
+                    }
+                )
+            }
             when (selectedTabIndex) {
                 0 -> HomeContent(
                     padding = padding,
@@ -622,7 +930,6 @@ fun HomeScreen(
                         navController = navController,
                         username = username,
                         id = id,
-                        deviceViewModel = deviceViewModel,
                         password = password
                     )
             }
@@ -1025,17 +1332,8 @@ fun CardFavorites(device: LikedProduct, isFavorite: Boolean, idCustomer: String?
                                 likedViewModel.addLiked(likedNew)
                                 check = true // Cập nhật cục bộ
                             } else {
-                                // Find the liked item by product_id to get its liked_id
-                                val likedItem =
-                                    listLiked.find { it.product_id == device.product_id }
-                                likedItem?.id?.let { likedId ->
-                                    likedViewModel.deleteLiked(
-                                        idCustomer,
-                                        likedId
-                                    ) // Pass liked_id to delete
-                                    check = false // Update locally
-                                }
-                                // Refresh the liked list
+                                likedViewModel.deleteLiked(idCustomer, device.product_id)
+                                check = false
                                 likedViewModel.getLikedByIdCustomer(idCustomer)
                             }
                             isLoading = false // Kết thúc tải
@@ -1170,16 +1468,13 @@ fun CardDevice(
                         contentScale = ContentScale.Crop // Crop để hình ảnh lấp đầy khung
                     )
                 } ?: run {
-                    Box(
-                        modifier = Modifier.fillMaxSize(),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        CircularProgressIndicator(
-                            modifier = Modifier.size(24.dp), // Tăng kích thước để dễ nhìn
-                            color = Color(0xFF5D9EFF),
-                            strokeWidth = 3.dp // Đường nét mỏng hơn
-                        )
-                    }
+                    Image(
+                        painter = painterResource(id = android.R.drawable.ic_menu_gallery),
+                        contentDescription = "Product Image",
+                        modifier = Modifier
+                            .fillMaxSize(),
+                        contentScale = ContentScale.Crop
+                    )
                 }
                 // Nút yêu thích ở góc trên bên phải
                 IconButton(
@@ -1196,12 +1491,8 @@ fun CardDevice(
                                 likedViewModel.addLiked(likedNew)
                                 check = true
                             } else {
-                                val likedItem = listLiked.find { it.product_id == device.idDevice }
-                                likedItem?.id?.let { likedId ->
-                                    likedViewModel.deleteLiked(idCustomer, likedId) // Pass liked_id to delete
-                                    check = false // Update locally
-                                }
-                                // Refresh the liked list
+                                likedViewModel.deleteLiked(idCustomer, device.idDevice)
+                                check = false
                                 likedViewModel.getLikedByIdCustomer(idCustomer)
                             }
                             isLoading = false
@@ -1263,12 +1554,6 @@ fun CardDevice(
 
 @Composable
 fun CategoryItem(category: Category, navController: NavController, username: String?, idCustomer: String?) {
-    val imageUrl = category.image ?: when (category.name) {
-        "Cảm biến" -> "https://m.media-amazon.com/images/I/61+WBqaGHEL._AC_UF1000,1000_QL80_.jpg"
-        "Công tắc thông min" -> "https://static-ecapac.acer.com/media/catalog/product/cache/a17a77e026ef2eddd3ecae104c32cc71/h/e/hero_chromebook_plus_514_cha_backlit_1.png"
-        "Đèn thông minh" -> "https://cdn2.cellphones.com.vn/insecure/rs:fill:358:358/q:90/plain/https://cellphones.com.vn/media/catalog/product/a/p/apple-watch-se-2023-lte-40mm.png"
-        else -> "https://via.placeholder.com/150" // Ảnh mặc định
-    }
     val deviceViewModel: DeviceViewModel = viewModel()
     var bitmap by remember { mutableStateOf<Bitmap?>(null) }
     // Tải hình ảnh

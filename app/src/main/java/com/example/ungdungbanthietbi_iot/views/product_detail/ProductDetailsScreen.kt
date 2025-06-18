@@ -344,14 +344,10 @@ fun ProductDetailsScreen(
                                     snackbarMessage.value = "Thêm vào yêu thích thành công!"
                                     isFavorite = true // Cập nhật cục bộ
                                 } else {
-                                    val likedItem =
-                                        listLiked.find { it.product_id == device.idDevice }
-                                    likedItem?.id?.let { likedId ->
-                                        likedViewModel.deleteLiked(
-                                            idCustomer,
-                                            likedId
-                                        ) // Pass liked_id to delete
-                                    }
+                                    likedViewModel.deleteLiked(
+                                        idCustomer,
+                                        device.idDevice
+                                    )
                                     snackbarMessage.value = "Xóa khỏi yêu thích!"
                                     isFavorite = false // Cập nhật cục bộ
                                 }
@@ -751,7 +747,7 @@ fun ProductDetailsScreen(
                 modifier = Modifier
                     .fillMaxSize()
                     .background(Color.White)
-                    .padding(padding).padding(horizontal = 12.dp),
+                    .padding(padding).padding(horizontal = 4.dp),
             )
             {
                 item {
@@ -864,7 +860,7 @@ fun ProductDetailsScreen(
                         Column(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(20.dp)
+                                .padding(horizontal = 10.dp, vertical = 10.dp)
                         ) {
                             Row(
                                 modifier = Modifier.fillMaxWidth(),
@@ -906,14 +902,12 @@ fun ProductDetailsScreen(
                                             snackbarMessage.value = "Thêm vào yêu thích thành công!"
                                             isFavorite = true // Cập nhật cục bộ
                                         } else {
-                                            val likedItem =
-                                                listLiked.find { it.product_id == device.idDevice }
-                                            likedItem?.id?.let { likedId ->
+
                                                 likedViewModel.deleteLiked(
                                                     idCustomer,
-                                                    likedId
+                                                    device.idDevice
                                                 ) // Pass liked_id to delete
-                                            }
+
                                             snackbarMessage.value = "Xóa khỏi yêu thích!"
                                             isFavorite = false // Cập nhật cục bộ
                                         }
@@ -1001,64 +995,73 @@ fun ProductDetailsScreen(
                         }
                     }
                 }
-                item{
-                    Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 20.dp, vertical = 8.dp)
-                    )
-                    {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Text(
-                                "Đánh giá sản phẩm",
-                                fontWeight = FontWeight.Bold,
-                                fontSize = 18.sp
-                            )
-                            Text(
-                                "Xem tất cả",
-                                fontWeight = FontWeight.Bold,
-                                fontSize = 16.sp, // Giảm nhẹ để cân bằng giao diện
-                                color = Color(0xFF5D9EFF),
-                                modifier = Modifier.clickable {
-                                    navController.navigate(Screen.Product_Reviews.route + "?idDevice=${id}")
-                                }
-                            )
-                        }
-                        Spacer(modifier = Modifier.height(8.dp))
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.Start
-                        ){
-                            for (i in 1..5) {
+                if(listReview.isEmpty()) {
+                    item {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 20.dp, vertical = 8.dp)
+                        )
+                        {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
                                 Text(
-                                    text = if (i <= averageRating) "★" else "☆",
-                                    fontSize = 20.sp,
-                                    color = if (i <= averageRating) Color(0xFFFBC02D) else Color(0xFFFBC02D)
+                                    "Đánh giá sản phẩm",
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 18.sp
+                                )
+                                Text(
+                                    "Xem tất cả",
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 16.sp, // Giảm nhẹ để cân bằng giao diện
+                                    color = Color(0xFF5D9EFF),
+                                    modifier = Modifier.clickable {
+                                        navController.navigate(Screen.Product_Reviews.route + "?idDevice=${id}")
+                                    }
                                 )
                             }
-                            Text(
-                                text = "${averageRating}/5.0 (${listReview.size} đánh giá)",
-                                modifier = Modifier.padding(start = 8.dp).align(Alignment.CenterVertically),
-                                color = Color.Gray,
-                                fontSize = 14.sp,
-                            )
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.Start
+                            ) {
+                                for (i in 1..5) {
+                                    Text(
+                                        text = if (i <= averageRating) "★" else "☆",
+                                        fontSize = 20.sp,
+                                        color = if (i <= averageRating) Color(0xFFFBC02D) else Color(
+                                            0xFFFBC02D
+                                        )
+                                    )
+                                }
+                                Text(
+                                    text = "${averageRating}/5.0 (${listReview.size} đánh giá)",
+                                    modifier = Modifier.padding(start = 8.dp)
+                                        .align(Alignment.CenterVertically),
+                                    color = Color.Gray,
+                                    fontSize = 14.sp,
+                                )
+                            }
+                            HorizontalDivider()
                         }
-                        HorizontalDivider()
-                    }
 
-                }
-                items(listReview.take(2)){
-                    CardReview(
-                        review = it,
-                        onClick = {
-                            navController.navigate(Screen.Product_Reviews.route + "?idDevice=${it.idDevice}")
-                        }
-                    )
+                    }
+                    items(listReview.take(2)) {
+                        CardReview(
+                            review = it,
+                            onClick = {
+                                navController.navigate(Screen.Product_Reviews.route + "?idDevice=${it.idDevice}")
+                            }
+                        )
+                    }
+                } else {
+                    item {
+                        Box(modifier = Modifier.fillMaxWidth())
+                    }
                 }
                 item {
                     HorizontalDivider()

@@ -64,7 +64,7 @@ fun IntroScreen(accountViewModel: AccountViewModel, navController: NavController
     val alpha = remember { Animatable(0f) }
 
     val context = LocalContext.current
-    var destination by remember { mutableStateOf(Screen.LoginScreen.route) }
+    var destination by remember { mutableStateOf(Screen.HomeScreen.route) }
     var shouldNavigate by remember { mutableStateOf(false) }
     // Kiểm tra trạng thái đăng nhập và lần đầu mở ứng dụng
     LaunchedEffect(Unit) {
@@ -147,15 +147,6 @@ fun IntroScreen(accountViewModel: AccountViewModel, navController: NavController
                     )
 
                     Spacer(modifier = Modifier.height(16.dp))
-
-//                    // Tiêu đề với hiệu ứng mờ dần
-//                    Text(
-//                        text = "HomeConnect E-com Store",
-//                        fontSize = 27.sp,
-//                        color = Color.White,
-//                        fontWeight = FontWeight.Bold,
-//                        modifier = Modifier.alpha(alpha.value)
-//                    )
 
                     Spacer(modifier = Modifier.height(24.dp))
                 }

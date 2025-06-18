@@ -266,7 +266,7 @@ fun AddressItem(
                     }
                 }
                 Text(
-                    text = "Số điện thoại: ${address.phone}",
+                    text = "SĐT: ${address.phone}",
                     fontSize = 15.sp,
                     modifier = Modifier.padding(bottom = 5.dp)
                 )

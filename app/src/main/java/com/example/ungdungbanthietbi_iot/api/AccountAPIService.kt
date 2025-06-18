@@ -41,7 +41,12 @@ data class RegisterRequest(
 )
 data class RegisterResponse(
     val status_code: Int,
-    val data: AddAccount
+    val data: AddAccount? = null,
+    val errors: List<ErrorResponse>? = null
+)
+data class ErrorResponse(
+    val code: Int,
+    val message: String
 )
 
 // Yêu cầu gửi email để nhận OTP
@@ -95,7 +100,7 @@ data class ResetPasswordResponse(
     val status_code: Int
 )
 
-interface AccuntAPIService {
+interface AccountAPIService {
 
     @POST("auth/login")
     suspend fun login(@Body request: LoginRequest): LoginResponse

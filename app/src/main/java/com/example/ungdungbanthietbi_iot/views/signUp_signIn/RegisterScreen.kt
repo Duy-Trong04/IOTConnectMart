@@ -2,7 +2,6 @@ package com.example.ungdungbanthietbi_iot.views.signUp_signIn
 
 import android.annotation.SuppressLint
 import androidx.compose.foundation.Image
-import android.util.Log
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -37,6 +36,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -59,6 +59,7 @@ import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalFocusManager
 import com.example.ungdungbanthietbi_iot.api.RegisterRequest
+import com.example.ungdungbanthietbi_iot.viewModels.RegisterUiState
 import com.example.ungdungbanthietbi_iot.views.components.CustomerTextField
 
 
@@ -79,404 +80,6 @@ import com.example.ungdungbanthietbi_iot.views.components.CustomerTextField
  * Nội dung cập nhật: chỉnh sửa lại các TextField, layout
  *
  */
-
-//@OptIn(ExperimentalMaterial3Api::class)
-//@Composable
-//
-//fun RegisterScreen(
-//    navController: NavController,
-//    accountViewModel: AccountViewModel,
-//    customerViewModel: CustomerViewModel
-//) {
-//
-//
-//    val accountCheckResult by accountViewModel.accountCheckResult
-//    val customerCheckResult by customerViewModel.customerCheckResult
-//    Log.d("AccountViewModel", "accountCheckResult: $accountCheckResult")
-//    Log.d("AccountViewModel", "customerCheckResult: $customerCheckResult")
-//
-//    // Biến nhận dữ liệu họ từ người dùng
-//    var ho by remember { mutableStateOf("") }
-//    // Biến nhận dữ liệu tên từ người dùng
-//    var ten by remember { mutableStateOf("") }
-//    // Biến nhận dữ liệu sdt từ người dùng
-//    var sdt by remember { mutableStateOf("") }
-//    // Biến nhận dữ liệu email từ người dùng
-//    var email by remember { mutableStateOf("") }
-//    // Biến nhận dữ liệu username từ người dùng
-//    var username by remember { mutableStateOf("") }
-//    // Biến nhận dữ liệu password từ người dùng
-//    var password by remember { mutableStateOf("") }
-//    // Biến nhận dữ liệu comfirmPassword từ người dùng
-//    var comfirmPassword by remember { mutableStateOf("") }
-//    // Biến kiểm tra trạng thái hiển thị password
-//    var isPasswordVisible by remember { mutableStateOf(false) }
-//    // Biến kiểm tra trạng thái hiển thị comfirmPassword
-//    var isComfirmPasswordVisible by remember { mutableStateOf(false) }
-//    // Biến kiểm tra kết quả đăng nhập
-//    var openDialog by remember { mutableStateOf(false) }
-//    var openDialog_Dk by remember { mutableStateOf(false) }
-//
-//
-//    var phoneError by remember { mutableStateOf("") }
-//
-////    // Xử lý kết quả từ API
-////    LaunchedEffect(registerResult) {
-////        val context = LocalContext.current
-////        registerResult?.let { response ->
-////            if (response.isSuccessful && response.body()?.status_code == 200) {
-////                Toast.makeText(context, "Đăng ký thành công!", Toast.LENGTH_SHORT).show()
-////                openDialog_Dk = true
-////            } else {
-////                val errorMessage = response.errorBody()?.string() ?: "Đăng ký thất bại"
-////                Toast.makeText(context, errorMessage, Toast.LENGTH_SHORT).show()
-////                openDialog = true
-////            }
-////        }
-////    }
-//
-//    Scaffold(
-//        modifier = Modifier.fillMaxWidth(),
-//        topBar = {
-//        },
-//        content = { padding ->
-//            LazyColumn(
-//                modifier = Modifier
-//                    .fillMaxSize()
-//                    .padding(16.dp)
-//                    .background(Color.White),
-//                horizontalAlignment = Alignment.CenterHorizontally,
-//            ) {
-//                item {
-//                    Spacer(modifier = Modifier.height(50.dp))
-//
-//                    Text(
-//                        text = "ĐĂNG KÝ",
-//                        fontSize = 27.sp,
-//                        color = Color(0xFF085979),
-//                        fontWeight = FontWeight.Bold
-//                    )
-//                    Spacer(modifier = Modifier.height(16.dp))
-//                    // Hiển thị logo từ file drawable
-//                    Image(
-//                        // Thay "logo" bằng tên file ảnh của bạn
-//                        painter = painterResource(id = R.drawable.logo9),
-//                        contentDescription = "Logo",
-//                        modifier = Modifier.size(240.dp).clip(CircleShape)
-//                    )
-//                    Spacer(modifier = Modifier.height(16.dp))
-//                    //Họ
-//                    TextField(
-//                        value = ho,
-//                        onValueChange = { ho = it },
-//                        modifier = Modifier.width(350.dp).padding(4.dp),
-//                        placeholder = { Text(text = "Họ") },
-//                        leadingIcon = {
-//                            Icon(
-//                                imageVector = Icons.Default.AccountCircle,
-//                                contentDescription = "Họ"
-//                            )
-//                        },
-//                        colors = TextFieldDefaults.colors(
-//                            focusedContainerColor = Color.White,
-//                            unfocusedContainerColor = Color.White,
-//                            focusedIndicatorColor = Color(0xFF00C3FF)
-//                        ),
-//                        singleLine = true,
-//                        keyboardOptions = KeyboardOptions.Default.copy(
-//                            imeAction = ImeAction.Next
-//                        )
-//                    )
-//
-//                    //Tên
-//                    TextField(
-//                        value = ten,
-//                        onValueChange = { ten = it },
-//                        modifier = Modifier.width(350.dp).padding(4.dp),
-//                        placeholder = { Text(text = "Tên") },
-//                        leadingIcon = {
-//                            Icon(
-//                                imageVector = Icons.Default.AccountBox,
-//                                contentDescription = "Tên"
-//                            )
-//                        },
-//                        colors = TextFieldDefaults.colors(
-//                            focusedContainerColor = Color.White,
-//                            unfocusedContainerColor = Color.White,
-//                            focusedIndicatorColor = Color(0xFF00C3FF)
-//                        ),
-//                        singleLine = true,
-//                        keyboardOptions = KeyboardOptions.Default.copy(
-//                            keyboardType = KeyboardType.Text,
-//                            imeAction = ImeAction.Next
-//                        )
-//                    )
-//
-//                    //SDT
-//                    TextField(
-//                        value = sdt,
-//                        onValueChange = {
-//                            sdt = it
-//                            if (it.matches(Regex("\\d*"))) { // Chỉ cho phép nhập số
-//                                sdt = it
-//                            }
-//                            phoneError = if (it.length == 10) {
-//                                ""
-//                            } else {
-//                                "Số điện thoại phải đúng 10 số"
-//                            } },
-//                        modifier = Modifier.width(350.dp).padding(4.dp),
-//                        placeholder = { Text(text = "SĐT") },
-//                        leadingIcon = {
-//                            Icon(
-//                                imageVector = Icons.Default.Phone,
-//                                contentDescription = "SĐT"
-//                            )
-//                        },
-//                        colors = TextFieldDefaults.colors(
-//                            focusedContainerColor = Color.White,
-//                            unfocusedContainerColor = Color.White,
-//                            focusedIndicatorColor = Color(0xFF00C3FF)
-//                        ),
-//                        singleLine = true,
-//                        keyboardOptions = KeyboardOptions.Default.copy(
-//                            keyboardType = KeyboardType.Phone, imeAction = ImeAction.Next
-//                        )
-//                    )
-//                    if (phoneError.isNotEmpty()) {
-//                        Text(
-//                            text = phoneError,
-//                            color = Color.Red,
-//                            fontSize = 12.sp
-//                        )
-//                    }
-//
-//                    //email
-//                    TextField(
-//                        value = email,
-//                        onValueChange = { email = it },
-//                        modifier = Modifier.width(350.dp).padding(4.dp),
-//                        placeholder = { Text(text = "Email") },
-//                        leadingIcon = {
-//                            Icon(
-//                                imageVector = Icons.Default.Email,
-//                                contentDescription = "email"
-//                            )
-//                        },
-//                        colors = TextFieldDefaults.colors(
-//                            focusedContainerColor = Color.White,
-//                            unfocusedContainerColor = Color.White,
-//                            focusedIndicatorColor = Color(0xFF00C3FF)
-//                        ),
-//                        singleLine = true,
-//                        keyboardOptions = KeyboardOptions.Default.copy(
-//                            keyboardType = KeyboardType.Email,
-//                            imeAction = ImeAction.Next
-//                        )
-//                    )
-//
-//                    //username
-//                    TextField(
-//                        value = username,
-//                        onValueChange = { username = it },
-//                        modifier = Modifier.width(350.dp).padding(4.dp),
-//                        placeholder = { Text(text = "Username") },
-//                        leadingIcon = {
-//                            Icon(
-//                                imageVector = Icons.Default.Email,
-//                                contentDescription = "Username"
-//                            )
-//                        },
-//                        colors = TextFieldDefaults.colors(
-//                            focusedContainerColor = Color.White,
-//                            unfocusedContainerColor = Color.White,
-//                            focusedIndicatorColor = Color(0xFF00C3FF)
-//                        ),
-//                        singleLine = true,
-//                        keyboardOptions = KeyboardOptions.Default.copy(
-//                            keyboardType = KeyboardType.Email,
-//                            imeAction = ImeAction.Next
-//                        )
-//                    )
-//
-//                    // Password
-//                    TextField(
-//                        value = password,
-//                        onValueChange = { password = it },
-//                        modifier = Modifier.width(350.dp).padding(4.dp),
-//                        placeholder = { Text(text = "Password") },
-//                        leadingIcon = {
-//                            Icon(
-//                                imageVector = Icons.Default.Lock,
-//                                contentDescription = "Password"
-//                            )
-//                        },
-//                        trailingIcon = {
-//                            IconButton(onClick = { isPasswordVisible = !isPasswordVisible }) {
-//                                Icon(
-//                                    imageVector = if (isPasswordVisible) Icons.Filled.Visibility else Icons.Filled.VisibilityOff,
-//                                    contentDescription = if (isPasswordVisible) "Ẩn mật khẩu" else "Hiện mật khẩu"
-//                                )
-//                            }
-//                        },
-//                        colors = TextFieldDefaults.colors(
-//                            focusedContainerColor = Color.White,
-//                            unfocusedContainerColor = Color.White,
-//                            focusedIndicatorColor = Color(0xFF00C3FF)
-//                        ),
-//                        singleLine = true,
-//                        visualTransformation = if (isPasswordVisible) VisualTransformation.None else PasswordVisualTransformation(),
-//                        keyboardOptions = KeyboardOptions(
-//                            keyboardType = KeyboardType.Password,
-//                            imeAction = ImeAction.Next
-//                        )
-//                    )
-//
-//                    // Comfirm Password
-//                    TextField(
-//                        value = comfirmPassword,
-//                        onValueChange = { comfirmPassword = it },
-//                        modifier = Modifier.width(350.dp).padding(4.dp),
-//                        placeholder = { Text(text = "Comfirm Password") },
-//                        leadingIcon = {
-//                            Icon(
-//                                imageVector = Icons.Default.Lock,
-//                                contentDescription = "Comfirm Password"
-//                            )
-//                        },
-//                        trailingIcon = {
-//                            IconButton(onClick = {
-//                                isComfirmPasswordVisible = !isComfirmPasswordVisible
-//                            }) {
-//                                Icon(
-//                                    imageVector = if (isComfirmPasswordVisible) Icons.Filled.Visibility else Icons.Filled.VisibilityOff,
-//                                    contentDescription = if (isComfirmPasswordVisible) "Ẩn mật khẩu" else "Hiện mật khẩu"
-//                                )
-//                            }
-//                        },
-//                        colors = TextFieldDefaults.colors(
-//                            focusedContainerColor = Color.White,
-//                            unfocusedContainerColor = Color.White,
-//                            focusedIndicatorColor = Color(0xFF00C3FF)
-//                        ),
-//                        singleLine = true,
-//                        visualTransformation = if (isComfirmPasswordVisible) VisualTransformation.None else PasswordVisualTransformation(),
-//                        keyboardOptions = KeyboardOptions(
-//                            keyboardType = KeyboardType.Password,
-//                            imeAction = ImeAction.Done
-//                        )
-//                    )
-//
-//                    Spacer(modifier = Modifier.height(16.dp))
-//                    Row() {
-//                        Text(
-//                            text = "Bạn đã có tài khoản? ",
-//                            fontSize = 15.sp,
-//                            color = Color.Black,
-//                            textAlign = TextAlign.Center, fontWeight = FontWeight.Bold
-//                        )
-//                        Text(
-//                            text = "Đăng nhập",
-//                            fontSize = 15.sp,
-//                            color = Color.Red,
-//                            textAlign = TextAlign.Center, fontWeight = FontWeight.Bold,
-//                            modifier = Modifier.clickable { /* Chuyển sang màn hình đăng nhập(LoginScreen) */
-//                                navController.navigate(Screen.LoginScreen.route)
-//                            }
-//                        )
-//                    }
-//
-//                    //Button
-//                    Spacer(modifier = Modifier.height(16.dp))
-//                    Button(
-//                        onClick = {
-//
-//                            val accountNew = RegisterRequest(
-//                                username = username,
-//                                password = password,
-//                                confirm_password = comfirmPassword,
-//                                surname = ho,
-//                                lastname = ten,
-//                                phone = sdt,
-//                                email = email,
-//                                gender = true
-//                            )
-//                            if (username.isNotEmpty() && password.isNotEmpty() && comfirmPassword.isNotEmpty() && sdt.isNotEmpty() && ho.isNotEmpty() && ten.isNotEmpty()) {
-//                                accountViewModel.register(accountNew)
-//                                Log.d("AccountViewModel", "Đăng ký thành công")
-//                                openDialog_Dk = true
-//                            }
-//                            else {
-//                                openDialog = true
-//                            }
-//                        },
-//                        modifier = Modifier
-//                            .width(350.dp)
-//                            .padding(bottom = 10.dp)
-//                            .height(45.dp),
-//                        shape = MaterialTheme.shapes.small,
-//                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF5F9EFF))
-//                    ) {
-//                        Text(text = "ĐĂNG KÝ", fontSize = 23.sp, fontWeight = FontWeight.Bold)
-//                    }
-//
-//                }
-//            }
-//        }
-//    )
-//    if (openDialog == true) {
-//        AlertDialog(
-//            onDismissRequest = { openDialog = false }, // Đóng khi nhấn ngoài dialog
-//            text = {
-//                if (username == "" || password == "" || comfirmPassword == "" || sdt == "" || ho == "" || ten == "") {
-//                    Text("Vui lòng nhập đầy đủ thông tin")
-//                } else if (password != comfirmPassword) {
-//                    Text("Password và Comfirm Password không khớp")
-//                }
-//                else {
-//                    Text("Tài khoản đã tồn tại")
-//                }
-//            },
-//            confirmButton = {
-//                Button(
-//                    onClick = {
-//                        openDialog = false
-//                    },
-//                    colors = ButtonDefaults.buttonColors(
-//                        containerColor = Color(0xFF5F9EFF)
-//                    )
-//                ) {
-//                    Text("OK")
-//                }
-//            },
-//        )
-//    }
-//    if (openDialog_Dk == true) {
-//        AlertDialog(
-//            onDismissRequest = {
-//                openDialog_Dk = false
-//                navController.navigate(Screen.LoginScreen.route)
-//            }, // Đóng khi nhấn ngoài dialog
-//            text = {
-//                Text("Đăng ký thành công")
-//            },
-//            confirmButton = {
-//                Button(
-//                    onClick = {
-//                        openDialog_Dk = false
-//                        navController.navigate(Screen.LoginScreen.route)
-//                    },
-//                    colors = ButtonDefaults.buttonColors(
-//                        containerColor = Color(0xFF5F9EFF)
-//                    )
-//                ) {
-//                    Text("OK")
-//                }
-//            },
-//        )
-//    }
-//}
-
 @OptIn(ExperimentalMaterial3Api::class)
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
@@ -486,11 +89,8 @@ fun RegisterScreen(
     customerViewModel: CustomerViewModel
 ) {
     val focusManager = LocalFocusManager.current
-
-    val accountCheckResult by accountViewModel.accountCheckResult
-    val customerCheckResult by customerViewModel.customerCheckResult
-    Log.d("AccountViewModel", "accountCheckResult: $accountCheckResult")
-    Log.d("AccountViewModel", "customerCheckResult: $customerCheckResult")
+    val registerUiState by accountViewModel.registerUiState.collectAsState()
+    val isLoading by accountViewModel.isLoading.collectAsState()
 
     var surname by remember { mutableStateOf("") }
     var lastname by remember { mutableStateOf("") }
@@ -501,14 +101,28 @@ fun RegisterScreen(
     var comFirmPassword by remember { mutableStateOf("") }
     var passwordObscure by remember { mutableStateOf(true) }
     var comFirmPasswordObscure by remember { mutableStateOf(true) }
-
     var openDialog by remember { mutableStateOf(false) }
-    var openDialog_Dk by remember { mutableStateOf(false) }
+    var openDialog_Success by remember { mutableStateOf(false) }
     var errorMessage by remember { mutableStateOf("") }
-
     var phoneError by remember { mutableStateOf("") }
-    // Observe isLoading state
-    val isLoading by accountViewModel.isLoading.collectAsState()
+
+    // Xử lý phản hồi từ API
+    LaunchedEffect(registerUiState) {
+        when (registerUiState) {
+            is RegisterUiState.Success -> {
+                openDialog_Success = true
+                errorMessage = "Đăng ký thành công\nBạn có thể đăng nhập vào ứng dụng"
+            }
+            is RegisterUiState.Error -> {
+                openDialog = true
+                errorMessage = (registerUiState as RegisterUiState.Error).message
+            }
+            else -> {
+                // Không làm gì khi Idle hoặc Loading
+            }
+        }
+    }
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -599,14 +213,10 @@ fun RegisterScreen(
                     value = phone,
                     onValueChange = {
                         phone = it
-                        if (it.matches(Regex("\\d*"))) { // Chỉ cho phép nhập số
+                        if (it.matches(Regex("\\d*"))) {
                             phone = it
                         }
-                        phoneError = if (it.length == 10) {
-                            ""
-                        } else {
-                            "Số điện thoại phải đúng 10 số"
-                        }
+                        phoneError = if (it.length == 10) "" else "Số điện thoại phải đúng 10 số"
                     },
                     hint = "Số điện thoại",
                     leadingIcon = {
@@ -622,13 +232,6 @@ fun RegisterScreen(
                         onNext = { focusManager.moveFocus(FocusDirection.Next) }
                     )
                 )
-                if (phoneError.isNotEmpty()) {
-                    Text(
-                        text = phoneError,
-                        color = Color.Red,
-                        fontSize = 12.sp
-                    )
-                }
                 CustomerTextField(
                     value = email,
                     onValueChange = {
@@ -724,27 +327,33 @@ fun RegisterScreen(
 
                 Button(
                     onClick = {
-                        val accountNew = RegisterRequest(
-                            username = username,
-                            password = password,
-                            confirm_password = comFirmPassword,
-                            surname = surname,
-                            lastname = lastname,
-                            phone = phone,
-                            email = email,
-                            gender = true
-                        )
-                        if (username.isEmpty() && password.isEmpty() && comFirmPassword.isEmpty() && phone.isEmpty() && surname.isEmpty() && lastname.isEmpty()) {
-                            errorMessage = "Vui lòng nhập đầy đủ thông tin !"
-                            openDialog = true
-                        }
-                        else if(password != comFirmPassword){
-                            errorMessage = "Mật khẩu và Xác nhận mật khẩu không trùng khớp!"
-                            openDialog = true
-                        }
-                        else{
-                            accountViewModel.register(accountNew)
-                            openDialog_Dk = true
+                        when {
+                            surname.isEmpty() || lastname.isEmpty() || phone.isEmpty() || email.isEmpty() ||
+                                    username.isEmpty() || password.isEmpty() || comFirmPassword.isEmpty() -> {
+                                errorMessage = "Vui lòng nhập đầy đủ thông tin !"
+                                openDialog = true
+                            }
+                            phoneError.isNotEmpty() -> {
+                                errorMessage = phoneError
+                                openDialog = true
+                            }
+                            password != comFirmPassword -> {
+                                errorMessage = "Mật khẩu và Xác nhận mật khẩu không trùng khớp !"
+                                openDialog = true
+                            }
+                            else -> {
+                                val accountNew = RegisterRequest(
+                                    username = username,
+                                    password = password,
+                                    confirm_password = comFirmPassword,
+                                    surname = surname,
+                                    lastname = lastname,
+                                    phone = phone,
+                                    email = email,
+                                    gender = true
+                                )
+                                accountViewModel.register(accountNew)
+                            }
                         }
                     },
                     shape = RoundedCornerShape(16.dp),
@@ -797,20 +406,14 @@ fun RegisterScreen(
         }
         if (openDialog) {
             AlertDialog(
-                onDismissRequest = { openDialog = false }, // Đóng khi nhấn ngoài dialog
-                title = {
-                    Text(text = "Thông báo")
-                },
+                onDismissRequest = { openDialog = false },
+                title = { Text(text = "Thông báo") },
                 containerColor = Color.White,
                 text = { Text(errorMessage) },
                 confirmButton = {
                     Button(
-                        onClick = {
-                            openDialog = false
-                        },
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = Color(0xFF5F9EFF)
-                        ),
+                        onClick = { openDialog = false },
+                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF5D9EFF)),
                         shape = RoundedCornerShape(10.dp)
                     ) {
                         Text("Xác nhận")
@@ -818,12 +421,8 @@ fun RegisterScreen(
                 },
                 dismissButton = {
                     Button(
-                        onClick = {
-                            openDialog = false
-                        },
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = Color.LightGray
-                        ),
+                        onClick = { openDialog = false },
+                        colors = ButtonDefaults.buttonColors(containerColor = Color.LightGray),
                         shape = RoundedCornerShape(10.dp)
                     ) {
                         Text("Hủy")
@@ -831,10 +430,10 @@ fun RegisterScreen(
                 }
             )
         }
-        if (openDialog_Dk) {
+        if (openDialog_Success) {
             AlertDialog(
                 onDismissRequest = {
-                    openDialog_Dk = false
+                    openDialog_Success = false
                     navController.navigate(Screen.LoginScreen.route)
                 }, // Đóng khi nhấn ngoài dialog
                 title = {
@@ -842,12 +441,12 @@ fun RegisterScreen(
                 },
                 containerColor = Color.White,
                 text = {
-                    Text("Đăng ký thành công!\nBạn có thể đăng nhập vào ứng dụng")
+                    Text(errorMessage)
                 },
                 confirmButton = {
                     Button(
                         onClick = {
-                            openDialog_Dk = false
+                            openDialog_Success = false
                             navController.navigate(Screen.LoginScreen.route)
                         },
                         colors = ButtonDefaults.buttonColors(

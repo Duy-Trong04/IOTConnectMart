@@ -21,7 +21,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material3.BottomAppBar
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -39,15 +38,13 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableDoubleStateOf
 import androidx.compose.runtime.mutableStateMapOf
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
-import androidx.compose.ui.graphics.painter.BitmapPainter
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
@@ -109,7 +106,7 @@ fun OrderDetailsScreen(
     }
     // Tìm đơn hàng từ listOrder dựa trên idOrder
     val order = listOrder?.data?.data?.find { it.id == decodedId }
-    val amount by remember { mutableStateOf(totalAmount + 30000) }
+    val amount by remember { mutableDoubleStateOf(totalAmount + 30000) }
     // Debug log
     LaunchedEffect(idOrder, listOrder) {
         Log.d(
@@ -188,7 +185,6 @@ fun OrderDetailsScreen(
         }
     ) { padding ->
         if (order == null) {
-
             Box(
                 modifier = Modifier
                     .fillMaxSize()

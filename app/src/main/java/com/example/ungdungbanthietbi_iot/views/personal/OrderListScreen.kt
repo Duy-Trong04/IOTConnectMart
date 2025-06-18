@@ -5,6 +5,7 @@ import android.graphics.Bitmap
 import android.util.Log
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -215,6 +216,7 @@ fun DaGiaoHangScreen(navController: NavController, idCustomer: String?) {
     Box(
         modifier = Modifier
             .fillMaxSize()
+            .background(Color.White)
             .padding(4.dp)
     ) {
         when {
@@ -235,35 +237,31 @@ fun DaGiaoHangScreen(navController: NavController, idCustomer: String?) {
 
             listOrder?.data?.data?.isEmpty() == true -> {
                 Text(
-                    text = "Không có hóa đơn nào đã giao.",
+                    text = "Không có hóa đơn nào đã giao !",
                     modifier = Modifier.align(Alignment.Center),
                     textAlign = TextAlign.Center,
                 )
             }
 
             else -> {
-                LazyColumn(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(4.dp)
-                ) {
-                    listOrder?.data?.let { orderData ->
-                        // Filter orders with status == 1
-                        val pendingOrders = orderData.data
-                            .filter { it.status == OrderStatus.DA_GIAO.value  }
-                            .sortedByDescending { OffsetDateTime.parse(it.created_at) }
-                        Log.d("ChoXacNhanScreen", "Filtered ${pendingOrders.size} orders with status == 3")
-                        if (pendingOrders.isEmpty()) {
-                            item {
-                                Text(
-                                    text = "Không có hóa đơn nào đã giao.",
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .padding(16.dp),
-                                    textAlign = TextAlign.Center
-                                )
-                            }
-                        } else {
+                listOrder?.data?.let { orderData ->
+                    // Filter orders with status == 1
+                    val pendingOrders = orderData.data
+                        .filter { it.status == OrderStatus.DA_GIAO.value  }
+                        .sortedByDescending { OffsetDateTime.parse(it.created_at) }
+                    Log.d("ChoXacNhanScreen", "Filtered ${pendingOrders.size} orders with status == 3")
+                    if (pendingOrders.isEmpty()) {
+                        Text(
+                            text = "Không có hóa đơn nào đã giao !",
+                            modifier = Modifier.align(Alignment.Center),
+                            textAlign = TextAlign.Center,
+                        )
+                    } else {
+                        LazyColumn(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .padding(4.dp)
+                        ) {
                             items(pendingOrders) { order ->
                                 if (idCustomer != null) {
                                     OrderItem(
@@ -325,6 +323,7 @@ fun HoanTatScreen(navController: NavController, idCustomer: String?) {
     Box(
         modifier = Modifier
             .fillMaxSize()
+            .background(Color.White)
             .padding(4.dp)
     ) {
         when {
@@ -345,35 +344,31 @@ fun HoanTatScreen(navController: NavController, idCustomer: String?) {
 
             listOrder?.data?.data?.isEmpty() == true -> {
                 Text(
-                    text = "Không có hóa đơn nào đã hoàn tất.",
+                    text = "Không có hóa đơn nào đã hoàn tất !",
                     modifier = Modifier.align(Alignment.Center),
                     textAlign = TextAlign.Center,
                 )
             }
 
             else -> {
-                LazyColumn(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(4.dp)
-                ) {
-                    listOrder?.data?.let { orderData ->
-                        // Filter orders with status == 1
-                        val pendingOrders = orderData.data
-                            .filter { it.status == OrderStatus.HOAN_TAT.value  }
-                            .sortedByDescending { OffsetDateTime.parse(it.created_at) }
-                        Log.d("ChoXacNhanScreen", "Filtered ${pendingOrders.size} orders with status == 4")
-                        if (pendingOrders.isEmpty()) {
-                            item {
-                                Text(
-                                    text = "Không có hóa đơn nào đã hoàn tất.",
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .padding(16.dp),
-                                    textAlign = TextAlign.Center
-                                )
-                            }
-                        } else {
+                listOrder?.data?.let { orderData ->
+                    // Filter orders with status == 1
+                    val pendingOrders = orderData.data
+                        .filter { it.status == OrderStatus.HOAN_TAT.value  }
+                        .sortedByDescending { OffsetDateTime.parse(it.created_at) }
+                    Log.d("ChoXacNhanScreen", "Filtered ${pendingOrders.size} orders with status == 4")
+                    if (pendingOrders.isEmpty()) {
+                        Text(
+                            text = "Không có hóa đơn nào đã hoàn tất !",
+                            modifier = Modifier.align(Alignment.Center),
+                            textAlign = TextAlign.Center,
+                        )
+                    } else {
+                        LazyColumn(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .padding(4.dp)
+                        ) {
                             items(pendingOrders) { order ->
                                 if (idCustomer != null) {
                                     OrderItem(
@@ -435,6 +430,7 @@ fun ChoGiaoHangScreen(navController: NavController, idCustomer: String?) {
     Box(
         modifier = Modifier
             .fillMaxSize()
+            .background(Color.White)
             .padding(4.dp)
     ) {
         when {
@@ -455,35 +451,31 @@ fun ChoGiaoHangScreen(navController: NavController, idCustomer: String?) {
 
             listOrder?.data?.data?.isEmpty() == true -> {
                 Text(
-                    text = "Không có hóa đơn nào đang chờ giao hàng.",
+                    text = "Không có hóa đơn nào đang chờ giao hàng !",
                     modifier = Modifier.align(Alignment.Center),
                     textAlign = TextAlign.Center,
                 )
             }
 
             else -> {
-                LazyColumn(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(4.dp)
-                ) {
-                    listOrder?.data?.let { orderData ->
-                        // Filter orders with status == 1
-                        val pendingOrders = orderData.data
-                            .filter { it.status == OrderStatus.CHO_GIAO_HANG.value  }
-                            .sortedByDescending { OffsetDateTime.parse(it.created_at) }
-                        Log.d("ChoXacNhanScreen", "Filtered ${pendingOrders.size} orders with status == 3")
-                        if (pendingOrders.isEmpty()) {
-                            item {
-                                Text(
-                                    text = "Không có hóa đơn nào đang được giao hàng.",
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .padding(16.dp),
-                                    textAlign = TextAlign.Center
-                                )
-                            }
-                        } else {
+                listOrder?.data?.let { orderData ->
+                    // Filter orders with status == 1
+                    val pendingOrders = orderData.data
+                        .filter { it.status == OrderStatus.CHO_GIAO_HANG.value  }
+                        .sortedByDescending { OffsetDateTime.parse(it.created_at) }
+                    Log.d("ChoXacNhanScreen", "Filtered ${pendingOrders.size} orders with status == 3")
+                    if (pendingOrders.isEmpty()) {
+                        Text(
+                            text = "Không có hóa đơn nào đang chờ giao hàng !",
+                            modifier = Modifier.align(Alignment.Center),
+                            textAlign = TextAlign.Center,
+                        )
+                    } else {
+                        LazyColumn(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .padding(4.dp)
+                        ) {
                             items(pendingOrders) { order ->
                                 if (idCustomer != null) {
                                     OrderItem(
@@ -545,6 +537,7 @@ fun DangGiaoHangScreen(navController: NavController, idCustomer: String?) {
     Box(
         modifier = Modifier
             .fillMaxSize()
+            .background(Color.White)
             .padding(4.dp)
     ) {
         when {
@@ -565,35 +558,31 @@ fun DangGiaoHangScreen(navController: NavController, idCustomer: String?) {
 
             listOrder?.data?.data?.isEmpty() == true -> {
                 Text(
-                    text = "Không có hóa đơn nào đang giao hàng.",
+                    text = "Không có hóa đơn nào đang giao hàng !",
                     modifier = Modifier.align(Alignment.Center),
                     textAlign = TextAlign.Center,
                 )
             }
 
             else -> {
-                LazyColumn(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(4.dp)
-                ) {
-                    listOrder?.data?.let { orderData ->
-                        // Filter orders with status == 1
-                        val pendingOrders = orderData.data
-                            .filter { it.status == OrderStatus.DANG_GIAO_HANG.value  }
-                            .sortedByDescending { OffsetDateTime.parse(it.created_at) }
-                        Log.d("ChoXacNhanScreen", "Filtered ${pendingOrders.size} orders with status == 3")
-                        if (pendingOrders.isEmpty()) {
-                            item {
-                                Text(
-                                    text = "Không có hóa đơn nào đang giao hàng.",
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .padding(16.dp),
-                                    textAlign = TextAlign.Center
-                                )
-                            }
-                        } else {
+                listOrder?.data?.let { orderData ->
+                    // Filter orders with status == 1
+                    val pendingOrders = orderData.data
+                        .filter { it.status == OrderStatus.DANG_GIAO_HANG.value  }
+                        .sortedByDescending { OffsetDateTime.parse(it.created_at) }
+                    Log.d("ChoXacNhanScreen", "Filtered ${pendingOrders.size} orders with status == 3")
+                    if (pendingOrders.isEmpty()) {
+                        Text(
+                            text = "Không có hóa đơn nào đang giao hàng !",
+                            modifier = Modifier.align(Alignment.Center),
+                            textAlign = TextAlign.Center,
+                        )
+                    } else {
+                        LazyColumn(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .padding(4.dp)
+                        ) {
                             items(pendingOrders) { order ->
                                 if (idCustomer != null) {
                                     OrderItem(
@@ -657,6 +646,7 @@ fun HuyDonHangScreen(navController: NavController, idCustomer: String?) {
     Box(
         modifier = Modifier
             .fillMaxSize()
+            .background(Color.White)
             .padding(4.dp)
     ) {
         when {
@@ -677,35 +667,31 @@ fun HuyDonHangScreen(navController: NavController, idCustomer: String?) {
 
             listOrder?.data?.data?.isEmpty() == true -> {
                 Text(
-                    text = "Không có hóa đơn đã hủy.",
+                    text = "Không có hóa đơn đã hủy !",
                     modifier = Modifier.align(Alignment.Center),
                     textAlign = TextAlign.Center,
                 )
             }
 
             else -> {
-                LazyColumn(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(4.dp)
-                ) {
-                    listOrder?.data?.let { orderData ->
-                        // Filter orders with status == 1
-                        val pendingOrders = orderData.data
-                            .filter { it.status == OrderStatus.DA_HUY.value  }
-                            .sortedByDescending { OffsetDateTime.parse(it.created_at) }
-                        Log.d("ChoXacNhanScreen", "Filtered ${pendingOrders.size} orders with status == -1")
-                        if (pendingOrders.isEmpty()) {
-                            item {
-                                Text(
-                                    text = "Không có hóa đơn đã hủy.",
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .padding(16.dp),
-                                    textAlign = TextAlign.Center
-                                )
-                            }
-                        } else {
+                listOrder?.data?.let { orderData ->
+                    // Filter orders with status == 1
+                    val pendingOrders = orderData.data
+                        .filter { it.status == OrderStatus.DA_HUY.value  }
+                        .sortedByDescending { OffsetDateTime.parse(it.created_at) }
+                    Log.d("ChoXacNhanScreen", "Filtered ${pendingOrders.size} orders with status == -1")
+                    if (pendingOrders.isEmpty()) {
+                        Text(
+                            text = "Không có hóa đơn đã hủy !",
+                            modifier = Modifier.align(Alignment.Center),
+                            textAlign = TextAlign.Center,
+                        )
+                    } else {
+                        LazyColumn(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .padding(4.dp)
+                        ) {
                             items(pendingOrders) { order ->
                                 if (idCustomer != null) {
                                     OrderItem(
@@ -769,6 +755,7 @@ fun ChoLayHangScreen(navController: NavController, idCustomer: String?) {
     Box(
         modifier = Modifier
             .fillMaxSize()
+            .background(Color.White)
             .padding(4.dp)
     ) {
         when {
@@ -789,35 +776,31 @@ fun ChoLayHangScreen(navController: NavController, idCustomer: String?) {
 
             listOrder?.data?.data?.isEmpty() == true -> {
                 Text(
-                    text = "Không có hóa đơn nào đang chuẩn bị hàng",
+                    text = "Không có hóa đơn nào đang chuẩn bị hàng !",
                     modifier = Modifier.align(Alignment.Center),
                     textAlign = TextAlign.Center,
                 )
             }
 
             else -> {
-                LazyColumn(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(4.dp)
-                ) {
-                    listOrder?.data?.let { orderData ->
-                        // Filter orders with status == 1
-                        val pendingOrders = orderData.data
-                            .filter { it.status == OrderStatus.CHO_LAY_HANG.value  }
-                            .sortedByDescending { OffsetDateTime.parse(it.created_at) }
-                        Log.d("ChoXacNhanScreen", "Filtered ${pendingOrders.size} orders with status == 2")
-                        if (pendingOrders.isEmpty()) {
-                            item {
-                                Text(
-                                    text = "Không có hóa đơn nào đang chuẩn bị hàng.",
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .padding(16.dp),
-                                    textAlign = TextAlign.Center
-                                )
-                            }
-                        } else {
+                listOrder?.data?.let { orderData ->
+                    // Filter orders with status == 1
+                    val pendingOrders = orderData.data
+                        .filter { it.status == OrderStatus.CHO_LAY_HANG.value  }
+                        .sortedByDescending { OffsetDateTime.parse(it.created_at) }
+                    Log.d("ChoXacNhanScreen", "Filtered ${pendingOrders.size} orders with status == 2")
+                    if (pendingOrders.isEmpty()) {
+                        Text(
+                            text = "Không có hóa đơn nào đang chuẩn bị hàng !",
+                            modifier = Modifier.align(Alignment.Center),
+                            textAlign = TextAlign.Center,
+                        )
+                    } else {
+                        LazyColumn(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .padding(4.dp)
+                        ) {
                             items(pendingOrders) { order ->
                                 if (idCustomer != null) {
                                     OrderItem(
@@ -881,6 +864,7 @@ fun ChoXacNhanScreen(navController: NavController, idCustomer: String?) {
     Box(
         modifier = Modifier
             .fillMaxSize()
+            .background(Color.White)
             .padding(4.dp)
     ) {
         when {
@@ -902,7 +886,7 @@ fun ChoXacNhanScreen(navController: NavController, idCustomer: String?) {
 
             listOrder?.data?.data?.isEmpty() == true -> {
                 Text(
-                    text = "Không có hóa đơn nào đang chờ xác nhận.",
+                    text = "Không có hóa đơn nào đang chờ xác nhận !",
                     modifier = Modifier.align(Alignment.Center),
                     textAlign = TextAlign.Center,
                 )
@@ -910,29 +894,25 @@ fun ChoXacNhanScreen(navController: NavController, idCustomer: String?) {
             }
 
             else -> {
-                LazyColumn(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(4.dp)
-                ) {
-                    listOrder?.data?.let { orderData ->
-                        // Filter orders with status == 1
-                        val pendingOrders = orderData.data
-                            .filter { it.status == OrderStatus.CHO_XAC_NHAN.value }
-                            .sortedByDescending { OffsetDateTime.parse(it.created_at) }
-                        Log.d("ChoXacNhanScreen", "Filtered ${pendingOrders.size} orders with status == 1")
-                        if (pendingOrders.isEmpty()) {
-                            item {
-                                Text(
-                                    text = "Không có hóa đơn nào đang chờ xác nhận.",
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .padding(16.dp),
-                                    textAlign = TextAlign.Center
-                                )
-                            }
-                            Log.i("ChoXacNhanScreen", "No pending orders after filtering")
-                        } else {
+                listOrder?.data?.let { orderData ->
+                    // Filter orders with status == 1
+                    val pendingOrders = orderData.data
+                        .filter { it.status == OrderStatus.CHO_XAC_NHAN.value }
+                        .sortedByDescending { OffsetDateTime.parse(it.created_at) }
+                    Log.d("ChoXacNhanScreen", "Filtered ${pendingOrders.size} orders with status == 1")
+                    if (pendingOrders.isEmpty()) {
+                        Text(
+                            text = "Không có hóa đơn nào đang chờ xác nhận !",
+                            modifier = Modifier.align(Alignment.Center),
+                            textAlign = TextAlign.Center,
+                        )
+                        Log.i("ChoXacNhanScreen", "No pending orders after filtering")
+                    } else {
+                        LazyColumn(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .padding(4.dp)
+                        ) {
                             items(pendingOrders) { order ->
                                 if (idCustomer != null) {
                                     OrderItem(

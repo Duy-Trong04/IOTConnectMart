@@ -60,15 +60,15 @@ data class DeleteLikedResponse(
 
 interface LikedAPIService {
 
-    @GET("liked/{customer_id}")
+    @GET("liked/detail/{customer_id}")
     suspend fun getLikedProducts(@Path("customer_id") customer_id: String): LikedResponse
 
     @POST("liked/")
     suspend fun addLikedProduct(@Body request: AddLikedRequest): AddLikedResponse
 
-    @DELETE("liked/{customer_id}/{id}")
+    @DELETE("liked/{customer_id}/{product_id}")
     suspend fun deleteLikedProduct(
         @Path("customer_id") customer_id: String,
-        @Path("id") id: Int
+        @Path("product_id") product_id: String
     ): DeleteLikedResponse
 }

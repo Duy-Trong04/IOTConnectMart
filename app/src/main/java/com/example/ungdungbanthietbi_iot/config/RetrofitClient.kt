@@ -1,6 +1,6 @@
 package com.example.ungdungbanthietbi_iot.config
 
-import com.example.ungdungbanthietbi_iot.api.AccuntAPIService
+import com.example.ungdungbanthietbi_iot.api.AccountAPIService
 import com.example.ungdungbanthietbi_iot.api.AddressAPIService
 import com.example.ungdungbanthietbi_iot.api.AddressPublic
 import com.example.ungdungbanthietbi_iot.api.CartAPIService
@@ -54,12 +54,12 @@ object RetrofitClient {
             .build()
             .create(ReviewAPIService::class.java)
     }
-    val accountAPIService: AccuntAPIService by lazy {
+    val accountAPIService: AccountAPIService by lazy {
         Retrofit.Builder()
             .baseUrl(Constant.BASE_URL)
             .addConverterFactory(GsonConverterFactory.create(GsonBuilder().create()))
             .build()
-            .create(AccuntAPIService::class.java)
+            .create(AccountAPIService::class.java)
     }
     val customerAPIService: CustomerAPIService by lazy {
         Retrofit.Builder()
@@ -113,28 +113,28 @@ object RetrofitClient {
             .create(CategoryApi::class.java)
     }
 
-    val verifyOtp: AccuntAPIService by lazy {
+    val verifyOtp: AccountAPIService by lazy {
         Retrofit.Builder()
             .baseUrl(Constant.BASE_URL)
             .addConverterFactory(GsonConverterFactory.create(GsonBuilder().create()))
             .build()
-            .create(AccuntAPIService::class.java)
+            .create(AccountAPIService::class.java)
     }
 
-    val authApiService: AccuntAPIService by lazy {
+    val authApiService: AccountAPIService by lazy {
         Retrofit.Builder()
             .baseUrl(Constant.BASE_URL)
             .addConverterFactory(GsonConverterFactory.create(GsonBuilder().create()))
             .build()
-            .create(AccuntAPIService::class.java)
+            .create(AccountAPIService::class.java)
     }
 
-    val resetPassword: AccuntAPIService by lazy {
+    val resetPassword: AccountAPIService by lazy {
         Retrofit.Builder()
             .baseUrl(Constant.BASE_URL)
             .addConverterFactory(GsonConverterFactory.create(GsonBuilder().create()))
             .build()
-            .create(AccuntAPIService::class.java)
+            .create(AccountAPIService::class.java)
     }
     val vnPayService: VNPayAPIService by lazy {
         Retrofit.Builder()

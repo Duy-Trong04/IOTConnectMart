@@ -1,11 +1,16 @@
 package com.example.ungdungbanthietbi_iot.views.search
 
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -19,9 +24,12 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
@@ -46,7 +54,7 @@ fun SearchResultsScreen(
     val devices by deviceViewModel.listDeviceSearch.collectAsState()
     val searchQuery by deviceViewModel.searchQuery.collectAsState()
     // Trạng thái tải
-    var isLoading by remember { mutableStateOf(true) }
+    val isLoading by deviceViewModel.isLoading.collectAsState()
     // Trạng thái cho hộp thoại lọc
     var showFilterDialog by remember { mutableStateOf(false) }
     // Trạng thái cho khoảng giá lọc
@@ -57,11 +65,9 @@ fun SearchResultsScreen(
     var isPriceAscending by remember { mutableStateOf(false) }
 
     LaunchedEffect(query) {
-        if (!query.isNullOrEmpty() && searchQuery != devices.firstOrNull()?.name) {
-            isLoading = true
+        if (query.isNotEmpty() && searchQuery != devices.firstOrNull()?.name) {
             deviceViewModel.updateSearchQuery(query)
             deviceViewModel.searchDevice(query)
-            isLoading = false
         }
     }
 
@@ -69,45 +75,37 @@ fun SearchResultsScreen(
         topBar = {
             TopAppBar(
                 title = {
-//                    Row(
-//                        modifier = Modifier
-//                            .fillMaxWidth()
-//                            .padding(8.dp),
-//                        horizontalArrangement = Arrangement.SpaceBetween,
-//                        verticalAlignment = Alignment.CenterVertically
-//                    ) {
-                        Box(modifier = Modifier.fillMaxWidth(1f)) {
-                            TextField(
-                                value = searchQuery,
-                                onValueChange = { /* Không cho phép nhập trực tiếp */ },
-                                modifier = Modifier
-                                    .fillMaxWidth(1f),
-                                colors = TextFieldDefaults.colors(
-                                    unfocusedContainerColor = Color.White,
-                                    focusedContainerColor = Color.White,
-                                    focusedTextColor = Color.Black,
-                                    unfocusedIndicatorColor = Color.Transparent,
-                                    focusedIndicatorColor = Color.Transparent,
-                                    unfocusedTextColor = Color.Black,
-                                    cursorColor = Color(0xFF5D9EFF)
-                                ),
-                                textStyle = TextStyle(
-                                    fontSize = 16.sp,
-                                    textAlign = TextAlign.Start,
-                                ),
-                                shape = RoundedCornerShape(25.dp),
-                                singleLine = true,
-                                readOnly = true
-                            )
-                            Box(
-                                modifier = Modifier
-                                    .matchParentSize()
-                                    .clickable {
-                                        navController.popBackStack()
-                                    }
-                            )
-                        }
-
+                    Box(modifier = Modifier.fillMaxWidth(1f)) {
+                        TextField(
+                            value = searchQuery,
+                            onValueChange = { /* Không cho phép nhập trực tiếp */ },
+                            modifier = Modifier
+                                .fillMaxWidth(1f),
+                            colors = TextFieldDefaults.colors(
+                                unfocusedContainerColor = Color.White,
+                                focusedContainerColor = Color.White,
+                                focusedTextColor = Color.Black,
+                                unfocusedIndicatorColor = Color.Transparent,
+                                focusedIndicatorColor = Color.Transparent,
+                                unfocusedTextColor = Color.Black,
+                                cursorColor = Color(0xFF5D9EFF)
+                            ),
+                            textStyle = TextStyle(
+                                fontSize = 16.sp,
+                                textAlign = TextAlign.Start,
+                            ),
+                            shape = RoundedCornerShape(25.dp),
+                            singleLine = true,
+                            readOnly = true
+                        )
+                        Box(
+                            modifier = Modifier
+                                .matchParentSize()
+                                .clickable {
+                                    navController.popBackStack()
+                                }
+                        )
+                    }
                 },
                 actions = {
                     // Nút biểu tượng lọc
@@ -200,25 +198,26 @@ fun SearchResultsScreen(
                                 selectedTabIndex = 3
                                 isPriceAscending = false
                             }
+                        },
+                        text = {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.Center
+                            ) {
+                                Text(
+                                    text = "Giá",
+                                    color = if (selectedTabIndex == 3) Color(0xFF5D9EFF) else Color.Gray
+                                )
+                                Spacer(modifier = Modifier.width(4.dp))
+                                Icon(
+                                    imageVector = if (isPriceAscending) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown,
+                                    contentDescription = if (isPriceAscending) "Sắp xếp giá tăng dần" else "Sắp xếp giá giảm dần",
+                                    modifier = Modifier.size(19.dp),
+                                    tint = if (selectedTabIndex == 3) Color(0xFF5D9EFF) else Color.Gray
+                                )
+                            }
                         }
-                    ) {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.Center
-                        ) {
-                            Text(
-                                "Giá",
-                                color = if (selectedTabIndex == 3) Color(0xFF5D9EFF) else Color.Gray
-                            )
-                            Spacer(modifier = Modifier.width(4.dp))
-                            Icon(
-                                imageVector = if (isPriceAscending) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown,
-                                contentDescription = if (isPriceAscending) "Sắp xếp giá tăng dần" else "Sắp xếp giá giảm dần",
-                                modifier = Modifier.size(18.dp),
-                                tint = if (selectedTabIndex == 3) Color(0xFF5D9EFF) else Color.Gray
-                            )
-                        }
-                    }
+                    )
                 }
 
                 // Hộp thoại lọc
@@ -356,6 +355,17 @@ fun FilterDialog(
                     ) {
                         Text("Dưới 5 triệu", fontSize = 14.sp)
                     }
+                    Button(
+                        onClick = { tempPriceRange = 0f..8000000f },
+                        modifier = Modifier.height(40.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = if (tempPriceRange.endInclusive <= 8000000f && tempPriceRange.endInclusive > 2000000f) Color(0xFF5D9EFF) else Color.LightGray,
+                            contentColor = if (tempPriceRange.endInclusive <= 8000000f && tempPriceRange.endInclusive > 2000000f) Color.White else Color.Black
+                        ),
+                        shape = RoundedCornerShape(8.dp)
+                    ) {
+                        Text("Dưới 8 triệu", fontSize = 14.sp)
+                    }
                 }
                 Spacer(modifier = Modifier.height(16.dp))
 
@@ -405,28 +415,20 @@ fun FilterDialog(
                     )
                 }
                 Spacer(modifier = Modifier.height(8.dp))
-                RangeSlider(
-                    value = tempPriceRange,
-                    onValueChange = { newRange ->
+                CustomRangeSlider(
+                    giaTri = tempPriceRange,
+                    onGiaTriThayDoi = { newRange ->
                         tempPriceRange = newRange
                     },
-                    valueRange = 0f..10000000f, // Phạm vi giá tối đa
-                    steps = 100,
-                    colors = SliderDefaults.colors(
-                        thumbColor = Color(0xFF5D9EFF), // Màu chấm tròn giống hình
-                        activeTrackColor = Color(0xFF5D9EFF), // Màu thanh trượt đã chọn
-                        inactiveTrackColor = Color.LightGray, // Màu thanh trượt chưa chọn
-                        activeTickColor = Color.Transparent, // Ẩn dấu tick
-                        inactiveTickColor = Color.Transparent
-                    ),
-                    modifier = Modifier
-                        .height(40.dp) // Điều chỉnh chiều cao để chấm tròn nổi bật
+                    phamViGiaTri = 0f..10000000f,
+                    modifier = Modifier.height(10.dp)
                 )
 
                 Spacer(modifier = Modifier.height(16.dp))
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.End
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
                     Button(
                         onClick = {
@@ -457,6 +459,114 @@ fun FilterDialog(
                     }
                 }
             }
+        }
+    }
+}
+
+@Composable
+fun CustomRangeSlider(
+    giaTri: ClosedFloatingPointRange<Float>,
+    onGiaTriThayDoi: (ClosedFloatingPointRange<Float>) -> Unit,
+    phamViGiaTri: ClosedFloatingPointRange<Float>,
+    modifier: Modifier = Modifier
+) {
+    val minGia = phamViGiaTri.start
+    val maxGia = phamViGiaTri.endInclusive
+    val khoangGia = maxGia - minGia
+
+    // Tính toán tỉ lệ vị trí của thumb
+    var targetStartOffset by remember { mutableFloatStateOf((giaTri.start - minGia) / khoangGia) }
+    var targetEndOffset by remember { mutableFloatStateOf((giaTri.endInclusive - minGia) / khoangGia) }
+
+    // Làm mượt chuyển động của thumb
+    val startOffset by animateFloatAsState(targetValue = targetStartOffset, animationSpec = tween(durationMillis = 100),
+        label = ""
+    )
+    val endOffset by animateFloatAsState(targetValue = targetEndOffset, animationSpec = tween(durationMillis = 100),
+        label = ""
+    )
+
+    // Hệ số giảm tốc để làm chậm chuyển động kéo
+    val dragSensitivity = 0.1f // Giảm tốc độ kéo hơn nữa (chậm hơn)
+
+    // Cập nhật giá trị khi thumb di chuyển
+    fun capNhatGiaTri() {
+        val newStart = minGia + (startOffset * khoangGia)
+        val newEnd = minGia + (endOffset * khoangGia)
+        onGiaTriThayDoi(newStart.coerceIn(minGia, newEnd)..newEnd.coerceIn(newStart, maxGia))
+    }
+    // Gọi cập nhật giá trị khi offset thay đổi
+    LaunchedEffect(startOffset, endOffset) {
+        capNhatGiaTri()
+    }
+
+    Layout(
+        modifier = modifier
+            .height(10.dp)
+            .fillMaxWidth()
+            .background(Color.LightGray, RoundedCornerShape(4.dp)),
+        content = {
+            // Thanh active giữa hai thumb
+            Box(
+                modifier = Modifier
+                    .fillMaxHeight()
+                    .background(Color(0xFF5D9EFF), RoundedCornerShape(10.dp))
+            )
+            // Thumb trái
+            Box(
+                modifier = Modifier
+                    .size(18.dp)
+                    .background(Color(0xFF5D9EFF), CircleShape)
+                    .border(2.dp, Color.White, CircleShape)
+                    .pointerInput(Unit) {
+                        detectDragGestures { change, dragAmount ->
+                            change.consume()
+                            val newOffset = (targetStartOffset + (dragAmount.x / size.width) * dragSensitivity)
+                                .coerceIn(0f, targetEndOffset)
+                            targetStartOffset = newOffset
+                        }
+                    }
+            )
+            // Thumb phải
+            Box(
+                modifier = Modifier
+                    .size(18.dp)
+                    .background(Color(0xFF5D9EFF), CircleShape)
+                    .border(2.dp, Color.White, CircleShape)
+                    .pointerInput(Unit) {
+                        detectDragGestures { change, dragAmount ->
+                            change.consume()
+                            val newOffset = (targetEndOffset + (dragAmount.x / size.width) * dragSensitivity)
+                                .coerceIn(targetStartOffset, 1f)
+                            targetEndOffset = newOffset
+                        }
+                    }
+            )
+        }
+    ) { measurables, constraints ->
+        val width = constraints.maxWidth
+        val height = constraints.maxHeight
+        val thumbSize = 18.dp.toPx().toInt()
+
+        // Đo các thành phần
+        val activeTrack = measurables[0].measure(
+            Constraints.fixed(
+                width = ((endOffset - startOffset).coerceAtLeast(0f) * width).toInt(),
+                height = height
+            )
+        )
+        val leftThumb = measurables[1].measure(Constraints.fixed(thumbSize, thumbSize))
+        val rightThumb = measurables[2].measure(Constraints.fixed(thumbSize, thumbSize))
+
+        // Tính toán vị trí
+        val leftThumbX = (startOffset * width - thumbSize / 2).toInt().coerceIn(0, width - thumbSize)
+        val rightThumbX = (endOffset * width - thumbSize / 2).toInt().coerceIn(0, width - thumbSize)
+        val activeTrackX = (startOffset * width).toInt().coerceIn(0, width - activeTrack.width)
+
+        layout(width, height) {
+            activeTrack.place(activeTrackX, 0)
+            leftThumb.place(leftThumbX, (height - thumbSize) / 2)
+            rightThumb.place(rightThumbX, (height - thumbSize) / 2)
         }
     }
 }

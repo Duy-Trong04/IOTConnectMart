@@ -660,60 +660,59 @@ fun CartScreen(
                 }
             )
         }
-        // Danh sách sản phẩm
-        LazyColumn(
-            modifier = Modifier.padding(padding)
-                .fillMaxSize()
-                .background(Color.White)
-        ) {
-            when (uiState) {
-                is CartViewModel.UiState.Initial -> {
-                    item {
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(16.dp),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            CircularProgressIndicator(
-                                color = Color(0xFF5D9EFF),
-                                strokeWidth = 4.dp,
-                                modifier = Modifier.size(48.dp)
-                            )
-                        }
-                    }
+        when (uiState) {
+            is CartViewModel.UiState.Initial -> {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(Color.White)
+                        .padding(16.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    CircularProgressIndicator(
+                        color = Color(0xFF5D9EFF),
+                        strokeWidth = 4.dp,
+                        modifier = Modifier.size(48.dp)
+                    )
                 }
-                is CartViewModel.UiState.Loading -> {
-                    item {
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(16.dp),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            CircularProgressIndicator(
-                                color = Color(0xFF5D9EFF),
-                                strokeWidth = 4.dp,
-                                modifier = Modifier.size(48.dp)
-                            )
-                        }
-                    }
+            }
+            is CartViewModel.UiState.Loading -> {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(Color.White)
+                        .padding(16.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    CircularProgressIndicator(
+                        color = Color(0xFF5D9EFF),
+                        strokeWidth = 4.dp,
+                        modifier = Modifier.size(48.dp)
+                    )
                 }
-                is CartViewModel.UiState.SuccessGet, is CartViewModel.UiState.SuccessAdd -> {
-                    val response = (uiState as? CartViewModel.UiState.SuccessGet)?.response
-                        ?: (uiState as? CartViewModel.UiState.SuccessGet)?.response
-                    if (response?.data.isNullOrEmpty()) {
-                        item {
-                            Text(
-                                text = "Giỏ hàng trống!",
-                                fontSize = 20.sp,
-                                textAlign = TextAlign.Center,
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(16.dp)
-                            )
-                        }
-                    } else {
+            }
+            is CartViewModel.UiState.SuccessGet, is CartViewModel.UiState.SuccessAdd -> {
+                val response = (uiState as? CartViewModel.UiState.SuccessGet)?.response
+                    ?: (uiState as? CartViewModel.UiState.SuccessGet)?.response
+                if (response?.data.isNullOrEmpty()) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .background(Color.White)
+                    ) {
+                        Text(
+                            text = "Giỏ hàng của bạn đang trống !",
+                            modifier = Modifier.align(Alignment.Center),
+                            textAlign = TextAlign.Center,
+                        )
+                    }
+                } else {
+                    // Danh sách sản phẩm
+                    LazyColumn(
+                        modifier = Modifier.padding(padding)
+                            .fillMaxSize()
+                            .background(Color.White)
+                    ) {
                         items(response?.data ?: emptyList()) { product ->
                             CartItem(
                                 product = product,
@@ -733,8 +732,8 @@ fun CartScreen(
                         }
                     }
                 }
-                is CartViewModel.UiState.Error -> {}
             }
+            is CartViewModel.UiState.Error -> {}
         }
     }
 }

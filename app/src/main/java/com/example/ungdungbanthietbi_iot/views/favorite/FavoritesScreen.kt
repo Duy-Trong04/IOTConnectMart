@@ -55,14 +55,14 @@ fun FavoritesScreen(
     password: String,
 ) {
     val likedViewModel: LikedViewModel = viewModel()
-
+    val deviceViewModel: DeviceViewModel = viewModel()
     val listLiked by likedViewModel.listLiked.collectAsState()
     // Lấy dữ liệu và tính tổng tiền ban đầu
     LaunchedEffect(idCustomer) {
         likedViewModel.getLikedByIdCustomer(idCustomer)
     }
 
-    val deviceViewModel: DeviceViewModel = viewModel()
+    //Đọc hình ảnh base64
     var bitmap by remember { mutableStateOf<Bitmap?>(null) }
 
 
@@ -72,10 +72,9 @@ fun FavoritesScreen(
                 modifier = Modifier.fillMaxWidth(),
                 title = {
                     Text(
-                        "Yêu thích(${listLiked.size})",
+                        "Yêu thích (${listLiked.size})",
                         textAlign = TextAlign.Start,
                         modifier = Modifier.fillMaxWidth(),
-                        fontWeight = FontWeight.Bold
                     )
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -97,11 +96,13 @@ fun FavoritesScreen(
             )
         }
     ) { padding ->
-        // Danh sách sản phẩm
-        LazyColumn(
-            modifier = Modifier.padding(padding).fillMaxSize().background(Color.White)
-        ) {
-            if(listLiked.isNotEmpty()) {
+        if(listLiked.isNotEmpty()) {
+            // Danh sách sản phẩm
+            LazyColumn(
+                modifier = Modifier.padding(padding)
+                    .fillMaxSize()
+                    .background(Color.White)
+            ) {
                 items(listLiked) { liked ->
                     // Tải hình ảnh
                     LaunchedEffect(liked) {
@@ -162,7 +163,7 @@ fun FavoritesScreen(
                             }
                             // Nút xóa sản phẩm
                             IconButton(onClick = {
-                                likedViewModel.deleteLiked(idCustomer, liked.id)
+                                likedViewModel.deleteLiked(idCustomer, liked.product_id)
                                 likedViewModel.getLikedByIdCustomer(idCustomer)
                             }) {
                                 Icon(
@@ -173,18 +174,20 @@ fun FavoritesScreen(
                         }
                     }
                 }
+
             }
-            else{
-                item{
-                    Text(
-                        text = "Danh sách yêu thích đang trống!",
-                        fontSize = 20.sp,
-                        textAlign = TextAlign.Center,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(16.dp)
-                    )
-                }
+        }
+        else{
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(Color.White)
+            ) {
+                Text(
+                    text = "Danh sách yêu thích đang trống !",
+                    modifier = Modifier.align(Alignment.Center),
+                    textAlign = TextAlign.Center,
+                )
             }
         }
     }

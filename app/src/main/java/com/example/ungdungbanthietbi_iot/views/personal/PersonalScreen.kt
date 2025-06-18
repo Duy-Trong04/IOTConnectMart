@@ -36,6 +36,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
@@ -65,7 +66,6 @@ import com.example.ungdungbanthietbi_iot.viewModels.AccountViewModel
 import com.example.ungdungbanthietbi_iot.viewModels.CartViewModel
 import com.example.ungdungbanthietbi_iot.models.Customer
 import com.example.ungdungbanthietbi_iot.viewModels.CustomerViewModel
-import com.example.ungdungbanthietbi_iot.viewModels.DeviceViewModel
 import com.example.ungdungbanthietbi_iot.navigation.Screen
 import com.example.ungdungbanthietbi_iot.utils.getCurrentTimestamp
 import com.example.ungdungbanthietbi_iot.viewModels.CustomerState
@@ -82,7 +82,6 @@ fun PersonalScreen(
     navController: NavController,
     username: String,
     id: String,
-    deviceViewModel: DeviceViewModel,
     password: String?
 ) {
 
@@ -162,7 +161,7 @@ fun PersonalScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .background(Color.White)
-                    .offset(y = 16.dp) // Dịch chuyển BottomAppBar xuống 16dp
+                    .offset(y = 16.dp) // Dịch chuyển BottomAppBar ring 16dp
             ){}
         },
         snackbarHost = {
@@ -222,8 +221,8 @@ fun PersonalScreen(
 fun AccountInfoSection(
     id: String?,
     username: String,
-    snackbarHostState: SnackbarHostState // Thêm tham số SnackbarHostState
-    ,context: Context = LocalContext.current
+    snackbarHostState: SnackbarHostState,
+    context: Context = LocalContext.current
 ){
 
     var selectedImageUri by remember { mutableStateOf<Uri?>(null) }
@@ -264,7 +263,7 @@ fun AccountInfoSection(
         }
     }
     var verificationCode by remember { mutableStateOf(List(6) { "" }) }
-    var countdown by remember { mutableStateOf(60) }
+    var countdown by remember { mutableIntStateOf(60) }
     var isResendEnabled by remember { mutableStateOf(false) }
     // Bộ đếm ngược cho nút gửi lại mã
     LaunchedEffect(countdown) {
@@ -283,7 +282,7 @@ fun AccountInfoSection(
         Column(modifier = Modifier.padding(16.dp)) {
             when (val state = customerState) {
                 is CustomerState.Loading -> {
-                    Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+                    Box(modifier = Modifier.fillMaxWidth().height(600.dp), contentAlignment = Alignment.Center) {
                         CircularProgressIndicator(
                             color = Color(0xFF5F9EFF)
                         )
@@ -538,7 +537,7 @@ fun AccountInfoSection(
                         Text("Email: ", fontWeight = FontWeight.Bold)
                         if (!customer.email_verified) {
                             Text(
-                                text = "Xác thực !",
+                                text = "Cần xác thực !",
                                 color = Color.Red,
                                 modifier = Modifier
                                     .clickable {
@@ -551,7 +550,7 @@ fun AccountInfoSection(
                             )
                         }
                         else{
-                            Text(text = "Đã xác thực !", color = Color.Green)
+                            Text(text = "Đã xác thực !", color = Color(0xFF00796B))
                         }
                     }
                     OutlinedTextField(
@@ -565,8 +564,8 @@ fun AccountInfoSection(
                             .fillMaxWidth()
                             .onFocusChanged { if (it.isFocused) isFocused = true },
                         colors = OutlinedTextFieldDefaults.colors(
-                            focusedBorderColor = Color(0xFF5F9EFF),
-                            unfocusedBorderColor = Color(0xFF5F9EFF),
+                            focusedBorderColor = if (!customer.email_verified) Color.Red else Color(0xFF5F9EFF),
+                            unfocusedBorderColor = if (!customer.email_verified) Color.Red else Color(0xFF5F9EFF),
                             focusedLabelColor = Color(0xFF5F9EFF)
                         ),
                         readOnly = true,
@@ -867,7 +866,7 @@ fun AccountInfoSection(
                 }
                 is CustomerState.Error -> {
                     Column(
-                        modifier = Modifier.fillMaxWidth(),
+                        modifier = Modifier.fillMaxSize(),
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
                         Text(
@@ -896,8 +895,6 @@ fun AccountInfoSection(
         }
 
     }
-
-
 }
 
 
@@ -1000,7 +997,7 @@ fun AccountOptionsSection(
             )
             AccountOptionItem(
                 iconRes = Icons.Filled.LocationOn,
-                label = "Số địa chỉ",
+                label = "Sổ địa chỉ",
                 isSelected = currentTab == "addresses",
                 onClick = { navController.navigate(Screen.Address_Selection.route + "?idCustomer=${idCustomer}") }
             )
@@ -1049,7 +1046,7 @@ fun AccountOptionsSection(
                                 openDialog.value = false
                                 // Điều hướng về IntroScreen sau khi đăng xuất
                                 navController.navigate(Screen.LoginScreen.route) {
-                                    popUpTo(navController.graph.startDestinationId) { inclusive = true }
+                                    popUpTo(0) { inclusive = true }
                                 }
                                 //Log.d("AccountOptions", "Navigated to IntroScreen after logout")
                             } catch (e: Exception) {
@@ -1289,17 +1286,6 @@ fun ChangePasswordSection(
                                 }
                                 accountViewModel.changePassword(username, matkhaucu, matkhaumoi, kiemtramkmoi)
                                 onPasswordChanged()
-//                                val taiKhoan = Account(
-//                                    idPerson = account.idPerson,
-//                                    idRole = "CUS",
-//                                    username = username,
-//                                    password = matkhaumoi,
-//                                    report = 0,
-//                                    isNew = 1,
-//                                    status = 1
-//                                )
-//                                accountViewModel.updateAccount(taiKhoan)
-                                //Log.d("Thành công", "Trong BUTTON ${matkhaucu} va ${username} va ${kiemtramkmoi} va ${matkhaumoi}")
                             }
                         }
                         else{

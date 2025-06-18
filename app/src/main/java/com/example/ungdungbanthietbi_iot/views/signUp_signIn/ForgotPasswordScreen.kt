@@ -91,7 +91,7 @@ fun ForgotPasswordScreen(
             if (response.isSuccessful) {
                 showSuccessDialog = true
             } else {
-                errorMessage = "Không tìm thấy email"
+                errorMessage = "Không tìm thấy email\nVui lòng nhập lại !"
                 showErrorDialog = true
             }
             // Reset trạng thái trong ViewModel để tránh lặp lại
@@ -206,7 +206,7 @@ fun ForgotPasswordScreen(
                 if (showErrorDialog) {
                     AlertDialog(
                         onDismissRequest = { showErrorDialog = false },
-                        title = { Text("Lỗi") },
+                        title = { Text("Thông báo") },
                         text = { Text(errorMessage) },
                         containerColor = Color.White,
                         confirmButton = {

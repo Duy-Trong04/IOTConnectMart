@@ -21,8 +21,10 @@ import com.example.ungdungbanthietbi_iot.api.VerifyOtpChangeEmailRequest
 import com.example.ungdungbanthietbi_iot.api.VerifyOtpRequest
 import com.example.ungdungbanthietbi_iot.api.VerifyOtpResponse
 import com.example.ungdungbanthietbi_iot.dataStore
+import com.example.ungdungbanthietbi_iot.models.AddAccount
 import com.example.ungdungbanthietbi_iot.models.LoginRequest
 import com.example.ungdungbanthietbi_iot.models.LoginResponse
+import com.google.gson.Gson
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -35,8 +37,9 @@ class AccountViewModel:ViewModel() {
     private val _loginUiState = MutableStateFlow(LoginUiState())
     val loginUiState: StateFlow<LoginUiState> = _loginUiState
 
-    private val _accountCheckResult = mutableStateOf<Boolean?>(null)
-    val accountCheckResult: State<Boolean?> = _accountCheckResult
+    private val _registerUiState = MutableStateFlow<RegisterUiState>(RegisterUiState.Idle)
+    val registerUiState: StateFlow<RegisterUiState> = _registerUiState.asStateFlow()
+
     private val _isLoading = MutableStateFlow(false)
     val isLoading: StateFlow<Boolean> = _isLoading
 
@@ -68,25 +71,38 @@ class AccountViewModel:ViewModel() {
         }
     }
 
-
-    private val _registerResult = MutableStateFlow<Response<RegisterResponse>?>(null)
-    val registerResult: StateFlow<Response<RegisterResponse>?> = _registerResult
-
-
     fun register(request: RegisterRequest) {
         viewModelScope.launch {
+            _isLoading.value = true
+            _registerUiState.value = RegisterUiState.Loading
             try {
-                _isLoading.value = true
                 val response = RetrofitClient.accountAPIService.addAccount(request)
-                _registerResult.value = response
-                if (response.isSuccessful) {
-                    Log.d("AccountViewModel", "Registration successful: ${response.body()?.data}")
+                if (response.isSuccessful && response.body()?.status_code == 200 && response.body()?.data != null) {
+                    _registerUiState.value = RegisterUiState.Success(response.body()!!.data!!)
+                    Log.d("AccountViewModel", "Đăng ký thành công: ${response.body()?.data}")
                 } else {
-                    Log.e("AccountViewModel", "Registration failed: ${response.errorBody()?.string()}")
+                    // Xử lý các phản hồi không thành công (200 hoặc 400)
+                    val errorBody = if (response.isSuccessful) response.body() else {
+                        // Phân tích body của phản hồi lỗi (như 400)
+                        val errorJson = response.errorBody()?.string()
+                        try {
+                            Gson().fromJson(errorJson, RegisterResponse::class.java)
+                        } catch (e: Exception) {
+                            null
+                        }
+                    }
+                    val error = errorBody?.errors?.firstOrNull()
+                    val errorMessage = when (error?.code) {
+                        1409 -> "Email đã tồn tại. Vui lòng sử dụng email khác."
+                        1621 -> "Tài khoản đã tồn tại. Vui lòng chọn tên tài khoản khác."
+                        else -> error?.message ?: "Đăng ký thất bại: ${response.message()}"
+                    }
+                    _registerUiState.value = RegisterUiState.Error(errorMessage)
+                    Log.e("AccountViewModel", "Đăng ký thất bại: $errorMessage, ErrorBody: ${response.errorBody()?.string()}")
                 }
             } catch (e: Exception) {
-                Log.e("AccountViewModel", "Registration error: ${e.message}")
-                _registerResult.value = null
+                _registerUiState.value = RegisterUiState.Error("Lỗi mạng: ${e.message}")
+                Log.e("RegisterViewModel", "Lỗi khi đăng ký: ${e.message}")
             } finally {
                 _isLoading.value = false
             }
@@ -280,6 +296,13 @@ data class LoginUiState(
     val error: String? = null,
     val result: Boolean? = null
 )
+
+sealed class RegisterUiState {
+    object Idle : RegisterUiState()
+    object Loading : RegisterUiState()
+    data class Success(val account: AddAccount) : RegisterUiState()
+    data class Error(val message: String) : RegisterUiState()
+}
 
 sealed class UiState {
     data object Idle : UiState()

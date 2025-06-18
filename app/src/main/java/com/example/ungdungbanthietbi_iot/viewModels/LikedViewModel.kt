@@ -35,10 +35,10 @@ class LikedViewModel:ViewModel() {
         }
     }
 
-    fun deleteLiked(customer_id: String, id: Int) {
+    fun deleteLiked(customer_id: String, product_id: String) {
         viewModelScope.launch {
             try {
-                val response = RetrofitClient.likedAPIService.deleteLikedProduct(customer_id, id)
+                val response = RetrofitClient.likedAPIService.deleteLikedProduct(customer_id, product_id)
                 if(response.status_code == 201){
                     _error.value = null
                 }

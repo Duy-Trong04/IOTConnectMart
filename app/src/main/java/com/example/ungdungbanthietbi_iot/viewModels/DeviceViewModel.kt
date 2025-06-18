@@ -44,6 +44,9 @@ class DeviceViewModel:ViewModel() {
     val searchQuery: StateFlow<String> get() = _searchQuery
     private val _searchError = MutableStateFlow<String?>(null)
     val searchError: StateFlow<String?> get() = _searchError
+    private val _isLoading = MutableStateFlow(false)
+    val isLoading: StateFlow<Boolean> = _isLoading
+
     fun getDeviceBySlug2(id: String) {
         viewModelScope.launch(Dispatchers.IO) {
             try {
@@ -96,6 +99,7 @@ class DeviceViewModel:ViewModel() {
     // Tìm kiếm thiết bị
     fun searchDevice(query: String) {
         viewModelScope.launch {
+            _isLoading.value = true
             try {
                 val trimmedQuery = query.trim()
                 _searchError.value = null // Reset lỗi
@@ -139,6 +143,8 @@ class DeviceViewModel:ViewModel() {
             } catch (e: Exception) {
                 _listDeviceSearch.value = emptyList()
                 Log.e("DeviceViewModel", "Lỗi khi tìm kiếm", e)
+            } finally {
+                _isLoading.value = false
             }
         }
     }

@@ -526,7 +526,7 @@ fun NavGraph(
             val username = it.arguments?.getString("username") ?: ""
             val id = it.arguments?.getString("id") ?: ""
             val password = it.arguments?.getString("password") ?: ""
-            PersonalScreen(navController, username, id, deviceViewModel, password)
+            PersonalScreen(navController, username, id, password)
         }
 
         //màn hình thông báo

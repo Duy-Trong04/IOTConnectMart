@@ -2,6 +2,7 @@ package com.example.ungdungbanthietbi_iot.views.rating
 
 import android.graphics.Bitmap
 import android.util.Log
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -81,8 +82,7 @@ fun RatingHistoryScreen(navController: NavController, idCustomer: String, userna
                 title = {
                     Text(text = "Đánh giá của tôi (${reviewsOfCustomer.size})",
                         fontWeight = FontWeight.Bold,
-                        modifier = Modifier.fillMaxWidth(),
-                        textAlign = TextAlign.Start
+                        modifier = Modifier.fillMaxWidth()
                     )
                 },
                 navigationIcon = {
@@ -196,15 +196,16 @@ fun ReviewItem(review: Reviews, idCustomer: String, idDevice: String, username:S
                         onClick = {
                             navController.navigate(Screen.Update_Rating_Screen.route + "?idReview=${review.idReview}&idCustomer=${idCustomer}")
                         },
-                        shape = RoundedCornerShape(8.dp),
                         colors = ButtonDefaults.buttonColors(
-                            contentColor = Color.White,
-                            containerColor = Color(0xFF5D9EFF)
-                        )
+                            containerColor = Color.White,
+                            contentColor = Color(0xFF5D9EFF)
+                        ),
+                        border = BorderStroke(1.dp, Color(0xFF5D9EFF)),
+                        shape = RoundedCornerShape(5.dp)
                     ) {
                         Text(
                             text = "Chỉnh sửa",
-                            fontSize = 18.sp
+                            fontSize = 13.sp
                         )
                     }
                 }
@@ -228,42 +229,40 @@ fun ReviewItem(review: Reviews, idCustomer: String, idDevice: String, username:S
                 fontSize = 12.sp,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
-
-                Row(
-                    modifier = Modifier.fillMaxWidth().clickable {
-                        navController.navigate(Screen.ProductDetailsScreen.route + "?id=${idDevice}&idCustomer=${idCustomer}&username=${username}")
-                    },
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    bitmap?.let {
-                        Image(
-                            bitmap = it.asImageBitmap(),
-                            contentDescription = customerName.ifEmpty { "Hình ảnh sản phẩm" },
-                            modifier = Modifier
-                                .width(50.dp)
-                                .height(50.dp),
-                            contentScale = ContentScale.Fit
-                        )
-                    } ?: run {
-                        Image(
-                            painter = painterResource(id = android.R.drawable.ic_menu_gallery),
-                            contentDescription = "Product Image",
-                            modifier = Modifier
-                                .width(50.dp)
-                                .height(50.dp),
-                            contentScale = ContentScale.Fit
-                        )
-                    }
-                    Spacer(modifier = Modifier.width(8.dp))
-                    if (device != null) {
-                        Text(
-                            text = device.name,
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 16.sp
-                        )
-                    }
+            Row(
+                modifier = Modifier.fillMaxWidth().clickable {
+                    navController.navigate(Screen.ProductDetailsScreen.route + "?id=${idDevice}&idCustomer=${idCustomer}&username=${username}")
+                },
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                bitmap?.let {
+                    Image(
+                        bitmap = it.asImageBitmap(),
+                        contentDescription = customerName.ifEmpty { "Hình ảnh sản phẩm" },
+                        modifier = Modifier
+                            .width(50.dp)
+                            .height(50.dp),
+                        contentScale = ContentScale.Fit
+                    )
+                } ?: run {
+                    Image(
+                        painter = painterResource(id = android.R.drawable.ic_menu_gallery),
+                        contentDescription = "Product Image",
+                        modifier = Modifier
+                            .width(50.dp)
+                            .height(50.dp),
+                        contentScale = ContentScale.Fit
+                    )
                 }
-
+                Spacer(modifier = Modifier.width(8.dp))
+                if (device != null) {
+                    Text(
+                        text = device.name,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 16.sp
+                    )
+                }
+            }
         }
     }
 }
