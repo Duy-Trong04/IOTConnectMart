@@ -21,6 +21,7 @@ class LikedViewModel:ViewModel() {
 
     fun getLikedByIdCustomer(customer_id: String) {
         viewModelScope.launch {
+            _isLoading.value = true
             try {
                 val response = RetrofitClient.likedAPIService.getLikedProducts(customer_id)
                 if(response.status_code == 200){
@@ -31,6 +32,8 @@ class LikedViewModel:ViewModel() {
                 }
             } catch (e: Exception) {
                 _listLiked.value = emptyList()
+            } finally {
+                _isLoading.value = false
             }
         }
     }

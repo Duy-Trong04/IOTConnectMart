@@ -271,6 +271,7 @@ fun DaGiaoHangScreen(navController: NavController, idCustomer: String?) {
                                         idCustomer,
                                     )
                                 }
+                                Spacer(modifier = Modifier.height(8.dp))
                             }
                         }
                     }
@@ -378,6 +379,7 @@ fun HoanTatScreen(navController: NavController, idCustomer: String?) {
                                         idCustomer,
                                     )
                                 }
+                                Spacer(modifier = Modifier.height(8.dp))
                             }
                         }
                     }
@@ -485,6 +487,7 @@ fun ChoGiaoHangScreen(navController: NavController, idCustomer: String?) {
                                         idCustomer,
                                     )
                                 }
+                                Spacer(modifier = Modifier.height(8.dp))
                             }
                         }
                     }
@@ -592,6 +595,7 @@ fun DangGiaoHangScreen(navController: NavController, idCustomer: String?) {
                                         idCustomer,
                                     )
                                 }
+                                Spacer(modifier = Modifier.height(8.dp))
                             }
                         }
                     }
@@ -701,6 +705,7 @@ fun HuyDonHangScreen(navController: NavController, idCustomer: String?) {
                                         idCustomer,
                                     )
                                 }
+                                Spacer(modifier = Modifier.height(8.dp))
                             }
                         }
                     }
@@ -810,6 +815,7 @@ fun ChoLayHangScreen(navController: NavController, idCustomer: String?) {
                                         idCustomer,
                                     )
                                 }
+                                Spacer(modifier = Modifier.height(8.dp))
                             }
                         }
                     }
@@ -922,6 +928,7 @@ fun ChoXacNhanScreen(navController: NavController, idCustomer: String?) {
                                         idCustomer,
                                     )
                                 }
+                                Spacer(modifier = Modifier.height(8.dp))
                             }
                             Log.d("ChoXacNhanScreen", "Displaying ${pendingOrders.size} pending orders")
                         }
@@ -974,118 +981,97 @@ fun OrderItem(
             navController.navigate("${Screen.Order_Detail.route}?id=${encodedOrderId}&totalAmount=${order.totalAmount}&idCustomer=$idCustomer")
         }
     ) {
-            Column(
-                modifier = Modifier.fillMaxWidth().padding(5.dp),
-                horizontalAlignment = Alignment.Start,
-                verticalArrangement = Arrangement.Top
-            ) {
-                Text(
-                    text = "Mã đơn hàng: #HD${encodedOrderId}",
-                )
-                Spacer(modifier = Modifier.height(8.dp))
-                Column {
-                    filteredDetails.forEach { detail ->
-                        // Tải hình ảnh cho từng product_id
-                        LaunchedEffect(detail.product_id) {
-                            if (bitmapMap[detail.product_id] == null) {
-                                val bitmap = deviceViewModel.getDeviceImageBitmapImage(detail.image)
-                                bitmapMap[detail.product_id] = bitmap
-                            }
+        Column(
+            modifier = Modifier.fillMaxWidth().padding(5.dp),
+            horizontalAlignment = Alignment.Start,
+            verticalArrangement = Arrangement.Top
+        ) {
+            Text(
+                text = "Mã đơn hàng: #HD${encodedOrderId}",
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            Column {
+                filteredDetails.forEach { detail ->
+                    // Tải hình ảnh cho từng product_id
+                    LaunchedEffect(detail.product_id) {
+                        if (bitmapMap[detail.product_id] == null) {
+                            val bitmap = deviceViewModel.getDeviceImageBitmapImage(detail.image)
+                            bitmapMap[detail.product_id] = bitmap
                         }
-                        val existingReview = listReviews.find { review ->
-                            review.idCustomer == idCustomer && review.idDevice == detail.product_id
-                        }
-                        val isReviewed = existingReview != null
-                        // Tính số ngày kể từ created_at hoặc updated_at
-                        val daysSinceReview = if (existingReview != null) {
-                            val reviewDate = existingReview.updated_at?.takeIf { it.isNotBlank() } ?: existingReview.created_at
-                            calculateDaysSinceReceived(reviewDate)
-                        } else {
-                            Int.MAX_VALUE
-                        }
-                        val canEditReview = daysSinceReview <= 7
-                        Log.d("Debug", "$existingReview, $isReviewed và $canEditReview")
+                    }
+                    val existingReview = listReviews.find { review ->
+                        review.idCustomer == idCustomer && review.idDevice == detail.product_id
+                    }
+                    val isReviewed = existingReview != null
+                    // Tính số ngày kể từ created_at hoặc updated_at
+                    val daysSinceReview = if (existingReview != null) {
+                        val reviewDate = existingReview.updated_at?.takeIf { it.isNotBlank() } ?: existingReview.created_at
+                        calculateDaysSinceReceived(reviewDate)
+                    } else {
+                        Int.MAX_VALUE
+                    }
+                    val canEditReview = daysSinceReview <= 7
+                    Log.d("Debug", "$existingReview, $isReviewed và $canEditReview")
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
                         Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
+                            modifier = Modifier.weight(1f),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Row(
-                                modifier = Modifier.weight(1f),
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                bitmapMap[detail.product_id]?.let { bitmap ->
-                                    Image(
-                                        bitmap = bitmap.asImageBitmap(),
-                                        contentDescription = detail.product_name.ifEmpty { "Hình ảnh sản phẩm" },
-                                        modifier = Modifier.size(100.dp),
-                                        contentScale = ContentScale.Crop
-                                    )
-                                } ?: run {
-                                    Image(
-                                        painter = painterResource(id = android.R.drawable.ic_menu_gallery),
-                                        contentDescription = "Product Image",
-                                        modifier = Modifier.size(100.dp),
-                                        contentScale = ContentScale.Crop
-                                    )
-                                }
-                                Spacer(modifier = Modifier.width(4.dp))
-                                Column {
-                                    Text(
-                                        text = detail.product_name,
-                                        fontSize = 16.sp
-                                    )
+                            bitmapMap[detail.product_id]?.let { bitmap ->
+                                Image(
+                                    bitmap = bitmap.asImageBitmap(),
+                                    contentDescription = detail.product_name.ifEmpty { "Hình ảnh sản phẩm" },
+                                    modifier = Modifier.size(100.dp),
+                                    contentScale = ContentScale.Crop
+                                )
+                            } ?: run {
+                                Image(
+                                    painter = painterResource(id = android.R.drawable.ic_menu_gallery),
+                                    contentDescription = "Product Image",
+                                    modifier = Modifier.size(100.dp),
+                                    contentScale = ContentScale.Crop
+                                )
+                            }
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Column {
+                                Text(
+                                    text = detail.product_name,
+                                    fontSize = 16.sp
+                                )
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
                                     Row(
-                                        modifier = Modifier.fillMaxWidth(),
-                                        horizontalArrangement = Arrangement.SpaceBetween,
                                         verticalAlignment = Alignment.CenterVertically
                                     ) {
-                                        Row(
-                                            verticalAlignment = Alignment.CenterVertically
-                                        ) {
-                                            Text(
-                                                text = formatGiaTien(detail.price),
-                                                fontSize = 14.sp,
-                                                color = Color.Red
-                                            )
-                                            Spacer(modifier = Modifier.width(8.dp))
-                                            Text(
-                                                text = "x${detail.quantity}",
-                                                fontSize = 14.sp,
-                                                fontWeight = FontWeight.Bold
-                                            )
-                                        }
+                                        Text(
+                                            text = formatGiaTien(detail.price),
+                                            fontSize = 14.sp,
+                                            color = Color.Red
+                                        )
+                                        Spacer(modifier = Modifier.width(8.dp))
+                                        Text(
+                                            text = "x${detail.quantity}",
+                                            fontSize = 14.sp,
+                                            fontWeight = FontWeight.Bold
+                                        )
                                     }
                                 }
                             }
-                            if (order.status == 5) {
-                                if (isReviewed && existingReview != null) {
-                                    if (canEditReview) {
-                                        Button(
-                                            onClick = {
-                                                navController.navigate(Screen.Update_Rating_Screen.route+"?idReview=${existingReview.idReview}&idCustomer=$idCustomer")
-                                            },
-                                            modifier = Modifier.padding(start = 8.dp), // Đặt chiều cao cố định
-                                            colors = ButtonDefaults.buttonColors(
-                                                containerColor = Color.White,
-                                                contentColor = Color(0xFF5D9EFF)
-                                            ),
-                                            border = BorderStroke(1.dp, Color(0xFF5D9EFF)),
-                                            shape = RoundedCornerShape(5.dp)
-                                        ) {
-                                            Text(
-                                                text = "Chỉnh sửa",
-                                                fontSize = 13.sp
-                                            )
-                                        }
-                                    }
-
-                                }
-                                else {
+                        }
+                        if (order.status == 5) {
+                            if (isReviewed && existingReview != null) {
+                                if (canEditReview) {
                                     Button(
                                         onClick = {
-                                            navController.navigate(Screen.Rating_Screen.route + "?idCustomer=$idCustomer&idDevice=${detail.product_id}")
-                                                  },
+                                            navController.navigate(Screen.Update_Rating_Screen.route+"?idReview=${existingReview.idReview}&idCustomer=$idCustomer")
+                                        },
                                         modifier = Modifier.padding(start = 8.dp), // Đặt chiều cao cố định
                                         colors = ButtonDefaults.buttonColors(
                                             containerColor = Color.White,
@@ -1095,70 +1081,90 @@ fun OrderItem(
                                         shape = RoundedCornerShape(5.dp)
                                     ) {
                                         Text(
-                                            text = "Đánh giá",
+                                            text = "Chỉnh sửa",
                                             fontSize = 13.sp
                                         )
                                     }
                                 }
+
+                            }
+                            else {
+                                Button(
+                                    onClick = {
+                                        navController.navigate(Screen.Rating_Screen.route + "?idCustomer=$idCustomer&idDevice=${detail.product_id}")
+                                    },
+                                    modifier = Modifier.padding(start = 8.dp), // Đặt chiều cao cố định
+                                    colors = ButtonDefaults.buttonColors(
+                                        containerColor = Color.White,
+                                        contentColor = Color(0xFF5D9EFF)
+                                    ),
+                                    border = BorderStroke(1.dp, Color(0xFF5D9EFF)),
+                                    shape = RoundedCornerShape(5.dp)
+                                ) {
+                                    Text(
+                                        text = "Đánh giá",
+                                        fontSize = 13.sp
+                                    )
+                                }
                             }
                         }
-                        HorizontalDivider(modifier = Modifier.padding(top = 3.dp))
                     }
-                }
-                Spacer(modifier = Modifier.height(8.dp))
-                Text(
-                    text = "Tổng Tiền: ${formatGiaTien(order.totalAmount)}",
-                    fontSize = 15.sp,
-                    color = Color.Red
-                )
-                Text(
-                    text = "Ngày đặt hàng: ${formatDateTimeZone(order.created_at)}",
-                    fontSize = 14.sp
-                )
-
-                Row (
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.End
-                ){
-                    if (isCancel) {
-                        Button(
-                            modifier = Modifier
-                                .height(40.dp) // Đặt chiều cao cố định
-                                .padding(end = 5.dp), // Padding giữa các nút
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = Color(0xFF5D9EFF),
-                                contentColor = Color.White
-                            ),
-                            shape = RoundedCornerShape(5.dp),
-                            onClick = {
-                                orderViewModel.cancelOrder(order.id)
-                            },
-                        ) {
-                            Text(text = "Hủy", fontSize = 13.sp)
-                        }
-                    }
-                    Button(
-                        onClick = {
-                            // Thêm hành động khi nhấn nút Xem chi tiết
-                            navController.navigate("${Screen.Order_Detail.route}?id=${order.id}&totalAmount=${order.totalAmount}&idCustomer=$idCustomer")
-                        },
-                        modifier = Modifier
-                            .height(40.dp), // Đặt chiều cao cố định
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = Color.White,
-                            contentColor = Color(0xFF5D9EFF)
-                        ),
-                        border = BorderStroke(1.dp, Color(0xFF5D9EFF)),
-                        shape = RoundedCornerShape(5.dp)
-                    ) {
-                        Text(
-                            text = "Xem chi tiết",
-                            fontSize = 13.sp
-                        )
-                    }
+                    HorizontalDivider(modifier = Modifier.padding(top = 3.dp))
                 }
             }
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(
+                text = "Tổng Tiền: ${formatGiaTien(order.totalAmount)}",
+                fontSize = 15.sp,
+                color = Color.Red
+            )
+            Text(
+                text = "Ngày đặt hàng: ${formatDateTimeZone(order.created_at)}",
+                fontSize = 14.sp
+            )
 
+            Row (
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.End
+            ){
+                if (isCancel) {
+                    Button(
+                        modifier = Modifier
+                            .height(40.dp) // Đặt chiều cao cố định
+                            .padding(end = 5.dp), // Padding giữa các nút
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = Color(0xFF5D9EFF),
+                            contentColor = Color.White
+                        ),
+                        shape = RoundedCornerShape(5.dp),
+                        onClick = {
+                            orderViewModel.cancelOrder(order.id)
+                        },
+                    ) {
+                        Text(text = "Hủy", fontSize = 13.sp)
+                    }
+                }
+                Button(
+                    onClick = {
+                        // Thêm hành động khi nhấn nút Xem chi tiết
+                        navController.navigate("${Screen.Order_Detail.route}?id=${order.id}&totalAmount=${order.totalAmount}&idCustomer=$idCustomer")
+                    },
+                    modifier = Modifier
+                        .height(40.dp), // Đặt chiều cao cố định
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color.White,
+                        contentColor = Color(0xFF5D9EFF)
+                    ),
+                    border = BorderStroke(1.dp, Color(0xFF5D9EFF)),
+                    shape = RoundedCornerShape(5.dp)
+                ) {
+                    Text(
+                        text = "Xem chi tiết",
+                        fontSize = 13.sp
+                    )
+                }
+            }
+        }
     }
 }

@@ -378,16 +378,38 @@ fun CartScreen(
 
     // Khởi tạo selectedItems khi listCart thay đổi
     LaunchedEffect(listProductCart) {
-        selectedItems.clear()
-        listProductCart.forEach { selectedItems[it.id] = false }
-        selectedProducts.clear()
+        // Cập nhật selectedItems
+        val currentIds = listProductCart.map { it.id }.toSet()
+        selectedItems.keys.retainAll { it in currentIds } // Xóa các key không còn trong giỏ hàng
+        listProductCart.forEach { product ->
+            if (!selectedItems.containsKey(product.id)) {
+                selectedItems[product.id] = false // Thêm sản phẩm mới với trạng thái không chọn
+            }
+        }
+
+        // Đồng bộ selectedProducts với số lượng mới
+        selectedProducts.removeAll { triple -> triple.first !in currentIds } // Xóa sản phẩm không còn trong giỏ
+        listProductCart.forEach { product ->
+            if (selectedItems[product.id] == true) {
+                val index = selectedProducts.indexOfFirst { it.first == product.id }
+                if (index != -1) {
+                    // Cập nhật số lượng nếu sản phẩm đã được chọn
+                    selectedProducts[index] = Triple(product.id, product.quantity, product.id.toInt())
+                } else {
+                    // Thêm sản phẩm mới nếu được chọn
+                    selectedProducts.add(Triple(product.id, product.quantity, product.id.toInt()))
+                }
+            }
+        }
+
+        // Tính lại tổng tiền
         calculateTotalPrice(listProductCart)
     }
 
-    // Tính tổng tiền khi dữ liệu giỏ hàng hoặc sản phẩm thay đổi
-    LaunchedEffect(listProductCart) {
-        calculateTotalPrice(listProductCart) // Tính tổng tiền khi dữ liệu thay đổi
-    }
+//    // Tính tổng tiền khi dữ liệu giỏ hàng hoặc sản phẩm thay đổi
+//    LaunchedEffect(listProductCart) {
+//        calculateTotalPrice(listProductCart) // Tính tổng tiền khi dữ liệu thay đổi
+//    }
 
     // Biến trạng thái cho dialog xác nhận
     var showDeleteDialog by remember { mutableStateOf(false) }
@@ -733,7 +755,21 @@ fun CartScreen(
                     }
                 }
             }
-            is CartViewModel.UiState.Error -> {}
+            is CartViewModel.UiState.Error -> {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(Color.White)
+                        .padding(16.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    CircularProgressIndicator(
+                        color = Color(0xFF5D9EFF),
+                        strokeWidth = 4.dp,
+                        modifier = Modifier.size(48.dp)
+                    )
+                }
+            }
         }
     }
 }

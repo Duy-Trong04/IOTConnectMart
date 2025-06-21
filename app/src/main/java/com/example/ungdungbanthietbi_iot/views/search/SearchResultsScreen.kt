@@ -315,7 +315,7 @@ fun FilterDialog(
             ) {
                 // Tiêu đề
                 Text(
-                    text = "Lọc danh mục",
+                    text = "Bộ lọc",
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
                     fontSize = 18.sp
@@ -355,17 +355,17 @@ fun FilterDialog(
                     ) {
                         Text("Dưới 5 triệu", fontSize = 14.sp)
                     }
-                    Button(
-                        onClick = { tempPriceRange = 0f..8000000f },
-                        modifier = Modifier.height(40.dp),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = if (tempPriceRange.endInclusive <= 8000000f && tempPriceRange.endInclusive > 2000000f) Color(0xFF5D9EFF) else Color.LightGray,
-                            contentColor = if (tempPriceRange.endInclusive <= 8000000f && tempPriceRange.endInclusive > 2000000f) Color.White else Color.Black
-                        ),
-                        shape = RoundedCornerShape(8.dp)
-                    ) {
-                        Text("Dưới 8 triệu", fontSize = 14.sp)
-                    }
+//                    Button(
+//                        onClick = { tempPriceRange = 0f..8000000f },
+//                        modifier = Modifier.height(40.dp),
+//                        colors = ButtonDefaults.buttonColors(
+//                            containerColor = if (tempPriceRange.endInclusive <= 8000000f && tempPriceRange.endInclusive > 2000000f) Color(0xFF5D9EFF) else Color.LightGray,
+//                            contentColor = if (tempPriceRange.endInclusive <= 8000000f && tempPriceRange.endInclusive > 2000000f) Color.White else Color.Black
+//                        ),
+//                        shape = RoundedCornerShape(8.dp)
+//                    ) {
+//                        Text("Dưới 8 triệu", fontSize = 14.sp)
+//                    }
                 }
                 Spacer(modifier = Modifier.height(16.dp))
 

@@ -93,8 +93,8 @@ class AccountViewModel:ViewModel() {
                     }
                     val error = errorBody?.errors?.firstOrNull()
                     val errorMessage = when (error?.code) {
-                        1409 -> "Email đã tồn tại. Vui lòng sử dụng email khác."
-                        1621 -> "Tài khoản đã tồn tại. Vui lòng chọn tên tài khoản khác."
+                        1409 -> "Email đã tồn tại.\nVui lòng sử dụng email khác."
+                        1621 -> "Tài khoản đã tồn tại\nVui lòng chọn tên tài khoản khác."
                         else -> error?.message ?: "Đăng ký thất bại: ${response.message()}"
                     }
                     _registerUiState.value = RegisterUiState.Error(errorMessage)

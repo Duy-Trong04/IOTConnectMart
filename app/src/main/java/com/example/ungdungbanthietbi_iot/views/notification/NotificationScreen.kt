@@ -369,14 +369,14 @@ fun NotificationItem(
             .fillMaxWidth()
             .clickable {
                 coroutineScope.launch {
-                    if (notice.status == 1) {
-                        val updatedNotice = notice.copy(status = 0)
-                        onNoticeUpdated(updatedNotice)
-                    }
-                    if (notice.type == "order_status_change") {
-                        val orderId = notice.text.substringAfter("#").substringBefore(" ")
-                        navController.navigate("${Screen.Order_Detail.route}?id=${orderId}&totalAmount=0")
-                    }
+//                    if (notice.status == 1) {
+//                        val updatedNotice = notice.copy(status = 0)
+//                        onNoticeUpdated(updatedNotice)
+//                    }
+//                    if (notice.type == "order_status_change") {
+//                        val orderId = notice.text.substringAfter("#").substringBefore(" ")
+//                        navController.navigate("${Screen.Order_Detail.route}?id=${orderId}&totalAmount=0")
+//                    }
                 }
             },
         shape = RoundedCornerShape(12.dp),

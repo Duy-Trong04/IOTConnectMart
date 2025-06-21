@@ -21,11 +21,9 @@ import java.time.Instant
 
 class ReviewViewModel:ViewModel() {
     private val _listReviews = MutableStateFlow<List<Reviews>>(emptyList())
-    // Public StateFlow for UI to observe
     val listReviews: StateFlow<List<Reviews>> = _listReviews.asStateFlow()
 
     private val _listAllReviews = MutableStateFlow<List<Reviews>>(emptyList())
-    // Public StateFlow for UI to observe
     val listAllReviews: StateFlow<List<Reviews>> = _listAllReviews.asStateFlow()
     private val _isLoading = MutableStateFlow(false)
     val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
@@ -79,13 +77,17 @@ class ReviewViewModel:ViewModel() {
 
     fun getReviewByIdDevice(id:String){
         viewModelScope.launch(Dispatchers.IO){
+            _isLoading.value = true
             try{
                 val response = RetrofitClient.reviewAPIService.getReviewByIdDevice(id)
                 _listReviews.value = response.data.data
+                Log.e("ReviewViewModel", "Count ${response.data.data.size}")
             }
             catch (e:Exception){
                 _listReviews.value = emptyList()
                 Log.e("ReviewViewModel", "Error getting reviews", e)
+            } finally {
+                _isLoading.value = false
             }
         }
     }

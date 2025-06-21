@@ -57,11 +57,11 @@ fun FavoritesScreen(
     val likedViewModel: LikedViewModel = viewModel()
     val deviceViewModel: DeviceViewModel = viewModel()
     val listLiked by likedViewModel.listLiked.collectAsState()
+    val isLoading by likedViewModel.isLoading.collectAsState()
     // Lấy dữ liệu và tính tổng tiền ban đầu
     LaunchedEffect(idCustomer) {
         likedViewModel.getLikedByIdCustomer(idCustomer)
     }
-
     //Đọc hình ảnh base64
     var bitmap by remember { mutableStateOf<Bitmap?>(null) }
 
@@ -96,7 +96,14 @@ fun FavoritesScreen(
             )
         }
     ) { padding ->
-        if(listLiked.isNotEmpty()) {
+        if(isLoading){
+            Box(modifier = Modifier.fillMaxSize().background(Color.White)) {
+                CircularProgressIndicator(
+                    modifier = Modifier.align(Alignment.Center),
+                    color = Color(0xFF5D9EFF)
+                )
+            }
+        } else if(listLiked.isNotEmpty()) {
             // Danh sách sản phẩm
             LazyColumn(
                 modifier = Modifier.padding(padding)

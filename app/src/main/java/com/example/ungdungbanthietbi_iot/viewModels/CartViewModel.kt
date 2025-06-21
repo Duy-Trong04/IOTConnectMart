@@ -136,6 +136,7 @@ class CartViewModel : ViewModel() {
     }
     fun getCartProducts(customerId: String) {
         viewModelScope.launch {
+            _isLoading.value = true
             try {
                 val response = RetrofitClient.cartAPIService.getCartProducts(customerId)
                 _uiState.value = UiState.SuccessGet(response)
@@ -143,6 +144,8 @@ class CartViewModel : ViewModel() {
             } catch (e: Exception) {
                 _uiState.value = UiState.Error(e.message ?: "Unknown error")
                 _listProductCart.value = emptyList()
+            } finally {
+                _isLoading.value = false
             }
         }
     }
@@ -152,6 +155,7 @@ class CartViewModel : ViewModel() {
             //_uiState.value = UiState.Loading
             try {
                 val response = RetrofitClient.cartAPIService.updateQuantity(request)
+                getCartProducts(request.customer_id)
                 //_uiState.value = UiState.SuccessAdd(response)
             } catch (e: Exception) {
                 //_uiState.value = UiState.Error(e.message ?: "Unknown error")

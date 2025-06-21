@@ -24,16 +24,21 @@ import java.io.ByteArrayInputStream
 
 class DeviceViewModel:ViewModel() {
 
-    var listAllDevice: List<Device> by mutableStateOf(emptyList())
+    //var listAllDevice: List<Device> by mutableStateOf(emptyList())
 
-    var listDeviceFeatured: List<Device> by mutableStateOf(emptyList())
+    private val _listAllDevice = MutableStateFlow<List<Device>>(emptyList())
+    val listAllDevice: StateFlow<List<Device>> get() = _listAllDevice
+
+    private val _listDeviceFeatured = MutableStateFlow<List<Device>>(emptyList())
+    val listDeviceFeatured: StateFlow<List<Device>> get() = _listDeviceFeatured
+    private val _listDeviceSale = MutableStateFlow<List<Device>>(emptyList())
+    val listDeviceSale: StateFlow<List<Device>> get() = _listDeviceSale
 
     private val _device = MutableStateFlow<Device?>(null)
     val device: StateFlow<Device?> get() = _device
 
     private val _listDevice = MutableStateFlow<List<Device>>(emptyList())
     val listDevice: StateFlow<List<Device>> get() = _listDevice.asStateFlow()
-
 
     var deviceMap = mutableStateMapOf<String, Device>()
         private set
@@ -46,6 +51,12 @@ class DeviceViewModel:ViewModel() {
     val searchError: StateFlow<String?> get() = _searchError
     private val _isLoading = MutableStateFlow(false)
     val isLoading: StateFlow<Boolean> = _isLoading
+    private val _isLoadingAll = MutableStateFlow(false)
+    val isLoadingAll: StateFlow<Boolean> = _isLoadingAll
+    private val _isLoadingFeatured = MutableStateFlow(false)
+    val isLoadingFeatured: StateFlow<Boolean> = _isLoadingFeatured
+    private val _isLoadingSale = MutableStateFlow(false)
+    val isLoadingSale: StateFlow<Boolean> = _isLoadingSale
 
     fun getDeviceBySlug2(id: String) {
         viewModelScope.launch(Dispatchers.IO) {
@@ -68,18 +79,51 @@ class DeviceViewModel:ViewModel() {
     }
     fun getAllDevice(){
         viewModelScope.launch(Dispatchers.IO) {
+            _isLoadingAll.value = true
             try {
                 val response = RetrofitClient.deviceAPIService.getAllDevice()
-                listAllDevice = response.data.data
+                _listAllDevice.value = response.data.data
             } catch (e: Exception) {
-                listAllDevice = emptyList()
+                _listAllDevice.value = emptyList()
                 e.printStackTrace() // Xử lý lỗi
+            } finally {
+                _isLoadingAll.value = false
             }
         }
     }
 
-    fun getDeviceBySlug(id: String){
+    fun getDeviceFeatured(){
+        viewModelScope.launch(Dispatchers.IO) {
+            _isLoadingFeatured.value = true
+            try {
+                val response = RetrofitClient.deviceAPIService.getDeviceFeatured(limit = 3)
+                _listDeviceFeatured.value = response.data.data
+            } catch (e: Exception) {
+                _listDeviceFeatured.value = emptyList()
+                e.printStackTrace() // Xử lý lỗi
+            } finally {
+                _isLoadingFeatured.value = false
+            }
+        }
+    }
+    fun getDeviceSale(){
+        viewModelScope.launch(Dispatchers.IO) {
+            _isLoadingSale.value = true
+            try {
+                val response = RetrofitClient.deviceAPIService.getDeviceSale(limit = 2)
+                _listDeviceSale.value = response.data.data
+            } catch (e: Exception) {
+                _listDeviceSale.value = emptyList()
+                e.printStackTrace() // Xử lý lỗi
+            } finally {
+                _isLoadingSale.value = false
+            }
+        }
+    }
+
+    fun getDeviceById(id: String){
         viewModelScope.launch{
+            _isLoading.value = true
             try {
                 val response = RetrofitClient.deviceAPIService.getDeviceById(id)
                 Log.d("DeviceViewModel","Failed to fetch device: $response")
@@ -93,6 +137,8 @@ class DeviceViewModel:ViewModel() {
             catch (e:Exception){
                 _device.value = null
                 Log.e("DeviceViewModel", "Error getting device", e)
+            } finally {
+                _isLoading.value = false
             }
         }
     }

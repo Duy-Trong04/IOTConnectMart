@@ -25,6 +25,16 @@ interface DeviceAPIService {
         @Path("id") id: String
     ): DeviceResponse
 
+    @GET("product/")
+    suspend fun getDeviceFeatured(
+        @Query("limit") limit: Int
+    ): DeviceResponse
+
+    @GET("product/")
+    suspend fun getDeviceSale(
+        @Query("limit") limit: Int
+    ): DeviceResponse
+
     @GET("product")
     suspend fun searchProducts(
         @Query("page") page: Int,

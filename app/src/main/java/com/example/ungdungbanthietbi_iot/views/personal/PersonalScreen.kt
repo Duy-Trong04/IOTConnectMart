@@ -367,8 +367,8 @@ fun AccountInfoSection(
                                 }
                                 else -> {
                                     Image(
-                                        painter = painterResource(id = R.drawable.logo9),
-                                        contentDescription = "Avatar",
+                                        painter = painterResource(id = android.R.drawable.ic_menu_gallery),
+                                        contentDescription = "Product Image",
                                         modifier = Modifier
                                             .fillMaxSize()
                                             .clip(CircleShape),
@@ -856,8 +856,8 @@ fun AccountInfoSection(
                             CircularProgressIndicator(
                                 modifier = Modifier
                                     .size(24.dp)
-                                    .align(Alignment.CenterEnd)
-                                    .padding(end = 16.dp),
+                                    .align(Alignment.Center)
+                                    .padding(4.dp),
                                 color = Color(0xFF5F9EFF),
                                 strokeWidth = 2.dp
                             )

@@ -134,6 +134,7 @@ fun AddressSelectionScreen(
                                 onSelectClick = { addressId -> selectAddress(addressId) }
                             )
                         }
+                        Spacer(modifier = Modifier.height(8.dp))
                     }
                 }
                 item {
@@ -235,7 +236,9 @@ fun AddressItem(
             }
             // Nội dung địa chỉ
             Column(
-                modifier = Modifier.weight(1f)
+                modifier = Modifier.weight(1f),
+                horizontalAlignment = Alignment.Start,
+                verticalArrangement = Arrangement.SpaceAround
             ) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -268,11 +271,11 @@ fun AddressItem(
                 Text(
                     text = "SĐT: ${address.phone}",
                     fontSize = 15.sp,
-                    modifier = Modifier.padding(bottom = 5.dp)
+                    //modifier = Modifier.padding(bottom = 5.dp)
                 )
                 Text(
                     text = "Địa chỉ: ${address.detail}, ${address.street}, ${address.ward}, ${address.district}, ${address.city}",
-                    modifier = Modifier.padding(bottom = 5.dp),
+                    //modifier = Modifier.padding(bottom = 5.dp),
                     fontSize = 15.sp
                 )
                 if (address.is_default) {

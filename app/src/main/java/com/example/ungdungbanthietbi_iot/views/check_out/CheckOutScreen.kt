@@ -823,6 +823,7 @@ fun DeviceItem(
                     ) {
                         Text(
                             text = formatGiaTien(device.sellingPrice),
+                            color = Color.Red
                         )
                         Text(
                             "x$stock"

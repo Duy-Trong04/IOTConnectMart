@@ -38,6 +38,8 @@ import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+//noinspection UsingMaterialAndMaterial3Libraries
+import androidx.compose.material.Divider
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.Logout
 import androidx.compose.material.icons.filled.Favorite
@@ -66,6 +68,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FabPosition
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.FloatingActionButtonDefaults
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.ModalDrawerSheet
@@ -145,8 +148,9 @@ fun HomeScreen(
     val categoryViewModel:CategoryViewModel = viewModel()
     val accountViewModel: AccountViewModel = viewModel()
     val customerViewModel: CustomerViewModel = viewModel()
-    val listAllDevice: List<Device> = deviceViewModel.listAllDevice
-    val listDeviceFeatured: List<Device> = deviceViewModel.listDeviceFeatured
+    val listAllDevice by deviceViewModel.listAllDevice.collectAsState()
+    val listDeviceFeatured by deviceViewModel.listDeviceFeatured.collectAsState()
+    val listDeviceSale by deviceViewModel.listDeviceSale.collectAsState()
     val listCategories by categoryViewModel.listCategories.collectAsState()
     val isLoadingCategories by categoryViewModel.isLoading.collectAsState()
     val errorMessage by categoryViewModel.errorMessage.collectAsState()
@@ -157,6 +161,8 @@ fun HomeScreen(
     LaunchedEffect(id) {
         slideShowViewModel.getAllSlideShow()
         deviceViewModel.getAllDevice()
+        deviceViewModel.getDeviceFeatured()
+        deviceViewModel.getDeviceSale()
         categoryViewModel.getCategories()
         if(id != null){
             likedViewModel.getLikedByIdCustomer(id)
@@ -200,8 +206,8 @@ fun HomeScreen(
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .background(Color(0xFF5D9EFF))
-                        .padding(horizontal = 16.dp, vertical = 8.dp)
+                        .background(Color.White)
+                        .padding(horizontal = 14.dp)
                 ) {
                     val customerState by customerViewModel.customerState.collectAsState()
                     when (val state = customerState) {
@@ -224,7 +230,9 @@ fun HomeScreen(
                                 }
                             }
                             Row(
-                                modifier = Modifier.fillMaxWidth(),
+                                modifier = Modifier.fillMaxWidth().clickable {
+                                    selectedTabIndex = 3
+                                },
                                 horizontalArrangement = Arrangement.Start,
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
@@ -232,45 +240,42 @@ fun HomeScreen(
                                     Image(
                                         bitmap = it.asImageBitmap(),
                                         contentDescription = customer.fullname.ifEmpty { "Hình ảnh sản phẩm" },
-                                        modifier = Modifier.size(80.dp).clip(CircleShape),
+                                        modifier = Modifier.size(50.dp).clip(CircleShape).border(1.dp, Color(0xFF5D9EFF)),
                                         contentScale = ContentScale.Crop
                                     )
                                 } ?: run {
                                     Image(
                                         painter = painterResource(id = android.R.drawable.ic_menu_gallery),
                                         contentDescription = "Product Image",
-                                        modifier = Modifier.size(80.dp).clip(CircleShape),
+                                        modifier = Modifier.size(50.dp).clip(CircleShape),
                                         contentScale = ContentScale.Crop
                                     )
                                 }
                                 Spacer(modifier = Modifier.width(8.dp))
                                 Column (
                                     modifier = Modifier.fillMaxWidth(),
-                                    verticalArrangement = Arrangement.Center,
+                                    verticalArrangement = Arrangement.SpaceAround,
                                     horizontalAlignment = Alignment.Start
                                 ){
                                     Text(
                                         text = customer.fullname,
-                                        color = Color.White,
-                                        fontSize = 18.sp,
+                                        fontSize = 17.sp,
                                         fontWeight = FontWeight.Medium
                                     )
-                                    Spacer(modifier = Modifier.height(4.dp))
                                     Text(
-                                        text = "SĐT: ${customer.phone}",
-                                        color = Color.White,
-                                        fontSize = 14.sp
+                                        text = "SĐT: " + customer.phone,
+                                        fontSize = 15.sp
                                     )
-                                    customer.email.let {
-                                        Spacer(modifier = Modifier.height(4.dp))
-                                        Text(
-                                            text = "Email: $it",
-                                            color = Color.White,
-                                            fontSize = 14.sp
-                                        )
-                                    }
+                                    Text(
+                                        text = "Email: " + customer.email,
+                                        fontSize = 15.sp
+                                    )
                                 }
                             }
+                            HorizontalDivider(
+                                modifier = Modifier.height(3.dp),
+                                color = Color(0xFF5D9EFF)
+                            )
                         }
                         is CustomerState.Error -> {
                             Text(
@@ -563,16 +568,24 @@ fun HomeScreen(
                                 Row(
                                     modifier = Modifier
                                         .fillMaxWidth()
-                                        .background(Color(0xFF5D9EFF)),
-                                    horizontalArrangement = Arrangement.Start,
-                                    verticalAlignment = Alignment.CenterVertically
+                                        .padding(horizontal = 14.dp)
+                                        .wrapContentHeight(),
+                                    verticalAlignment = Alignment.CenterVertically,
                                 ) {
+                                    Divider(
+                                        modifier = Modifier.weight(1f),
+                                        color = Color(0xFF5D9EFF)
+                                    )
                                     Text(
-                                        text = "Danh mục sản phẩm",
-                                        color = Color.White,
+                                        text = "Danh mục",
                                         fontSize = 18.sp,
-                                        fontWeight = FontWeight.Bold,
-                                        modifier = Modifier.fillMaxWidth().padding(start = 10.dp)
+                                        fontWeight = FontWeight.W600,
+                                        color = Color(0xFF5D9EFF),
+                                        modifier = Modifier.padding(horizontal = 10.dp)
+                                    )
+                                    Divider(
+                                        modifier = Modifier.weight(1f),
+                                        color = Color(0xFF5D9EFF)
                                     )
                                 }
                             }
@@ -849,7 +862,7 @@ fun HomeScreen(
                         Icon(
                             imageVector = Icons.Default.KeyboardArrowUp,
                             contentDescription = "Nút lên",
-                            modifier = Modifier.size(25.dp)
+                            modifier = Modifier.size(28.dp)
                         )
                     }
                 }
@@ -920,6 +933,7 @@ fun HomeScreen(
                     isFavorite = isFavorite,
                     listAllDevice = listAllDevice,
                     listDeviceFeatured = listDeviceFeatured,
+                    listDeviceSale = listDeviceSale,
                     listDeviceLiked = listLiked,
                     categories = listCategories
                 )
@@ -951,6 +965,7 @@ fun HomeContent(
     isFavorite: Boolean,
     listAllDevice: List<Device>,
     listDeviceFeatured: List<Device>,
+    listDeviceSale: List<Device>,
     listDeviceLiked: List<LikedProduct>,
     categories: List<Category>
 ) {
@@ -1118,86 +1133,107 @@ fun HomeContent(
                     }
                 }
             }
-//            item {
-//                SectionTitle("Sản phẩm nổi bật")
-//                LazyRow(
-//                    modifier = Modifier
-//                        .fillMaxWidth()
-//                        .padding(horizontal = 12.dp),
-//                    horizontalArrangement = Arrangement.spacedBy(12.dp)
-//                ) {
-//                    items(listDeviceFeatured) { device ->
-//                        CardDevice(
-//                            device = device,
-//                            isFavorite = isFavorite,
-//                            idCustomer = id,
-//                            username = username,
-//                            password = password,
-//                            deviceViewModel = deviceViewModel,
-//                            navController = navController
-//                        )
-//                    }
-//                }
-//            }
             item {
-                Row(
+                SectionTitle("Sản phẩm khuyến mãi")
+                LazyRow(
                     modifier = Modifier
-                        .fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
+                        .fillMaxWidth()
+                        .padding(horizontal = 12.dp),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    SectionTitle("Sản phẩm yêu thích")
-                    Text(
-                        text = "Xem tất cả",
-                        fontSize = 14.sp,
-                        color = Color(0xFF1E88E5),
-                        fontWeight = FontWeight.SemiBold,
-                        modifier = Modifier
-                            .clickable {
-                                if (username == null) {
-                                    navController.navigate(Screen.LoginScreen.route)
-                                } else {
-                                    navController.navigate(
-                                        Screen.Favorites_Screen.route +
-                                                "?idCustomer=${id}&username=${username}&password=$password"
-                                    )
-                                }
-                            }
-                            .padding(end = 20.dp)
-                    )
-                }
-                if (listDeviceLiked.isEmpty()) {
-                    Text(
-                        text = "Chưa có sản phẩm yêu thích",
-                        color = Color(0xFF616161),
-                        fontSize = 14.sp,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(16.dp),
-                        textAlign = TextAlign.Center
-                    )
-                } else {
-                    LazyRow(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 16.dp),
-                        horizontalArrangement = Arrangement.spacedBy(16.dp)
-                    ) {
-                        items(listDeviceLiked) { device ->
-                            if (username != null) {
-                                CardFavorites(
-                                    device = device,
-                                    isFavorite = isFavorite,
-                                    idCustomer = id,
-                                    username = username,
-                                    password = password,
-                                    navController = navController
-                                )
-                            }
-                        }
+                    items(listDeviceSale) { device ->
+                        CardDevice(
+                            device = device,
+                            isFavorite = isFavorite,
+                            idCustomer = id,
+                            username = username,
+                            password = password,
+                            deviceViewModel = deviceViewModel,
+                            navController = navController
+                        )
                     }
                 }
             }
+            item {
+                SectionTitle("Sản phẩm nổi bật")
+                LazyRow(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 12.dp),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    items(listDeviceFeatured) { device ->
+                        CardDevice(
+                            device = device,
+                            isFavorite = isFavorite,
+                            idCustomer = id,
+                            username = username,
+                            password = password,
+                            deviceViewModel = deviceViewModel,
+                            navController = navController
+                        )
+                    }
+                }
+            }
+//            item {
+//                Row(
+//                    modifier = Modifier
+//                        .fillMaxWidth(),
+//                    horizontalArrangement = Arrangement.SpaceBetween,
+//                    verticalAlignment = Alignment.CenterVertically
+//                ) {
+//                    SectionTitle("Sản phẩm yêu thích")
+//                    Text(
+//                        text = "Xem tất cả",
+//                        fontSize = 14.sp,
+//                        color = Color(0xFF1E88E5),
+//                        fontWeight = FontWeight.SemiBold,
+//                        modifier = Modifier
+//                            .clickable {
+//                                if (username == null) {
+//                                    navController.navigate(Screen.LoginScreen.route)
+//                                } else {
+//                                    navController.navigate(
+//                                        Screen.Favorites_Screen.route +
+//                                                "?idCustomer=${id}&username=${username}&password=$password"
+//                                    )
+//                                }
+//                            }
+//                            .padding(end = 20.dp)
+//                    )
+//                }
+//                if (listDeviceLiked.isEmpty()) {
+//                    Text(
+//                        text = "Chưa có sản phẩm yêu thích",
+//                        color = Color(0xFF616161),
+//                        fontSize = 14.sp,
+//                        modifier = Modifier
+//                            .fillMaxWidth()
+//                            .padding(16.dp),
+//                        textAlign = TextAlign.Center
+//                    )
+//                } else {
+//                    LazyRow(
+//                        modifier = Modifier
+//                            .fillMaxWidth()
+//                            .padding(horizontal = 16.dp),
+//                        horizontalArrangement = Arrangement.spacedBy(16.dp)
+//                    ) {
+//                        items(listDeviceLiked) { device ->
+//                            if (username != null) {
+//                                CardFavorites(
+//                                    device = device,
+//                                    isFavorite = isFavorite,
+//                                    idCustomer = id,
+//                                    username = username,
+//                                    password = password,
+//                                    navController = navController
+//                                )
+//                            }
+//                        }
+//                    }
+//                }
+//            }
             item {
                 SectionTitle("Tất cả sản phẩm")
             }
@@ -1577,23 +1613,22 @@ fun CategoryItem(category: Category, navController: NavController, username: Str
                 .size(70.dp)
                 .clip(CircleShape)
                 .background(Color(0xFFF5F5F5))
-                .border(1.dp, Color(0xFFE0E0E0), CircleShape)
-                .padding(10.dp),
+                .border(1.dp, Color(0xFFE0E0E0), CircleShape),
             contentAlignment = Alignment.Center
         ) {
             bitmap?.let {
                 Image(
                     bitmap = it.asImageBitmap(),
                     contentDescription = category.name.ifEmpty { "Hình ảnh sản phẩm" },
-                    modifier = Modifier.size(60.dp),
-                    contentScale = ContentScale.Fit
+                    modifier = Modifier.size(100.dp),
+                    contentScale = ContentScale.Crop
                 )
             } ?: run {
                 Image(
                     painter = painterResource(id = android.R.drawable.ic_menu_gallery),
                     contentDescription = "Product Image",
-                    modifier = Modifier.size(60.dp),
-                    contentScale = ContentScale.Fit
+                    modifier = Modifier.size(100.dp),
+                    contentScale = ContentScale.Crop
                 )
             }
         }
