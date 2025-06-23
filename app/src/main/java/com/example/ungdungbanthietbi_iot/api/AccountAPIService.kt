@@ -73,7 +73,6 @@ data class VerifyOtpRequest(
 
 // Yêu cầu xác minh OTP
 data class VerifyOtpChangeEmailRequest(
-    val account_id: String,
     val email: String,
     val otp: String
 )
@@ -81,7 +80,8 @@ data class VerifyOtpChangeEmailRequest(
 // Phản hồi từ API xác minh OTP
 data class VerifyOtpResponse(
     val status_code: Int,
-    val data: VerifyData
+    val data: VerifyData? = null,
+    val errors: List<ErrorResponse>? = null
 )
 
 data class VerifyData(

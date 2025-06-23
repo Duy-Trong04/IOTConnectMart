@@ -54,6 +54,7 @@ import com.example.ungdungbanthietbi_iot.views.rating.RatingHistoryScreen
 import com.example.ungdungbanthietbi_iot.views.rating.RatingScreen
 import com.example.ungdungbanthietbi_iot.views.rating.UpdateRatingScreen
 import com.example.ungdungbanthietbi_iot.ui.theme.parseSelectedProducts
+import com.example.ungdungbanthietbi_iot.views.personal.VerifiedEmailScreen
 import com.example.ungdungbanthietbi_iot.views.search.CategoriesScreen
 
 /** Chuyển hướng (NavGraph)
@@ -557,6 +558,19 @@ fun NavGraph(
             val idCustomer = backStackEntry.arguments?.getString("idCustomer")
             val password = backStackEntry.arguments?.getString("password")
             CategoriesScreen(navController, deviceViewModel, category, username, idCustomer, password)
+        }
+
+
+        composable(
+            Screen.VerifiedEmailScreen.route + "?id={id}&email={email}",
+            arguments = listOf(
+                navArgument("email") { type = NavType.StringType },
+                navArgument("id") { type = NavType.StringType}
+            )
+        ) {
+            val id = it.arguments?.getString("id") ?: ""
+            val email = it.arguments?.getString("email") ?: ""
+            VerifiedEmailScreen(navController, id, email)
         }
     }
 }

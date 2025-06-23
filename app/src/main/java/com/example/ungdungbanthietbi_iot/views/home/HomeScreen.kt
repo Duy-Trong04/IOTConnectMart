@@ -508,7 +508,10 @@ fun HomeScreen(
                                     onClick = {
                                         scope.launch {
                                             navdrawerState.close()
-                                            selectedTabIndex = 3
+                                            if (id != null) selectedTabIndex = 3
+                                            else {
+                                                navController.navigate(Screen.LoginScreen.route)
+                                            }
                                         }
                                     },
                                     modifier = Modifier.padding(vertical = 4.dp)
@@ -1277,156 +1280,157 @@ fun SectionTitle(text: String) {
         text = text,
         modifier = Modifier.padding(start = 16.dp, top = 16.dp, bottom = 12.dp),
         color = Color(0xFF5D9EFF),
-        fontSize = 18.sp
+        fontSize = 18.sp,
+        fontWeight = FontWeight.W500
     )
 }
 
-@Composable
-fun CardFavorites(device: LikedProduct, isFavorite: Boolean, idCustomer: String?, username: String?, password: String?, navController: NavController) {
-    var check by remember { mutableStateOf(isFavorite) }
-    val likedViewModel: LikedViewModel = viewModel()
-    val listLiked by likedViewModel.listLiked.collectAsState()
-    var isLoading by remember { mutableStateOf(false) } // Thêm trạng thái tải cục bộ
-    LaunchedEffect(idCustomer) {
-        if (idCustomer != null) {
-            likedViewModel.getLikedByIdCustomer(idCustomer)
-        }
-    }
-    LaunchedEffect(listLiked) {
-        check = listLiked.any { it.product_id == device.product_id }
-    }
-    val deviceViewModel: DeviceViewModel = viewModel()
-    var bitmap by remember { mutableStateOf<Bitmap?>(null) }
-    // Tải hình ảnh
-    LaunchedEffect(device) {
-        bitmap = device.image?.let { deviceViewModel.getDeviceImageBitmapImage(it) }
-    }
-    Card(
-        modifier = Modifier
-            .width(200.dp)
-            .height(250.dp)
-            .padding(4.dp), // Tăng padding để tạo khoảng cách giữa các card
-        onClick = {
-            if (username != null) {
-                navController.navigate(
-                    Screen.ProductDetailsScreen.route +
-                            "?id=${device.product_id}&idCustomer=${idCustomer}&username=${username}&password=$password"
-                )
-            } else {
-                navController.navigate(Screen.ProductDetailsScreen.route + "?id=${device.product_id}")
-            }
-        },
-        colors = CardDefaults.cardColors(
-            containerColor = Color.White
-        ),
-        elevation = CardDefaults.cardElevation(
-            defaultElevation = 1.dp // Tăng bóng nhẹ để card nổi bật hơn
-        ),
-        shape = RoundedCornerShape(12.dp) // Bo góc lớn hơn cho cảm giác mềm mại
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(8.dp), // Padding bên trong card đồng đều
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .aspectRatio(1.2f) // Tỷ lệ 1:1 cho hình ảnh
-                    .clip(RoundedCornerShape(12.dp)) // Bo góc hình ảnh đồng bộ với card
-                    .background(Color(0xFFF5F5F5)) // Màu nền nhẹ khi chưa có hình
-            ) {
-                bitmap?.let {
-                    Image(
-                        bitmap = it.asImageBitmap(),
-                        contentDescription = device.name.ifEmpty { "Hình ảnh sản phẩm" },
-                        modifier = Modifier
-                            .fillMaxSize(),
-                        contentScale = ContentScale.Crop
-                    )
-                } ?: run {
-                    Image(
-                        painter = painterResource(id = android.R.drawable.ic_menu_gallery),
-                        contentDescription = "Product Image",
-                        modifier = Modifier
-                            .fillMaxSize(),
-                        contentScale = ContentScale.Crop
-                    )
-                }
-                IconButton(
-                    onClick = {
-                        if (idCustomer == null) {
-                            navController.navigate(Screen.LoginScreen.route)
-                        } else if (!isLoading) {
-                            isLoading = true // Bắt đầu tải
-                            if (!check) {
-                                val likedNew = AddLikedRequest(
-                                    customer_id = idCustomer,
-                                    product_id = device.product_id
-                                )
-                                likedViewModel.addLiked(likedNew)
-                                check = true // Cập nhật cục bộ
-                            } else {
-                                likedViewModel.deleteLiked(idCustomer, device.product_id)
-                                check = false
-                                likedViewModel.getLikedByIdCustomer(idCustomer)
-                            }
-                            isLoading = false // Kết thúc tải
-                        }
-                    },
-                    enabled = !isLoading,
-                    modifier = Modifier
-                        .size(32.dp) // Tăng kích thước nút
-                        .align(Alignment.TopEnd)
-                        .padding(4.dp) // Padding để nút không sát viền
-                        .background(
-                            color = Color.White.copy(alpha = 0.8f), // Nền trắng mờ
-                            shape = CircleShape
-                        )
-                ) {
-                    if (isLoading) {
-                        CircularProgressIndicator(
-                            modifier = Modifier.size(20.dp),
-                            color = Color.Red,
-                            strokeWidth = 2.dp
-                        )
-                    } else {
-                        Icon(
-                            imageVector = if (check) Icons.Filled.Favorite else Icons.Filled.FavoriteBorder,
-                            contentDescription = "Favorite",
-                            tint = Color.Red,
-                            modifier = Modifier.size(20.dp)
-                        )
-                    }
-                }
-            }
-            Spacer(modifier = Modifier.height(8.dp))
-            Text(
-                text = device.name,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 4.dp),
-                textAlign = TextAlign.Center,
-                fontWeight = FontWeight.SemiBold, // Giảm độ đậm để tinh tế hơn
-                fontSize = 14.sp, // Giảm kích thước chữ
-                maxLines = 2, // Giới hạn 2 dòng để tránh tràn
-                overflow = TextOverflow.Ellipsis
-            )
-            Spacer(modifier = Modifier.height(4.dp))
-            Text(
-                text = formatGiaTienInt(device.selling_price),
-                color = Color(0xFFE91E63), // Màu hồng đậm hơn để nổi bật
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 4.dp),
-                textAlign = TextAlign.Center,
-                fontWeight = FontWeight.Bold,
-                fontSize = 16.sp
-            )
-        }
-    }
-}
+//@Composable
+//fun CardFavorites(device: LikedProduct, isFavorite: Boolean, idCustomer: String?, username: String?, password: String?, navController: NavController) {
+//    var check by remember { mutableStateOf(isFavorite) }
+//    val likedViewModel: LikedViewModel = viewModel()
+//    val listLiked by likedViewModel.listLiked.collectAsState()
+//    var isLoading by remember { mutableStateOf(false) } // Thêm trạng thái tải cục bộ
+//    LaunchedEffect(idCustomer) {
+//        if (idCustomer != null) {
+//            likedViewModel.getLikedByIdCustomer(idCustomer)
+//        }
+//    }
+//    LaunchedEffect(listLiked) {
+//        check = listLiked.any { it.product_id == device.product_id }
+//    }
+//    val deviceViewModel: DeviceViewModel = viewModel()
+//    var bitmap by remember { mutableStateOf<Bitmap?>(null) }
+//    // Tải hình ảnh
+//    LaunchedEffect(device) {
+//        bitmap = device.image?.let { deviceViewModel.getDeviceImageBitmapImage(it) }
+//    }
+//    Card(
+//        modifier = Modifier
+//            .width(200.dp)
+//            .height(250.dp)
+//            .padding(4.dp), // Tăng padding để tạo khoảng cách giữa các card
+//        onClick = {
+//            if (username != null) {
+//                navController.navigate(
+//                    Screen.ProductDetailsScreen.route +
+//                            "?id=${device.product_id}&idCustomer=${idCustomer}&username=${username}&password=$password"
+//                )
+//            } else {
+//                navController.navigate(Screen.ProductDetailsScreen.route + "?id=${device.product_id}")
+//            }
+//        },
+//        colors = CardDefaults.cardColors(
+//            containerColor = Color.White
+//        ),
+//        elevation = CardDefaults.cardElevation(
+//            defaultElevation = 1.dp // Tăng bóng nhẹ để card nổi bật hơn
+//        ),
+//        shape = RoundedCornerShape(12.dp) // Bo góc lớn hơn cho cảm giác mềm mại
+//    ) {
+//        Column(
+//            modifier = Modifier
+//                .fillMaxWidth()
+//                .padding(8.dp), // Padding bên trong card đồng đều
+//            horizontalAlignment = Alignment.CenterHorizontally
+//        ) {
+//            Box(
+//                modifier = Modifier
+//                    .fillMaxWidth()
+//                    .aspectRatio(1.2f) // Tỷ lệ 1:1 cho hình ảnh
+//                    .clip(RoundedCornerShape(12.dp)) // Bo góc hình ảnh đồng bộ với card
+//                    .background(Color(0xFFF5F5F5)) // Màu nền nhẹ khi chưa có hình
+//            ) {
+//                bitmap?.let {
+//                    Image(
+//                        bitmap = it.asImageBitmap(),
+//                        contentDescription = device.name.ifEmpty { "Hình ảnh sản phẩm" },
+//                        modifier = Modifier
+//                            .fillMaxSize(),
+//                        contentScale = ContentScale.Crop
+//                    )
+//                } ?: run {
+//                    Image(
+//                        painter = painterResource(id = android.R.drawable.ic_menu_gallery),
+//                        contentDescription = "Product Image",
+//                        modifier = Modifier
+//                            .fillMaxSize(),
+//                        contentScale = ContentScale.Crop
+//                    )
+//                }
+//                IconButton(
+//                    onClick = {
+//                        if (idCustomer == null) {
+//                            navController.navigate(Screen.LoginScreen.route)
+//                        } else if (!isLoading) {
+//                            isLoading = true // Bắt đầu tải
+//                            if (!check) {
+//                                val likedNew = AddLikedRequest(
+//                                    customer_id = idCustomer,
+//                                    product_id = device.product_id
+//                                )
+//                                likedViewModel.addLiked(likedNew)
+//                                check = true // Cập nhật cục bộ
+//                            } else {
+//                                likedViewModel.deleteLiked(idCustomer, device.product_id)
+//                                check = false
+//                                likedViewModel.getLikedByIdCustomer(idCustomer)
+//                            }
+//                            isLoading = false // Kết thúc tải
+//                        }
+//                    },
+//                    enabled = !isLoading,
+//                    modifier = Modifier
+//                        .size(32.dp) // Tăng kích thước nút
+//                        .align(Alignment.TopEnd)
+//                        .padding(4.dp) // Padding để nút không sát viền
+//                        .background(
+//                            color = Color.White.copy(alpha = 0.8f), // Nền trắng mờ
+//                            shape = CircleShape
+//                        )
+//                ) {
+//                    if (isLoading) {
+//                        CircularProgressIndicator(
+//                            modifier = Modifier.size(20.dp),
+//                            color = Color.Red,
+//                            strokeWidth = 2.dp
+//                        )
+//                    } else {
+//                        Icon(
+//                            imageVector = if (check) Icons.Filled.Favorite else Icons.Filled.FavoriteBorder,
+//                            contentDescription = "Favorite",
+//                            tint = Color.Red,
+//                            modifier = Modifier.size(20.dp)
+//                        )
+//                    }
+//                }
+//            }
+//            Spacer(modifier = Modifier.height(8.dp))
+//            Text(
+//                text = device.name,
+//                modifier = Modifier
+//                    .fillMaxWidth()
+//                    .padding(horizontal = 4.dp),
+//                textAlign = TextAlign.Center,
+//                fontWeight = FontWeight.SemiBold, // Giảm độ đậm để tinh tế hơn
+//                fontSize = 14.sp, // Giảm kích thước chữ
+//                maxLines = 2, // Giới hạn 2 dòng để tránh tràn
+//                overflow = TextOverflow.Ellipsis
+//            )
+//            Spacer(modifier = Modifier.height(4.dp))
+//            Text(
+//                text = formatGiaTienInt(device.selling_price),
+//                color = Color(0xFFE91E63), // Màu hồng đậm hơn để nổi bật
+//                modifier = Modifier
+//                    .fillMaxWidth()
+//                    .padding(horizontal = 4.dp),
+//                textAlign = TextAlign.Center,
+//                fontWeight = FontWeight.Bold,
+//                fontSize = 16.sp
+//            )
+//        }
+//    }
+//}
 
 @Composable
 fun CardDevice(

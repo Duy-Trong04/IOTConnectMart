@@ -192,7 +192,7 @@ fun PersonalScreen(
                     modifier = Modifier.padding(start = 16.dp, end = 16.dp, top = 16.dp)
                 ){
                     when (currentTab) {
-                        "accountInfo" -> AccountInfoSection(id, username, snackbarHostState)
+                        "accountInfo" -> AccountInfoSection(id, username, snackbarHostState, navController)
                         "changePassword" -> ChangePasswordSection(
                             username = username,
                             snackbarHostState = snackbarHostState,
@@ -222,6 +222,7 @@ fun AccountInfoSection(
     id: String?,
     username: String,
     snackbarHostState: SnackbarHostState,
+    navController: NavController,
     context: Context = LocalContext.current
 ){
 
@@ -260,17 +261,6 @@ fun AccountInfoSection(
         }
         else{
             customerViewModel.getCustomerById(id)
-        }
-    }
-    var verificationCode by remember { mutableStateOf(List(6) { "" }) }
-    var countdown by remember { mutableIntStateOf(60) }
-    var isResendEnabled by remember { mutableStateOf(false) }
-    // Bộ đếm ngược cho nút gửi lại mã
-    LaunchedEffect(countdown) {
-        if (countdown > 0) {
-            delay(1000)
-            countdown--
-            isResendEnabled = countdown == 0
         }
     }
     Card(
@@ -542,10 +532,7 @@ fun AccountInfoSection(
                                 modifier = Modifier
                                     .clickable {
                                         accountViewModel.sendOtp(email.value)
-                                        showDialog = true
-                                        countdown = 60
-                                        isResendEnabled = false
-                                        verificationCode = List(6) { "" }
+                                        navController.navigate(Screen.VerifiedEmailScreen.route + "?id=$id&email=${email.value}")
                                     }
                             )
                         }
@@ -614,106 +601,106 @@ fun AccountInfoSection(
                     }
                     Spacer(modifier = Modifier.height(16.dp))
                     // Dialog xác thực email
-                    if (showDialog) {
-                        AlertDialog(
-                            onDismissRequest = {  },
-                            title = { Text("Xác thực email") },
-                            text = {
-                                Column(
-                                    horizontalAlignment = Alignment.CenterHorizontally,
-                                    verticalArrangement = Arrangement.spacedBy(16.dp)
-                                ) {
-                                    Text("Nhập mã xác thực được gửi đến ${email.value}")
-                                    Row(
-                                        modifier = Modifier.fillMaxWidth(),
-                                        horizontalArrangement = Arrangement.SpaceEvenly
-                                    ) {
-                                        verificationCode.forEachIndexed { index, digit ->
-                                            OutlinedTextField(
-                                                value = digit,
-                                                onValueChange = { newValue ->
-                                                    if (newValue.length <= 1 && newValue.all { it.isDigit() }) {
-                                                        verificationCode = verificationCode.toMutableList().apply {
-                                                            this[index] = newValue
-                                                        }
-                                                    }
-                                                },
-                                                modifier = Modifier
-                                                    .width(48.dp)
-                                                    .height(48.dp),
-                                                textStyle = TextStyle(
-                                                    textAlign = TextAlign.Center,
-                                                    fontSize = 18.sp
-                                                ),
-                                                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                                                singleLine = true
-                                            )
-                                        }
-                                    }
-                                    Row(
-                                        modifier = Modifier.fillMaxWidth(),
-                                        horizontalArrangement = Arrangement.SpaceBetween
-                                    ) {
-                                        Button(
-                                            onClick = {
-                                                if (isResendEnabled) {
-                                                    accountViewModel.sendOtp(email.value)
-                                                    countdown = 60
-                                                    isResendEnabled = false
-                                                    scope.launch {
-                                                        snackbarHostState.showSnackbar(
-                                                            message = "Đã gửi lại mã xác thực",
-                                                            duration = SnackbarDuration.Short
-                                                        )
-                                                    }
-                                                }
-                                            },
-                                            enabled = isResendEnabled,
-                                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF5F9EFF))
-                                        ) {
-                                            Text("Gửi lại ${if (countdown > 0) "($countdown)" else ""}")
-                                        }
-                                        Button(
-                                            onClick = {
-                                                val code = verificationCode.joinToString("")
-                                                if (code.length == 6) {
-                                                    val accountId = customer.account.firstOrNull()?.account_id ?: ""
-                                                    val request = VerifyOtpChangeEmailRequest(
-                                                        account_id = accountId,
-                                                        email = email.value,
-                                                        otp = code
-                                                    )
-                                                    accountViewModel.verifyOtpChangeEmail(request)
-                                                    scope.launch {
-                                                        snackbarHostState.showSnackbar(
-                                                            message = "Xác thực email thành công",
-                                                            duration = SnackbarDuration.Short
-                                                        )
-                                                        showDialog = false
-                                                        if (id != null) {
-                                                            customerViewModel.getCustomerById(id)
-                                                        }
-                                                    }
-                                                } else {
-                                                    scope.launch {
-                                                        snackbarHostState.showSnackbar(
-                                                            message = "Vui lòng nhập đủ 6 chữ số",
-                                                            duration = SnackbarDuration.Short
-                                                        )
-                                                    }
-                                                }
-                                            },
-                                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF5F9EFF))
-                                        ) {
-                                            Text("Xác nhận")
-                                        }
-                                    }
-                                }
-                            },
-                            confirmButton = {},
-                            dismissButton = {}
-                        )
-                    }
+//                    if (showDialog) {
+//                        AlertDialog(
+//                            onDismissRequest = {  },
+//                            title = { Text("Xác thực email") },
+//                            text = {
+//                                Column(
+//                                    horizontalAlignment = Alignment.CenterHorizontally,
+//                                    verticalArrangement = Arrangement.spacedBy(16.dp)
+//                                ) {
+//                                    Text("Nhập mã xác thực được gửi đến ${email.value}")
+//                                    Row(
+//                                        modifier = Modifier.fillMaxWidth(),
+//                                        horizontalArrangement = Arrangement.SpaceEvenly
+//                                    ) {
+//                                        verificationCode.forEachIndexed { index, digit ->
+//                                            OutlinedTextField(
+//                                                value = digit,
+//                                                onValueChange = { newValue ->
+//                                                    if (newValue.length <= 1 && newValue.all { it.isDigit() }) {
+//                                                        verificationCode = verificationCode.toMutableList().apply {
+//                                                            this[index] = newValue
+//                                                        }
+//                                                    }
+//                                                },
+//                                                modifier = Modifier
+//                                                    .width(48.dp)
+//                                                    .height(48.dp),
+//                                                textStyle = TextStyle(
+//                                                    textAlign = TextAlign.Center,
+//                                                    fontSize = 18.sp
+//                                                ),
+//                                                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+//                                                singleLine = true
+//                                            )
+//                                        }
+//                                    }
+//                                    Row(
+//                                        modifier = Modifier.fillMaxWidth(),
+//                                        horizontalArrangement = Arrangement.SpaceBetween
+//                                    ) {
+//                                        Button(
+//                                            onClick = {
+//                                                if (isResendEnabled) {
+//                                                    accountViewModel.sendOtp(email.value)
+//                                                    countdown = 60
+//                                                    isResendEnabled = false
+//                                                    scope.launch {
+//                                                        snackbarHostState.showSnackbar(
+//                                                            message = "Đã gửi lại mã xác thực",
+//                                                            duration = SnackbarDuration.Short
+//                                                        )
+//                                                    }
+//                                                }
+//                                            },
+//                                            enabled = isResendEnabled,
+//                                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF5F9EFF))
+//                                        ) {
+//                                            Text("Gửi lại ${if (countdown > 0) "($countdown)" else ""}")
+//                                        }
+//                                        Button(
+//                                            onClick = {
+//                                                val code = verificationCode.joinToString("")
+//                                                if (code.length == 6) {
+//                                                    val accountId = customer.account.firstOrNull()?.account_id ?: ""
+//                                                    val request = VerifyOtpChangeEmailRequest(
+//                                                        account_id = accountId,
+//                                                        email = email.value,
+//                                                        otp = code
+//                                                    )
+//                                                    accountViewModel.verifyOtpChangeEmail(request)
+//                                                    scope.launch {
+//                                                        snackbarHostState.showSnackbar(
+//                                                            message = "Xác thực email thành công",
+//                                                            duration = SnackbarDuration.Short
+//                                                        )
+//                                                        showDialog = false
+//                                                        if (id != null) {
+//                                                            customerViewModel.getCustomerById(id)
+//                                                        }
+//                                                    }
+//                                                } else {
+//                                                    scope.launch {
+//                                                        snackbarHostState.showSnackbar(
+//                                                            message = "Vui lòng nhập đủ 6 chữ số",
+//                                                            duration = SnackbarDuration.Short
+//                                                        )
+//                                                    }
+//                                                }
+//                                            },
+//                                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF5F9EFF))
+//                                        ) {
+//                                            Text("Xác nhận")
+//                                        }
+//                                    }
+//                                }
+//                            },
+//                            confirmButton = {},
+//                            dismissButton = {}
+//                        )
+//                    }
                     Box(
                         modifier = Modifier.fillMaxWidth(),
                         contentAlignment = Alignment.Center

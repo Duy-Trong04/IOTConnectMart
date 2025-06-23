@@ -157,8 +157,7 @@ class AccountViewModel:ViewModel() {
             try {
                 val request = LoginRequest(
                     username = username,
-                    password = password,
-                    type = "CUSTOMER"
+                    password = password
                 )
                 val response: LoginResponse = RetrofitClient.accountAPIService.login(request)
                 if (response.status_code == 200) {
@@ -194,8 +193,11 @@ class AccountViewModel:ViewModel() {
     private val _sendOtpResult = MutableStateFlow<Response<SendOtpResponse>?>(null)
     val sendOtpResult: StateFlow<Response<SendOtpResponse>?> = _sendOtpResult
 
-    private val _verifyOtpResult = MutableStateFlow<Response<VerifyOtpResponse>?>(null)
-    val verifyOtpResult: StateFlow<Response<VerifyOtpResponse>?> = _verifyOtpResult
+    private val _verifyOtpResult = MutableStateFlow<VerifyOtpUiState>(VerifyOtpUiState.Idle)
+    val verifyOtpResult: StateFlow<VerifyOtpUiState> = _verifyOtpResult.asStateFlow()
+
+    private val _verifyEmailResult = MutableStateFlow<Response<VerifyOtpResponse>?>(null)
+    val verifyEmailResult: StateFlow<Response<VerifyOtpResponse>?> = _verifyEmailResult
 
     private val _resetPasswordResult = MutableStateFlow<Response<ResetPasswordResponse>?>(null)
     val resetPasswordResult: StateFlow<Response<ResetPasswordResponse>?> = _resetPasswordResult
@@ -228,20 +230,36 @@ class AccountViewModel:ViewModel() {
 
     fun verifyOtp(email: String, otp: String) {
         viewModelScope.launch {
+            _isLoading.value = true
+            _verifyOtpResult.value = VerifyOtpUiState.Loading
             try {
-                _isLoading.value = true
                 val request = VerifyOtpRequest(email = email, otp = otp)
                 Log.d("AuthViewModel", "Verify OTP request: $request")
-                val response = RetrofitClient.verifyOtp.verifyOtp(request)
-                _verifyOtpResult.value = response
-                if (response.isSuccessful) {
+                val response = RetrofitClient.accountAPIService.verifyOtp(request)
+                if (response.isSuccessful && response.body()?.status_code == 200 && response.body()?.data != null) {
+                    _verifyOtpResult.value = VerifyOtpUiState.Success(response.body()!!.data!!.message)
                     Log.d("AuthViewModel", "Verify OTP successful: ${response.body()?.data}")
                 } else {
-                    Log.e("AuthViewModel", "Verify OTP failed: ${response.errorBody()?.string()}")
+                    val errorBody = if (response.isSuccessful) response.body() else {
+                        val errorJson = response.errorBody()?.string()
+                        try {
+                            Gson().fromJson(errorJson, VerifyOtpResponse::class.java)
+                        } catch (e: Exception) {
+                            null
+                        }
+                    }
+                    val error = errorBody?.errors?.firstOrNull()
+                    val errorMessage = when (error?.code) {
+                        1616 -> "Mã xác thực không khớp. Vui lòng thử lại."
+                        else -> error?.message ?: "Vui lòng nhập đầy đủ 6 chữ số !"
+                    }
+                    _verifyOtpResult.value = VerifyOtpUiState.Error(errorMessage)
+                    Log.e("AuthViewModel", "Verify OTP failed: $errorMessage, ErrorBody: ${response.errorBody()?.string()}")
                 }
             } catch (e: Exception) {
-                Log.e("AuthViewModel", "Verify OTP error: ${e.message}")
-                _verifyOtpResult.value = null
+                val errorMessage = "Lỗi mạng: ${e.message}"
+                _verifyOtpResult.value = VerifyOtpUiState.Error(errorMessage)
+                Log.e("AuthViewModel", "Verify OTP error: $errorMessage")
             } finally {
                 _isLoading.value = false
             }
@@ -252,7 +270,7 @@ class AccountViewModel:ViewModel() {
         viewModelScope.launch {
             try {
                 val response = RetrofitClient.verifyOtp.verifyOtpChangeEmail(request)
-                _verifyOtpResult.value = response
+                _verifyEmailResult.value = response
                 if (response.isSuccessful) {
                     Log.d("AuthViewModel", "Verify OTP successful: ${response.body()?.data}")
                 } else {
@@ -260,7 +278,7 @@ class AccountViewModel:ViewModel() {
                 }
             } catch (e: Exception) {
                 Log.e("AuthViewModel", "Verify OTP error: ${e.message}")
-                _verifyOtpResult.value = null
+                _verifyEmailResult.value = null
             }
         }
     }
@@ -309,4 +327,11 @@ sealed class UiState {
     data object Loading : UiState()
     data class Success(val response: ChangePasswordResponse) : UiState()
     data class Error(val message: String) : UiState()
+}
+
+sealed class VerifyOtpUiState {
+    object Idle : VerifyOtpUiState()
+    object Loading : VerifyOtpUiState()
+    data class Success(val message: String) : VerifyOtpUiState()
+    data class Error(val message: String) : VerifyOtpUiState()
 }

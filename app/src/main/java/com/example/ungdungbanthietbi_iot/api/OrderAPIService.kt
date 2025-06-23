@@ -28,7 +28,7 @@ data class CheckoutResponse(
     val data: OrderDataCheckOut, // Adjust type based on success data
     val data_errors: List<ProductError>? = null
 )
-data class OrderRequestCancel(val id: String)
+data class OrderRequestCancel(val order_id: String)
 
 data class OrderDataCheckOut(
     @SerializedName("order_id") val orderId: String,
@@ -37,12 +37,22 @@ data class OrderDataCheckOut(
     @SerializedName("created_at") val createdAt: String?
 )
 
+data class OrderFinishedRequest(
+    val order_id: String,
+    val customer_id: String
+)
+
 interface OrderAPIService {
     @POST("order/checkout")
     suspend fun createOrder(@Body request: CheckoutRequest): CheckoutResponse
 
     @GET("order/customer/{customerId}")
     suspend fun getOrdersByCustomer(@Path("customerId") customerId: String): OrderResponse
+
+    @PUT("order/finished")
+    suspend fun finishedOrder(
+        @Body request: OrderFinishedRequest
+    ): Response<Unit>
 
     @PUT("order/customer")
     suspend fun cancelOrder(

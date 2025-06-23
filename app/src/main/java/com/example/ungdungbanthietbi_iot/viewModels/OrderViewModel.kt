@@ -14,6 +14,7 @@ import androidx.compose.runtime.State
 import com.example.ungdungbanthietbi_iot.api.CheckoutResponse
 import com.example.ungdungbanthietbi_iot.api.OrderData
 import com.example.ungdungbanthietbi_iot.api.OrderDataCheckOut
+import com.example.ungdungbanthietbi_iot.api.OrderFinishedRequest
 import com.example.ungdungbanthietbi_iot.api.OrderRequestCancel
 import com.example.ungdungbanthietbi_iot.api.OrderResponse
 import com.example.ungdungbanthietbi_iot.models.CheckoutRequest
@@ -97,6 +98,27 @@ class OrderViewModel:ViewModel() {
     // Thêm state để trigger refresh
     private val _shouldRefresh = mutableStateOf(false)
     val shouldRefresh: State<Boolean> = _shouldRefresh
+
+    // Cập nhật hóa đơn
+    fun finishedOrder(order_id: String, customer_id: String) {
+        viewModelScope.launch {
+            try {
+                val request = OrderFinishedRequest(order_id, customer_id)
+                Log.d("OrderViewModel", "Sending request: $request")
+                val response = RetrofitClient.orderAPIService.finishedOrder(request)
+                Log.d("OrderViewModel", "Response code: ${response.code()}")
+                _statusCode.value = response.code()
+                _errorMessage.value = null
+                if (response.code() == 200) {
+                    // Trigger refresh hoặc xóa item
+                    _shouldRefresh.value = true
+                }
+            } catch (e: Exception) {
+                _errorMessage.value = e.message
+                _statusCode.value = null
+            }
+        }
+    }
     // Cập nhật hóa đơn
     fun cancelOrder(id: String) {
         viewModelScope.launch {

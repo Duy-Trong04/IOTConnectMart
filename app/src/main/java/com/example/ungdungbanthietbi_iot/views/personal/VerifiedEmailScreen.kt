@@ -1,4 +1,4 @@
-package com.example.ungdungbanthietbi_iot.views.signUp_signIn
+package com.example.ungdungbanthietbi_iot.views.personal
 
 import android.annotation.SuppressLint
 import androidx.compose.foundation.Image
@@ -8,6 +8,8 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -58,12 +60,14 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.Dp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.example.ungdungbanthietbi_iot.R
-import com.example.ungdungbanthietbi_iot.models.AccountData
+import com.example.ungdungbanthietbi_iot.api.VerifyOtpChangeEmailRequest
 import com.example.ungdungbanthietbi_iot.navigation.Screen
 import com.example.ungdungbanthietbi_iot.viewModels.AccountViewModel
-import com.example.ungdungbanthietbi_iot.viewModels.VerifyOtpUiState
+import com.example.ungdungbanthietbi_iot.viewModels.CustomerState
+import com.example.ungdungbanthietbi_iot.viewModels.CustomerViewModel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -313,36 +317,32 @@ fun Int.pxToDp() = with(LocalDensity.current) { this@pxToDp.toDp() }
 
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
-fun VerifyOTPScreen(
+fun VerifiedEmailScreen(
     navController: NavController,
-    accountViewModel: AccountViewModel,
-    email: String?
+    id: String,
+    email: String
 ) {
+    val customerViewModel: CustomerViewModel = viewModel()
+
+    val customerState by customerViewModel.customerState.collectAsState()
+    val accountViewModel: AccountViewModel = viewModel()
     var isResendEnabled by remember { mutableStateOf(false) }
     var timer by remember { mutableIntStateOf(120) }
     val otpValue = remember {
         mutableStateOf("")
     }
     var showErrorDialog by remember { mutableStateOf(false) }
-    var showSuccessDialog by remember { mutableStateOf(false) }
+    var openDialog by remember { mutableStateOf(false) }
     var errorMessage by remember { mutableStateOf("") }
 
     val isLoading by accountViewModel.isLoading.collectAsState()
-    val verifyOtpResult by accountViewModel.verifyOtpResult.collectAsState()
-    // Xử lý phản hồi từ API
-    LaunchedEffect(verifyOtpResult) {
-        when (verifyOtpResult) {
-            is VerifyOtpUiState.Success -> {
-                showSuccessDialog = true
-                errorMessage = (verifyOtpResult as VerifyOtpUiState.Success).message
-            }
-            is VerifyOtpUiState.Error -> {
-                showErrorDialog = true
-                errorMessage = (verifyOtpResult as VerifyOtpUiState.Error).message
-            }
-            else -> {
-                // Không làm gì khi Idle hoặc Loading
-            }
+
+    LaunchedEffect(id) {
+        if (id.isBlank()) {
+            customerViewModel.setErrorState("Lỗi: ID khách hàng không hợp lệ")
+        }
+        else{
+            customerViewModel.getCustomerById(id)
         }
     }
 
@@ -357,177 +357,201 @@ fun VerifyOTPScreen(
     }
 
     Scaffold{
-        Column(
-            verticalArrangement = Arrangement.Top,
-            horizontalAlignment = Alignment.CenterHorizontally,
-            modifier = Modifier.padding(horizontal = 24.dp)
-        ) {
-            Box(modifier = Modifier.height(24.dp))
-            Image(
-                painter = painterResource(id = R.drawable.ill_otp),
-                contentDescription = "Forgot Password Illustration",
-                modifier = Modifier
-                    .weight(2.5f)
-                    .padding(horizontal = 32.dp),
-                contentScale = ContentScale.Fit,
-            )
-            Column(
-                verticalArrangement = Arrangement.SpaceAround,
-                horizontalAlignment = Alignment.Start,
-                modifier = Modifier.weight(7.5f)
-            ) {
-                Text(
-                    text = "Nhập mã xác thực OTP", style = MaterialTheme.typography.headlineLarge.copy(
-                        fontWeight = FontWeight.Bold,
-                        color = Color(0xFF5D9EFF)
-                    )
-                )
-                Text(
-                    text = "Chúng tôi đã gửi cho bạn mã xác nhận gồm 6 chữ số.\nHãy nhập mã gồm 6 chữ số mà chúng tôi đã gửi đến email của bạn.",
-                    style = MaterialTheme.typography.bodyMedium
-                )
-                OtpInputField(
-                    otp = otpValue,
-                    count = 6,
-                    textColor = Color(0xFF5D9EFF),
-                    otpBoxModifier = Modifier
-                        .border(4.pxToDp(), Color(0xFF5D9EFF), shape = RoundedCornerShape(12.pxToDp()))
-                )
-                TextButton(
-                    onClick = {
-                        if (email != null) {
-                            accountViewModel.sendOtp(email)
-                        }
-                        isResendEnabled = false
-                        timer = 120
-                    },
-                    enabled = isResendEnabled,
-                    modifier = Modifier.align(Alignment.End),
-                    colors = ButtonDefaults.textButtonColors(
-                        contentColor = Color(0xFF5D9EFF)
-                    )
+        when (val state = customerState) {
+            is CustomerState.Loading -> {
+                Box(
+                    modifier = Modifier.fillMaxWidth().height(600.dp),
+                    contentAlignment = Alignment.Center
                 ) {
-                    Text(
-                        text = if (timer > 0) "Gửi lại mã sau ${timer}s" else "Gửi lại",
-                        color = if (timer <= 0) Color(0xFF5D9EFF) else Color.Gray,
-                    )
-                }
-
-                Button(
-                    onClick = {
-                        if (otpValue.value.isNotEmpty() && email != null) {
-                            accountViewModel.verifyOtp(email, otpValue.value)
-                        } else if (otpValue.value.isEmpty()) {
-                            showErrorDialog = true
-                            errorMessage = "Vui lòng nhập mã OTP"
-                        }
-//                        if (otpValue.value.isNotEmpty()) {
-//                            accountViewModel.verifyOtp(email!!, otpValue.value)
-//                            navController.navigate(Screen.ResetPasswordScreen.route + "?email=${email}"){
-//                                popUpTo(0) { inclusive = true }
-//                            }
-//                        } else {
-//                            errorMessage = "Vui lòng nhập mã OTP"
-//                            showErrorDialog = true
-//                        }
-                    },
-                    shape = RoundedCornerShape(16.dp),
-                    modifier = Modifier
-                        .height(48.dp)
-                        .fillMaxWidth(),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = Color(0xFF5D9EFF)
-                    )
-                ) {
-                    if (isLoading) {
-                        CircularProgressIndicator(
-                            color = Color.White,
-                            strokeWidth = 4.dp,
-                            modifier = Modifier.size(22.dp)
-                        )
-                    } else {
-                        Text(
-                            text = "Xác nhận",
-                            fontSize = 18.sp
-                        )
-                    }
-                }
-
-                Box(modifier = Modifier.height(16.dp))
-                // Error Dialog
-                if (showErrorDialog) {
-                    AlertDialog(
-                        onDismissRequest = { showErrorDialog = false },
-                        title = { Text("Thông báo") },
-                        containerColor = Color.White,
-                        text = { Text(errorMessage) },
-                        confirmButton = {
-                            Button(
-                                onClick = {
-                                    showErrorDialog = false
-                                    if (verifyOtpResult is VerifyOtpUiState.Success) {
-                                        navController.navigate(Screen.ResetPasswordScreen.route + "?email=${email}") {
-                                            popUpTo(0) { inclusive = true }
-                                        }
-                                    }
-                                },
-                                colors = ButtonDefaults.buttonColors(
-                                    containerColor = Color(0xFF5D9EFF)
-                                ),
-                                shape = RoundedCornerShape(10.dp)
-                            ) {
-                                Text("Xác nhận")
-                            }
-                        },
-                        dismissButton = {
-                            Button(
-                                onClick = { showErrorDialog = false },
-                                colors = ButtonDefaults.buttonColors(
-                                    containerColor = Color.LightGray
-                                ),
-                                shape = RoundedCornerShape(10.dp)
-                            ) {
-                                Text("Hủy")
-                            }
-                        }
-                    )
-                }
-                // Error Dialog
-                if (showSuccessDialog) {
-                    AlertDialog(
-                        onDismissRequest = {
-                            showSuccessDialog = false
-                            if (verifyOtpResult is VerifyOtpUiState.Success) {
-                                navController.navigate(Screen.ResetPasswordScreen.route + "?email=${email}") {
-                                    popUpTo(0) { inclusive = true }
-                                }
-                            }
-                        },
-                        title = { Text("Thông báo") },
-                        containerColor = Color.White,
-                        text = { Text(errorMessage) },
-                        confirmButton = {
-                            Button(
-                                onClick = {
-                                    showSuccessDialog = false
-                                    if (verifyOtpResult is VerifyOtpUiState.Success) {
-                                        navController.navigate(Screen.ResetPasswordScreen.route + "?email=${email}") {
-                                            popUpTo(0) { inclusive = true }
-                                        }
-                                    }
-                                },
-                                colors = ButtonDefaults.buttonColors(
-                                    containerColor = Color(0xFF5D9EFF)
-                                ),
-                                modifier = Modifier.fillMaxWidth(),
-                                shape = RoundedCornerShape(10.dp)
-                            ) {
-                                Text("Tiếp tục")
-                            }
-                        }
+                    CircularProgressIndicator(
+                        color = Color(0xFF5F9EFF)
                     )
                 }
             }
+            is CustomerState.Success -> {
+                val customer = state.customer
+                Column(
+                    verticalArrangement = Arrangement.Top,
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    modifier = Modifier.padding(horizontal = 24.dp)
+                ) {
+                    Box(modifier = Modifier.height(24.dp))
+                    Image(
+                        painter = painterResource(id = R.drawable.email_verified),
+                        contentDescription = "Forgot Password Illustration",
+                        modifier = Modifier
+                            .weight(3.0f)
+                            .padding(horizontal = 32.dp),
+                        contentScale = ContentScale.Fit,
+                    )
+                    Column(
+                        verticalArrangement = Arrangement.SpaceAround,
+                        horizontalAlignment = Alignment.Start,
+                        modifier = Modifier.weight(7.0f)
+                    ) {
+                        Text(
+                            text = "Nhập mã xác thực OTP", style = MaterialTheme.typography.headlineLarge.copy(
+                                fontWeight = FontWeight.Bold,
+                                color = Color(0xFF5D9EFF)
+                            )
+                        )
+                        Text(
+                            text = "Chúng tôi đã gửi cho bạn mã xác nhận gồm 6 chữ số.\nHãy nhập mã gồm 6 chữ số mà chúng tôi đã gửi đến email của bạn.",
+                            style = MaterialTheme.typography.bodyMedium
+                        )
+                        OtpInputField(
+                            otp = otpValue,
+                            count = 6,
+                            textColor = Color(0xFF5D9EFF),
+                            otpBoxModifier = Modifier
+                                .border(4.pxToDp(), Color(0xFF5D9EFF), shape = RoundedCornerShape(12.pxToDp()))
+                        )
+                        TextButton(
+                            onClick = {
+                                accountViewModel.sendOtp(email)
+                                isResendEnabled = false
+                                timer = 120
+                            },
+                            enabled = isResendEnabled,
+                            modifier = Modifier.align(Alignment.End),
+                            colors = ButtonDefaults.textButtonColors(
+                                contentColor = Color(0xFF5D9EFF)
+                            )
+                        ) {
+                            Text(
+                                text = if (timer > 0) "Gửi lại mã sau ${timer}s" else "Gửi lại",
+                                color = if (timer <= 0) Color(0xFF5D9EFF) else Color.Gray,
+                            )
+                        }
+
+                        Button(
+                            onClick = {
+                                if (otpValue.value.isNotEmpty()) {
+                                    val request = VerifyOtpChangeEmailRequest(
+                                        email = email,
+                                        otp = otpValue.value
+                                    )
+                                    accountViewModel.verifyOtpChangeEmail(request)
+                                    openDialog = true
+                                    errorMessage = "Email đã được xác thực thành công !"
+                                } else {
+                                    errorMessage = "Vui lòng nhập mã OTP"
+                                    showErrorDialog = true
+                                }
+                            },
+                            shape = RoundedCornerShape(16.dp),
+                            modifier = Modifier
+                                .height(48.dp)
+                                .fillMaxWidth(),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = Color(0xFF5D9EFF)
+                            )
+                        ) {
+                            if (isLoading) {
+                                CircularProgressIndicator(
+                                    color = Color.White,
+                                    strokeWidth = 4.dp,
+                                    modifier = Modifier.size(22.dp)
+                                )
+                            } else {
+                                Text(
+                                    text = "Xác nhận",
+                                    fontSize = 18.sp
+                                )
+                            }
+                        }
+
+                        Box(modifier = Modifier.height(16.dp))
+                        // Error Dialog
+                        if (showErrorDialog) {
+                            AlertDialog(
+                                onDismissRequest = { showErrorDialog = false },
+                                title = { Text("Thông báo") },
+                                containerColor = Color.White,
+                                text = { Text(errorMessage) },
+                                confirmButton = {
+                                    Button(
+                                        onClick = { showErrorDialog = false },
+                                        colors = ButtonDefaults.buttonColors(
+                                            containerColor = Color(0xFF5D9EFF)
+                                        ),
+                                        shape = RoundedCornerShape(10.dp)
+                                    ) {
+                                        Text("Xác nhận")
+                                    }
+                                },
+                                dismissButton = {
+                                    Button(
+                                        onClick = { showErrorDialog = false },
+                                        colors = ButtonDefaults.buttonColors(
+                                            containerColor = Color.LightGray
+                                        ),
+                                        shape = RoundedCornerShape(10.dp)
+                                    ) {
+                                        Text("Hủy")
+                                    }
+                                }
+                            )
+                        }
+                        if (openDialog) {
+                            AlertDialog(
+                                onDismissRequest = { openDialog = false },
+                                title = { Text("Thông báo") },
+                                containerColor = Color.White,
+                                text = { Text(errorMessage) },
+                                confirmButton = {
+                                    Button(
+                                        onClick = {
+                                            openDialog = false
+                                            navController.popBackStack()
+                                        },
+                                        colors = ButtonDefaults.buttonColors(
+                                            containerColor = Color(0xFF5D9EFF)
+                                        ),
+                                        shape = RoundedCornerShape(10.dp)
+                                    ) {
+                                        Text("Xác nhận")
+                                    }
+                                },
+                                dismissButton = {
+                                    Button(
+                                        onClick = { openDialog = false },
+                                        colors = ButtonDefaults.buttonColors(
+                                            containerColor = Color.LightGray
+                                        ),
+                                        shape = RoundedCornerShape(10.dp)
+                                    ) {
+                                        Text("Hủy")
+                                    }
+                                }
+                            )
+                        }
+                    }
+                }
+            }
+            is CustomerState.Error -> {
+                Column(
+                    modifier = Modifier.fillMaxSize(),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Text(
+                        text = state.message,
+                        color = MaterialTheme.colorScheme.error,
+                        fontSize = 16.sp
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Button(
+                        onClick = {
+                            customerViewModel.getCustomerById(id)
+                        },
+                        shape = RoundedCornerShape(10.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF5F9EFF))
+                    ) {
+                        Text("Thử lại", color = Color.White)
+                    }
+                }
+            }
         }
+
     }
 }

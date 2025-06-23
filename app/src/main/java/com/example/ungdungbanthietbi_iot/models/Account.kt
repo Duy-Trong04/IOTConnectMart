@@ -33,8 +33,7 @@ data class AddAccount(
 
 data class LoginRequest(
     val username: String,
-    val password: String,
-    val type: String
+    val password: String
 )
 
 data class LoginResponse(

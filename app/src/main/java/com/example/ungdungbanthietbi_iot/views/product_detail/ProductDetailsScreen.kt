@@ -569,6 +569,7 @@ fun ProductDetailsScreen(
                                 AlertDialog(
                                     onDismissRequest = { showDialog = false },
                                     title = { Text(text = "Thông báo", fontWeight = FontWeight.Bold) },
+                                    containerColor = Color.White,
                                     text = {
                                         Text(
                                             text = "Bạn chưa có địa chỉ giao hàng. Vui lòng thêm địa chỉ để tiếp tục mua sắm.",

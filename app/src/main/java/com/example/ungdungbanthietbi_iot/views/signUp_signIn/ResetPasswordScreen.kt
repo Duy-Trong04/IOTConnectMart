@@ -76,6 +76,7 @@ fun ResetPasswordScreen(
     var passwordConfirmObscure by remember { mutableStateOf(true) }
 
     var openDialog_Success by remember { mutableStateOf(false) }
+    var errorMessage by remember { mutableStateOf("") }
     var openDialog_Error by remember { mutableStateOf(false) }
 
     Scaffold {
@@ -165,10 +166,17 @@ fun ResetPasswordScreen(
                     onClick = {
                         /* Chuyển sang màn hình đăng nhập(LoginScreen) */
                         if(password.isNotEmpty() && passwordConfirm.isNotEmpty()) {
-                            accountViewModel.resetPassword(email!!, password, passwordConfirm)
-                            openDialog_Success = true
+                            if(password == passwordConfirm) {
+                                accountViewModel.resetPassword(email!!, password, passwordConfirm)
+                                openDialog_Success = true
+                            }
+                            else{
+                                openDialog_Error = true
+                                errorMessage = "Mật khẩu và Xác nhận mật khẩu không trùng khớp !"
+                            }
                         }
                         else{
+                            errorMessage = "Vui lòng nhập đầy đủ thông tin !"
                             openDialog_Error = true
                         }
                     },
@@ -192,12 +200,9 @@ fun ResetPasswordScreen(
             AlertDialog(
                 onDismissRequest = { openDialog_Error = false }, // Đóng khi nhấn ngoài dialog
                 text = {
-                    if (password == "" || passwordConfirm == "") {
-                        Text("Vui lòng nhập đầy đủ thông tin!")
-                    } else if (password != passwordConfirm) {
-                        Text("Mật khẩu và Xác nhận mật khẩu không trùng khớp!")
-                    }
+                    Text(errorMessage)
                 },
+                containerColor = Color.White,
                 confirmButton = {
                     Button(
                         onClick = {
@@ -237,7 +242,7 @@ fun ResetPasswordScreen(
                     Text("Thông báo")
                 },
                 text = {
-                    Text("Đặt lại mật khẩu thành công!\nVui lòng đăng nhập lại.")
+                    Text("Đặt lại mật khẩu thành công!\nVui lòng đăng nhập lại !")
                 },
                 confirmButton = {
                     Button(

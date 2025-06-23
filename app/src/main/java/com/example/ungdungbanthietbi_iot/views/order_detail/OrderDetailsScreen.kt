@@ -161,6 +161,7 @@ fun OrderDetailsScreen(
                             onClick = {
                                 // Vô hiệu hóa logic API, chỉ log hành động
                                 Log.d("OrderDetailsScreen", "Xác nhận đã nhận hàng: ${order.id}")
+                                orderViewModel.finishedOrder(order.id, idCustomer)
                                 navController.popBackStack()
                             },
                             modifier = Modifier.fillMaxWidth(),
