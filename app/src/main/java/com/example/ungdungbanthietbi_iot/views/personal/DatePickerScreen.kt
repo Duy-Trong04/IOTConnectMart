@@ -1,5 +1,6 @@
 package com.example.ungdungbanthietbi_iot.views.personal
 
+import android.annotation.SuppressLint
 import android.content.res.Configuration
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -18,13 +19,13 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.example.ungdungbanthietbi_iot.models.Birthdate
 import com.example.ungdungbanthietbi_iot.viewModels.CustomerViewModel
 import java.time.LocalDate
 import java.time.YearMonth
 import java.time.format.DateTimeFormatter
 import java.util.*
 
+@SuppressLint("NewApi")
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CalendarDialog(
@@ -85,17 +86,7 @@ fun CalendarDialog(
         onDismissRequest = onDismiss,
         confirmButton = {
             Button(onClick = {
-                val selectedBirthDate = LocalDate.of(selectedYear, selectedMonth, selectedDate)
-                if(selectedBirthDate<=currentDate) {
-                    onDateSelected(LocalDate.of(selectedYear, selectedMonth, selectedDate))
-                    val birthdate = LocalDate.of(selectedYear, selectedMonth, selectedDate)
-                    val b = Birthdate(customerID.toString(), birthdate.toString())
-                    birthdateModel.updateBirthdate(b)
-                    onDismiss()
-                }
-                else{
-                    showErrorDialog = true
-                }
+
             }) {
                 Text("Xác nhận", color = Color.White)
             }

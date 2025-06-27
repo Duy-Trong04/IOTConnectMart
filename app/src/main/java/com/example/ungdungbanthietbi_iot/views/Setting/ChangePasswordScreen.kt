@@ -40,7 +40,6 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.ungdungbanthietbi_iot.viewModels.AccountViewModel
-import com.example.ungdungbanthietbi_iot.models.UpdatePassword
 
 
 //Người thực hiện: NGUYỄN MẠNH CƯỜNG
@@ -200,9 +199,6 @@ fun ChangePassword(onBack: () -> Unit = {}, id: String, password: String) {
                         Text("Mật khẩu mới và xác nhận mật khẩu không trùng khớp")
                     } else {
                         Text("Đổi mật khẩu thành công.")
-                        var account: UpdatePassword
-                        account = UpdatePassword(id, matkhaumoi2.value)
-                        updatePass.updatePassword(account)
                     }
                 } else {
                     Text("Mật khẩu cũ không đúng")

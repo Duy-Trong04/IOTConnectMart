@@ -1,64 +1,190 @@
 package com.example.ungdungbanthietbi_iot.api
 
-import com.example.ungdungbanthietbi_iot.models.Account
+import com.example.ungdungbanthietbi_iot.models.AccountData
 import com.example.ungdungbanthietbi_iot.models.AddAccount
-import com.example.ungdungbanthietbi_iot.models.UpdatePassword
+import com.example.ungdungbanthietbi_iot.models.LoginRequest
+import com.example.ungdungbanthietbi_iot.models.LoginResponse
+import retrofit2.Response
 import retrofit2.http.Body
-import retrofit2.http.GET
+import retrofit2.http.Header
+import retrofit2.http.PATCH
 import retrofit2.http.POST
-import retrofit2.http.PUT
-import retrofit2.http.Query
 
-
-data class CheckLoginResponse(
-    val result: Boolean,
-    val message: String? = null
+// ChangePasswordRequest.kt
+data class ChangePasswordRequest(
+    val username: String,
+    val password: String,
+    val newPassword: String,
+    val confirmPassword: String
 )
 
-data class AddAccountResponse(
-    val success: Boolean,
+// ChangePasswordResponse.kt
+data class ChangePasswordResponse(
+    val status_code: Int
+)
+
+// ChangePasswordUiState.kt
+data class ChangePasswordUiState(
+    val isLoading: Boolean = false,
+    val statusCode: Int? = null,
+    val error: String? = null,
+    val result: Boolean? = null
+)
+
+data class RegisterRequest(
+    val username: String,
+    val password: String,
+    val confirm_password: String,
+    val surname: String,
+    val lastname: String,
+    val phone: String,
+    val email: String,
+    val gender: Boolean
+)
+data class RegisterResponse(
+    val status_code: Int,
+    val data: AddAccount? = null,
+    val errors: List<ErrorResponse>? = null
+)
+data class ErrorResponse(
+    val code: Int,
     val message: String
 )
-data class accountUpdateResponse(
-    val success: Boolean,
+
+// Yêu cầu gửi email để nhận OTP
+data class SendOtpRequest(
+    val email: String
+)
+
+// Phản hồi từ API gửi OTP
+data class SendOtpResponse(
+    val status_code: Int,
+    val data: OtpData
+)
+
+data class OtpData(
+    val message: String,
+    val otp: String
+)
+
+// Yêu cầu xác minh OTP
+data class VerifyOtpRequest(
+    val email: String,
+    val otp: String
+)
+
+// Yêu cầu xác minh OTP
+data class VerifyOtpChangeEmailRequest(
+    val email: String,
+    val otp: String
+)
+
+// Phản hồi từ API xác minh OTP
+data class VerifyOtpResponse(
+    val status_code: Int,
+    val data: VerifyData? = null,
+    val errors: List<ErrorResponse>? = null
+)
+
+data class VerifyData(
     val message: String
 )
 
-interface AccuntAPIService {
-    @GET("account/check_account.php")
-    suspend fun check_Login(
-        @Query("username") username: String,
-        @Query("password") password: String
-    ): CheckLoginResponse
-    
+// Yêu cầu đặt lại mật khẩu
+data class ResetPasswordRequest(
+    val email: String,
+    val newPassword: String,
+    val confirmPassword: String
+)
 
-    @POST("account/check_Dk.php")
-    suspend fun checkAccount_Dk(
-        @Body account: AddAccount
-    ): Boolean
+// Phản hồi từ API đặt lại mật khẩu
+data class ResetPasswordResponse(
+    val status_code: Int
+)
 
-    @GET("account/show.php")
-    suspend fun getAccountByUsername(
-        @Query("username") username: String
-    ): Account
+interface AccountAPIService {
 
-    @GET("account/getAccountById.php")
-    suspend fun getAccountById(
-        @Query("idPerson") idPerson: String
-    ): Account
+    @POST("auth/login")
+    suspend fun login(@Body request: LoginRequest): LoginResponse
 
-    @POST("account/create.php")
+    @POST("auth/register")
     suspend fun addAccount(
-        @Body account: AddAccount
-    ): AddAccountResponse
+        @Body account: RegisterRequest
+    ): Response<RegisterResponse>
 
-    @PUT("account/updatePassword.php")
-    suspend fun updatePassword(
-        @Body account: UpdatePassword
-    ): Boolean
+    @PATCH("auth/account/changed-password")
+    suspend fun changePassword(
+        @Header("Authorization") token: String,
+        @Body request: ChangePasswordRequest
+    ): Response<ChangePasswordResponse>
 
-    @PUT("account/update.php")
-    suspend fun updateAccount(
-        @Body account: Account
-    ): accountUpdateResponse
+    @POST("auth/send-otp")
+    suspend fun sendOtp(
+        @Body request: SendOtpRequest
+    ): Response<SendOtpResponse>
+
+    @POST("auth/verify-otp")
+    suspend fun verifyOtp(
+        @Body request: VerifyOtpRequest
+    ): Response<VerifyOtpResponse>
+
+    @POST("auth/verify-otp-change-email")
+    suspend fun verifyOtpChangeEmail(
+        @Body request: VerifyOtpChangeEmailRequest
+    ): Response<VerifyOtpResponse>
+
+    @POST("auth/account/change-password-forgot")
+    suspend fun resetPassword(
+        @Body request: ResetPasswordRequest
+    ): Response<ResetPasswordResponse>
+}
+
+data class LoginIOTRequest(
+    val username: String,
+    val password: String,
+    val rememberMe: Boolean,
+    val deviceName: String,
+    val deviceId: String,
+    val deviceUuid: String
+)
+
+data class LoginIOTResponse(
+    val accessToken: String,
+    val customer_id: String,
+    val username: String,
+    val userId: String,
+    val refreshToken: String,
+    val deviceUuid: String,
+    val deviceInfo: DeviceInfo,
+    val devices: List<Devices>
+)
+
+data class DeviceInfo(
+    val current: Current,
+    val total: Total
+)
+
+data class Current(
+    val deviceId: String,
+    val deviceName: String,
+    val lastLogin: String,
+    val ipAddress: String,
+    val userAgent: String
+)
+
+data class Total(
+    val active: Int,
+    val limit: Int,
+    val remaining: Int
+)
+
+data class Devices(
+    val deviceId: String,
+    val deviceName: String,
+    val lastLogin: String,
+    val isCurrentDevice: Boolean
+)
+interface AccountAPIServiceIOT {
+    @POST("auth/login")
+    suspend fun loginIOT(@Body request: LoginIOTRequest): LoginIOTResponse
 }

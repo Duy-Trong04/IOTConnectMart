@@ -1,6 +1,15 @@
 package com.example.ungdungbanthietbi_iot.views.cart
 
+import android.graphics.Bitmap
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
+import androidx.compose.animation.togetherWith
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -8,29 +17,31 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Remove
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
-import coil.compose.AsyncImage
-import com.example.ungdungbanthietbi_iot.models.CartEntity
-import com.example.ungdungbanthietbi_iot.models.Device
+import com.example.ungdungbanthietbi_iot.api.AddCartRequest
+import com.example.ungdungbanthietbi_iot.api.ProductInCart
 import com.example.ungdungbanthietbi_iot.viewModels.AddressViewModel
 import com.example.ungdungbanthietbi_iot.viewModels.CartViewModel
-import com.example.ungdungbanthietbi_iot.viewModels.DeviceViewModel
 import com.example.ungdungbanthietbi_iot.navigation.Screen
-import com.example.ungdungbanthietbi_iot.utils.formatGiaTien
+import com.example.ungdungbanthietbi_iot.utils.formatGiaTienInt
+import com.example.ungdungbanthietbi_iot.viewModels.DeviceViewModel
 
 /** Giao diện màn hình giỏ hàng (CartScreen)
  * -------------------------------------------
@@ -56,150 +67,268 @@ enum class DeleteAction {
 
 @Composable
 fun CartItem(
-    cart: CartEntity, // Assuming Cart is the data class for cart items
-    sanPham: Device, // Assuming Device is the data class for products
-    selectedItems: MutableMap<Int, Boolean>,
-    selectedProducts: MutableList<Triple<Int, Int, Int>>,
+    product: ProductInCart,
+    idCustomer: String,
+    username: String,
+    token: String,
+    selectedItems: MutableMap<String, Boolean>,
+    selectedProducts: MutableList<Triple<String, Int, Int>>,
     cartViewModel: CartViewModel,
     navController: NavController,
     onCalculateTotalPrice: () -> Unit,
-    onShowDeleteDialog: (Int, DeleteAction) -> Unit
+    onShowDeleteDialog: (String, DeleteAction) -> Unit
 ) {
-    var soLuong by remember { mutableIntStateOf(cart.stock) }
+
+    // Lấy thông tin cấu hình màn hình
+    val configuration = LocalConfiguration.current
+    val screenWidth = configuration.screenWidthDp.dp
+    val isSmallScreen = screenWidth < 360.dp
+    val isLargeScreen = screenWidth > 600.dp
+
+    // Điều chỉnh kích thước dựa trên màn hình
+    val imageSize = when {
+        isLargeScreen -> 180.dp
+        isSmallScreen -> 100.dp
+        else -> 150.dp
+    }
+    val fontSizeTitle = when {
+        isLargeScreen -> 18.sp
+        isSmallScreen -> 14.sp
+        else -> 16.sp
+    }
+    val fontSizePrice = when {
+        isLargeScreen -> 16.sp
+        isSmallScreen -> 12.sp
+        else -> 14.sp
+    }
+    val buttonSize = when {
+        isLargeScreen -> 40.dp
+        isSmallScreen -> 24.dp
+        else -> 32.dp
+    }
+    val quantityButtonSize = when {
+        isLargeScreen -> 36.dp
+        isSmallScreen -> 24.dp
+        else -> 28.dp
+    }
+    val paddingValue = when {
+        isLargeScreen -> 8.dp
+        isSmallScreen -> 4.dp
+        else -> 6.dp
+    }
+
+    val deviceViewModel: DeviceViewModel = viewModel()
+    var bitmap by remember { mutableStateOf<Bitmap?>(null) }
+    var soLuong by remember { mutableIntStateOf(product.quantity) }
+
+    // Tải hình ảnh
+    LaunchedEffect(product) {
+        bitmap = product.image?.let { deviceViewModel.getDeviceImageBitmapImage(it) }
+    }
 
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(4.dp)
-            .height(150.dp),
+            .padding(paddingValue)
+            .height(120.dp),
         elevation = CardDefaults.cardElevation(1.dp),
-        shape = RoundedCornerShape(5.dp),
+        shape = RoundedCornerShape(8.dp),
         colors = CardDefaults.cardColors(containerColor = Color.White),
         onClick = {
-            navController.navigate(Screen.ProductDetailsScreen.route + "?id=${sanPham.idDevice}")
+            navController.navigate(
+                Screen.ProductDetailsScreen.route +
+                        "?id=${product.id}&idCustomer=${idCustomer}&username=${username}&token=${token}"
+            )
         }
     ) {
         Row(
             modifier = Modifier
-                .padding(2.dp),
+                .fillMaxWidth()
+                .padding(paddingValue),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.Start
         ) {
             // Checkbox chọn sản phẩm
             Checkbox(
-                checked = selectedItems[cart.id] == true,
+                checked = selectedItems[product.id] == true,
                 colors = CheckboxDefaults.colors(
                     checkedColor = Color(0xFF5D9EFF),
                     uncheckedColor = Color.Gray,
                 ),
                 onCheckedChange = { isChecked ->
-                    selectedItems[cart.id] = isChecked
-
+                    selectedItems[product.id] = isChecked
                     if (isChecked) {
-                        // Thêm sản phẩm vào danh sách selectedProducts cùng với MaGioHang
-                        selectedProducts.add(
-                            Triple(
-                                cart.idDevice,
-                                cart.stock,
-                                cart.id
-                            )
-                        )
+                        selectedProducts.removeAll { it.first == product.id }
+                        selectedProducts.add(Triple(product.id, soLuong, product.id.toInt()))
                     } else {
-                        // Loại bỏ sản phẩm khỏi danh sách
-                        selectedProducts.removeAll { it.first == cart.idDevice }
+                        selectedProducts.removeAll { it.first == product.id }
                     }
-                    // Tính lại tổng tiền sau khi thay đổi trạng thái checkbox
                     onCalculateTotalPrice()
                 },
+                modifier = Modifier.size(buttonSize)
             )
-            // Hình ảnh sản phẩm
-            AsyncImage(
-                model = sanPham.image,
-                contentDescription = null,
-                modifier = Modifier
-                    .size(150.dp),
-                contentScale = ContentScale.Fit
-            )
-            Column(modifier = Modifier.weight(1f)) {
-                // Tên sản phẩm
-                Text(
-                    text = sanPham.name,
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 16.sp
+            if(product.image?.isEmpty() == true){
+                Image(
+                    painter = painterResource(id = android.R.drawable.ic_menu_gallery),
+                    contentDescription = "Product Image",
+                    modifier = Modifier.size(imageSize)
+                        .padding(start = paddingValue),
+                    contentScale = ContentScale.Crop
                 )
-                Spacer(modifier = Modifier.height(5.dp))
-                // Giá sản phẩm
-                Row(
-                    verticalAlignment = Alignment.CenterVertically
-                ){
-                    Text(
-                        text = formatGiaTien(sanPham.sellingPrice),
-                        color = Color.Red
+            }
+            else {
+                bitmap?.let {
+                    Image(
+                        bitmap = it.asImageBitmap(),
+                        contentDescription = product.name.ifEmpty { "Hình ảnh sản phẩm" },
+                        modifier = Modifier
+                            .size(imageSize)
+                            .padding(start = paddingValue),
+                        contentScale = ContentScale.Fit
                     )
-
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        // Nút giảm số lượng
-                        IconButton(onClick = {
-                            if (soLuong > 1) {
-                                soLuong-- // Giảm số lượng
-                                cart.stock = soLuong
-                                cartViewModel.updateCart(cart)
-
-                                // Cập nhật lại số lượng trong selectedProducts
-                                val index = selectedProducts.indexOfFirst { it.first == cart.idDevice }
-                                if (index != -1) {
-                                    selectedProducts[index] = Triple(cart.idDevice, soLuong, cart.id)
-                                }
-
-                                onCalculateTotalPrice() // Tính lại tổng tiền
-                            }
-                        }) {
-                            Icon(
-                                imageVector = Icons.Filled.Remove,
-                                contentDescription = "Decrease Quantity"
-                            )
-                        }
-                        // Hiển thị số lượng
-                        Text(
-                            text = soLuong.toString(),
-                            modifier = Modifier.padding(horizontal = 8.dp),
-                            fontSize = 16.sp
-                        )
-                        // Nút tăng số lượng
-                        IconButton(onClick = {
-                            if (soLuong < 500 /* 500 là số lượng tồn kho*/) {
-                                soLuong++ // Tăng số lượng
-                                cart.stock = soLuong
-                                cartViewModel.updateCart(cart)
-
-                                // Cập nhật lại số lượng trong selectedProducts
-                                val index = selectedProducts.indexOfFirst { it.first == cart.idDevice }
-                                if (index != -1) {
-                                    selectedProducts[index] = Triple(cart.idDevice, soLuong, cart.id)
-                                }
-
-                                onCalculateTotalPrice() // Tính lại tổng tiền
-                            }
-                        }) {
-                            Icon(
-                                imageVector = Icons.Filled.Add,
-                                contentDescription = "Increase Quantity"
-                            )
-                        }
-                    }
+                } ?: run {
+                    Image(
+                        painter = painterResource(id = android.R.drawable.ic_menu_gallery),
+                        contentDescription = "Product Image",
+                        modifier = Modifier
+                            .size(100.dp),
+                        contentScale = ContentScale.Crop
+                    )
                 }
-
             }
 
-//            // Nút xóa sản phẩm
-//            IconButton(onClick = {
-//                onShowDeleteDialog(cart.id, DeleteAction.SINGLE)
-//            }) {
-//                Icon(
-//                    imageVector = Icons.Default.Delete,
-//                    contentDescription = "Remove Item"
-//                )
-//            }
+            // Cột chứa thông tin sản phẩm
+            Column(
+                modifier = Modifier
+                    .weight(1f)
+                    .padding(start = paddingValue)
+            ) {
+                // Tên sản phẩm
+                Text(
+                    text = product.name,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = fontSizeTitle,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis
+                )
+                Spacer(modifier = Modifier.height(paddingValue))
+
+                // Giá sản phẩm
+                Text(
+                    text = formatGiaTienInt(product.selling_price),
+                    color = Color.Red,
+                    fontSize = fontSizePrice,
+                    fontWeight = FontWeight.SemiBold
+                )
+
+                // Bộ điều khiển số lượng (nằm dưới giá)
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier
+                        .background(
+                            color = Color.Transparent,
+                            shape = RoundedCornerShape(8.dp)
+                        )
+                        .border(
+                            width = 1.dp,
+                            color = Color(0xFFE0E0E0),
+                            shape = RoundedCornerShape(8.dp)
+                        )
+                        .padding(end = paddingValue)
+                ) {
+                    // Nút giảm số lượng
+                    IconButton(
+                        onClick = {
+                            if (soLuong > 1) {
+                                soLuong--
+                                //product.quantity = soLuong
+                                val updateQuantity = AddCartRequest(
+                                    customer_id = idCustomer,
+                                    product_id = product.id,
+                                    quantity = soLuong
+                                )
+                                cartViewModel.updateQuantity(updateQuantity)
+                                val index = selectedProducts.indexOfFirst { it.first == product.id }
+                                if (index != -1) {
+                                    selectedProducts[index] = Triple(product.id, soLuong, product.id.toInt())
+                                } else if (selectedItems[product.id] == true) {
+                                    selectedProducts.add(Triple(product.id, soLuong, product.id.toInt()))
+                                }
+                                onCalculateTotalPrice()
+                            }
+                        },
+                        modifier = Modifier
+                            .size(quantityButtonSize)
+                            .background(
+                                color = Color.Transparent,
+                                shape = RoundedCornerShape(6.dp)
+                            )
+                    ) {
+                        Icon(
+                            imageVector = Icons.Filled.Remove,
+                            contentDescription = "Decrease Quantity",
+                            modifier = Modifier.size(quantityButtonSize * 0.7f),
+                        )
+                    }
+
+                    // Hiển thị số lượng
+                    AnimatedContent(
+                        targetState = soLuong,
+                        transitionSpec = {
+                            (slideInVertically { height -> height } + fadeIn()) togetherWith
+                                    (slideOutVertically { height -> -height } + fadeOut())
+                        }, label = ""
+                    ) { targetCount ->
+                        Text(
+                            text = targetCount.toString(),
+                            modifier = Modifier
+                                .padding(horizontal = paddingValue)
+                                .width(quantityButtonSize)
+                                .background(Color.White, RoundedCornerShape(4.dp))
+                                .border(1.dp, Color.Transparent, RoundedCornerShape(4.dp)),
+                            fontSize = fontSizePrice,
+                            fontWeight = FontWeight.Bold,
+                            textAlign = TextAlign.Center,
+                            color = Color.Black
+                        )
+                    }
+
+                    // Nút tăng số lượng
+                    IconButton(
+                        onClick = {
+                            if (soLuong < 500) {
+                                soLuong++
+                                //product.quantity = soLuong
+                                val updateQuantity = AddCartRequest(
+                                    customer_id = idCustomer,
+                                    product_id = product.id,
+                                    quantity = soLuong
+                                )
+                                cartViewModel.updateQuantity(updateQuantity)
+                                val index = selectedProducts.indexOfFirst { it.first == product.id }
+                                if (index != -1) {
+                                    selectedProducts[index] = Triple(product.id, soLuong, product.id.toInt())
+                                }else if (selectedItems[product.id] == true) {
+                                    selectedProducts.add(Triple(product.id, soLuong, product.id.toInt()))
+                                }
+                                onCalculateTotalPrice()
+                            }
+                        },
+                        modifier = Modifier
+                            .size(quantityButtonSize)
+                            .background(
+                                color = Color.Transparent,
+                                shape = RoundedCornerShape(6.dp)
+                            )
+                    ) {
+                        Icon(
+                            imageVector = Icons.Filled.Add,
+                            contentDescription = "Increase Quantity",
+                            modifier = Modifier.size(quantityButtonSize * 0.7f),
+                        )
+                    }
+                }
+            }
         }
     }
 }
@@ -209,66 +338,84 @@ fun CartItem(
 fun CartScreen(
     navController: NavController,
     idCustomer: String,
-    username: String
+    username: String,
+    token: String
 ) {
     val cartViewModel: CartViewModel = viewModel()
-    val deviceViewModel: DeviceViewModel = viewModel()
     val addressViewModel: AddressViewModel = viewModel()
 
     // Lấy danh sách giỏ hàng và sản phẩm
-    val listCart = cartViewModel.listCart
+    val uiState by cartViewModel.uiState.collectAsState()
+    val listProductCart by cartViewModel.listProductCart.collectAsState()
     val listAddress = addressViewModel.listAddress
-    val listAllDevice = deviceViewModel.listAllDevice
 
     // Biến lưu tổng tiền
-    var totalPrice by remember { mutableDoubleStateOf(0.0) }
-
+    var totalPrice by remember { mutableIntStateOf(0) }
     // Biến lưu trạng thái checkbox của từng sản phẩm
-    val selectedItems = remember { mutableStateMapOf<Int, Boolean>() }
+    val selectedItems = remember { mutableStateMapOf<String, Boolean>() }
     // Lưu thông tin sản phẩm để truyền qua màn hình thanh toán
-    val selectedProducts = remember { mutableListOf<Triple<Int, Int, Int>>() }
+    val selectedProducts = remember { mutableListOf<Triple<String, Int, Int>>() }
 
     var showDialog by remember { mutableStateOf(false) }
     var openDialog by remember { mutableStateOf(false) }
     var showDialogDelete by remember { mutableStateOf(false) }
 
     // Hàm tính tổng tiền
-    fun calculateTotalPrice() {
-        totalPrice = if (listCart.isEmpty()) {
-            0.0
+    fun calculateTotalPrice(products: List<ProductInCart>) {
+        totalPrice = if (products.isEmpty()) {
+            0
         } else {
-            listCart.filter { selectedItems[it.id] == true }.sumOf { giohang ->
-                val device = listAllDevice.find { it.idDevice == giohang.idDevice }
-                val gia = device?.sellingPrice ?: 0.0
-                gia * giohang.stock
+            products.filter { selectedItems[it.id] == true }.sumOf { product ->
+                product.selling_price * product.quantity
             }
         }
     }
 
     // Lấy dữ liệu và tính tổng tiền ban đầu
     LaunchedEffect(idCustomer) {
-        cartViewModel.getCartByIdCustomer(idCustomer)
-        deviceViewModel.getAllDevice()
-        addressViewModel.getAddressByIdCustomer(idCustomer)
+        cartViewModel.getCartProducts(idCustomer)
+        addressViewModel.getAddressDefault(idCustomer)
     }
 
     // Khởi tạo selectedItems khi listCart thay đổi
-    LaunchedEffect(listCart) {
-        selectedItems.clear()
-        listCart.forEach { selectedItems[it.id] = false }
-        selectedProducts.clear()
-        calculateTotalPrice()
+    LaunchedEffect(listProductCart) {
+        // Cập nhật selectedItems
+        val currentIds = listProductCart.map { it.id }.toSet()
+        selectedItems.keys.retainAll { it in currentIds } // Xóa các key không còn trong giỏ hàng
+        listProductCart.forEach { product ->
+            if (!selectedItems.containsKey(product.id)) {
+                selectedItems[product.id] = false // Thêm sản phẩm mới với trạng thái không chọn
+            }
+        }
+
+        // Đồng bộ selectedProducts với số lượng mới
+        selectedProducts.removeAll { triple -> triple.first !in currentIds } // Xóa sản phẩm không còn trong giỏ
+        listProductCart.forEach { product ->
+            if (selectedItems[product.id] == true) {
+                val index = selectedProducts.indexOfFirst { it.first == product.id }
+                if (index != -1) {
+                    // Cập nhật số lượng nếu sản phẩm đã được chọn
+                    selectedProducts[index] = Triple(product.id, product.quantity, product.id.toInt())
+                } else {
+                    // Thêm sản phẩm mới nếu được chọn
+                    selectedProducts.add(Triple(product.id, product.quantity, product.id.toInt()))
+                }
+            }
+        }
+
+        // Tính lại tổng tiền
+        calculateTotalPrice(listProductCart)
     }
 
-    // Tính tổng tiền khi dữ liệu giỏ hàng hoặc sản phẩm thay đổi
-    LaunchedEffect(listCart, listAllDevice) {
-        calculateTotalPrice() // Tính tổng tiền khi dữ liệu thay đổi
-    }
+//    // Tính tổng tiền khi dữ liệu giỏ hàng hoặc sản phẩm thay đổi
+//    LaunchedEffect(listProductCart) {
+//        calculateTotalPrice(listProductCart) // Tính tổng tiền khi dữ liệu thay đổi
+//    }
 
     // Biến trạng thái cho dialog xác nhận
     var showDeleteDialog by remember { mutableStateOf(false) }
     var deleteAction by remember { mutableStateOf<DeleteAction?>(null) }
-    var cartIdToDelete by remember { mutableStateOf<Int?>(null) } // Lưu id của sản phẩm cần xóa (cho xóa một sản phẩm)
+    var cartIdToDelete by remember { mutableStateOf<String?>(null) } // Lưu id của sản phẩm cần xóa (cho xóa một sản phẩm)
 
     Scaffold(
         topBar = {
@@ -276,10 +423,9 @@ fun CartScreen(
                 modifier = Modifier.fillMaxWidth(),
                 title = {
                     Text(
-                        "Giỏ hàng (${listCart.size})",
+                        "Giỏ hàng (${listProductCart.size})",
                         textAlign = TextAlign.Start,
                         modifier = Modifier.fillMaxWidth(),
-                        fontWeight = FontWeight.Bold
                     )
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -313,7 +459,6 @@ fun CartScreen(
                 navigationIcon = {
                     // Nút quay lại
                     IconButton(onClick = {
-                        cartViewModel.updateAllCart(idCustomer)
                         navController.popBackStack()
                     }) {
                         Icon(
@@ -325,117 +470,111 @@ fun CartScreen(
             )
         },
         bottomBar = {
-            BottomAppBar(
-                containerColor = Color.White,
+            Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(165.dp)
+                    .background(Color.White)
+                    .padding(10.dp)
             ) {
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(10.dp)
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
                 ) {
                     Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.SpaceBetween
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Checkbox(
-                                checked = selectedItems.isNotEmpty() && selectedItems.values.all { it } && listCart.isNotEmpty(),
-                                onCheckedChange = { isChecked ->
-                                    // Cập nhật trạng thái chọn tất cả sản phẩm
-                                    listCart.forEach { cart ->
-                                        selectedItems[cart.id] = isChecked
-                                        if (isChecked) {
-                                            // Thêm sản phẩm vào danh sách selectedProducts
-                                            selectedProducts.add(Triple(cart.idDevice, cart.stock, cart.id))
-                                        } else {
-                                            // Xóa sản phẩm khỏi danh sách selectedProducts
-                                            selectedProducts.removeAll { it.first == cart.idDevice }
-                                        }
+                        Checkbox(
+                            checked = selectedItems.isNotEmpty() && selectedItems.values.all { it } && listProductCart.isNotEmpty(),
+                            onCheckedChange = { isChecked ->
+                                // Cập nhật trạng thái chọn tất cả sản phẩm
+                                listProductCart.forEach { cart ->
+                                    selectedItems[cart.id] = isChecked
+                                    if (isChecked) {
+                                        // Thêm sản phẩm vào danh sách selectedProducts
+                                        selectedProducts.add(Triple(cart.id, cart.quantity, cart.id.toInt()))
+                                    } else {
+                                        // Xóa sản phẩm khỏi danh sách selectedProducts
+                                        selectedProducts.removeAll { it.first == cart.id }
                                     }
-                                    calculateTotalPrice() // Tính lại tổng tiền
-                                },
-                                colors = CheckboxDefaults.colors(
-                                    checkedColor = Color(0xFF5D9EFF),
-                                    uncheckedColor = Color.Gray
-                                )
+                                }
+                                calculateTotalPrice(listProductCart) // Tính lại tổng tiền
+                            },
+                            colors = CheckboxDefaults.colors(
+                                checkedColor = Color(0xFF5D9EFF),
+                                uncheckedColor = Color.Gray
                             )
-                            Text(
-                                text = "Tất cả",
-                                fontSize = 18.sp,
-                                color = Color.Black
-                            )
-                        }
-                        // Hiển thị tổng giá thanh toán
+                        )
                         Text(
-                            "Tổng: ${formatGiaTien(totalPrice)}",
-                            style = TextStyle(color = Color.Red, fontSize = 18.sp)
+                            text = "Tất cả",
+                            fontSize = 18.sp,
+                            color = Color.Black
                         )
                     }
-                    Spacer(modifier = Modifier.height(4.dp))
-                    // Nút mua hàng
-                    Button(
-                        modifier = Modifier.fillMaxWidth(),
-                        onClick = {
-                            if (selectedProducts.isEmpty()) {
-                                showDialog = true // Hiển thị dialog nếu không có sản phẩm nào được chọn
-                            } else if (addressViewModel.listAddress.isEmpty()) { // Kiểm tra danh sách địa chỉ rỗng
-                                openDialog = true // Hiển thị dialog thông báo thêm địa chỉ
-                            } else {
-                                val selectedProductsString = selectedProducts.joinToString(",") { "${it.first}:${it.second}:${it.third}" }
-                                navController.navigate(Screen.Check_Out.route + "?selectedProducts=${selectedProductsString}&tongtien=${totalPrice}&username=${username}")
+                    // Hiển thị tổng giá thanh toán
+                    Text(
+                        "Tổng: ${formatGiaTienInt(totalPrice)}",
+                        style = TextStyle(color = Color.Red, fontSize = 18.sp)
+                    )
+                }
+                // Nút mua hàng
+                Button(
+                    modifier = Modifier.fillMaxWidth(),
+                    onClick = {
+                        if (selectedProducts.isEmpty()) {
+                            showDialog = true // Hiển thị dialog nếu không có sản phẩm nào được chọn
+                        } else if (listAddress.isEmpty()) { // Kiểm tra danh sách địa chỉ rỗng
+                            openDialog = true // Hiển thị dialog thông báo thêm địa chỉ
+                        } else {
+                            val selectedProductsString = selectedProducts.joinToString(",") { "${it.first}:${it.second}:${it.third}" }
+                            navController.navigate(Screen.Check_Out.route + "?selectedProducts=${selectedProductsString}&tongtien=${totalPrice}&username=${username}&id=$idCustomer&token=$token")
+                        }
+                    },
+                    shape = RoundedCornerShape(5.dp),
+                    elevation = ButtonDefaults.buttonElevation(1.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color(0xFF5D9EFF)
+                    )
+                ) {
+                    Text(
+                        "MUA HÀNG",
+                        fontSize = 20.sp
+                    )
+                }
+                if (openDialog) {
+                    AlertDialog(
+                        onDismissRequest = { openDialog = false }, // Đóng khi nhấn ngoài dialog
+                        containerColor = Color.White,
+                        title = {
+                            Text(
+                                text = "Thông báo"
+                            )
+                        },
+                        text = {
+                            Text(
+                                text = "Bạn chưa có địa chỉ giao hàng.\n" +
+                                        "Vui lòng thêm địa chỉ giao hàng!"
+                            )
+                        },
+                        confirmButton = {
+                            Button(
+                                onClick = {
+                                    openDialog = false
+                                    navController.navigate("${Screen.Add_Address.route}?idCustomer=${idCustomer}")
+                                },
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = Color(0xFF5D9EFF)
+                                ),
+                                modifier = Modifier.fillMaxWidth(),
+                                shape = RoundedCornerShape(10.dp)
+                            ) {
+                                Text(
+                                    text = "Thêm địa chỉ",
+                                    fontSize = 18.sp
+                                )
                             }
                         },
-                        shape = RoundedCornerShape(10.dp),
-                        elevation = ButtonDefaults.buttonElevation(2.dp),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = Color(0xFF5D9EFF)
-                        )
-                    ) {
-                        Text(
-                            "MUA HÀNG",
-                            fontSize = 20.sp
-                        )
-                    }
-                    if (openDialog) {
-                        AlertDialog(
-                            onDismissRequest = { openDialog = false }, // Đóng khi nhấn ngoài dialog
-                            title = {
-                                Text(
-                                    text = "Thông báo"
-                                )
-                            },
-                            text = {
-                                Text(
-                                    text = "Bạn chưa có địa chỉ giao hàng." +
-                                            "Vui lòng thêm địa chỉ giao hàng!"
-                                )
-                            },
-                            confirmButton = {
-                                Button(
-                                    onClick = {
-                                        openDialog = false
-                                        navController.navigate("${Screen.Address_Selection.route}?idCustomer=${idCustomer}")
-                                    },
-                                    colors = ButtonDefaults.buttonColors(
-                                        containerColor = Color(0xFF5D9EFF)
-                                    ),
-                                    modifier = Modifier.fillMaxWidth(),
-                                    shape = RoundedCornerShape(10.dp)
-                                ) {
-                                    Text(
-                                        text = "Thêm địa chỉ",
-                                        fontSize = 18.sp
-                                    )
-                                }
-                            }
-                        )
-                    }
+                    )
                 }
             }
         }
@@ -450,16 +589,19 @@ fun CartScreen(
                         onClick = { showDialog = false },
                         colors = ButtonDefaults.buttonColors(
                             containerColor = Color(0xFF5D9EFF)
-                        )
+                        ),
+                        shape = RoundedCornerShape(10.dp)
                     ) {
                         Text("OK")
                     }
-                }
+                },
+                containerColor = Color.White
             )
         }
         if (showDialogDelete) {
             AlertDialog(
                 onDismissRequest = { showDialogDelete = false },
+                containerColor = Color.White,
                 title = { Text(text = "Thông báo") },
                 text = { Text(text = "Vui lòng chọn sản phẩm để xóa.") },
                 confirmButton = {
@@ -467,7 +609,8 @@ fun CartScreen(
                         onClick = { showDialogDelete = false },
                         colors = ButtonDefaults.buttonColors(
                             containerColor = Color(0xFF5D9EFF)
-                        )
+                        ),
+                        shape = RoundedCornerShape(10.dp)
                     ) {
                         Text("OK")
                     }
@@ -481,6 +624,7 @@ fun CartScreen(
                     deleteAction = null
                     cartIdToDelete = null
                 },
+                containerColor = Color.White,
                 title = { Text(text = "Xác nhận xóa") },
                 text = {
                     Text(
@@ -497,16 +641,16 @@ fun CartScreen(
                             when (deleteAction) {
                                 DeleteAction.SINGLE -> {
                                     cartIdToDelete?.let { cartId ->
-                                        cartViewModel.deleteCart(cartId, idCustomer)
-                                        calculateTotalPrice()
+                                        cartViewModel.removeCart(idCustomer, cartId)
+                                        calculateTotalPrice(listProductCart)
                                     }
                                 }
                                 DeleteAction.ALL -> {
                                     val selectedIds = selectedItems.filterValues { it }.keys.toList()
-                                    cartViewModel.deleteAllSelectedCarts(selectedIds, idCustomer)
+                                    cartViewModel.removeAllSelectedCarts(selectedIds, idCustomer)
                                     selectedItems.clear()
                                     selectedProducts.clear()
-                                    calculateTotalPrice()
+                                    calculateTotalPrice(listProductCart)
                                 }
                                 null -> {}
                             }
@@ -516,7 +660,8 @@ fun CartScreen(
                         },
                         colors = ButtonDefaults.buttonColors(
                             containerColor = Color(0xFF5D9EFF)
-                        )
+                        ),
+                        shape = RoundedCornerShape(10.dp)
                     ) {
                         Text("Xóa")
                     }
@@ -529,65 +674,87 @@ fun CartScreen(
                             cartIdToDelete = null
                         },
                         colors = ButtonDefaults.buttonColors(
-                            containerColor = Color.Gray
-                        )
+                            containerColor = Color.LightGray
+                        ),
+                        shape = RoundedCornerShape(10.dp)
                     ) {
                         Text("Hủy")
                     }
                 }
             )
         }
-        // Danh sách sản phẩm
-        LazyColumn(
-            modifier = Modifier.padding(padding)
-                .fillMaxSize()
-                .background(Color.White)
-        ) {
-            if (listCart.isEmpty()) {
-                item {
-                    Text(
-                        text = "Giỏ hàng trống!",
-                        fontSize = 20.sp,
-                        textAlign = TextAlign.Center,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(16.dp)
+        when (uiState) {
+            is CartViewModel.UiState.Initial, is CartViewModel.UiState.Loading -> {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(Color.White)
+                        .padding(16.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    CircularProgressIndicator(
+                        color = Color(0xFF5D9EFF),
+                        strokeWidth = 4.dp,
+                        modifier = Modifier.size(48.dp)
                     )
                 }
-            } else if (listAllDevice.isEmpty()) {
-                item {
+            }
+            is CartViewModel.UiState.SuccessGet, is CartViewModel.UiState.SuccessAdd -> {
+                val response = (uiState as? CartViewModel.UiState.SuccessGet)?.response
+                    ?: (uiState as? CartViewModel.UiState.SuccessGet)?.response
+                if (response?.data.isNullOrEmpty()) {
                     Box(
                         modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(16.dp),
-                        contentAlignment = Alignment.Center
+                            .fillMaxSize()
+                            .background(Color.White)
                     ) {
-                        CircularProgressIndicator(
-                            color = Color(0xFF5D9EFF),
-                            strokeWidth = 4.dp,
-                            modifier = Modifier.size(48.dp)
+                        Text(
+                            text = "Giỏ hàng của bạn đang trống !",
+                            modifier = Modifier.align(Alignment.Center),
+                            textAlign = TextAlign.Center,
                         )
+                    }
+                } else {
+                    // Danh sách sản phẩm
+                    LazyColumn(
+                        modifier = Modifier.padding(padding)
+                            .fillMaxSize()
+                            .background(Color.White)
+                    ) {
+                        items(response?.data ?: emptyList()) { product ->
+                            CartItem(
+                                product = product,
+                                idCustomer = idCustomer,
+                                username = username,
+                                token = token,
+                                selectedItems = selectedItems,
+                                selectedProducts = selectedProducts,
+                                cartViewModel = cartViewModel,
+                                navController = navController,
+                                onCalculateTotalPrice = { calculateTotalPrice(listProductCart) },
+                                onShowDeleteDialog = { cartId, action ->
+                                    cartIdToDelete = cartId
+                                    deleteAction = action
+                                    showDeleteDialog = true
+                                }
+                            )
+                        }
                     }
                 }
-            } else {
-                items(listCart) { cart ->
-                    val sanPham = listAllDevice.find { it.idDevice == cart.idDevice }
-                    if (sanPham != null) {
-                        CartItem(
-                            cart = cart,
-                            sanPham = sanPham,
-                            selectedItems = selectedItems,
-                            selectedProducts = selectedProducts,
-                            cartViewModel = cartViewModel,
-                            navController = navController,
-                            onCalculateTotalPrice = { calculateTotalPrice() },
-                            onShowDeleteDialog = { cartId, action ->
-                                cartIdToDelete = cartId
-                                deleteAction = action
-                                showDeleteDialog = true
-                            }
-                        )
-                    }
+            }
+            is CartViewModel.UiState.Error -> {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(Color.White)
+                        .padding(16.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    CircularProgressIndicator(
+                        color = Color(0xFF5D9EFF),
+                        strokeWidth = 4.dp,
+                        modifier = Modifier.size(48.dp)
+                    )
                 }
             }
         }

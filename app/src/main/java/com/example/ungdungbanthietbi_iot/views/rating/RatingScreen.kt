@@ -1,8 +1,12 @@
 package com.example.ungdungbanthietbi_iot.views.rating
 
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import android.net.Uri
+import android.util.Log
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -17,20 +21,19 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.outlined.Star
-import androidx.compose.material3.BottomAppBar
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Checkbox
-import androidx.compose.material3.CheckboxDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Snackbar
@@ -40,7 +43,9 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -48,37 +53,65 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import coil.compose.AsyncImage
-import com.example.ungdungbanthietbi_iot.models.Review
+import com.example.ungdungbanthietbi_iot.R
+import com.example.ungdungbanthietbi_iot.api.ReviewRequestCreate
 import com.example.ungdungbanthietbi_iot.viewModels.ReviewViewModel
-import com.example.ungdungbanthietbi_iot.utils.getCurrentTimestamp
+import com.example.ungdungbanthietbi_iot.views.components.bitmapToBase64
+import com.example.ungdungbanthietbi_iot.views.components.compressImage
+import com.example.ungdungbanthietbi_iot.views.components.uriToByteArray
 import kotlinx.coroutines.delay
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun RatingScreen(navController: NavController, idCustomer: String?, idDevice: Int) {
+fun RatingScreen(navController: NavController, idCustomer: String, idDevice: String) {
+    val context = LocalContext.current
     val reviewViewModel: ReviewViewModel = viewModel()
 
-    var rating by remember { mutableStateOf(0) }
+    var rating by remember { mutableIntStateOf(0) }
     var comment by remember { mutableStateOf("") }
-    var selectedImage by remember { mutableStateOf<Uri?>(null) }
-    var isAnonymous by remember { mutableStateOf(false) }
+    var selectedImageUri by remember { mutableStateOf<Uri?>(null) }
+    var base64String by remember { mutableStateOf<String?>(null) }
 
+    val error by reviewViewModel.error.collectAsState()
+    val isLoading by reviewViewModel.isLoading.collectAsState()
     val showSnackbar = remember { mutableStateOf(false) }
     val snackbarMessage = remember { mutableStateOf("") }
 
-    // Launcher để chọn ảnh từ thư viện
-    val launcher = rememberLauncherForActivityResult(
+    val imagePickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
     ) { uri: Uri? ->
         uri?.let {
-            selectedImage = it
+            selectedImageUri = it
+            try {
+                val byteArray = uriToByteArray(context, it)
+                byteArray?.let { bytes ->
+                    val originalBitmap = BitmapFactory.decodeByteArray(bytes, 0, bytes.size)
+                    val compressedBytes = compressImage(bytes, 80, 200)
+                    base64String = compressedBytes?.let { bitmapToBase64(BitmapFactory.decodeByteArray(it, 0, it.size)) }
+                    Log.d("ImagePicker", "Uri: $it")
+                    Log.d("ImagePicker", "ByteArray size: ${bytes.size}")
+                    Log.d("ImagePicker", "Base64String: ${base64String?.take(100)?.plus("...") ?: "null"}")
+                    Log.d("ImagePicker", "Base64String Length: ${base64String?.length ?: 0}")
+                } ?: run {
+                    Log.e("ImagePicker", "Failed to convert URI to byte array")
+                    snackbarMessage.value = "Không thể tải ảnh, vui lòng thử lại."
+                    showSnackbar.value = true
+                }
+            } catch (e: Exception) {
+                Log.e("ImagePicker", "Error processing image: ${e.message}")
+                snackbarMessage.value = "Lỗi khi xử lý ảnh: ${e.message}"
+                showSnackbar.value = true
+            }
         }
     }
 
@@ -88,7 +121,7 @@ fun RatingScreen(navController: NavController, idCustomer: String?, idDevice: In
                 title = { Text("Đánh giá sản phẩm", fontWeight = FontWeight.Bold) },
                 navigationIcon = {
                     IconButton(onClick = { navController.popBackStack() }) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Back")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -99,89 +132,58 @@ fun RatingScreen(navController: NavController, idCustomer: String?, idDevice: In
             )
         },
         bottomBar = {
-            BottomAppBar(
-                containerColor = Color.Transparent,
+            Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(170.dp)
+                    .background(Color.White)
+                    .padding(horizontal = 10.dp).padding(bottom = 10.dp)
             ) {
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(10.dp)
-                ) {
-                    if (showSnackbar.value) {
-                        LaunchedEffect(Unit) {
-                            delay(3000)
-                            showSnackbar.value = false
-                        }
-                        Snackbar(
-                            modifier = Modifier.padding(16.dp),
-                            containerColor = Color.White,
-                            contentColor = Color.Gray
-                        ) {
-                            Text(snackbarMessage.value)
-                        }
+                if (showSnackbar.value) {
+                    LaunchedEffect(Unit) {
+                        delay(3000)
+                        showSnackbar.value = false
                     }
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.SpaceBetween
+                    Snackbar(
+                        modifier = Modifier.padding(16.dp),
+                        containerColor = Color.White,
+                        contentColor = Color.Gray
                     ) {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            modifier = Modifier.padding(bottom = 1.dp)
-                        ) {
-                            Checkbox(
-                                checked = isAnonymous,
-                                onCheckedChange = { isAnonymous = it },
-                                colors = CheckboxDefaults.colors(
-                                    checkedColor = Color(0xFF5D9EFF),
-                                    uncheckedColor = Color.Gray
-                                )
-                            )
-                            Text(
-                                text = "Đánh giá ẩn danh",
-                                fontSize = 16.sp,
-                                modifier = Modifier.clickable { isAnonymous = !isAnonymous }
-                            )
-                        }
+                        Text(snackbarMessage.value)
                     }
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Button(
-                        onClick = {
-                            if (idCustomer != null) {
-                                val addReview = Review(
-                                    idReview = 0,
-                                    idCustomer = if (isAnonymous) "Anonymous" else idCustomer,
-                                    idEmployee = "Null",
-                                    idDevice = idDevice,
-                                    comment = comment,
-                                    rating = rating,
-                                    response = "Null",
-                                    note = "Null",
-                                    created_at = getCurrentTimestamp(),
-                                    updated_at = getCurrentTimestamp(),
-                                    status = 1
-                                )
-                                reviewViewModel.addReview(addReview)
-                            }
+                }
+                if (error != null) {
+                    Text(
+                        text = "Lỗi: $error",
+                        color = MaterialTheme.colorScheme.error,
+                        modifier = Modifier.padding(8.dp)
+                    )
+                }
+                Spacer(modifier = Modifier.height(8.dp))
+                Button(
+                    onClick = {
+                        if (!isLoading) {
+                            val createReview = ReviewRequestCreate(
+                                customer_id = idCustomer,
+                                product_id = idDevice,
+                                comment = comment,
+                                image = base64String,
+                                rating = rating
+                            )
+                            reviewViewModel.addReview(createReview)
                             showSnackbar.value = true
                             snackbarMessage.value = "Đánh giá của bạn đã được gửi thành công!"
                             navController.popBackStack()
-                        },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(50.dp),
-                        shape = RoundedCornerShape(5.dp),
-                        elevation = ButtonDefaults.buttonElevation(5.dp),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = Color(0xFF5D9EFF),
-                            contentColor = Color.White
-                        )
-                    ) {
-                        Text(text = "Gửi đánh giá", fontSize = 20.sp)
-                    }
+                        }
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(10.dp),
+                    elevation = ButtonDefaults.buttonElevation(1.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color(0xFF5D9EFF),
+                        contentColor = Color.White
+                    )
+                ) {
+                    Text(text = if (isLoading) "Đang gửi..." else "Gửi đánh giá", fontSize = 20.sp)
                 }
             }
         }
@@ -189,6 +191,7 @@ fun RatingScreen(navController: NavController, idCustomer: String?, idDevice: In
         LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
+                .background(Color.White)
                 .padding(paddingValues)
                 .padding(16.dp)
         ) {
@@ -243,21 +246,19 @@ fun RatingScreen(navController: NavController, idCustomer: String?, idDevice: In
                     modifier = Modifier.padding(bottom = 8.dp)
                 )
 
-                // Thay thế LazyRow bằng một Box đơn lẻ và phóng to kích thước
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(200.dp) // Phóng to chiều cao ảnh
+                        .height(200.dp)
                         .clip(RoundedCornerShape(8.dp))
                         .border(1.dp, Color.Gray, RoundedCornerShape(8.dp))
                         .background(Color.White)
                         .clickable {
-                            launcher.launch("image/*")
+                            imagePickerLauncher.launch("image/*")
                         },
                     contentAlignment = Alignment.Center
                 ) {
-                    if (selectedImage == null) {
-                        // Hiển thị icon thêm nếu chưa có ảnh
+                    if (selectedImageUri == null) {
                         Column(
                             horizontalAlignment = Alignment.CenterHorizontally
                         ) {
@@ -275,12 +276,15 @@ fun RatingScreen(navController: NavController, idCustomer: String?, idDevice: In
                             )
                         }
                     } else {
-                        // Hiển thị ảnh đã chọn, lấp đầy toàn bộ không gian
                         AsyncImage(
-                            model = selectedImage,
+                            model = selectedImageUri,
                             contentDescription = "Ảnh đánh giá",
-                            modifier = Modifier.fillMaxSize(),
-                            contentScale = ContentScale.Fit  // Đảm bảo ảnh lắp đầy ô chứa
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .clip(RoundedCornerShape(8.dp)),
+                            contentScale = ContentScale.Crop,
+                            placeholder = painterResource(android.R.drawable.ic_menu_gallery),
+                            error = painterResource(android.R.drawable.ic_menu_gallery)
                         )
                     }
                 }

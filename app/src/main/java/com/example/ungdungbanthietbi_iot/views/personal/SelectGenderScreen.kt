@@ -16,7 +16,6 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.graphics.Color
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.ungdungbanthietbi_iot.viewModels.CustomerViewModel
-import com.example.ungdungbanthietbi_iot.models.Gender
 
 
 /*Người thực hiện: Nguyễn Mạnh Cường
@@ -51,16 +50,7 @@ fun GenderSelectionDialog(customerId:String,onDismiss: () -> Unit, onGenderSelec
         confirmButton = {
             Button(
                 onClick = {
-                    onGenderSelected(selectedGender)
-                    if(selectedGender == "Nam"){
-                        gender = 0
-                    }else if(selectedGender == "Nữ"){
-                        gender = 1
-                    }
-                    val g: Gender
-                    g = Gender(customerId,gender)
-                    genderModel.updateGender(g)
-                    onDismiss()
+
                 }
             )
             {

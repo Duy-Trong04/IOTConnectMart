@@ -1,17 +1,22 @@
 package com.example.ungdungbanthietbi_iot.viewModels
 
+import android.content.Context
 import android.util.Log
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.ungdungbanthietbi_iot.api.SendTokenRequest
 import com.example.ungdungbanthietbi_iot.config.RetrofitClient
+import com.example.ungdungbanthietbi_iot.dataStore
 import com.example.ungdungbanthietbi_iot.models.Notice
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
@@ -22,22 +27,6 @@ class NoticeViewModel : ViewModel(){
 
     var noticeUpdateResult by mutableStateOf("")
         private set
-
-    var noticeAddResult by mutableStateOf("")
-
-    fun getNoticeByIdCustomer(idUser: String?) {
-        viewModelScope.launch {
-            try {
-                val response = withContext(Dispatchers.IO) {
-                    RetrofitClient.noticeAPIService.getNoticeByIdCustomer(idUser)
-                }
-                _listNotice.value = response.notice ?: emptyList()
-            } catch (e: Exception) {
-                Log.e("Notice Error", "Lỗi khi lấy thông báo: ${e.message}")
-                _listNotice.value = emptyList()
-            }
-        }
-    }
 
     fun updateNotice(notice: Notice) {
         viewModelScope.launch {
@@ -56,17 +45,43 @@ class NoticeViewModel : ViewModel(){
             }
         }
     }
-    fun addNotice(notice: Notice) {
-        viewModelScope.launch {
+
+    fun sendTokenToServer(token: SendTokenRequest, context: Context) {
+        viewModelScope.launch(Dispatchers.IO) {
             try {
-                val response = RetrofitClient.noticeAPIService.addNotice(notice)
-                noticeAddResult = if (response.success) {
-                    "Thành công: ${response.message}"
+                val preferences = context.dataStore.data.first()
+                val accessToken = preferences[stringPreferencesKey("access_token")] ?: ""
+                Log.d("Token User", accessToken)
+                val authHeader = "Bearer $accessToken"
+                Log.d("Token User", authHeader)
+                val response = RetrofitClient.noticeAPIService.sendTokenDevice(authHeader, token )
+                if (response.isSuccessful) {
+                    Log.i("FCM Token", "Token sent successfully")
                 } else {
-                    "Thất bại: ${response.message}"
+                    Log.e("FCM Token", "Failed to send token: ${response.code()} - ${response.errorBody()?.string()}")
                 }
             } catch (e: Exception) {
-                Log.e("Add Notice", "Lỗi kết nối: ${e.message}")
+                Log.e("FCM Token", "Error sending token: ${e.message}")
+            }
+        }
+    }
+
+    fun sendToken(token: SendTokenRequest, context: Context) {
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                val preferences = context.dataStore.data.first()
+                val accessToken = preferences[stringPreferencesKey("access_token")] ?: ""
+                Log.d("Token User", accessToken)
+                val authHeader = "Bearer $accessToken"
+                Log.d("Token User", authHeader)
+                val response = RetrofitClient.noticeAPIServiceEcom.sendToken(authHeader, token )
+                if (response.isSuccessful) {
+                    Log.i("FCM Token", "Token sent successfully")
+                } else {
+                    Log.e("FCM Token", "Failed to send token: ${response.code()} - ${response.errorBody()?.string()}")
+                }
+            } catch (e: Exception) {
+                Log.e("FCM Token", "Error sending token: ${e.message}")
             }
         }
     }

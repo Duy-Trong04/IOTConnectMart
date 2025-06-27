@@ -35,45 +35,57 @@ import com.example.ungdungbanthietbi_iot.models.Order
 import com.example.ungdungbanthietbi_iot.viewModels.OrderViewModel
 import com.example.ungdungbanthietbi_iot.navigation.Screen
 import com.example.ungdungbanthietbi_iot.utils.formatDate
+import com.example.ungdungbanthietbi_iot.utils.getCurrentTimestampEX
 import kotlinx.coroutines.launch
+import java.text.SimpleDateFormat
+import java.util.Locale
 
+// Mock data for notices
+val mockNotices = listOf(
+    Notice(
+        id = 1,
+        idUser = "user123",
+        type = "admin_order_confirmation",
+        text = "Đơn hàng #1 đang chờ xác nhận",
+        created_at = "2025-06-10T10:05:00Z",
+        status = 1
+    ),
+    Notice(
+        id = 2,
+        idUser = "user123",
+        type = "order_status_change",
+        text = "Đơn hàng #1 đã được xác nhận",
+        created_at = "2025-06-10T10:10:00Z",
+        status = 0
+    ),
+    Notice(
+        id = 3,
+        idUser = "user123",
+        type = "order_status_change",
+        text = "Đơn hàng #2 đang xử lý",
+        created_at = "2025-06-09T15:35:00Z",
+        status = 1
+    ),
+    Notice(
+        id = 4,
+        idUser = "user123",
+        type = "promotion",
+        text = "Khuyến mãi 20% cho đơn hàng tiếp theo!",
+        created_at = "2025-06-09T08:00:00Z",
+        status = 1
+    )
+)
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun NotificationScreen(navController: NavController, idUser: String?) {
-    val noticeViewModel: NoticeViewModel = viewModel()
-    val orderViewModel: OrderViewModel = viewModel()
-    val listNotice by noticeViewModel.listNotice.collectAsState()
-    val listOrders by orderViewModel.listAllOrderOfCustomer.collectAsState()
-    val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
+    var notices by remember { mutableStateOf(mockNotices) }
+    var selectedTab by remember { mutableStateOf(0) }
+    val tabs = listOf("Tôi", "Admin")
 
-    // Biến để làm mới danh sách thông báo khi quay lại
-    var refreshKey by remember { mutableStateOf(0) }
-
-    LaunchedEffect(Unit) {
-        // Khởi tạo SharedPreferences cho OrderViewModel
-        orderViewModel.initialize(context)
-        noticeViewModel.getNoticeByIdCustomer(idUser)
-        orderViewModel.getAllOrderByCustomer(idUser ?: "")
-        orderViewModel.startOrderStatusCheck(idUser ?: "")
-    }
-    // Lắng nghe sự kiện quay lại từ màn hình chi tiết
-    LaunchedEffect(navController) {
-        navController.currentBackStackEntry?.savedStateHandle?.getLiveData<String>("refresh")
-            ?.observe(navController.currentBackStackEntry!!) {
-                refreshKey++ // Tăng refreshKey để làm mới dữ liệu
-            }
-    }
-    // Gom thông báo theo đơn hàng
-    val groupedNotices = listNotice
-        .filter { it.type == "order_status_change" }
-        .groupBy { notice ->
-            listOrders.find { order -> notice.text.contains("#${order.id}") }?.id ?: 0
-        }
-        .filterKeys { it != 0 }
-
-    // Lấy các thông báo không liên quan đến đơn hàng
-    val otherNotices = listNotice.filter { it.type != "order_status_change" }
+    // Filter notices for each tab
+    val userNotices = notices.filter { it.type == "order_status_change" }
+    val adminNotices = notices.filter { it.type != "order_status_change" }
 
     Scaffold(
         topBar = {
@@ -97,52 +109,101 @@ fun NotificationScreen(navController: NavController, idUser: String?) {
             }
         }
     ) { paddingValues ->
-        if (idUser == "" || groupedNotices.isEmpty()) {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(paddingValues),
-                contentAlignment = Alignment.Center
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues)
+                .background(Color(0xFFF5F5F5))
+        ) {
+            // Tab Row
+            TabRow(
+                selectedTabIndex = selectedTab,
+                containerColor = Color.White,
+                contentColor = Color(0xFF5D9EFF)
             ) {
-                Text(
-                    text = "Không có thông báo nào",
-                    color = Color.Gray,
-                    fontSize = 16.sp
-                )
+                tabs.forEachIndexed { index, title ->
+                    Tab(
+                        text = { Text(title) },
+                        selected = selectedTab == index,
+                        onClick = { selectedTab = index },
+                        selectedContentColor = Color(0xFF5D9EFF),
+                    )
+                }
             }
-        } else {
-            LazyColumn(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(paddingValues)
-                    .background(Color(0xFFF5F5F5)),
-                contentPadding = PaddingValues(16.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                items(groupedNotices.entries.toList()) { (orderId, notices) ->
-                    val order = listOrders.find { it.id == orderId }
-                    if (order != null) {
-                        NotificationGroupItem(
-                            navController = navController,
-                            order = order,
-                            notices = notices,
-                            noticeViewModel = noticeViewModel,
-                            onNoticesUpdated = {
-                                coroutineScope.launch {
-                                    noticeViewModel.getNoticeByIdCustomer(idUser) // Làm mới danh sách thông báo
-                                }
+
+            // Tab Content
+            when (selectedTab) {
+                0 -> { // Tôi (User) Tab
+                    if (idUser == "" || userNotices.isEmpty()) {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .padding(16.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = "Không có thông báo đơn hàng",
+                                color = Color.Gray,
+                                fontSize = 16.sp
+                            )
+                        }
+                    } else {
+                        LazyColumn(
+                            modifier = Modifier.fillMaxSize(),
+                            contentPadding = PaddingValues(16.dp),
+                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            items(userNotices) { notice ->
+                                NotificationItem(
+                                    navController = navController,
+                                    notice = notice,
+                                    isAdminTab = false,
+                                    onNoticeUpdated = { updatedNotice ->
+                                        notices = notices.map { if (it.id == updatedNotice.id) updatedNotice else it }
+                                    },
+                                    onNoticeRemoved = { noticeId ->
+                                        notices = notices.filter { it.id != noticeId }
+                                    }
+                                )
                             }
-                        )
+                        }
                     }
                 }
-                // Hiển thị các thông báo không liên quan đến đơn hàng (riêng lẻ)
-                items(otherNotices) { notice ->
-                    NotificationItem(
-                        navController = navController,
-                        notice = notice,
-                        orderViewModel = orderViewModel,
-                        noticeViewModel = noticeViewModel
-                    )
+                1 -> { // Admin Tab
+                    if (adminNotices.isEmpty()) {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .padding(16.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = "Không có thông báo từ admin",
+                                color = Color.Gray,
+                                fontSize = 16.sp
+                            )
+                        }
+                    } else {
+                        LazyColumn(
+                            modifier = Modifier.fillMaxSize(),
+                            contentPadding = PaddingValues(16.dp),
+                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            items(adminNotices) { notice ->
+                                NotificationItem(
+                                    navController = navController,
+                                    notice = notice,
+                                    isAdminTab = true,
+                                    onNoticeUpdated = { updatedNotice ->
+                                        notices = notices.map { if (it.id == updatedNotice.id) updatedNotice else it }
+                                    },
+                                    onNoticeRemoved = { noticeId ->
+                                        notices = notices.filter { it.id != noticeId }
+                                    }
+                                )
+                            }
+                        }
+                    }
                 }
             }
         }
@@ -296,27 +357,26 @@ fun NotificationGroupItem(
 fun NotificationItem(
     navController: NavController,
     notice: Notice,
-    orderViewModel: OrderViewModel,
-    noticeViewModel: NoticeViewModel
+    isAdminTab: Boolean,
+    onNoticeUpdated: (Notice) -> Unit,
+    onNoticeRemoved: (Int) -> Unit
 ) {
     val coroutineScope = rememberCoroutineScope()
+    var expanded by remember { mutableStateOf(false) }
 
     Card(
         modifier = Modifier
             .fillMaxWidth()
             .clickable {
-                // Cập nhật trạng thái thông báo thành đã đọc
                 coroutineScope.launch {
-                    if (notice.status == 1) {
-                        val noticeUpdate = notice.copy(status = 0)
-                        noticeViewModel.updateNotice(noticeUpdate)
-                        noticeViewModel.getNoticeByIdCustomer(notice.idUser)
-                    }
-                }
-                // Nếu thông báo liên quan đến đơn hàng, điều hướng đến chi tiết đơn hàng
-                if (notice.type == "order_status_change") {
-                    val orderId = notice.text.substringAfter("#").substringBefore(" ")
-                    navController.navigate("${Screen.Order_Detail.route}?id=${orderId}&totalAmount=0")
+//                    if (notice.status == 1) {
+//                        val updatedNotice = notice.copy(status = 0)
+//                        onNoticeUpdated(updatedNotice)
+//                    }
+//                    if (notice.type == "order_status_change") {
+//                        val orderId = notice.text.substringAfter("#").substringBefore(" ")
+//                        navController.navigate("${Screen.Order_Detail.route}?id=${orderId}&totalAmount=0")
+//                    }
                 }
             },
         shape = RoundedCornerShape(12.dp),
@@ -325,40 +385,113 @@ fun NotificationItem(
         ),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
-        Row(
+        Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(16.dp),
-            verticalAlignment = Alignment.CenterVertically
+                .padding(16.dp)
         ) {
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = notice.type,
-                    fontWeight = if (notice.status == 1) FontWeight.Bold else FontWeight.Normal,
-                    fontSize = 16.sp,
-                    color = MaterialTheme.colorScheme.onSurface
-                )
-                Spacer(modifier = Modifier.height(4.dp))
-                Text(
-                    text = notice.text,
-                    fontSize = 14.sp,
-                    color = Color.Gray,
-                    maxLines = 2
-                )
-                Spacer(modifier = Modifier.height(8.dp))
-                Text(
-                    text = formatDate(notice.created_at),
-                    fontSize = 12.sp,
-                    color = Color.Gray
-                )
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Text(
+                            text = if (notice.type == "order_status_change") "Đơn hàng #${notice.text.substringAfter("#").substringBefore(" ")}" else notice.type,
+                            fontWeight = if (notice.status == 1) FontWeight.Bold else FontWeight.Normal,
+                            fontSize = 16.sp,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                        if (notice.status == 1) {
+                            Box(
+                                modifier = Modifier
+                                    .size(12.dp)
+                                    .clip(CircleShape)
+                                    .background(Color.Red)
+                            )
+                        }
+                    }
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        text = notice.text,
+                        fontSize = 14.sp,
+                        color = Color.Gray,
+                        maxLines = if (expanded) Int.MAX_VALUE else 2
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        text = formatDate(notice.created_at),
+                        fontSize = 12.sp,
+                        color = Color.Gray
+                    )
+                    // Confirmation button only for admin tab with "đang chờ xác nhận"
+                    if (isAdminTab && notice.type == "admin_order_confirmation" && notice.text.contains("đang chờ xác nhận")) {
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Button(
+                            onClick = {
+                                coroutineScope.launch {
+                                    if (notice.status == 1) {
+                                        val updatedNotice = notice.copy(status = 0)
+                                        onNoticeUpdated(updatedNotice)
+                                    }
+                                    onNoticeRemoved(notice.id)
+                                }
+                            },
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = Color(0xFF5D9EFF),
+                                contentColor = Color.White
+                            ),
+                            shape = RoundedCornerShape(10.dp),
+                            modifier = Modifier.align(Alignment.End)
+                        ) {
+                            Text("Xác nhận đơn hàng")
+                        }
+                    }
+                }
+                // Dropdown icon only for user tab (order_status_change)
+                if (notice.type == "order_status_change" && !isAdminTab) {
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Icon(
+                        imageVector = if (expanded) Icons.Default.ArrowDropUp else Icons.Default.ArrowDropDown,
+                        contentDescription = "Toggle dropdown",
+                        modifier = Modifier
+                            .size(24.dp)
+                            .clickable {
+                                expanded = !expanded
+                                coroutineScope.launch {
+                                    if (notice.status == 1) {
+                                        val updatedNotice = notice.copy(status = 0)
+                                        onNoticeUpdated(updatedNotice)
+                                    }
+                                }
+                            }
+                    )
+                }
             }
-            if (notice.status == 1) {
-                Box(
+            // Dropdown content only for user tab
+            if (expanded && notice.type == "order_status_change" && !isAdminTab) {
+                Column(
                     modifier = Modifier
-                        .size(12.dp)
-                        .clip(CircleShape)
-                        .background(Color.Red)
-                )
+                        .fillMaxWidth()
+                        .padding(top = 8.dp)
+                ) {
+                    Text(
+                        text = notice.text,
+                        fontSize = 14.sp,
+                        color = Color.Black
+                    )
+                    Text(
+                        text = formatDate(notice.created_at),
+                        fontSize = 14.sp,
+                        color = Color.Black,
+                        modifier = Modifier.padding(top = 8.dp)
+                    )
+                    HorizontalDivider()
+                }
             }
         }
     }

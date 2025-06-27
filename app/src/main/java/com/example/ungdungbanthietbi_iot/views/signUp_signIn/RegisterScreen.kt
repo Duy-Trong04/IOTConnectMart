@@ -1,28 +1,28 @@
 package com.example.ungdungbanthietbi_iot.views.signUp_signIn
 
+import android.annotation.SuppressLint
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
-import android.util.Log
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.layout.wrapContentHeight
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.AccountBox
-import androidx.compose.material.icons.filled.AccountCircle
-import androidx.compose.material.icons.filled.Email
-import androidx.compose.material.icons.filled.Lock
-import androidx.compose.material.icons.filled.Phone
-import androidx.compose.material.icons.filled.Visibility
-import androidx.compose.material.icons.filled.VisibilityOff
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.outlined.Email
+import androidx.compose.material.icons.outlined.Password
+import androidx.compose.material.icons.outlined.Person
+import androidx.compose.material.icons.outlined.Person2
+import androidx.compose.material.icons.outlined.PhoneAndroid
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -30,11 +30,14 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextField
-import androidx.compose.material3.TextFieldDefaults
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -45,20 +48,19 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
-import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.text.input.PasswordVisualTransformation
-import androidx.compose.ui.text.input.VisualTransformation
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.example.ungdungbanthietbi_iot.R
 import com.example.ungdungbanthietbi_iot.viewModels.AccountViewModel
-import com.example.ungdungbanthietbi_iot.models.AddAccount
-import com.example.ungdungbanthietbi_iot.models.AddCustomer
 import com.example.ungdungbanthietbi_iot.viewModels.CustomerViewModel
 import com.example.ungdungbanthietbi_iot.navigation.Screen
-import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.FocusDirection
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalFocusManager
+import com.example.ungdungbanthietbi_iot.api.RegisterRequest
+import com.example.ungdungbanthietbi_iot.viewModels.RegisterUiState
+import com.example.ungdungbanthietbi_iot.views.components.CustomerTextField
 
 
 /** Giao diện màn hình đăng ký (RegisterScreen)
@@ -78,365 +80,385 @@ import androidx.compose.ui.draw.clip
  * Nội dung cập nhật: chỉnh sửa lại các TextField, layout
  *
  */
-
 @OptIn(ExperimentalMaterial3Api::class)
+@SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
-
 fun RegisterScreen(
     navController: NavController,
     accountViewModel: AccountViewModel,
     customerViewModel: CustomerViewModel
 ) {
+    val focusManager = LocalFocusManager.current
+    val registerUiState by accountViewModel.registerUiState.collectAsState()
+    val isLoading by accountViewModel.isLoading.collectAsState()
 
-    val accountCheckResult by accountViewModel.accountCheckResult
-    val customerCheckResult by customerViewModel.customerCheckResult
-    Log.d("AccountViewModel", "accountCheckResult: $accountCheckResult")
-    Log.d("AccountViewModel", "customerCheckResult: $customerCheckResult")
-
-    // Biến nhận dữ liệu họ từ người dùng
-    var ho by remember { mutableStateOf("") }
-    // Biến nhận dữ liệu tên từ người dùng
-    var ten by remember { mutableStateOf("") }
-    // Biến nhận dữ liệu sdt từ người dùng
-    var sdt by remember { mutableStateOf("") }
-    // Biến nhận dữ liệu email từ người dùng
+    var surname by remember { mutableStateOf("") }
+    var lastname by remember { mutableStateOf("") }
+    var phone by remember { mutableStateOf("") }
     var username by remember { mutableStateOf("") }
-    // Biến nhận dữ liệu password từ người dùng
+    var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
-    // Biến nhận dữ liệu comfirmPassword từ người dùng
-    var comfirmPassword by remember { mutableStateOf("") }
-    // Biến kiểm tra trạng thái hiển thị password
-    var isPasswordVisible by remember { mutableStateOf(false) }
-    // Biến kiểm tra trạng thái hiển thị comfirmPassword
-    var isComfirmPasswordVisible by remember { mutableStateOf(false) }
-    // Biến kiểm tra kết quả đăng nhập
+    var comFirmPassword by remember { mutableStateOf("") }
+    var passwordObscure by remember { mutableStateOf(true) }
+    var comFirmPasswordObscure by remember { mutableStateOf(true) }
     var openDialog by remember { mutableStateOf(false) }
-    var openDialog_Dk by remember { mutableStateOf(false) }
-
-    // Gửi dữ liệu lên server
-    val accountNew = AddAccount(username, username, password)
-    val customerNew = AddCustomer(username, ho, ten, sdt)
-    accountViewModel.check_Dk(accountNew)
-    customerViewModel.check_Dk(customerNew)
-
+    var openDialog_Success by remember { mutableStateOf(false) }
+    var errorMessage by remember { mutableStateOf("") }
     var phoneError by remember { mutableStateOf("") }
 
-    Scaffold(
-        modifier = Modifier.fillMaxWidth(),
-        topBar = {
-        },
-        content = { padding ->
-            LazyColumn(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(16.dp)
-                    .background(Color.White),
-                horizontalAlignment = Alignment.CenterHorizontally,
-            ) {
-                item {
-                    Spacer(modifier = Modifier.height(50.dp))
-
-                    Text(
-                        text = "ĐĂNG KÝ",
-                        fontSize = 27.sp,
-                        color = Color(0xFF085979),
-                        fontWeight = FontWeight.Bold
-                    )
-                    Spacer(modifier = Modifier.height(16.dp))
-                    // Hiển thị logo từ file drawable
-                    Image(
-                        // Thay "logo" bằng tên file ảnh của bạn
-                        painter = painterResource(id = R.drawable.logo9),
-                        contentDescription = "Logo",
-                        modifier = Modifier.size(240.dp).clip(CircleShape)
-                    )
-                    Spacer(modifier = Modifier.height(16.dp))
-                    //Họ
-                    TextField(
-                        value = ho,
-                        onValueChange = { ho = it },
-                        modifier = Modifier.width(350.dp).padding(4.dp),
-                        placeholder = { Text(text = "Họ") },
-                        leadingIcon = {
-                            Icon(
-                                imageVector = Icons.Default.AccountCircle,
-                                contentDescription = "Họ"
-                            )
-                        },
-                        colors = TextFieldDefaults.colors(
-                            focusedContainerColor = Color.White,
-                            unfocusedContainerColor = Color.White,
-                            focusedIndicatorColor = Color(0xFF00C3FF)
-                        ),
-                        singleLine = true,
-                        keyboardOptions = KeyboardOptions.Default.copy(
-                            imeAction = ImeAction.Next
-                        )
-                    )
-
-                    //Tên
-                    TextField(
-                        value = ten,
-                        onValueChange = { ten = it },
-                        modifier = Modifier.width(350.dp).padding(4.dp),
-                        placeholder = { Text(text = "Tên") },
-                        leadingIcon = {
-                            Icon(
-                                imageVector = Icons.Default.AccountBox,
-                                contentDescription = "Tên"
-                            )
-                        },
-                        colors = TextFieldDefaults.colors(
-                            focusedContainerColor = Color.White,
-                            unfocusedContainerColor = Color.White,
-                            focusedIndicatorColor = Color(0xFF00C3FF)
-                        ),
-                        singleLine = true,
-                        keyboardOptions = KeyboardOptions.Default.copy(
-                            keyboardType = KeyboardType.Text,
-                            imeAction = ImeAction.Next
-                        )
-                    )
-
-                    //SDT
-                    TextField(
-                        value = sdt,
-                        onValueChange = {
-                            sdt = it
-                            if (it.matches(Regex("\\d*"))) { // Chỉ cho phép nhập số
-                                sdt = it
-                            }
-                            phoneError = if (it.length == 10) {
-                                ""
-                            } else {
-                                "Số điện thoại phải đúng 10 số"
-                            } },
-                        modifier = Modifier.width(350.dp).padding(4.dp),
-                        placeholder = { Text(text = "SĐT") },
-                        leadingIcon = {
-                            Icon(
-                                imageVector = Icons.Default.Phone,
-                                contentDescription = "SĐT"
-                            )
-                        },
-                        colors = TextFieldDefaults.colors(
-                            focusedContainerColor = Color.White,
-                            unfocusedContainerColor = Color.White,
-                            focusedIndicatorColor = Color(0xFF00C3FF)
-                        ),
-                        singleLine = true,
-                        keyboardOptions = KeyboardOptions.Default.copy(
-                            keyboardType = KeyboardType.Phone, imeAction = ImeAction.Next
-                        )
-                    )
-                    if (phoneError.isNotEmpty()) {
-                        Text(
-                            text = phoneError,
-                            color = Color.Red,
-                            fontSize = 12.sp
-                        )
-                    }
-
-                    //email
-                    TextField(
-                        value = username,
-                        onValueChange = { username = it },
-                        modifier = Modifier.width(350.dp).padding(4.dp),
-                        placeholder = { Text(text = "Username") },
-                        leadingIcon = {
-                            Icon(
-                                imageVector = Icons.Default.Email,
-                                contentDescription = "Username"
-                            )
-                        },
-                        colors = TextFieldDefaults.colors(
-                            focusedContainerColor = Color.White,
-                            unfocusedContainerColor = Color.White,
-                            focusedIndicatorColor = Color(0xFF00C3FF)
-                        ),
-                        singleLine = true,
-                        keyboardOptions = KeyboardOptions.Default.copy(
-                            keyboardType = KeyboardType.Email,
-                            imeAction = ImeAction.Next
-                        )
-                    )
-
-                    // Password
-                    TextField(
-                        value = password,
-                        onValueChange = { password = it },
-                        modifier = Modifier.width(350.dp).padding(4.dp),
-                        placeholder = { Text(text = "Password") },
-                        leadingIcon = {
-                            Icon(
-                                imageVector = Icons.Default.Lock,
-                                contentDescription = "Password"
-                            )
-                        },
-                        trailingIcon = {
-                            IconButton(onClick = { isPasswordVisible = !isPasswordVisible }) {
-                                Icon(
-                                    imageVector = if (isPasswordVisible) Icons.Filled.Visibility else Icons.Filled.VisibilityOff,
-                                    contentDescription = if (isPasswordVisible) "Ẩn mật khẩu" else "Hiện mật khẩu"
-                                )
-                            }
-                        },
-                        colors = TextFieldDefaults.colors(
-                            focusedContainerColor = Color.White,
-                            unfocusedContainerColor = Color.White,
-                            focusedIndicatorColor = Color(0xFF00C3FF)
-                        ),
-                        singleLine = true,
-                        visualTransformation = if (isPasswordVisible) VisualTransformation.None else PasswordVisualTransformation(),
-                        keyboardOptions = KeyboardOptions(
-                            keyboardType = KeyboardType.Password,
-                            imeAction = ImeAction.Next
-                        )
-                    )
-
-                    // Comfirm Password
-                    TextField(
-                        value = comfirmPassword,
-                        onValueChange = { comfirmPassword = it },
-                        modifier = Modifier.width(350.dp).padding(4.dp),
-                        placeholder = { Text(text = "Comfirm Password") },
-                        leadingIcon = {
-                            Icon(
-                                imageVector = Icons.Default.Lock,
-                                contentDescription = "Comfirm Password"
-                            )
-                        },
-                        trailingIcon = {
-                            IconButton(onClick = {
-                                isComfirmPasswordVisible = !isComfirmPasswordVisible
-                            }) {
-                                Icon(
-                                    imageVector = if (isComfirmPasswordVisible) Icons.Filled.Visibility else Icons.Filled.VisibilityOff,
-                                    contentDescription = if (isComfirmPasswordVisible) "Ẩn mật khẩu" else "Hiện mật khẩu"
-                                )
-                            }
-                        },
-                        colors = TextFieldDefaults.colors(
-                            focusedContainerColor = Color.White,
-                            unfocusedContainerColor = Color.White,
-                            focusedIndicatorColor = Color(0xFF00C3FF)
-                        ),
-                        singleLine = true,
-                        visualTransformation = if (isComfirmPasswordVisible) VisualTransformation.None else PasswordVisualTransformation(),
-                        keyboardOptions = KeyboardOptions(
-                            keyboardType = KeyboardType.Password,
-                            imeAction = ImeAction.Done
-                        )
-                    )
-
-                    Spacer(modifier = Modifier.height(16.dp))
-                    Row() {
-                        Text(
-                            text = "Bạn đã có tài khoản? ",
-                            fontSize = 15.sp,
-                            color = Color.Black,
-                            textAlign = TextAlign.Center, fontWeight = FontWeight.Bold
-                        )
-                        Text(
-                            text = "Đăng nhập",
-                            fontSize = 15.sp,
-                            color = Color.Red,
-                            textAlign = TextAlign.Center, fontWeight = FontWeight.Bold,
-                            modifier = Modifier.clickable { /* Chuyển sang màn hình đăng nhập(LoginScreen) */
-                                navController.navigate(Screen.LoginScreen.route)
-                            }
-                        )
-                    }
-
-                    //Button
-                    Spacer(modifier = Modifier.height(16.dp))
-                    Button(
-                        onClick = {
-                            accountViewModel.check_Dk(accountNew)
-                            customerViewModel.check_Dk(customerNew)
-                            if(accountCheckResult == false || customerCheckResult == false) {
-                                // Kiểm tra điều kiện hợp lệ trước khi gửi lên server
-                                if (username.isNotEmpty() && password.isNotEmpty() && comfirmPassword.isNotEmpty() && sdt.isNotEmpty() && ho.isNotEmpty() && ten.isNotEmpty()) {
-                                    if (password == comfirmPassword) {
-                                        // Thực hiện gọi API hoặc gửi dữ liệu tới server
-                                        accountViewModel.addToAccount(accountNew)
-                                        // Ví dụ gọi ViewModel để gửi dữ liệu
-                                        customerViewModel.addToCustomer(customerNew)
-                                        // Điều hướng đến màn hình đăng nhập sau khi thành công
-                                        openDialog_Dk=true
-
-                                    } else {
-                                        openDialog = true  // Nếu mật khẩu không khớp, hiển thị thông báo lỗi
-                                    }
-                                } else {
-                                    openDialog = true  // Nếu thiếu thông tin, hiển thị thông báo lỗi
-                                }
-                                Log.d("AccountViewModel", "Đăng ký thành công\n")
-                            } else if (accountCheckResult == true&& customerCheckResult == true) {
-                                openDialog = true
-                                Log.d("AccountViewModel", "Đăng ký thất bại\n")
-                            }
-                        },
-                        modifier = Modifier
-                            .width(350.dp)
-                            .padding(bottom = 10.dp)
-                            .height(45.dp),
-                        shape = MaterialTheme.shapes.small,
-                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF00C3FF))
-                    ) {
-                        Text(text = "ĐĂNG KÝ", fontSize = 23.sp, fontWeight = FontWeight.Bold)
-                    }
-
-                }
+    // Xử lý phản hồi từ API
+    LaunchedEffect(registerUiState) {
+        when (registerUiState) {
+            is RegisterUiState.Success -> {
+                openDialog_Success = true
+                errorMessage = "Đăng ký thành công\nBạn có thể đăng nhập vào ứng dụng"
+            }
+            is RegisterUiState.Error -> {
+                openDialog = true
+                errorMessage = (registerUiState as RegisterUiState.Error).message
+            }
+            else -> {
+                // Không làm gì khi Idle hoặc Loading
             }
         }
-    )
-    if (openDialog == true) {
-        AlertDialog(
-            onDismissRequest = { openDialog = false }, // Đóng khi nhấn ngoài dialog
-            text = {
-                if (username == "" || password == "" || comfirmPassword == "" || sdt == "" || ho == "" || ten == "") {
-                    Text("Vui lòng nhập đầy đủ thông tin")
-                } else if (password != comfirmPassword) {
-                    Text("Password và Comfirm Password không khớp")
-                }
-                else {
-                    Text("Tài khoản đã tồn tại")
-                }
-            },
-            confirmButton = {
-                Button(
-                    onClick = {
-                        openDialog = false
-                    },
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = Color(0xFF00C3FF)
-                    )
-                ) {
-                    Text("OK")
-                }
-            },
-        )
     }
-    if (openDialog_Dk == true) {
-        AlertDialog(
-            onDismissRequest = { openDialog_Dk = false }, // Đóng khi nhấn ngoài dialog
-            text = {
-                Text("Đăng ký thành công")
-            },
-            confirmButton = {
+
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = {},
+                navigationIcon = {
+                    IconButton(onClick = {
+                        navController.popBackStack()
+                    }) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = "Back Button"
+                        )
+                    }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = Color.Transparent,
+                    navigationIconContentColor = Color(0xFF5D9EFF)
+                )
+            )
+        }
+    ) {
+        Column(
+            verticalArrangement = Arrangement.Top,
+            horizontalAlignment = Alignment.CenterHorizontally,
+            modifier = Modifier.padding(horizontal = 24.dp)
+        ) {
+            Box(modifier = Modifier.height(24.dp))
+            Image(
+                painter = painterResource(id = R.drawable.ill_signup),
+                contentDescription = "Sign up Illustration",
+                modifier = Modifier
+                    .weight(2.7f)
+                    .padding(
+                        horizontal = 32.dp,
+                    ),
+                contentScale = ContentScale.Fit,
+            )
+            Column(
+                verticalArrangement = Arrangement.SpaceAround,
+                horizontalAlignment = Alignment.Start,
+                modifier = Modifier.weight(7.3f),
+            ) {
+                Text(
+                    text = "Đăng ký", style = MaterialTheme.typography.headlineLarge.copy(
+                        fontWeight = FontWeight.Bold,
+                        color = Color(0xFF5D9EFF)
+                    )
+                )
+                CustomerTextField(
+                    value = surname,
+                    onValueChange = {
+                        surname = it
+                    },
+                    hint = "Họ",
+                    leadingIcon = {
+                        Icon(
+                            imageVector = Icons.Outlined.Person,
+                            contentDescription = "Họ",
+                        )
+                    },
+                    keyboardOptions = KeyboardOptions.Default.copy(
+                        imeAction = ImeAction.Next,
+                    ),
+                    keyboardActions = KeyboardActions(
+                        onNext = { focusManager.moveFocus(FocusDirection.Next) }
+                    )
+                )
+                CustomerTextField(
+                    value = lastname,
+                    onValueChange = {
+                        lastname = it
+                    },
+                    hint = "Tên",
+                    leadingIcon = {
+                        Icon(
+                            imageVector = Icons.Outlined.Person2,
+                            contentDescription = "Tên",
+                        )
+                    },
+                    keyboardOptions = KeyboardOptions.Default.copy(
+                        imeAction = ImeAction.Next,
+                    ),
+                    keyboardActions = KeyboardActions(
+                        onNext = { focusManager.moveFocus(FocusDirection.Next) }
+                    )
+                )
+                CustomerTextField(
+                    value = phone,
+                    onValueChange = {
+                        phone = it
+                        if (it.matches(Regex("\\d*"))) {
+                            phone = it
+                        }
+                        phoneError = if (it.length == 10) "" else "Số điện thoại phải đúng 10 số"
+                    },
+                    hint = "Số điện thoại",
+                    leadingIcon = {
+                        Icon(
+                            imageVector = Icons.Outlined.PhoneAndroid,
+                            contentDescription = "Số điện thoại",
+                        )
+                    },
+                    keyboardOptions = KeyboardOptions.Default.copy(
+                        imeAction = ImeAction.Next,
+                    ),
+                    keyboardActions = KeyboardActions(
+                        onNext = { focusManager.moveFocus(FocusDirection.Next) }
+                    )
+                )
+                CustomerTextField(
+                    value = email,
+                    onValueChange = {
+                        email = it
+                    },
+                    hint = "Email ",
+                    leadingIcon = {
+                        Icon(
+                            imageVector = Icons.Outlined.Email,
+                            contentDescription = "Email Field",
+                        )
+                    },
+                    keyboardOptions = KeyboardOptions.Default.copy(
+                        imeAction = ImeAction.Next,
+                    ),
+                    keyboardActions = KeyboardActions(
+                        onNext = { focusManager.moveFocus(FocusDirection.Next) }
+                    )
+                )
+                CustomerTextField(
+                    value = username,
+                    onValueChange = {
+                        username = it
+                    },
+                    hint = "Tài khoản",
+                    leadingIcon = {
+                        Icon(
+                            imageVector = Icons.Outlined.Person,
+                            contentDescription = "Tài khoản",
+                        )
+                    },
+                    keyboardOptions = KeyboardOptions.Default.copy(
+                        imeAction = ImeAction.Next,
+                    ),
+                    keyboardActions = KeyboardActions(
+                        onNext = { focusManager.moveFocus(FocusDirection.Next) }
+                    )
+                )
+                CustomerTextField(
+                    value = password,
+                    onValueChange = {
+                        password = it
+                    },
+                    hint = "Mật khẩu",
+                    leadingIcon = {
+                        Icon(
+                            imageVector = Icons.Outlined.Password,
+                            contentDescription = "Password Field",
+                        )
+                    },
+                    trailingIcon = {
+                        Icon(painter = if (passwordObscure) painterResource(id = R.drawable.ic_outline_visibility_off) else painterResource(
+                            id = R.drawable.ic_outline_visibility
+                        ), contentDescription = "Show Password", modifier = Modifier.clickable {
+                            passwordObscure = !passwordObscure
+                        })
+                    },
+                    obscure = passwordObscure,
+                    keyboardOptions = KeyboardOptions.Default.copy(
+                        imeAction = ImeAction.Next,
+                    ),
+                    keyboardActions = KeyboardActions(
+                        onNext = { focusManager.moveFocus(FocusDirection.Next) }
+                    )
+                )
+                CustomerTextField(
+                    value = comFirmPassword,
+                    onValueChange = {
+                        comFirmPassword = it
+                    },
+                    hint = "Nhập lại mật khẩu",
+                    leadingIcon = {
+                        Icon(
+                            imageVector = Icons.Outlined.Password,
+                            contentDescription = "Password Field",
+                        )
+                    },
+                    trailingIcon = {
+                        Icon(painter = if (comFirmPasswordObscure) painterResource(id = R.drawable.ic_outline_visibility_off) else painterResource(
+                            id = R.drawable.ic_outline_visibility
+                        ), contentDescription = "Show Password", modifier = Modifier.clickable {
+                            comFirmPasswordObscure = !comFirmPasswordObscure
+                        })
+                    },
+                    obscure = comFirmPasswordObscure,
+                    keyboardOptions = KeyboardOptions.Default.copy(
+                        imeAction = ImeAction.Done,
+                    ),
+                    keyboardActions = KeyboardActions(
+                        onDone = { focusManager.clearFocus() }
+                    )
+                )
+
                 Button(
                     onClick = {
-                        openDialog_Dk = false
-                        navController.navigate(Screen.LoginScreen.route)
+                        when {
+                            surname.isEmpty() || lastname.isEmpty() || phone.isEmpty() || email.isEmpty() ||
+                                    username.isEmpty() || password.isEmpty() || comFirmPassword.isEmpty() -> {
+                                errorMessage = "Vui lòng nhập đầy đủ thông tin !"
+                                openDialog = true
+                            }
+                            phoneError.isNotEmpty() -> {
+                                errorMessage = phoneError
+                                openDialog = true
+                            }
+                            password != comFirmPassword -> {
+                                errorMessage = "Mật khẩu và Xác nhận mật khẩu không trùng khớp !"
+                                openDialog = true
+                            }
+                            else -> {
+                                val accountNew = RegisterRequest(
+                                    username = username,
+                                    password = password,
+                                    confirm_password = comFirmPassword,
+                                    surname = surname,
+                                    lastname = lastname,
+                                    phone = phone,
+                                    email = email,
+                                    gender = true
+                                )
+                                accountViewModel.register(accountNew)
+                            }
+                        }
                     },
+                    shape = RoundedCornerShape(16.dp),
+                    modifier = Modifier
+                        .height(48.dp)
+                        .fillMaxWidth(),
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = Color(0xFF00C3FF)
+                        containerColor = Color(0xFF5D9EFF)
                     )
                 ) {
-                    Text("OK")
+                    if (isLoading) {
+                        CircularProgressIndicator(
+                            color = Color.White,
+                            strokeWidth = 4.dp,
+                            modifier = Modifier.size(22.dp)
+                        )
+                    } else {
+                        Text(
+                            text = "Đăng ký",
+                            fontSize = 18.sp
+                        )
+                    }
                 }
-            },
-        )
+
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .wrapContentHeight(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.Center,
+                ) {
+
+                    Text(
+                        "Bạn đã có tài khoản ?",
+                        style = MaterialTheme.typography.bodyMedium,
+                    )
+                    Box(modifier = Modifier.width(8.dp))
+                    Text(
+                        "Đăng nhập !",
+                        style = MaterialTheme.typography.bodyMedium.copy(
+                            color = Color(0xFF5D9EFF),
+                        ),
+                        modifier = Modifier.clickable {
+                            navController.popBackStack()
+                        }
+                    )
+                }
+                Box(modifier = Modifier.height(24.dp))
+            }
+        }
+        if (openDialog) {
+            AlertDialog(
+                onDismissRequest = { openDialog = false },
+                title = { Text(text = "Thông báo") },
+                containerColor = Color.White,
+                text = { Text(errorMessage) },
+                confirmButton = {
+                    Button(
+                        onClick = { openDialog = false },
+                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF5D9EFF)),
+                        shape = RoundedCornerShape(10.dp)
+                    ) {
+                        Text("Xác nhận")
+                    }
+                },
+                dismissButton = {
+                    Button(
+                        onClick = { openDialog = false },
+                        colors = ButtonDefaults.buttonColors(containerColor = Color.LightGray),
+                        shape = RoundedCornerShape(10.dp)
+                    ) {
+                        Text("Hủy")
+                    }
+                }
+            )
+        }
+        if (openDialog_Success) {
+            AlertDialog(
+                onDismissRequest = {
+                    openDialog_Success = false
+                    navController.navigate(Screen.LoginScreen.route)
+                }, // Đóng khi nhấn ngoài dialog
+                title = {
+                    Text("Thông báo")
+                },
+                containerColor = Color.White,
+                text = {
+                    Text(errorMessage)
+                },
+                confirmButton = {
+                    Button(
+                        onClick = {
+                            openDialog_Success = false
+                            navController.navigate(Screen.LoginScreen.route)
+                        },
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = Color(0xFF5F9EFF)
+                        ),
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(10.dp)
+                    ) {
+                        Text("Đăng nhập")
+                    }
+                },
+            )
+        }
     }
 }

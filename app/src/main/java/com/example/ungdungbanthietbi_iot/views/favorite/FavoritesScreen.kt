@@ -1,30 +1,33 @@
 package com.example.ungdungbanthietbi_iot.views.favorite
 
+import android.graphics.Bitmap
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
-import coil.compose.AsyncImage
-import com.example.ungdungbanthietbi_iot.viewModels.DeviceViewModel
 import com.example.ungdungbanthietbi_iot.viewModels.LikedViewModel
 import com.example.ungdungbanthietbi_iot.navigation.Screen
-import java.text.DecimalFormat
+import com.example.ungdungbanthietbi_iot.utils.formatGiaTienInt
+import com.example.ungdungbanthietbi_iot.viewModels.DeviceViewModel
 
 /** Giao diện màn hình yêu thích (FavoritesScreen)
  * -------------------------------------------
@@ -48,22 +51,19 @@ import java.text.DecimalFormat
 fun FavoritesScreen(
     navController: NavController,
     idCustomer:String,
-    username:String
+    username:String,
+    token: String
 ) {
-    val deviceViewModel: DeviceViewModel = viewModel()
     val likedViewModel: LikedViewModel = viewModel()
-
-    val listLiked = likedViewModel.listLiked
-    //Hàm format tiền
-    fun formatGiaTien(gia: Double): String {
-        val formatter = DecimalFormat("#,###,###")
-        return "${formatter.format(gia)}đ"
-    }
+    val deviceViewModel: DeviceViewModel = viewModel()
+    val listLiked by likedViewModel.listLiked.collectAsState()
+    val isLoading by likedViewModel.isLoading.collectAsState()
     // Lấy dữ liệu và tính tổng tiền ban đầu
     LaunchedEffect(idCustomer) {
         likedViewModel.getLikedByIdCustomer(idCustomer)
-        deviceViewModel.getDeviceByLiked(idCustomer)
     }
+
+
 
     Scaffold(
         topBar = {
@@ -71,10 +71,9 @@ fun FavoritesScreen(
                 modifier = Modifier.fillMaxWidth(),
                 title = {
                     Text(
-                        "Yêu thích(${listLiked.size})",
+                        "Yêu thích (${listLiked.size})",
                         textAlign = TextAlign.Start,
                         modifier = Modifier.fillMaxWidth(),
-                        fontWeight = FontWeight.Bold
                     )
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -88,7 +87,7 @@ fun FavoritesScreen(
                         navController.popBackStack()
                     }) {
                         Icon(
-                            imageVector = Icons.Filled.ArrowBack,
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = "Back"
                         )
                     }
@@ -96,83 +95,107 @@ fun FavoritesScreen(
             )
         }
     ) { padding ->
-        // Danh sách sản phẩm
-        LazyColumn(modifier = Modifier.padding(padding)) {
-            if(listLiked.isNotEmpty()) {
+        if(isLoading){
+            Box(modifier = Modifier.fillMaxSize().background(Color.White)) {
+                CircularProgressIndicator(
+                    modifier = Modifier.align(Alignment.Center),
+                    color = Color(0xFF5D9EFF)
+                )
+            }
+        } else if(listLiked.isNotEmpty()) {
+            // Danh sách sản phẩm
+            LazyColumn(
+                modifier = Modifier.padding(padding)
+                    .fillMaxSize()
+                    .background(Color.White)
+            ) {
                 items(listLiked) { liked ->
-                    val device =
-                        deviceViewModel.listDeviceOfCustomer.find { it.idDevice == liked.idDevice }
-                    if (device != null) {
-                        Card(
+                    // Trạng thái bitmap riêng cho từng mục
+                    var bitmap by remember(liked.product_id) { mutableStateOf<Bitmap?>(null) }
+                    // Tải hình ảnh
+                    LaunchedEffect(liked.product_id) {
+                        bitmap = liked.image?.let { deviceViewModel.getDeviceImageBitmapImage(it) }
+                    }
+                    Card(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(8.dp)
+                            .height(170.dp),
+                        elevation = CardDefaults.cardElevation(1.dp),
+                        shape = RoundedCornerShape(5.dp),
+                        colors = CardDefaults.cardColors(containerColor = Color.White),
+                        onClick = {
+                            navController.navigate(Screen.ProductDetailsScreen.route + "?id=${liked.product_id}&idCustomer=${idCustomer}&username=${username}&token=$token")
+                        }
+                    ) {
+                        Row(
                             modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(8.dp)
-                                .height(190.dp),
-                            elevation = CardDefaults.cardElevation(1.dp),
-                            shape = RoundedCornerShape(5.dp),
-                            colors = CardDefaults.cardColors(containerColor = Color.White),
-                            onClick = {
-                                navController.navigate(Screen.ProductDetailsScreen.route + "?id=${device.idDevice}")
-                            }
+                                .fillMaxSize()
+                                .background(Color.White, shape = RoundedCornerShape(8.dp))
+                                .padding(8.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.Start
                         ) {
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxSize()
-                                    .background(Color.White, shape = RoundedCornerShape(8.dp))
-                                    .padding(8.dp),
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.Start
-                            ) {
-                                AsyncImage(
-                                    model = device.image,
-                                    contentDescription = null,
+                            bitmap?.let {
+                                Image(
+                                    bitmap = it.asImageBitmap(),
+                                    contentDescription = liked.name.ifEmpty { "Hình ảnh sản phẩm" },
+                                    modifier = Modifier
+                                        .size(140.dp),
+                                    contentScale = ContentScale.Fit
+                                )
+                            } ?: run {
+                                Image(
+                                    painter = painterResource(id = android.R.drawable.ic_menu_gallery),
+                                    contentDescription = "Hình ảnh sản phẩm",
                                     modifier = Modifier
                                         .size(150.dp),
                                     contentScale = ContentScale.Fit
                                 )
-                                Column(modifier = Modifier.weight(1f)) {
-                                    // Tên sản phẩm
-                                    Text(
-                                        text = device.name,
-                                        fontWeight = FontWeight.Bold,
-                                        fontSize = 20.sp
-                                    )
-                                    Spacer(modifier = Modifier.height(8.dp))
-                                    // Giá sản phẩm
-                                    Text(
-                                        text = "Giá: ${formatGiaTien(device.sellingPrice)}",
-                                        color = Color.Red
-                                    )
-                                    Spacer(modifier = Modifier.height(8.dp))
+                            }
+                            Column(modifier = Modifier.weight(1f)) {
+                                // Tên sản phẩm
+                                Text(
+                                    text = liked.name,
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 20.sp
+                                )
+                                Spacer(modifier = Modifier.height(8.dp))
+                                // Giá sản phẩm
+                                Text(
+                                    text = "Giá: ${formatGiaTienInt(liked.selling_price)}",
+                                    color = Color.Red
+                                )
+                                Spacer(modifier = Modifier.height(8.dp))
 
-                                }
-                                // Nút xóa sản phẩm
-                                IconButton(onClick = {
-                                    likedViewModel.deleteLiked(liked.id)
-                                    likedViewModel.listLiked =
-                                        likedViewModel.listLiked.filter { it.id != liked.id }
-                                }) {
-                                    Icon(
-                                        imageVector = Icons.Default.Delete,
-                                        contentDescription = "Remove Item"
-                                    )
-                                }
+                            }
+                            // Nút xóa sản phẩm
+                            IconButton(onClick = {
+                                likedViewModel.deleteLiked(idCustomer, liked.product_id)
+                                likedViewModel.getLikedByIdCustomer(idCustomer)
+                            }) {
+                                Icon(
+                                    imageVector = Icons.Default.Delete,
+                                    contentDescription = "Remove Item"
+                                )
                             }
                         }
                     }
                 }
+
             }
-            else{
-                item{
-                    Text(
-                        text = "Danh sách yêu thích đang trống!",
-                        fontSize = 20.sp,
-                        textAlign = TextAlign.Center,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(16.dp)
-                    )
-                }
+        }
+        else{
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(Color.White)
+            ) {
+                Text(
+                    text = "Danh sách yêu thích đang trống !",
+                    modifier = Modifier.align(Alignment.Center),
+                    textAlign = TextAlign.Center,
+                )
             }
         }
     }

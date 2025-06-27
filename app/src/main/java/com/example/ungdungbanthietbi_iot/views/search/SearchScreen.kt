@@ -5,13 +5,11 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -44,11 +42,13 @@ import com.example.ungdungbanthietbi_iot.viewModels.DeviceViewModel
 import com.example.ungdungbanthietbi_iot.navigation.Screen
 import android.content.Context
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.History
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.TextButton
@@ -83,7 +83,7 @@ class SearchHistoryManager(context: Context) {
 
         // Lấy danh sách lịch sử hiện tại
         val currentHistory = getSearchHistoryList()
-
+        if (currentHistory.contains(query)) return // Không lưu nếu đã tồn tại
         // Xóa query cũ nếu đã tồn tại để tránh trùng lặp
         val updatedHistory = currentHistory.toMutableList()
         updatedHistory.remove(query)
@@ -156,7 +156,9 @@ class SearchHistoryManager(context: Context) {
 @Composable
 fun SearchScreen(
     navController: NavController,
-    username: String?
+    username: String?,
+    idCustomer: String?,
+    token: String?
 ) {
     val deviceViewModel: DeviceViewModel = viewModel()
     // Lấy từ khóa tìm kiếm từ ViewModel
@@ -185,13 +187,13 @@ fun SearchScreen(
         topBar = {
             TopAppBar(
                 title = {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(8.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
+//                    Row(
+//                        modifier = Modifier
+//                            .fillMaxWidth()
+//                            .padding(8.dp),
+//                        horizontalArrangement = Arrangement.SpaceBetween,
+//                        verticalAlignment = Alignment.CenterVertically
+//                    ) {
                         // Ô nhập liệu tìm kiếm
                         OutlinedTextField(
                             value = searchQuery,
@@ -199,21 +201,24 @@ fun SearchScreen(
                                 deviceViewModel.updateSearchQuery(newQuery)
                             },
                             modifier = Modifier
-                                .weight(1f)
-                                .height(50.dp)
+                                .fillMaxWidth(1f)
+                                .padding(bottom = 5.dp)
                                 .focusRequester(focusRequester), // Gắn FocusRequester
                             colors = TextFieldDefaults.colors(
                                 unfocusedContainerColor = Color.White,
                                 focusedContainerColor = Color.White,
                                 focusedTextColor = Color.Black,
-                                unfocusedTextColor = Color.Black
+                                unfocusedTextColor = Color.Black,
+                                unfocusedIndicatorColor = Color.Transparent,
+                                focusedIndicatorColor = Color.Transparent,
+                                cursorColor = Color(0xFF5D9EFF)
                             ),
                             trailingIcon = {
                                 if (searchQuery.isNotEmpty()) {
                                     IconButton(
                                         onClick = { deviceViewModel.updateSearchQuery("") }
                                     ) {
-                                        androidx.compose.foundation.layout.Box(
+                                        Box(
                                             modifier = Modifier
                                                 .size(20.dp)
                                                 .background(Color.Gray, shape = CircleShape)
@@ -234,10 +239,10 @@ fun SearchScreen(
                                 fontSize = 16.sp,
                                 textAlign = TextAlign.Start
                             ),
-                            shape = RoundedCornerShape(20.dp),
+                            shape = RoundedCornerShape(25.dp),
                             singleLine = true
                         )
-                    }
+
                 },
                 actions = {
                     IconButton(onClick = {
@@ -245,16 +250,13 @@ fun SearchScreen(
                             // Lưu từ khóa tìm kiếm vào DataStore
                             coroutineScope.launch {
                                 searchHistoryManager.saveSearchQuery(searchQuery)
+                                //deviceViewModel.searchDevice(searchQuery)
                             }
 
                             // Điều hướng sang SearchResultsScreen
                             if (username != null) {
                                 navController.navigate(
-                                    Screen.Search_Results.route + "?query=${searchQuery}&username=${username}"
-                                )
-                            } else {
-                                navController.navigate(
-                                    Screen.Search_Results.route + "?query=${searchQuery}"
+                                    Screen.Search_Results.route + "?query=${searchQuery}&username=${username}&idCustomer=$idCustomer&token=$token"
                                 )
                             }
                         }
@@ -270,7 +272,7 @@ fun SearchScreen(
                     IconButton(onClick = {
                         navController.popBackStack()
                     }) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Back")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -330,10 +332,11 @@ fun SearchScreen(
                                 .clickable {
                                     // Cập nhật searchQuery trong ViewModel
                                     deviceViewModel.updateSearchQuery(historyItem)
+                                    deviceViewModel.searchDevice(historyItem)
                                     // Điều hướng sang SearchResultsScreen
                                     if (username != null) {
                                         navController.navigate(
-                                            Screen.Search_Results.route + "?query=${historyItem}&username=${username}"
+                                            Screen.Search_Results.route + "?query=${historyItem}&username=${username}&idCustomer=$idCustomer&token=$token"
                                         )
                                     } else {
                                         navController.navigate(

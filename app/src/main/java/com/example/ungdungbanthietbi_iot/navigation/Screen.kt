@@ -26,6 +26,8 @@ sealed class Screen(var route: String) {
     object HomeScreen : Screen("HomeScreen")
     object ProductDetailsScreen : Screen("ProductDetailsScreen")
     object IntroScreen : Screen("IntroScreen")
+    object VerifiedEmailScreen : Screen("VerifiedEmailScreen")
+    object EmailVerificationScreen : Screen("EmailVerificationScreen")
 
     object Address_Selection: Screen("address_selection_screen")
     object Add_Address: Screen("add_address_screen")
@@ -42,6 +44,7 @@ sealed class Screen(var route: String) {
     object Rating_History:Screen("rating_history")
     object CheckOutSuccess:Screen("checkout_success")
     object Notification_Screen:Screen("notification_screen")
+    object Category_Screen: Screen("categories_screen")
 
     //Các màn hình Personal (Hồ sơ cá nhân)
     object PersonalScreen : Screen("PersonalScreen")
