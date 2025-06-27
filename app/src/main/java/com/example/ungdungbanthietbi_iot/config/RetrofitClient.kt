@@ -1,6 +1,7 @@
 package com.example.ungdungbanthietbi_iot.config
 
 import com.example.ungdungbanthietbi_iot.api.AccountAPIService
+import com.example.ungdungbanthietbi_iot.api.AccountAPIServiceIOT
 import com.example.ungdungbanthietbi_iot.api.AddressAPIService
 import com.example.ungdungbanthietbi_iot.api.AddressPublic
 import com.example.ungdungbanthietbi_iot.api.CartAPIService
@@ -10,24 +11,36 @@ import com.example.ungdungbanthietbi_iot.api.DeviceAPIService
 import com.example.ungdungbanthietbi_iot.api.ImageAPIService
 import com.example.ungdungbanthietbi_iot.api.LikedAPIService
 import com.example.ungdungbanthietbi_iot.api.NoticeAPIService
+import com.example.ungdungbanthietbi_iot.api.NoticeAPIServiceEcom
 import com.example.ungdungbanthietbi_iot.api.OrderAPIService
 import com.example.ungdungbanthietbi_iot.api.ReviewAPIService
 import com.example.ungdungbanthietbi_iot.api.SlideShowAPIService
 import com.example.ungdungbanthietbi_iot.api.VNPayAPIService
 import com.google.gson.GsonBuilder
+import okhttp3.OkHttpClient
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
+import java.util.concurrent.TimeUnit
 
 
 object Constant{
-    const val BASE_URL = "http://10.0.2.2:8081/api/" //10.0.2.2
+    const val BASE_URL = "http://192.168.2.129:8081/api/" //10.0.2.2
     const val BASE_URL_ADDRESS_PUBLIC = "https://online-gateway.ghn.vn/"
+    const val BASE_URL_IOT = "https://iothomeconnectapiv2-production.up.railway.app/api/"
 }
 
 object RetrofitClient {
     val deviceAPIService: DeviceAPIService by lazy {
+        // Tạo OkHttpClient với các thiết lập timeout
+        val okHttpClient = OkHttpClient.Builder()
+            .connectTimeout(60, TimeUnit.SECONDS) // Timeout khi kết nối, ví dụ: 30 giây
+            .readTimeout(60, TimeUnit.SECONDS)   // Timeout khi đọc dữ liệu
+            .writeTimeout(60, TimeUnit.SECONDS)  // Timeout khi ghi dữ liệu
+            .build()
+
         Retrofit.Builder()
             .baseUrl(Constant.BASE_URL)
+            .client(okHttpClient) // Thêm OkHttpClient vào Retrofit
             .addConverterFactory(GsonConverterFactory.create(GsonBuilder().create()))
             .build()
             .create(DeviceAPIService::class.java)
@@ -91,8 +104,16 @@ object RetrofitClient {
             .create(AddressAPIService::class.java)
     }
     val likedAPIService: LikedAPIService by lazy {
+        // Tạo OkHttpClient với các thiết lập timeout
+        val okHttpClient = OkHttpClient.Builder()
+            .connectTimeout(60, TimeUnit.SECONDS) // Timeout khi kết nối, ví dụ: 30 giây
+            .readTimeout(60, TimeUnit.SECONDS)   // Timeout khi đọc dữ liệu
+            .writeTimeout(60, TimeUnit.SECONDS)  // Timeout khi ghi dữ liệu
+            .build()
+
         Retrofit.Builder()
             .baseUrl(Constant.BASE_URL)
+            .client(okHttpClient) // Thêm OkHttpClient vào Retrofit
             .addConverterFactory(GsonConverterFactory.create(GsonBuilder().create()))
             .build()
             .create(LikedAPIService::class.java)
@@ -100,10 +121,24 @@ object RetrofitClient {
 
     val noticeAPIService: NoticeAPIService by lazy {
         Retrofit.Builder()
-            .baseUrl(Constant.BASE_URL)
+            .baseUrl(Constant.BASE_URL_IOT)
             .addConverterFactory(GsonConverterFactory.create(GsonBuilder().create()))
             .build()
             .create(NoticeAPIService::class.java)
+    }
+    val noticeAPIServiceEcom: NoticeAPIServiceEcom by lazy {
+        Retrofit.Builder()
+            .baseUrl(Constant.BASE_URL)
+            .addConverterFactory(GsonConverterFactory.create(GsonBuilder().create()))
+            .build()
+            .create(NoticeAPIServiceEcom::class.java)
+    }
+    val accountAPIServiceIOT: AccountAPIServiceIOT by lazy {
+        Retrofit.Builder()
+            .baseUrl(Constant.BASE_URL_IOT)
+            .addConverterFactory(GsonConverterFactory.create(GsonBuilder().create()))
+            .build()
+            .create(AccountAPIServiceIOT::class.java)
     }
     val categoryAPIService: CategoryApi by lazy {
         Retrofit.Builder()

@@ -27,6 +27,7 @@ sealed class Screen(var route: String) {
     object ProductDetailsScreen : Screen("ProductDetailsScreen")
     object IntroScreen : Screen("IntroScreen")
     object VerifiedEmailScreen : Screen("VerifiedEmailScreen")
+    object EmailVerificationScreen : Screen("EmailVerificationScreen")
 
     object Address_Selection: Screen("address_selection_screen")
     object Add_Address: Screen("add_address_screen")

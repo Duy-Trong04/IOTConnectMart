@@ -5,7 +5,6 @@ import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.net.Uri
 import android.os.Build
-import android.util.Base64
 import android.util.Log
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -36,7 +35,6 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
@@ -49,7 +47,6 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
@@ -60,8 +57,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import coil.compose.AsyncImage
-import com.example.ungdungbanthietbi_iot.R
-import com.example.ungdungbanthietbi_iot.api.VerifyOtpChangeEmailRequest
+import com.example.ungdungbanthietbi_iot.api.ChangePasswordRequest
 import com.example.ungdungbanthietbi_iot.viewModels.AccountViewModel
 import com.example.ungdungbanthietbi_iot.viewModels.CartViewModel
 import com.example.ungdungbanthietbi_iot.models.Customer
@@ -69,9 +65,12 @@ import com.example.ungdungbanthietbi_iot.viewModels.CustomerViewModel
 import com.example.ungdungbanthietbi_iot.navigation.Screen
 import com.example.ungdungbanthietbi_iot.utils.getCurrentTimestamp
 import com.example.ungdungbanthietbi_iot.viewModels.CustomerState
-import kotlinx.coroutines.delay
+import com.example.ungdungbanthietbi_iot.views.components.base64ToBitmap
+import com.example.ungdungbanthietbi_iot.views.components.bitmapToBase64
+import com.example.ungdungbanthietbi_iot.views.components.compressImage
+import com.example.ungdungbanthietbi_iot.views.components.isValidBase64
+import com.example.ungdungbanthietbi_iot.views.components.uriToByteArray
 import kotlinx.coroutines.launch
-import java.io.ByteArrayOutputStream
 import java.time.LocalDate
 
 
@@ -82,9 +81,8 @@ fun PersonalScreen(
     navController: NavController,
     username: String,
     id: String,
-    password: String?
+    token: String
 ) {
-
     val navdrawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     val scope = rememberCoroutineScope()
     val cartViewModel: CartViewModel = viewModel()
@@ -192,11 +190,11 @@ fun PersonalScreen(
                     modifier = Modifier.padding(start = 16.dp, end = 16.dp, top = 16.dp)
                 ){
                     when (currentTab) {
-                        "accountInfo" -> AccountInfoSection(id, username, snackbarHostState, navController)
+                        "accountInfo" -> AccountInfoSection(id, snackbarHostState, navController, username, token)
                         "changePassword" -> ChangePasswordSection(
                             username = username,
+                            token = token,
                             snackbarHostState = snackbarHostState,
-                            password = password,
                             onPasswordChanged = { currentTab = "accountInfo" }
                         )
                     }
@@ -204,13 +202,15 @@ fun PersonalScreen(
             }
             item { Spacer(modifier = Modifier.height(16.dp)) }
             item {
-                AccountOptionsSection(
-                    onOptionSelected = { selectedTab -> currentTab = selectedTab },
-                    currentTab = currentTab,
-                    navController = navController,
-                    username = username,
-                    idCustomer = id
-                )
+                    AccountOptionsSection(
+                        onOptionSelected = { selectedTab -> currentTab = selectedTab },
+                        currentTab = currentTab,
+                        navController = navController,
+                        username = username,
+                        idCustomer = id,
+                        token = token
+                    )
+
             }
         }
     }
@@ -220,12 +220,12 @@ fun PersonalScreen(
 @Composable
 fun AccountInfoSection(
     id: String?,
-    username: String,
     snackbarHostState: SnackbarHostState,
     navController: NavController,
+    username: String,
+    token: String,
     context: Context = LocalContext.current
 ){
-
     var selectedImageUri by remember { mutableStateOf<Uri?>(null) }
     var showDialog by remember { mutableStateOf(false) }
 
@@ -233,25 +233,13 @@ fun AccountInfoSection(
     var compressedBitmap by remember { mutableStateOf<Bitmap?>(null) }
     var base64String by remember { mutableStateOf<String?>(null) }
     val maxLength = 10
-    val accountViewModel: AccountViewModel = viewModel()
     val customerViewModel: CustomerViewModel = viewModel()
 
     val customerState by customerViewModel.customerState.collectAsState()
 
     var isFocused by remember { mutableStateOf(false) }
     var isButtonEnabled by remember { mutableStateOf(false) }
-    //var selectedImageUri by remember { mutableStateOf<Uri?>(null) } // Lưu URI ảnh được chọn
     var isUpdating by remember { mutableStateOf(false) } // Trạng thái loading
-
-    // Launcher để chọn ảnh từ thư viện
-    val launcher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.GetContent()
-    ) { uri: Uri? ->
-        selectedImageUri = uri // Cập nhật URI ảnh được chọn
-        // Nếu cần lưu ảnh vào backend, gọi hàm trong ViewModel tại đây
-        // ví dụ: customerViewModel.updateAvatar(uri)
-        isButtonEnabled = true // Bật nút khi chọn ảnh
-    }
 
     val scope = rememberCoroutineScope()
 
@@ -272,7 +260,7 @@ fun AccountInfoSection(
         Column(modifier = Modifier.padding(16.dp)) {
             when (val state = customerState) {
                 is CustomerState.Loading -> {
-                    Box(modifier = Modifier.fillMaxWidth().height(600.dp), contentAlignment = Alignment.Center) {
+                    Box(modifier = Modifier.fillMaxWidth().height(610.dp), contentAlignment = Alignment.Center) {
                         CircularProgressIndicator(
                             color = Color(0xFF5F9EFF)
                         )
@@ -338,8 +326,8 @@ fun AccountInfoSection(
                                             .fillMaxSize()
                                             .clip(CircleShape),
                                         contentScale = ContentScale.Crop,
-                                        placeholder = painterResource(R.drawable.avt),
-                                        error = painterResource(R.drawable.avt)
+                                        placeholder = painterResource(android.R.drawable.ic_menu_gallery),
+                                        error = painterResource(android.R.drawable.ic_menu_gallery)
                                     )
                                 }
                                 originalBitmap != null -> {
@@ -388,9 +376,6 @@ fun AccountInfoSection(
 
                         }
                     }
-
-
-
 
                     Spacer(modifier = Modifier.height(16.dp))
                     // Xử lý ngày sinh mặc định (18 năm trước) nếu birthdate null
@@ -527,17 +512,17 @@ fun AccountInfoSection(
                         Text("Email: ", fontWeight = FontWeight.Bold)
                         if (!customer.email_verified) {
                             Text(
-                                text = "Cần xác thực !",
+                                text = "Ấn xác thực",
                                 color = Color.Red,
                                 modifier = Modifier
                                     .clickable {
-                                        accountViewModel.sendOtp(email.value)
-                                        navController.navigate(Screen.VerifiedEmailScreen.route + "?id=$id&email=${email.value}")
+                                        //accountViewModel.sendOtp(email.value)
+                                        navController.navigate(Screen.EmailVerificationScreen.route + "?id=$id&email=${email.value}&username=$username&token=$token")
                                     }
                             )
                         }
                         else{
-                            Text(text = "Đã xác thực !", color = Color(0xFF00796B))
+                            Text(text = "Đã xác thực !", color = Color(0xFF02C92C))
                         }
                     }
                     OutlinedTextField(
@@ -600,107 +585,6 @@ fun AccountInfoSection(
                         )
                     }
                     Spacer(modifier = Modifier.height(16.dp))
-                    // Dialog xác thực email
-//                    if (showDialog) {
-//                        AlertDialog(
-//                            onDismissRequest = {  },
-//                            title = { Text("Xác thực email") },
-//                            text = {
-//                                Column(
-//                                    horizontalAlignment = Alignment.CenterHorizontally,
-//                                    verticalArrangement = Arrangement.spacedBy(16.dp)
-//                                ) {
-//                                    Text("Nhập mã xác thực được gửi đến ${email.value}")
-//                                    Row(
-//                                        modifier = Modifier.fillMaxWidth(),
-//                                        horizontalArrangement = Arrangement.SpaceEvenly
-//                                    ) {
-//                                        verificationCode.forEachIndexed { index, digit ->
-//                                            OutlinedTextField(
-//                                                value = digit,
-//                                                onValueChange = { newValue ->
-//                                                    if (newValue.length <= 1 && newValue.all { it.isDigit() }) {
-//                                                        verificationCode = verificationCode.toMutableList().apply {
-//                                                            this[index] = newValue
-//                                                        }
-//                                                    }
-//                                                },
-//                                                modifier = Modifier
-//                                                    .width(48.dp)
-//                                                    .height(48.dp),
-//                                                textStyle = TextStyle(
-//                                                    textAlign = TextAlign.Center,
-//                                                    fontSize = 18.sp
-//                                                ),
-//                                                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-//                                                singleLine = true
-//                                            )
-//                                        }
-//                                    }
-//                                    Row(
-//                                        modifier = Modifier.fillMaxWidth(),
-//                                        horizontalArrangement = Arrangement.SpaceBetween
-//                                    ) {
-//                                        Button(
-//                                            onClick = {
-//                                                if (isResendEnabled) {
-//                                                    accountViewModel.sendOtp(email.value)
-//                                                    countdown = 60
-//                                                    isResendEnabled = false
-//                                                    scope.launch {
-//                                                        snackbarHostState.showSnackbar(
-//                                                            message = "Đã gửi lại mã xác thực",
-//                                                            duration = SnackbarDuration.Short
-//                                                        )
-//                                                    }
-//                                                }
-//                                            },
-//                                            enabled = isResendEnabled,
-//                                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF5F9EFF))
-//                                        ) {
-//                                            Text("Gửi lại ${if (countdown > 0) "($countdown)" else ""}")
-//                                        }
-//                                        Button(
-//                                            onClick = {
-//                                                val code = verificationCode.joinToString("")
-//                                                if (code.length == 6) {
-//                                                    val accountId = customer.account.firstOrNull()?.account_id ?: ""
-//                                                    val request = VerifyOtpChangeEmailRequest(
-//                                                        account_id = accountId,
-//                                                        email = email.value,
-//                                                        otp = code
-//                                                    )
-//                                                    accountViewModel.verifyOtpChangeEmail(request)
-//                                                    scope.launch {
-//                                                        snackbarHostState.showSnackbar(
-//                                                            message = "Xác thực email thành công",
-//                                                            duration = SnackbarDuration.Short
-//                                                        )
-//                                                        showDialog = false
-//                                                        if (id != null) {
-//                                                            customerViewModel.getCustomerById(id)
-//                                                        }
-//                                                    }
-//                                                } else {
-//                                                    scope.launch {
-//                                                        snackbarHostState.showSnackbar(
-//                                                            message = "Vui lòng nhập đủ 6 chữ số",
-//                                                            duration = SnackbarDuration.Short
-//                                                        )
-//                                                    }
-//                                                }
-//                                            },
-//                                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF5F9EFF))
-//                                        ) {
-//                                            Text("Xác nhận")
-//                                        }
-//                                    }
-//                                }
-//                            },
-//                            confirmButton = {},
-//                            dismissButton = {}
-//                        )
-//                    }
                     Box(
                         modifier = Modifier.fillMaxWidth(),
                         contentAlignment = Alignment.Center
@@ -956,7 +840,8 @@ fun AccountOptionsSection(
     currentTab: String,
     navController: NavController,
     username:String,
-    idCustomer: String
+    idCustomer: String,
+    token: String
 ) {
     val context = LocalContext.current
     val openDialog = remember { mutableStateOf(false) }
@@ -998,7 +883,7 @@ fun AccountOptionsSection(
                 iconRes = Icons.Filled.Star,
                 label = "Đánh giá",
                 isSelected = currentTab == "rating",
-                onClick = { navController.navigate(Screen.Rating_History.route + "?idCustomer=${idCustomer}&username=$username") }
+                onClick = { navController.navigate(Screen.Rating_History.route + "?idCustomer=${idCustomer}&username=$username&token=$token") }
             )
             AccountOptionItem(
                 iconRes = Icons.Filled.Lock,
@@ -1127,8 +1012,8 @@ fun AccountOptionLogOut(
 @Composable
 fun ChangePasswordSection(
     username: String,
+    token: String,
     snackbarHostState: SnackbarHostState, // Thêm tham số SnackbarHostState
-    password: String?,
     onPasswordChanged: () -> Unit // Callback để chuyển tab
 ) {
     val scope = rememberCoroutineScope()
@@ -1236,7 +1121,7 @@ fun ChangePasswordSection(
             //Log.d("Thành công", "trướt BUTTON${password} va ${username} va ${kiemtramkmoi}")
             Button(
                 onClick = {
-                        if(matkhaucu == password){
+                        if(matkhaucu == "password"){
                             if(matkhaumoi.isEmpty() || kiemtramkmoi.isEmpty()){
                                 scope.launch {
                                     snackbarHostState.showSnackbar(
@@ -1271,7 +1156,13 @@ fun ChangePasswordSection(
                                         message = "Đổi mật khẩu thành công!"
                                     )
                                 }
-                                accountViewModel.changePassword(username, matkhaucu, matkhaumoi, kiemtramkmoi)
+                                val request = ChangePasswordRequest(
+                                    username = username,
+                                    password = matkhaucu,
+                                    newPassword = matkhaumoi,
+                                    confirmPassword = kiemtramkmoi
+                                )
+                                accountViewModel.changePassword(token, request)
                                 onPasswordChanged()
                             }
                         }
@@ -1291,74 +1182,5 @@ fun ChangePasswordSection(
                 Text("ĐỔI MẬT KHẨU", color = Color.White, fontSize = 16.sp)
             }
         }
-    }
-}
-
-// hình ảnh base64
-fun compressImage(inputImage: ByteArray, quality: Int, maxFileSizeKB: Int): ByteArray? {
-    try {
-        var bitmap = BitmapFactory.decodeByteArray(inputImage, 0, inputImage.size)
-        val outputStream = ByteArrayOutputStream()
-        var currentQuality = quality
-
-        do {
-            outputStream.reset()
-            bitmap.compress(Bitmap.CompressFormat.JPEG, currentQuality, outputStream)
-
-            if (outputStream.size() / 1024 > maxFileSizeKB) {
-                bitmap = resizeBitmap(bitmap, bitmap.width / 2, bitmap.height / 2)
-            }
-            currentQuality -= 10
-        } while (outputStream.size() / 1024 > maxFileSizeKB && currentQuality > 10)
-
-        return outputStream.toByteArray()
-    } catch (e: Exception) {
-        e.printStackTrace()
-        return null
-    }
-}
-
-fun resizeBitmap(bitmap: Bitmap, newWidth: Int, newHeight: Int): Bitmap {
-    return Bitmap.createScaledBitmap(bitmap, newWidth, newHeight, true)
-}
-
-fun uriToByteArray(context: Context, uri: Uri): ByteArray? {
-    return try {
-        val inputStream = context.contentResolver.openInputStream(uri)
-        inputStream?.use { it.readBytes() }
-    } catch (e: Exception) {
-        e.printStackTrace()
-        null
-    }
-}
-
-fun bitmapToBase64(bitmap: Bitmap): String {
-    val outputStream = ByteArrayOutputStream()
-    bitmap.compress(Bitmap.CompressFormat.JPEG, 80, outputStream)
-    return Base64.encodeToString(outputStream.toByteArray(), Base64.NO_WRAP)
-}
-
-fun isValidBase64(base64: String?): Boolean {
-    return try {
-        Base64.decode(base64?.replace("data:image/jpeg;base64,", ""), Base64.DEFAULT)
-        true
-    } catch (e: IllegalArgumentException) {
-        Log.e("ImagePicker", "Invalid Base64 string: ${base64?.take(100)}")
-        false
-    }
-}
-
-fun cleanBase64(base64: String?): String? {
-    return base64?.replace("\n", "")?.replace("\r", "")?.trim()
-}
-
-fun base64ToBitmap(base64: String?): Bitmap? {
-    return try {
-        val cleanBase64 = cleanBase64(base64) ?: return null
-        val decodedBytes = Base64.decode(cleanBase64, Base64.DEFAULT)
-        BitmapFactory.decodeByteArray(decodedBytes, 0, decodedBytes.size)
-    } catch (e: Exception) {
-        Log.e("ImagePicker", "Error decoding Base64: ${e.message}")
-        null
     }
 }

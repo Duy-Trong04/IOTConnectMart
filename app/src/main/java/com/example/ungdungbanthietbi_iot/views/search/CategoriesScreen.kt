@@ -62,7 +62,7 @@ fun CategoriesScreen(
     category: String?,
     username: String?,
     idCustomer: String?,
-    password: String?
+    token: String?
 ) {
     val listAllDevice by deviceViewModel.listAllDevice.collectAsState()
     val isLoading by deviceViewModel.isLoadingAll.collectAsState()
@@ -276,7 +276,7 @@ fun CategoriesScreen(
                                             isFavorite = false,
                                             idCustomer = idCustomer,
                                             username = username,
-                                            password = password,
+                                            token = token,
                                             deviceViewModel = deviceViewModel,
                                             navController = navController
                                         )

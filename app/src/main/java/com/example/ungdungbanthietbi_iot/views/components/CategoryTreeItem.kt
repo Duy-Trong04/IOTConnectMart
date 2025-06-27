@@ -32,7 +32,7 @@ fun ParentCategoryItem(
     navController: NavController,
     username: String?,
     idCustomer: String?,
-    password: String?,
+    token: String?,
     depth: Int,
     navdrawerState: DrawerState,
     selectedCategory: String?,
@@ -66,7 +66,7 @@ fun ParentCategoryItem(
                     scope.launch {
                         navdrawerState.close()
                         val route = if (username != null && idCustomer != null)
-                            Screen.Category_Screen.route + "?category=${category.name}&username=${username}&idCustomer=$idCustomer&password=$password"
+                            Screen.Category_Screen.route + "?category=${category.name}&username=${username}&idCustomer=$idCustomer&token=$token"
                         else
                             Screen.Category_Screen.route + "?category=${category.name}"
                         navController.navigate(route)
@@ -95,7 +95,7 @@ fun ParentCategoryItem(
                     navController = navController,
                     username = username,
                     idCustomer = idCustomer,
-                    password = password,
+                    token = token,
                     depth = depth + 1,
                     navdrawerState = navdrawerState,
                     isParentSelected = isSelected
@@ -111,7 +111,7 @@ fun ChildCategoryItem(
     navController: NavController,
     username: String?,
     idCustomer: String?,
-    password: String?,
+    token: String?,
     depth: Int,
     navdrawerState: DrawerState,
     isParentSelected: Boolean
@@ -132,7 +132,7 @@ fun ChildCategoryItem(
             scope.launch {
                 navdrawerState.close()
                 val route = if (username != null && idCustomer != null)
-                    Screen.Category_Screen.route + "?category=${category.name}&username=${username}&idCustomer=$idCustomer&password=$password"
+                    Screen.Category_Screen.route + "?category=${category.name}&username=${username}&idCustomer=$idCustomer&token=$token"
                 else
                     Screen.Category_Screen.route + "?category=${category.name}"
                 navController.navigate(route)

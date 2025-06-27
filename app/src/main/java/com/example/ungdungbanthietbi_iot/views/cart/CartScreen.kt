@@ -70,6 +70,7 @@ fun CartItem(
     product: ProductInCart,
     idCustomer: String,
     username: String,
+    token: String,
     selectedItems: MutableMap<String, Boolean>,
     selectedProducts: MutableList<Triple<String, Int, Int>>,
     cartViewModel: CartViewModel,
@@ -136,7 +137,7 @@ fun CartItem(
         onClick = {
             navController.navigate(
                 Screen.ProductDetailsScreen.route +
-                        "?id=${product.id}&idCustomer=${idCustomer}&username=${username}"
+                        "?id=${product.id}&idCustomer=${idCustomer}&username=${username}&token=${token}"
             )
         }
     ) {
@@ -338,7 +339,7 @@ fun CartScreen(
     navController: NavController,
     idCustomer: String,
     username: String,
-    password: String
+    token: String
 ) {
     val cartViewModel: CartViewModel = viewModel()
     val addressViewModel: AddressViewModel = viewModel()
@@ -526,7 +527,7 @@ fun CartScreen(
                             openDialog = true // Hiển thị dialog thông báo thêm địa chỉ
                         } else {
                             val selectedProductsString = selectedProducts.joinToString(",") { "${it.first}:${it.second}:${it.third}" }
-                            navController.navigate(Screen.Check_Out.route + "?selectedProducts=${selectedProductsString}&tongtien=${totalPrice}&username=${username}&id=$idCustomer&password=$password")
+                            navController.navigate(Screen.Check_Out.route + "?selectedProducts=${selectedProductsString}&tongtien=${totalPrice}&username=${username}&id=$idCustomer&token=$token")
                         }
                     },
                     shape = RoundedCornerShape(5.dp),
@@ -683,22 +684,7 @@ fun CartScreen(
             )
         }
         when (uiState) {
-            is CartViewModel.UiState.Initial -> {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .background(Color.White)
-                        .padding(16.dp),
-                    contentAlignment = Alignment.Center
-                ) {
-                    CircularProgressIndicator(
-                        color = Color(0xFF5D9EFF),
-                        strokeWidth = 4.dp,
-                        modifier = Modifier.size(48.dp)
-                    )
-                }
-            }
-            is CartViewModel.UiState.Loading -> {
+            is CartViewModel.UiState.Initial, is CartViewModel.UiState.Loading -> {
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -740,6 +726,7 @@ fun CartScreen(
                                 product = product,
                                 idCustomer = idCustomer,
                                 username = username,
+                                token = token,
                                 selectedItems = selectedItems,
                                 selectedProducts = selectedProducts,
                                 cartViewModel = cartViewModel,

@@ -52,7 +52,7 @@ fun FavoritesScreen(
     navController: NavController,
     idCustomer:String,
     username:String,
-    password: String,
+    token: String
 ) {
     val likedViewModel: LikedViewModel = viewModel()
     val deviceViewModel: DeviceViewModel = viewModel()
@@ -62,8 +62,7 @@ fun FavoritesScreen(
     LaunchedEffect(idCustomer) {
         likedViewModel.getLikedByIdCustomer(idCustomer)
     }
-    //Đọc hình ảnh base64
-    var bitmap by remember { mutableStateOf<Bitmap?>(null) }
+
 
 
     Scaffold(
@@ -111,8 +110,10 @@ fun FavoritesScreen(
                     .background(Color.White)
             ) {
                 items(listLiked) { liked ->
+                    // Trạng thái bitmap riêng cho từng mục
+                    var bitmap by remember(liked.product_id) { mutableStateOf<Bitmap?>(null) }
                     // Tải hình ảnh
-                    LaunchedEffect(liked) {
+                    LaunchedEffect(liked.product_id) {
                         bitmap = liked.image?.let { deviceViewModel.getDeviceImageBitmapImage(it) }
                     }
                     Card(
@@ -124,7 +125,7 @@ fun FavoritesScreen(
                         shape = RoundedCornerShape(5.dp),
                         colors = CardDefaults.cardColors(containerColor = Color.White),
                         onClick = {
-                            navController.navigate(Screen.ProductDetailsScreen.route + "?id=${liked.product_id}&idCustomer=${idCustomer}&username=${username}&password=$password")
+                            navController.navigate(Screen.ProductDetailsScreen.route + "?id=${liked.product_id}&idCustomer=${idCustomer}&username=${username}&token=$token")
                         }
                     ) {
                         Row(
@@ -146,7 +147,7 @@ fun FavoritesScreen(
                             } ?: run {
                                 Image(
                                     painter = painterResource(id = android.R.drawable.ic_menu_gallery),
-                                    contentDescription = "Product Image",
+                                    contentDescription = "Hình ảnh sản phẩm",
                                     modifier = Modifier
                                         .size(150.dp),
                                     contentScale = ContentScale.Fit

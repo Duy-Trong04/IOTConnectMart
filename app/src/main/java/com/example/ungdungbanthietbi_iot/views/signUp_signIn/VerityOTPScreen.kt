@@ -421,15 +421,6 @@ fun VerifyOTPScreen(
                             showErrorDialog = true
                             errorMessage = "Vui lòng nhập mã OTP"
                         }
-//                        if (otpValue.value.isNotEmpty()) {
-//                            accountViewModel.verifyOtp(email!!, otpValue.value)
-//                            navController.navigate(Screen.ResetPasswordScreen.route + "?email=${email}"){
-//                                popUpTo(0) { inclusive = true }
-//                            }
-//                        } else {
-//                            errorMessage = "Vui lòng nhập mã OTP"
-//                            showErrorDialog = true
-//                        }
                     },
                     shape = RoundedCornerShape(16.dp),
                     modifier = Modifier
@@ -465,11 +456,11 @@ fun VerifyOTPScreen(
                             Button(
                                 onClick = {
                                     showErrorDialog = false
-                                    if (verifyOtpResult is VerifyOtpUiState.Success) {
-                                        navController.navigate(Screen.ResetPasswordScreen.route + "?email=${email}") {
-                                            popUpTo(0) { inclusive = true }
-                                        }
-                                    }
+//                                    if (verifyOtpResult is VerifyOtpUiState.Success) {
+//                                        navController.navigate(Screen.ResetPasswordScreen.route + "?email=${email}") {
+//                                            popUpTo(0) { inclusive = true }
+//                                        }
+//                                    }
                                 },
                                 colors = ButtonDefaults.buttonColors(
                                     containerColor = Color(0xFF5D9EFF)

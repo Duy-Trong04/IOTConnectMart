@@ -4,6 +4,7 @@ import android.graphics.Bitmap
 import android.util.Log
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -56,7 +57,7 @@ import com.example.ungdungbanthietbi_iot.utils.formatDateTimeZone
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun RatingHistoryScreen(navController: NavController, idCustomer: String, username: String) {
+fun RatingHistoryScreen(navController: NavController, idCustomer: String, username: String, token: String) {
 
     val reviewViewModel: ReviewViewModel = viewModel()
     val listReviews by reviewViewModel.listAllReviews.collectAsState()
@@ -112,9 +113,11 @@ fun RatingHistoryScreen(navController: NavController, idCustomer: String, userna
                     isLoading -> {
                         Box(
                             contentAlignment = Alignment.Center,
-                            modifier = Modifier.fillMaxSize()
+                            modifier = Modifier.fillMaxSize().background(Color.White)
                         ) {
-                            CircularProgressIndicator()
+                            CircularProgressIndicator(
+                                color = Color(0xFF5D9EFF)
+                            )
                         }
                     }
                     reviewsOfCustomer.isEmpty() -> {
@@ -138,6 +141,7 @@ fun RatingHistoryScreen(navController: NavController, idCustomer: String, userna
                                     idCustomer = idCustomer,
                                     idDevice = review.idDevice,
                                     username = username,
+                                    token = token,
                                     navController = navController
                                 )
                                 Spacer(modifier = Modifier.height(8.dp))
@@ -151,7 +155,7 @@ fun RatingHistoryScreen(navController: NavController, idCustomer: String, userna
 }
 
 @Composable
-fun ReviewItem(review: Reviews, idCustomer: String, idDevice: String, username:String, navController: NavController) {
+fun ReviewItem(review: Reviews, idCustomer: String, idDevice: String, username:String, token: String,navController: NavController) {
 
     val deviceViewModel: DeviceViewModel = viewModel()
     val device = deviceViewModel.deviceMap[idDevice] // Lấy thiết bị theo ID
@@ -231,7 +235,7 @@ fun ReviewItem(review: Reviews, idCustomer: String, idDevice: String, username:S
             )
             Row(
                 modifier = Modifier.fillMaxWidth().clickable {
-                    navController.navigate(Screen.ProductDetailsScreen.route + "?id=${idDevice}&idCustomer=${idCustomer}&username=${username}")
+                    navController.navigate(Screen.ProductDetailsScreen.route + "?id=${idDevice}&idCustomer=${idCustomer}&username=${username}&token=${token}")
                 },
                 verticalAlignment = Alignment.CenterVertically
             ) {

@@ -1,6 +1,9 @@
 package com.example.ungdungbanthietbi_iot.views.signUp_signIn
 
 import android.annotation.SuppressLint
+import android.os.Build
+import android.provider.Settings
+import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -55,8 +58,13 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.ungdungbanthietbi_iot.api.SendTokenRequest
 import com.example.ungdungbanthietbi_iot.dataStore
+import com.example.ungdungbanthietbi_iot.viewModels.NoticeViewModel
 import com.example.ungdungbanthietbi_iot.views.components.CustomerTextField
+import com.google.firebase.messaging.FirebaseMessaging
+import java.util.UUID
 
 /** Giao diện màn hình đăng nhập (LoginScreen)
  * -------------------------------------------
@@ -74,11 +82,14 @@ import com.example.ungdungbanthietbi_iot.views.components.CustomerTextField
  * Nội dung cập nhật:Chỉnh sửa lại TextField, layout
  *
  */
-@SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
+@SuppressLint("UnusedMaterial3ScaffoldPaddingParameter", "HardwareIds",
+    "CoroutineCreationDuringComposition"
+)
 @Composable
 fun LoginScreen(navController: NavController, accountViewModel: AccountViewModel){
     val context = LocalContext.current
     val focusManager = LocalFocusManager.current
+    val noticeViewModel: NoticeViewModel = viewModel()
     // Observe loginUiState
     val loginUiState by accountViewModel.loginUiState.collectAsState()
     // Biến nhận dữ liệu email từ người dùng
@@ -92,7 +103,7 @@ fun LoginScreen(navController: NavController, accountViewModel: AccountViewModel
     // Key cho DataStore
     val usernameKey = stringPreferencesKey("username")
     val passwordKey = stringPreferencesKey("password")
-
+    val accessTokenKey = stringPreferencesKey("access_token")
     Scaffold {
         Column(
             verticalArrangement = Arrangement.Top,
@@ -193,6 +204,11 @@ fun LoginScreen(navController: NavController, accountViewModel: AccountViewModel
                             openDialog = true
                         }
                         else {
+//                            accountViewModel.login(
+//                                context = context,
+//                                username = username,
+//                                password = password
+//                            )
                             accountViewModel.checkLogin(username, password)
                             scope.launch {
                                 // Lắng nghe kết quả từ loginResult
@@ -202,8 +218,23 @@ fun LoginScreen(navController: NavController, accountViewModel: AccountViewModel
                                         context.dataStore.edit { preferences ->
                                             preferences[usernameKey] = username
                                             preferences[passwordKey] = password
+                                            preferences[accessTokenKey] = state.accessToken ?: ""
                                         }
-                                        navController.navigate(Screen.HomeScreen.route + "?username=$username&id=${state.customer_id}&password=$password") {
+                                        // Lấy FCM token và gửi lên server
+                                        FirebaseMessaging.getInstance().token.addOnCompleteListener { task ->
+                                            if (task.isSuccessful) {
+                                                val fcmToken = task.result
+                                                Log.d("FCM Token", fcmToken, task.exception)
+                                                val tokenFCM = SendTokenRequest(
+                                                    deviceToken = fcmToken
+                                                )
+                                                noticeViewModel.sendTokenToServer(tokenFCM, context)
+                                                Log.d("FCM Token", "Success")
+                                            } else {
+                                                Log.d("FCM Token", "Failed to get FCM token", task.exception)
+                                            }
+                                        }
+                                        navController.navigate(Screen.HomeScreen.route + "?username=$username&id=${state.customer_id}&token=${state.accessToken}") {
                                             popUpTo(0) { inclusive = true }
                                         }
                                     } else if (state.result == false) {

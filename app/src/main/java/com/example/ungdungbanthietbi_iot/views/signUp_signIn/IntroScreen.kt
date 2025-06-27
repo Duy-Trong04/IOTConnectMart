@@ -86,6 +86,7 @@ fun IntroScreen(accountViewModel: AccountViewModel, navController: NavController
 
         val savedUsername = preferences[usernameKey]
         val savedPassword = preferences[passwordKey]
+        val accessToken = preferences[stringPreferencesKey("access_token")]
         val isFirstLaunch = preferences[isFirstLaunchKey] ?: true
 
         // Nếu là lần đầu mở ứng dụng, lưu trạng thái
@@ -98,10 +99,11 @@ fun IntroScreen(accountViewModel: AccountViewModel, navController: NavController
         // Kiểm tra đăng nhập với thời gian chờ tối đa
         if (!savedUsername.isNullOrEmpty() && !savedPassword.isNullOrEmpty()) {
             accountViewModel.checkLogin(savedUsername, savedPassword)
+            //accountViewModel.login(context, savedUsername, savedPassword)
             withTimeoutOrNull(2000L) { // Chờ tối đa 5 giây
                 accountViewModel.loginUiState.collect { loginState ->
                     if (!loginState.isLoading && loginState.result == true && loginState.customer_id != null) {
-                        destination = "${Screen.HomeScreen.route}?username=$savedUsername&id=${loginState.customer_id}&password=$savedPassword"
+                        destination = "${Screen.HomeScreen.route}?username=$savedUsername&id=${loginState.customer_id}&token=$accessToken"
                     }
                     shouldNavigate = true
                 }

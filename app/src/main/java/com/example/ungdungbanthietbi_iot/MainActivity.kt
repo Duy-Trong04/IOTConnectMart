@@ -23,6 +23,7 @@ import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
+import com.example.ungdungbanthietbi_iot.api.SendTokenRequest
 import com.example.ungdungbanthietbi_iot.viewModels.AccountViewModel
 import com.example.ungdungbanthietbi_iot.viewModels.DeviceViewModel
 import com.example.ungdungbanthietbi_iot.viewModels.ImageViewModel
@@ -32,6 +33,7 @@ import com.example.ungdungbanthietbi_iot.viewModels.CustomerViewModel
 import com.example.ungdungbanthietbi_iot.navigation.NavGraph
 import com.example.ungdungbanthietbi_iot.navigation.Screen
 import com.example.ungdungbanthietbi_iot.ui.theme.UngDungBanThietBi_IOTTheme
+import com.example.ungdungbanthietbi_iot.viewModels.NoticeViewModel
 import com.google.android.gms.tasks.OnCompleteListener
 import com.google.firebase.messaging.FirebaseMessaging
 import kotlinx.coroutines.CoroutineScope
@@ -50,6 +52,7 @@ class MainActivity : ComponentActivity() {
     private val imageViewModel by viewModels<ImageViewModel>()
     private val reviewViewModel by viewModels<ReviewViewModel>()
     private val accountViewModel by viewModels<AccountViewModel>()
+    private val noticeViewModel by viewModels<NoticeViewModel>()
     private val customerViewModel by viewModels<CustomerViewModel>()
     lateinit var navController: NavHostController
     val _paymentStatus = MutableStateFlow<String?>(null)
@@ -84,32 +87,50 @@ class MainActivity : ComponentActivity() {
                     val totalMoney = preferences[intPreferencesKey("total_money")] ?: 0
                     val createdAt = preferences[stringPreferencesKey("created_at")] ?: ""
                     val status = preferences[stringPreferencesKey("payment_status")]
+                    val usernameKey = stringPreferencesKey("username")
+                    val passwordKey = stringPreferencesKey("password")
+                    val savedUsername = preferences[usernameKey]
+                    val savedPassword = preferences[passwordKey]
+                    val accessToken = preferences[stringPreferencesKey("access_token")]
 
-                    FirebaseMessaging.getInstance().token
-                        .addOnCompleteListener(OnCompleteListener { task ->
-                            if (!task.isSuccessful) {
-                                Log.d("FCM Notify", "Fetching FCM registration token failed", task.exception)
-                                return@OnCompleteListener
+//                    FirebaseMessaging.getInstance().token
+//                        .addOnCompleteListener(OnCompleteListener { task ->
+//                            if (!task.isSuccessful) {
+//                                Log.d("FCM Notify", "Fetching FCM registration token failed", task.exception)
+//                                return@OnCompleteListener
+//                            }
+//
+//                            //Get new FCM registration token
+//                            val token: String? = task.result
+//                            Log.d("FCM Token", token, task.exception)
+//                            //Toast.makeText(context, token, Toast.LENGTH_SHORT).show()
+//                        })
+                    // Lấy FCM token và gửi lên server nếu đã đăng nhập
+                    FirebaseMessaging.getInstance().token.addOnCompleteListener(OnCompleteListener { task ->
+                        if (task.isSuccessful) {
+                            val fcmToken = task.result
+                            Log.d("FCM Token", "FCM Token: $fcmToken")
+                            val tokenFCM = SendTokenRequest(
+                                deviceToken = fcmToken
+                            )
+                            if (!savedUsername.isNullOrEmpty() && !savedPassword.isNullOrEmpty() && !accessToken.isNullOrEmpty()) {
+                                noticeViewModel.sendTokenToServer(tokenFCM, context)
                             }
-
-                            //Get new FCM registration token
-                            val token: String? = task.result
-                            Log.d("FCM Token", token, task.exception)
-                            //Toast.makeText(context, token, Toast.LENGTH_SHORT).show()
-                        })
+                        } else {
+                            Log.d("FCM Notify", "Fetching FCM registration token failed", task.exception)
+                        }
+                    })
 
                     if (status == "success") {
-                        val usernameKey = stringPreferencesKey("username")
-                        val passwordKey = stringPreferencesKey("password")
-                        val savedUsername = preferences[usernameKey]
-                        val savedPassword = preferences[passwordKey]
+
                         if (!savedUsername.isNullOrEmpty() && !savedPassword.isNullOrEmpty()) {
                             accountViewModel.checkLogin(savedUsername, savedPassword)
+                            //accountViewModel.login(context, savedUsername, savedPassword)
                             accountViewModel.loginUiState.collect { loginState ->
                                 if (loginState.isLoading) return@collect
                                 if (loginState.result == true && loginState.customer_id != null) {
                                     val encodedCreatedAt = URLEncoder.encode(createdAt, "UTF-8")
-                                    paymentNavigation = "${Screen.CheckOutSuccess.route}?username=$savedUsername&id=${loginState.customer_id}&orderId=$orderId&totalMoney=$totalMoney&createdAt=$encodedCreatedAt&password=$savedPassword"
+                                    paymentNavigation = "${Screen.CheckOutSuccess.route}?username=$savedUsername&id=${loginState.customer_id}&orderId=$orderId&totalMoney=$totalMoney&createdAt=$encodedCreatedAt&token=${accessToken}"
                                 }
                             }
                         }

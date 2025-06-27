@@ -64,10 +64,10 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.example.ungdungbanthietbi_iot.R
 import com.example.ungdungbanthietbi_iot.api.VerifyOtpChangeEmailRequest
-import com.example.ungdungbanthietbi_iot.navigation.Screen
 import com.example.ungdungbanthietbi_iot.viewModels.AccountViewModel
 import com.example.ungdungbanthietbi_iot.viewModels.CustomerState
 import com.example.ungdungbanthietbi_iot.viewModels.CustomerViewModel
+import com.example.ungdungbanthietbi_iot.viewModels.VerifyEmailUiState
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -320,7 +320,9 @@ fun Int.pxToDp() = with(LocalDensity.current) { this@pxToDp.toDp() }
 fun VerifiedEmailScreen(
     navController: NavController,
     id: String,
-    email: String
+    email: String,
+    username: String,
+    token: String
 ) {
     val customerViewModel: CustomerViewModel = viewModel()
 
@@ -332,7 +334,7 @@ fun VerifiedEmailScreen(
         mutableStateOf("")
     }
     var showErrorDialog by remember { mutableStateOf(false) }
-    var openDialog by remember { mutableStateOf(false) }
+    var showSuccessDialog by remember { mutableStateOf(false) }
     var errorMessage by remember { mutableStateOf("") }
 
     val isLoading by accountViewModel.isLoading.collectAsState()
@@ -353,6 +355,24 @@ fun VerifiedEmailScreen(
             timer -= 1
         } else {
             isResendEnabled = true
+        }
+    }
+
+    val verifyEmailResult by accountViewModel.verifyEmailResult.collectAsState()
+    // Xử lý phản hồi từ API
+    LaunchedEffect(verifyEmailResult) {
+        when (verifyEmailResult) {
+            is VerifyEmailUiState.Success -> {
+                showSuccessDialog = true
+                errorMessage = (verifyEmailResult as VerifyEmailUiState.Success).message
+            }
+            is VerifyEmailUiState.Error -> {
+                showErrorDialog = true
+                errorMessage = (verifyEmailResult as VerifyEmailUiState.Error).message
+            }
+            else -> {
+                // Không làm gì khi Idle hoặc Loading
+            }
         }
     }
 
@@ -432,8 +452,6 @@ fun VerifiedEmailScreen(
                                         otp = otpValue.value
                                     )
                                     accountViewModel.verifyOtpChangeEmail(request)
-                                    openDialog = true
-                                    errorMessage = "Email đã được xác thực thành công !"
                                 } else {
                                     errorMessage = "Vui lòng nhập mã OTP"
                                     showErrorDialog = true
@@ -475,53 +493,35 @@ fun VerifiedEmailScreen(
                                         colors = ButtonDefaults.buttonColors(
                                             containerColor = Color(0xFF5D9EFF)
                                         ),
-                                        shape = RoundedCornerShape(10.dp)
+                                        shape = RoundedCornerShape(10.dp),
+                                        modifier = Modifier.fillMaxWidth()
                                     ) {
                                         Text("Xác nhận")
-                                    }
-                                },
-                                dismissButton = {
-                                    Button(
-                                        onClick = { showErrorDialog = false },
-                                        colors = ButtonDefaults.buttonColors(
-                                            containerColor = Color.LightGray
-                                        ),
-                                        shape = RoundedCornerShape(10.dp)
-                                    ) {
-                                        Text("Hủy")
                                     }
                                 }
                             )
                         }
-                        if (openDialog) {
+                        if (showSuccessDialog) {
                             AlertDialog(
-                                onDismissRequest = { openDialog = false },
+                                onDismissRequest = {},
                                 title = { Text("Thông báo") },
                                 containerColor = Color.White,
                                 text = { Text(errorMessage) },
                                 confirmButton = {
                                     Button(
                                         onClick = {
-                                            openDialog = false
-                                            navController.popBackStack()
+                                            showSuccessDialog = false
+                                            if (verifyEmailResult is VerifyEmailUiState.Success) {
+                                                navController.popBackStack()
+                                            }
                                         },
                                         colors = ButtonDefaults.buttonColors(
                                             containerColor = Color(0xFF5D9EFF)
                                         ),
+                                        modifier = Modifier.fillMaxWidth(),
                                         shape = RoundedCornerShape(10.dp)
                                     ) {
                                         Text("Xác nhận")
-                                    }
-                                },
-                                dismissButton = {
-                                    Button(
-                                        onClick = { openDialog = false },
-                                        colors = ButtonDefaults.buttonColors(
-                                            containerColor = Color.LightGray
-                                        ),
-                                        shape = RoundedCornerShape(10.dp)
-                                    ) {
-                                        Text("Hủy")
                                     }
                                 }
                             )
@@ -552,6 +552,5 @@ fun VerifiedEmailScreen(
                 }
             }
         }
-
     }
 }

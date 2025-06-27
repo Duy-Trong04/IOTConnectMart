@@ -26,6 +26,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.LocationOn
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -38,6 +39,7 @@ import androidx.compose.material3.RadioButton
 import androidx.compose.material3.RadioButtonDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
@@ -85,6 +87,8 @@ import com.example.ungdungbanthietbi_iot.utils.formatGiaTien
 import com.example.ungdungbanthietbi_iot.utils.getCurrentTimestampEX
 import com.example.ungdungbanthietbi_iot.utils.isNetworkAvailable
 import com.example.ungdungbanthietbi_iot.viewModels.CheckoutState
+import com.example.ungdungbanthietbi_iot.viewModels.CustomerState
+import com.example.ungdungbanthietbi_iot.viewModels.CustomerViewModel
 import com.example.ungdungbanthietbi_iot.viewModels.VNPayViewModel
 import kotlinx.coroutines.flow.first
 import java.net.URLEncoder
@@ -115,7 +119,7 @@ fun CheckoutScreen(
     tongtien: Double,
     username: String,
     idCustomer: String,
-    password: String,
+    token: String
 ) {
 
     val context = LocalContext.current
@@ -123,7 +127,7 @@ fun CheckoutScreen(
     val cartViewModel: CartViewModel = viewModel()
     val addressViewModel: AddressViewModel = viewModel()
     val orderViewModel: OrderViewModel = viewModel()
-
+    val customerViewModel: CustomerViewModel = viewModel()
 
     val listDevice by deviceViewModel.listDevice.collectAsState(initial = emptyList())
     var selectedPaymentMethod by remember { mutableStateOf("Thanh toán khi nhận hàng (COD)") }
@@ -135,12 +139,19 @@ fun CheckoutScreen(
     var isLoadingProducts by remember { mutableStateOf(true) }
     // State để kích hoạt cuộc gọi API
     var checkoutRequest by remember { mutableStateOf<CheckoutRequest?>(null) }
+    val customerState by customerViewModel.customerState.collectAsState()
     // Lấy selectedAddressId từ savedStateHandle
     val selectedAddressId by navController.currentBackStackEntry
         ?.savedStateHandle
         ?.getStateFlow<Int?>("selectedAddressId", null)
         ?.collectAsState() ?: remember { mutableStateOf(null) }
 
+    // Gọi API để lấy thông tin khách hàng
+    LaunchedEffect(idCustomer) {
+        if (idCustomer.isNotBlank()) {
+            customerViewModel.getCustomerById(idCustomer)
+        }
+    }
     // Lấy địa chỉ: ưu tiên địa chỉ được chọn, nếu không thì lấy mặc định
     LaunchedEffect(username, selectedAddressId) {
         Log.d("CheckoutScreen", "idCustomer: $idCustomer, selectedAddressId: $selectedAddressId")
@@ -256,14 +267,6 @@ fun CheckoutScreen(
     val mainActivity = context as? MainActivity
     val paymentStatus by mainActivity?.paymentStatus?.collectAsState() ?: remember { mutableStateOf<String?>(null) }
 
-    // Lưu checkoutRequest vào DataStore để khôi phục
-//    LaunchedEffect(checkoutRequest) {
-//        if (checkoutRequest != null) {
-//            context.dataStore.edit { preferences ->
-//                preferences[stringPreferencesKey("checkout_request")] = Json.encodeToString(CheckoutRequest.serializer(), checkoutRequest!!)
-//            }
-//        }
-//    }
     // Kiểm tra DataStore khi khởi tạo
     LaunchedEffect(Unit) {
         val preferences = context.dataStore.data.first()
@@ -364,7 +367,7 @@ fun CheckoutScreen(
                                     "id=$idCustomer&" +
                                     "orderId=$encodedOrderId&" +
                                     "totalMoney=${orderData.totalMoney}&" +
-                                    "createdAt=$encodedCreatedAt&password=$password"
+                                    "createdAt=$encodedCreatedAt&token=$token"
                         ) {
                             navController.currentDestination?.let {
                                 popUpTo(it.id) {
@@ -392,7 +395,10 @@ fun CheckoutScreen(
             }
         }
     }
-    if (isLoadingAddress || isLoadingProducts || isLoadingPayment) {
+    var email by remember { mutableStateOf("") }
+    // Biến để kiểm soát hiển thị popup
+    var showEmailVerificationDialog by remember { mutableStateOf(false) }
+    if (isLoadingAddress || isLoadingProducts || isLoadingPayment || customerState is CustomerState.Loading) {
         Box(
             modifier = Modifier.fillMaxSize().background(Color.White),
             contentAlignment = Alignment.Center
@@ -450,77 +456,94 @@ fun CheckoutScreen(
                     Spacer(modifier = Modifier.height(10.dp))
                     Button(
                         onClick = {
-                            if (address != null) {
-                                if (selectedPaymentMethod == "VNPay" && !isNetworkAvailable(
-                                        context
-                                    )
-                                ) {
-                                    addressViewModel.updateErrorMessage("Không có kết nối internet. Vui lòng kiểm tra và thử lại.")
-                                    return@Button
-                                }
-                                Log.d("CheckoutScreen", "ListDevice: $listDevice")
-                                listDevice.forEach { device ->
-                                    Log.d(
-                                        "CheckoutScreen",
-                                        "Device ID: ${device.idDevice}, Name: ${device.name}, Price: ${device.sellingPrice}"
-                                    )
-                                }
-                                val request = CheckoutRequest(
-                                    shipping = Shipping(
-                                        addressType = "saved",
-                                        savedAddressId = address.id.toString(),
-                                        fullName = address.receiver_name,
-                                        phone = address.phone,
-                                        email = "ikungfu777@gmail.com",
-                                        address = "${address.detail}, ${address.street}",
-                                        city = address.city,
-                                        district = address.district,
-                                        ward = address.ward,
-                                        shippingMethod = "standard",
-                                        note = ""
-                                    ),
-                                    payment = Payment(
-                                        paymentMethod = if(selectedPaymentMethod == "Thanh toán khi nhận hàng (COD)") "COD" else "VNPay",
-                                        sameAsShipping = true,
-                                        cardNumber = "",
-                                        cardName = "",
-                                        cardExpiry = "",
-                                        cardCvc = ""
-                                    ),
-                                    products = selectedProducts.distinctBy { it.first }
-                                        .map { triple ->
-                                            val device =
-                                                listDevice.find { it.idDevice == triple.first }
-                                            Product(
-                                                id = triple.first,
-                                                name = device?.name ?: "Unknown Product",
-                                                price = device?.sellingPrice ?: 0.0,
-                                                quantity = triple.second,
-                                                selected = true
+                            // Kiểm tra email_verified khi nhấn nút
+                            when (val state = customerState) {
+                                is CustomerState.Success -> {
+                                    if (!state.customer.email_verified) {
+                                        email = state.customer.email
+                                        showEmailVerificationDialog = true
+                                    } else {
+                                        if (address != null) {
+                                            if (selectedPaymentMethod == "VNPay" && !isNetworkAvailable(
+                                                    context
+                                                )
+                                            ) {
+                                                addressViewModel.updateErrorMessage("Không có kết nối internet. Vui lòng kiểm tra và thử lại.")
+                                                return@Button
+                                            }
+                                            Log.d("CheckoutScreen", "ListDevice: $listDevice")
+                                            listDevice.forEach { device ->
+                                                Log.d(
+                                                    "CheckoutScreen",
+                                                    "Device ID: ${device.idDevice}, Name: ${device.name}, Price: ${device.sellingPrice}"
+                                                )
+                                            }
+                                            val request = CheckoutRequest(
+                                                shipping = Shipping(
+                                                    addressType = "saved",
+                                                    savedAddressId = address.id.toString(),
+                                                    fullName = address.receiver_name,
+                                                    phone = address.phone,
+                                                    email = state.customer.email,
+                                                    address = "${address.detail}, ${address.street}",
+                                                    city = address.city,
+                                                    district = address.district,
+                                                    ward = address.ward,
+                                                    shippingMethod = "standard",
+                                                    note = ""
+                                                ),
+                                                payment = Payment(
+                                                    paymentMethod = if (selectedPaymentMethod == "Thanh toán khi nhận hàng (COD)") "COD" else "VNPay",
+                                                    sameAsShipping = true,
+                                                    cardNumber = "",
+                                                    cardName = "",
+                                                    cardExpiry = "",
+                                                    cardCvc = ""
+                                                ),
+                                                products = selectedProducts.distinctBy { it.first }
+                                                    .map { triple ->
+                                                        val device =
+                                                            listDevice.find { it.idDevice == triple.first }
+                                                        Product(
+                                                            id = triple.first,
+                                                            name = device?.name
+                                                                ?: "Unknown Product",
+                                                            price = device?.sellingPrice ?: 0.0,
+                                                            quantity = triple.second,
+                                                            selected = true
+                                                        )
+                                                    },
+                                                order = OrderRequest(
+                                                    customer_id = idCustomer,
+                                                    export_date = getCurrentTimestampEX(),
+                                                    total_money = tongtien.toInt(),
+                                                    discount = 0,
+                                                    vat = 0,
+                                                    amount = amount.toInt(),
+                                                    status = 0
+                                                )
                                             )
-                                        },
-                                    order = OrderRequest(
-                                        customer_id = idCustomer,
-                                        export_date = getCurrentTimestampEX(),
-                                        total_money = tongtien.toInt(),
-                                        discount = 0,
-                                        vat = 0,
-                                        amount = amount.toInt(),
-                                        status = 0
-                                    )
-                                )
-                                checkoutRequest = request
-                                if (selectedPaymentMethod == "VNPay") {
-                                    vnPayViewModel.createPaymentUrl(
-                                        PaymentRequest(
-                                            amount = amount.toString(),
-                                            bankCode = "",
-                                            returnUrl = "myapp://payment"
-                                        )
-                                    )
-                                    orderViewModel.createOrder(request)
-                                } else {
-                                    orderViewModel.createOrder(request)
+                                            checkoutRequest = request
+                                            if (selectedPaymentMethod == "VNPay") {
+                                                vnPayViewModel.createPaymentUrl(
+                                                    PaymentRequest(
+                                                        amount = amount.toString(),
+                                                        bankCode = "",
+                                                        returnUrl = "myapp://payment"
+                                                    )
+                                                )
+                                                orderViewModel.createOrder(request)
+                                            } else {
+                                                orderViewModel.createOrder(request)
+                                            }
+                                        }
+                                    }
+                                }
+                                is CustomerState.Error -> {
+                                    addressViewModel.updateErrorMessage(state.message)
+                                }
+                                is CustomerState.Loading -> {
+                                    // Đang tải, không làm gì
                                 }
                             }
                         },
@@ -709,6 +732,29 @@ fun CheckoutScreen(
             }
 
         }
+    }
+    // Hiển thị popup nếu email chưa xác thực
+    if (showEmailVerificationDialog) {
+        AlertDialog(
+            onDismissRequest = { /* Không cho phép đóng bằng cách nhấn bên ngoài */ },
+            containerColor = Color.White,
+            title = { Text("Thông báo") },
+            text = { Text("Email chưa xác thực.\nVui lòng xác thực email để mua hàng !") },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        // Chuyển hướng đến màn hình xác thực email (nếu có)
+                        navController.navigate("${Screen.EmailVerificationScreen.route}?id=$idCustomer&email=$email&username=$username&token=$token")
+                        showEmailVerificationDialog = false // Đóng popup tạm thời
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(10.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF5D9EFF))
+                ) {
+                    Text("Xác thực ngay")
+                }
+            }
+        )
     }
 }
 

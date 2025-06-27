@@ -1,6 +1,7 @@
 package com.example.ungdungbanthietbi_iot.api
 
 import com.example.ungdungbanthietbi_iot.models.Notice
+import retrofit2.Response
 import retrofit2.http.Body
 import retrofit2.http.GET
 import retrofit2.http.Header
@@ -13,11 +14,7 @@ data class updateNoticeResponse(
     val message: String
 )
 
-data class NoticeResponse(
-    val notice: List<Notice>
-)
-
-data class SendNoticeRequest(
+data class SendTokenRequest(
     val deviceToken: String,
 )
 
@@ -27,24 +24,23 @@ data class DeviceTokenResponse(
 )
 
 interface NoticeAPIService {
-    @GET("notice/getNoticeByIdCustomer.php")
-    suspend fun getNoticeByIdCustomer(
-        @Query("idUser") idUser: String?
-    ): NoticeResponse
 
     @PUT("notice/update.php")
     suspend fun updateNotice(
         @Body notice: Notice
     ): updateNoticeResponse
 
-    @POST("notice/create.php")
-    suspend fun addNotice(
-        @Body notice : Notice
-    ): updateNoticeResponse
-
     @POST("auth/update-device-token")
     suspend fun sendTokenDevice(
-        @Body request : SendNoticeRequest,
-        @Header("Authorization") token: String
-    ): DeviceTokenResponse
+        @Header("Authorization") token: String,
+        @Body request : SendTokenRequest
+    ): Response<Unit>
+}
+
+interface NoticeAPIServiceEcom {
+    @POST("notification/fcm-token")
+    suspend fun sendToken(
+        @Header("Authorization") token: String,
+        @Body request : SendTokenRequest
+    ): Response<Unit>
 }

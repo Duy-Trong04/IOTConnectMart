@@ -70,6 +70,8 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -125,7 +127,7 @@ fun ProductDetailsScreen(
     id:String,
     idCustomer:String?,
     username:String?,
-    password: String?,
+    token: String?,
     deviceViewModel: DeviceViewModel,
     imageViewModel: ImageViewModel,
     reviewViewModel: ReviewViewModel
@@ -210,8 +212,8 @@ fun ProductDetailsScreen(
     val isLoadingDevice by deviceViewModel.isLoading.collectAsState()
     var isLoading by remember { mutableStateOf(false) } // Thêm trạng thái tải cục bộ
 
-    // Trạng thái tab được chọn
-    var selectedTabIndex by remember { mutableIntStateOf(0) }
+    val screenWidth = LocalContext.current.resources.displayMetrics.widthPixels
+    val cardWidth = with(LocalDensity.current) { (screenWidth / 2 - 20.dp.toPx()).toDp() }
     Scaffold(
         topBar = {
             TopAppBar(
@@ -247,7 +249,7 @@ fun ProductDetailsScreen(
                         // Icon Tìm kiếm
                         IconButton(onClick = {
                             if(username != null){
-                                navController.navigate( Screen.Search_Screen.route + "?username=${username}&idCustomer=$id&password=$password")
+                                navController.navigate( Screen.Search_Screen.route + "?username=${username}&idCustomer=$id&token=$token")
                             }
                             else{
                                 navController.navigate(Screen.Search_Screen.route)
@@ -270,7 +272,7 @@ fun ProductDetailsScreen(
                                     navController.navigate(Screen.LoginScreen.route)
                                 }
                                 else{
-                                    navController.navigate(Screen.Cart_Screen.route +"?idCustomer=${idCustomer}&username=${username}&password=$password")
+                                    navController.navigate(Screen.Cart_Screen.route +"?idCustomer=${idCustomer}&username=${username}&token=$token")
                                 }
                             }) {
                                 Icon(
@@ -705,7 +707,7 @@ fun ProductDetailsScreen(
                                                     Screen.Check_Out.route +
                                                             "?selectedProducts=$selectedProductsString" +
                                                             "&tongtien=$totalPrice" +
-                                                            "&username=$username" + "&id=$idCustomer&password=$password"
+                                                            "&username=$username" + "&id=$idCustomer&token=$token"
                                                 )
                                                 snackbarMessage.value = "Đã chọn sản phẩm để mua ngay!"
                                                 showSnackbar.value = true
@@ -1076,33 +1078,56 @@ fun ProductDetailsScreen(
                         LazyRow(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(10.dp),
-                            horizontalArrangement = Arrangement.Start
+                                .padding(horizontal = 12.dp, vertical = 4.dp),
+                            horizontalArrangement = Arrangement.spacedBy(12.dp)
                         ) {
-                            items(listAllDevice) {
-                                if (username != null) {
+                            items(listAllDevice) { device ->
+                                Box(
+                                    modifier = Modifier
+                                        .width(cardWidth)
+                                ) {
                                     CardDevice(
-                                        device = it,
+                                        device = device,
                                         isFavorite = isFavorite,
-                                        idCustomer,
-                                        username,
-                                        password,
+                                        idCustomer = id,
+                                        username = username,
+                                        token = token,
                                         deviceViewModel = deviceViewModel,
-                                        navController
-                                    )
-                                } else {
-                                    CardDevice(
-                                        device = it,
-                                        isFavorite = isFavorite,
-                                        null,
-                                        null,
-                                        password,
-                                        deviceViewModel = deviceViewModel,
-                                        navController
+                                        navController = navController
                                     )
                                 }
                             }
                         }
+//                        LazyRow(
+//                            modifier = Modifier
+//                                .fillMaxWidth()
+//                                .padding(10.dp),
+//                            horizontalArrangement = Arrangement.Start
+//                        ) {
+//                            items(listAllDevice) {
+//                                if (username != null) {
+//                                    CardDevice(
+//                                        device = it,
+//                                        isFavorite = isFavorite,
+//                                        idCustomer,
+//                                        username,
+//                                        password,
+//                                        deviceViewModel = deviceViewModel,
+//                                        navController
+//                                    )
+//                                } else {
+//                                    CardDevice(
+//                                        device = it,
+//                                        isFavorite = isFavorite,
+//                                        null,
+//                                        null,
+//                                        password,
+//                                        deviceViewModel = deviceViewModel,
+//                                        navController
+//                                    )
+//                                }
+//                            }
+//                        }
                     }
                 }
             } else{

@@ -235,10 +235,10 @@ fun ForgotPasswordScreen(
                 }
                 if (showSuccessDialog) {
                     AlertDialog(
-                        onDismissRequest = { showSuccessDialog = false },
+                        onDismissRequest = {},
                         title = { Text("Thông báo") },
                         containerColor = Color.White,
-                        text = { Text(text = "Mã OTP đã được gửi đến email của bạn.\nVui lòng kiểm tra và nhập mã OTP vào ô bên dưới") },
+                        text = { Text(text = "Mã OTP đã được gửi đến email của bạn.\nVui lòng kiểm tra và nhập mã OTP") },
                         confirmButton = {
                             Button(
                                 onClick = {

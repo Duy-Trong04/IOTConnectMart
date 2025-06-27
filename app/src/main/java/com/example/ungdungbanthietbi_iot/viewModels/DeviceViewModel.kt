@@ -27,15 +27,15 @@ class DeviceViewModel:ViewModel() {
     //var listAllDevice: List<Device> by mutableStateOf(emptyList())
 
     private val _listAllDevice = MutableStateFlow<List<Device>>(emptyList())
-    val listAllDevice: StateFlow<List<Device>> get() = _listAllDevice
+    val listAllDevice: StateFlow<List<Device>> get() = _listAllDevice.asStateFlow()
 
     private val _listDeviceFeatured = MutableStateFlow<List<Device>>(emptyList())
-    val listDeviceFeatured: StateFlow<List<Device>> get() = _listDeviceFeatured
+    val listDeviceFeatured: StateFlow<List<Device>> get() = _listDeviceFeatured.asStateFlow()
     private val _listDeviceSale = MutableStateFlow<List<Device>>(emptyList())
-    val listDeviceSale: StateFlow<List<Device>> get() = _listDeviceSale
+    val listDeviceSale: StateFlow<List<Device>> get() = _listDeviceSale.asStateFlow()
 
     private val _device = MutableStateFlow<Device?>(null)
-    val device: StateFlow<Device?> get() = _device
+    val device: StateFlow<Device?> get() = _device.asStateFlow()
 
     private val _listDevice = MutableStateFlow<List<Device>>(emptyList())
     val listDevice: StateFlow<List<Device>> get() = _listDevice.asStateFlow()
@@ -44,19 +44,19 @@ class DeviceViewModel:ViewModel() {
         private set
 
     private val _listDeviceSearch = MutableStateFlow<List<Device>>(emptyList())
-    val listDeviceSearch: StateFlow<List<Device>> get() = _listDeviceSearch
+    val listDeviceSearch: StateFlow<List<Device>> get() = _listDeviceSearch.asStateFlow()
     private val _searchQuery = MutableStateFlow("")
-    val searchQuery: StateFlow<String> get() = _searchQuery
+    val searchQuery: StateFlow<String> get() = _searchQuery.asStateFlow()
     private val _searchError = MutableStateFlow<String?>(null)
-    val searchError: StateFlow<String?> get() = _searchError
+    val searchError: StateFlow<String?> get() = _searchError.asStateFlow()
     private val _isLoading = MutableStateFlow(false)
-    val isLoading: StateFlow<Boolean> = _isLoading
+    val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
     private val _isLoadingAll = MutableStateFlow(false)
-    val isLoadingAll: StateFlow<Boolean> = _isLoadingAll
+    val isLoadingAll: StateFlow<Boolean> = _isLoadingAll.asStateFlow()
     private val _isLoadingFeatured = MutableStateFlow(false)
-    val isLoadingFeatured: StateFlow<Boolean> = _isLoadingFeatured
+    val isLoadingFeatured: StateFlow<Boolean> = _isLoadingFeatured.asStateFlow()
     private val _isLoadingSale = MutableStateFlow(false)
-    val isLoadingSale: StateFlow<Boolean> = _isLoadingSale
+    val isLoadingSale: StateFlow<Boolean> = _isLoadingSale.asStateFlow()
 
     fun getDeviceBySlug2(id: String) {
         viewModelScope.launch(Dispatchers.IO) {
@@ -83,8 +83,10 @@ class DeviceViewModel:ViewModel() {
             try {
                 val response = RetrofitClient.deviceAPIService.getAllDevice()
                 _listAllDevice.value = response.data.data
+                Log.d("DeviceViewModel","Fetched all devices: ${response.data.data.size}")
             } catch (e: Exception) {
                 _listAllDevice.value = emptyList()
+                Log.e("DeviceViewModel","Failed to fetch all devices: $e")
                 e.printStackTrace() // Xử lý lỗi
             } finally {
                 _isLoadingAll.value = false

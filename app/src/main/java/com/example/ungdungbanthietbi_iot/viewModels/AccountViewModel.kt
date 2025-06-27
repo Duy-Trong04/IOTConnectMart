@@ -1,6 +1,8 @@
 package com.example.ungdungbanthietbi_iot.viewModels
 
+import android.annotation.SuppressLint
 import android.content.Context
+import android.os.Build
 import android.util.Log
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
@@ -10,6 +12,8 @@ import androidx.lifecycle.viewModelScope
 import com.example.ungdungbanthietbi_iot.api.ChangePasswordRequest
 import com.example.ungdungbanthietbi_iot.api.ChangePasswordResponse
 import com.example.ungdungbanthietbi_iot.api.ChangePasswordUiState
+import com.example.ungdungbanthietbi_iot.api.LoginIOTRequest
+import com.example.ungdungbanthietbi_iot.api.LoginIOTResponse
 import com.example.ungdungbanthietbi_iot.config.RetrofitClient
 import com.example.ungdungbanthietbi_iot.api.RegisterRequest
 import com.example.ungdungbanthietbi_iot.api.RegisterResponse
@@ -29,13 +33,16 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import android.provider.Settings
+import retrofit2.HttpException
 import retrofit2.Response
+import java.util.UUID
 
 class AccountViewModel:ViewModel() {
     var username: String? = null
 
     private val _loginUiState = MutableStateFlow(LoginUiState())
-    val loginUiState: StateFlow<LoginUiState> = _loginUiState
+    val loginUiState: StateFlow<LoginUiState> = _loginUiState.asStateFlow()
 
     private val _registerUiState = MutableStateFlow<RegisterUiState>(RegisterUiState.Idle)
     val registerUiState: StateFlow<RegisterUiState> = _registerUiState.asStateFlow()
@@ -43,31 +50,33 @@ class AccountViewModel:ViewModel() {
     private val _isLoading = MutableStateFlow(false)
     val isLoading: StateFlow<Boolean> = _isLoading
 
-    suspend fun logout(context: Context) {
-        try {
-            // Xóa toàn bộ dữ liệu trong DataStore
-            context.dataStore.edit { preferences ->
-                preferences.clear()
+    fun logout(context: Context) {
+        viewModelScope.launch {
+            try {
+                // Xóa toàn bộ dữ liệu trong DataStore
+                context.dataStore.edit { preferences ->
+                    preferences.clear()
+                }
+                // Đặt lại trạng thái loginUiState
+                _loginUiState.value = LoginUiState(
+                    isLoading = false,
+                    accessToken = null,
+                    customer_id = null,
+                    error = null,
+                    result = false
+                )
+                // Ghi log để debug
+                Log.d("AccountViewModel", "Đăng xuất thành công")
+            } catch (e: Exception) {
+                _loginUiState.value = LoginUiState(
+                    isLoading = false,
+                    accessToken = null,
+                    customer_id = null,
+                    error = "Lỗi khi đăng xuất: ${e.message}",
+                    result = false
+                )
+                Log.e("AccountViewModel", "Lỗi khi đăng xuất: ${e.message}", e)
             }
-            // Đặt lại trạng thái loginUiState
-            _loginUiState.value = LoginUiState(
-                isLoading = false,
-                accessToken = null,
-                customer_id = null,
-                error = null,
-                result = false
-            )
-            // Ghi log để debug
-            Log.d("AccountViewModel", "Đăng xuất thành công")
-        } catch (e: Exception) {
-            _loginUiState.value = LoginUiState(
-                isLoading = false,
-                accessToken = null,
-                customer_id = null,
-                error = "Lỗi khi đăng xuất: ${e.message}",
-                result = false
-            )
-            Log.e("AccountViewModel", "Lỗi khi đăng xuất: ${e.message}", e)
         }
     }
 
@@ -112,17 +121,12 @@ class AccountViewModel:ViewModel() {
     private val _uiState = MutableStateFlow(ChangePasswordUiState())
     val uiState: StateFlow<ChangePasswordUiState> = _uiState.asStateFlow()
 
-    fun changePassword(username: String, password: String, newPassword: String, confirmPassword: String) {
+    fun changePassword(token: String, request: ChangePasswordRequest) {
         viewModelScope.launch {
             _uiState.value = ChangePasswordUiState(isLoading = true)
             try {
-                val request = ChangePasswordRequest(
-                    username = username,
-                    password = password,
-                    newPassword = newPassword,
-                    confirmPassword = confirmPassword
-                )
-                val response: Response<ChangePasswordResponse> = RetrofitClient.accountAPIService.changePassword(request)
+                val tokenUser = "Bearer $token"
+                val response: Response<ChangePasswordResponse> = RetrofitClient.accountAPIService.changePassword(tokenUser, request)
                 if (response.isSuccessful && response.body()?.status_code == 200) {
                     _uiState.value = ChangePasswordUiState(
                         isLoading = false,
@@ -189,6 +193,59 @@ class AccountViewModel:ViewModel() {
         }
     }
 
+    @SuppressLint("HardwareIds")
+    fun login(context: Context, username: String, password: String) {
+        viewModelScope.launch {
+            _loginUiState.value = LoginUiState(isLoading = true)
+            Log.d("Login", "Bắt đầu đăng nhập - username: $username, password: $password")
+
+            try {
+                val deviceName = Build.MODEL
+                Log.d("Login", "deviceName: $deviceName")
+                val deviceId = Settings.Secure.getString(context.contentResolver, Settings.Secure.ANDROID_ID) ?: UUID.randomUUID().toString()
+                Log.d("Login", "deviceId: $deviceId")
+                val deviceUuid = UUID.randomUUID().toString()
+                Log.d("Login", "deviceUuid: $deviceUuid")
+
+                val request = LoginIOTRequest(
+                    username = username,
+                    password = password,
+                    rememberMe = true,
+                    deviceName = deviceName,
+                    deviceId = deviceId,
+                    deviceUuid = ""
+                )
+                Log.d("Login", "Request: $request")
+
+                val response: LoginIOTResponse = RetrofitClient.accountAPIServiceIOT.loginIOT(request)
+                Log.d("Login", "Response: $response")
+
+                _loginUiState.value = LoginUiState(
+                    isLoading = false,
+                    accessToken = response.accessToken,
+                    customer_id = response.customer_id,
+                    error = null,
+                    result = true
+                )
+                Log.d("Login", "Thành công - accessToken: ${response.accessToken}")
+            } catch (e: Exception) {
+                Log.e("Login", "Lỗi: ${e.message}", e)
+                if (e is HttpException) {
+                    val errorBody = e.response()?.errorBody()?.string()
+                    Log.e("Login", "Nội dung lỗi: $errorBody")
+                }
+                _loginUiState.value = LoginUiState(
+                    isLoading = false,
+                    accessToken = null,
+                    customer_id = null,
+                    error = e.message ?: "Đã xảy ra lỗi khi đăng nhập",
+                    result = false
+                )
+                Log.d("Login", "Thất bại - error: ${e.message}")
+            }
+        }
+    }
+
 
     private val _sendOtpResult = MutableStateFlow<Response<SendOtpResponse>?>(null)
     val sendOtpResult: StateFlow<Response<SendOtpResponse>?> = _sendOtpResult
@@ -196,8 +253,8 @@ class AccountViewModel:ViewModel() {
     private val _verifyOtpResult = MutableStateFlow<VerifyOtpUiState>(VerifyOtpUiState.Idle)
     val verifyOtpResult: StateFlow<VerifyOtpUiState> = _verifyOtpResult.asStateFlow()
 
-    private val _verifyEmailResult = MutableStateFlow<Response<VerifyOtpResponse>?>(null)
-    val verifyEmailResult: StateFlow<Response<VerifyOtpResponse>?> = _verifyEmailResult
+    private val _verifyEmailResult = MutableStateFlow<VerifyEmailUiState>(VerifyEmailUiState.Idle)
+    val verifyEmailResult: StateFlow<VerifyEmailUiState> = _verifyEmailResult.asStateFlow()
 
     private val _resetPasswordResult = MutableStateFlow<Response<ResetPasswordResponse>?>(null)
     val resetPasswordResult: StateFlow<Response<ResetPasswordResponse>?> = _resetPasswordResult
@@ -268,17 +325,36 @@ class AccountViewModel:ViewModel() {
 
     fun verifyOtpChangeEmail(request: VerifyOtpChangeEmailRequest) {
         viewModelScope.launch {
+            _isLoading.value = true
+            _verifyEmailResult.value = VerifyEmailUiState.Loading
             try {
                 val response = RetrofitClient.verifyOtp.verifyOtpChangeEmail(request)
-                _verifyEmailResult.value = response
-                if (response.isSuccessful) {
-                    Log.d("AuthViewModel", "Verify OTP successful: ${response.body()?.data}")
+                if (response.isSuccessful && response.body()?.status_code == 200 && response.body()?.data != null) {
+                    _verifyEmailResult.value = VerifyEmailUiState.Success(response.body()!!.data!!.message)
+                    Log.d("AuthViewModel", "Verify Email successful: ${response.body()?.data}")
                 } else {
-                    Log.e("AuthViewModel", "Verify OTP failed: ${response.errorBody()?.string()}")
+                    val errorBody = if (response.isSuccessful) response.body() else {
+                        val errorJson = response.errorBody()?.string()
+                        try {
+                            Gson().fromJson(errorJson, VerifyOtpResponse::class.java)
+                        } catch (e: Exception) {
+                            null
+                        }
+                    }
+                    val error = errorBody?.errors?.firstOrNull()
+                    val errorMessage = when (error?.code) {
+                        1616 -> "Mã xác thực không khớp. Vui lòng thử lại !"
+                        else -> error?.message ?: "Vui lòng nhập đầy đủ 6 chữ số !"
+                    }
+                    _verifyEmailResult.value = VerifyEmailUiState.Error(errorMessage)
+                    Log.e("AuthViewModel", "Verify OTP failed: $errorMessage, ErrorBody: ${response.errorBody()?.string()}")
                 }
             } catch (e: Exception) {
-                Log.e("AuthViewModel", "Verify OTP error: ${e.message}")
-                _verifyEmailResult.value = null
+                val errorMessage = "Lỗi mạng: ${e.message}"
+                _verifyEmailResult.value = VerifyEmailUiState.Error(errorMessage)
+                Log.e("AuthViewModel", "Verify OTP error: $errorMessage")
+            } finally {
+                _isLoading.value = false
             }
         }
     }
@@ -334,4 +410,11 @@ sealed class VerifyOtpUiState {
     object Loading : VerifyOtpUiState()
     data class Success(val message: String) : VerifyOtpUiState()
     data class Error(val message: String) : VerifyOtpUiState()
+}
+
+sealed class VerifyEmailUiState {
+    object Idle : VerifyEmailUiState()
+    object Loading : VerifyEmailUiState()
+    data class Success(val message: String) : VerifyEmailUiState()
+    data class Error(val message: String) : VerifyEmailUiState()
 }

@@ -68,7 +68,6 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FabPosition
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.FloatingActionButtonDefaults
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.ModalDrawerSheet
@@ -102,6 +101,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -126,12 +126,15 @@ import com.example.ungdungbanthietbi_iot.viewModels.CartViewModel
 import com.example.ungdungbanthietbi_iot.views.notification.NotificationScreen
 import com.example.ungdungbanthietbi_iot.views.personal.PersonalScreen
 import com.example.ungdungbanthietbi_iot.utils.formatGiaTien
-import com.example.ungdungbanthietbi_iot.utils.formatGiaTienInt
 import com.example.ungdungbanthietbi_iot.viewModels.AccountViewModel
 import com.example.ungdungbanthietbi_iot.viewModels.CategoryViewModel
 import com.example.ungdungbanthietbi_iot.viewModels.CustomerState
 import com.example.ungdungbanthietbi_iot.viewModels.CustomerViewModel
 import com.example.ungdungbanthietbi_iot.views.components.ParentCategoryItem
+import com.example.ungdungbanthietbi_iot.views.components.PlaceholderAllDevices
+import com.example.ungdungbanthietbi_iot.views.components.PlaceholderCategory
+import com.example.ungdungbanthietbi_iot.views.components.PlaceholderDevice
+import com.example.ungdungbanthietbi_iot.views.components.PlaceholderSlideShow
 
 @RequiresApi(Build.VERSION_CODES.O)
 @OptIn(ExperimentalMaterial3Api::class)
@@ -142,7 +145,7 @@ fun HomeScreen(
     slideShowViewModel: SlideShowViewModel,
     username: String?,
     id: String?,
-    password: String?
+    token: String?
 ) {
     val context = LocalContext.current
     val categoryViewModel:CategoryViewModel = viewModel()
@@ -165,7 +168,7 @@ fun HomeScreen(
         deviceViewModel.getDeviceSale()
         categoryViewModel.getCategories()
         if(id != null){
-            likedViewModel.getLikedByIdCustomer(id)
+            //likedViewModel.getLikedByIdCustomer(id)
             customerViewModel.getCustomerById(id)
         }
     }
@@ -206,7 +209,17 @@ fun HomeScreen(
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .background(Color.White)
+                        .background(
+                            brush = Brush.horizontalGradient(
+                                colors = listOf(
+                                    Color(0xFF5D9EFF), // Màu xanh của TopAppBar
+                                    Color(0xFF5D9EFF), // Giữ màu xanh đậm lâu hơn
+                                    Color(0xFF5D9EFF).copy(alpha = 0.5f), // Nhạt dần
+                                    Color(0xFF5D9EFF).copy(alpha = 0.3f),
+                                    Color(0xFF5D9EFF).copy(alpha = 0.1f)// Nhạt hơn nữa
+                                )
+                            )
+                        )
                         .padding(horizontal = 14.dp)
                 ) {
                     val customerState by customerViewModel.customerState.collectAsState()
@@ -231,7 +244,10 @@ fun HomeScreen(
                             }
                             Row(
                                 modifier = Modifier.fillMaxWidth().clickable {
-                                    selectedTabIndex = 3
+                                    scope.launch {
+                                        navdrawerState.close()
+                                        selectedTabIndex = 3
+                                    }
                                 },
                                 horizontalArrangement = Arrangement.Start,
                                 verticalAlignment = Alignment.CenterVertically
@@ -272,10 +288,10 @@ fun HomeScreen(
                                     )
                                 }
                             }
-                            HorizontalDivider(
-                                modifier = Modifier.height(3.dp),
-                                color = Color(0xFF5D9EFF)
-                            )
+//                            HorizontalDivider(
+//                                modifier = Modifier.height(3.dp),
+//                                color = Color(0xFF5D9EFF)
+//                            )
                         }
                         is CustomerState.Error -> {
                             Text(
@@ -420,7 +436,7 @@ fun HomeScreen(
                                             if (username != null) {
                                                 navController.navigate(
                                                     Screen.Favorites_Screen.route +
-                                                            "?idCustomer=${id}&username=${username}&password=$password"
+                                                            "?idCustomer=${id}&username=${username}&token=$token"
                                                 )
                                             }
                                             else {
@@ -453,7 +469,7 @@ fun HomeScreen(
                                             if (username != null) {
                                                 navController.navigate(
                                                     Screen.Cart_Screen.route +
-                                                            "?idCustomer=${id}&username=${username}&password=$password"
+                                                            "?idCustomer=${id}&username=${username}&token=$token"
                                                 )
                                             }
                                             else {
@@ -598,7 +614,7 @@ fun HomeScreen(
                                     navController = navController,
                                     username = username,
                                     idCustomer = id,
-                                    password = password,
+                                    token = token,
                                     depth = 0,
                                     navdrawerState = navdrawerState,
                                     selectedCategory = selectedCategory,
@@ -636,7 +652,7 @@ fun HomeScreen(
                         titleContentColor = Color.White
                     ),
                     navigationIcon = {
-                        if (username != null) {
+                        if (username?.isNotEmpty() == true) {
                             IconButton(onClick = {
                                 selectedTabIndex = 3
                             }) {
@@ -657,7 +673,7 @@ fun HomeScreen(
                     },
                     actions = {
                         IconButton(onClick = {
-                            navController.navigate(Screen.Search_Screen.route + "?username=${username}&idCustomer=$id&password=$password")
+                            navController.navigate(Screen.Search_Screen.route + "?username=${username}&idCustomer=$id&token=${token}")
                         }) {
                             Icon(
                                 imageVector = Icons.Default.Search,
@@ -676,7 +692,7 @@ fun HomeScreen(
                                 } else {
                                     navController.navigate(
                                         Screen.Cart_Screen.route +
-                                                "?idCustomer=${id}&username=${username}&password=$password"
+                                                "?idCustomer=${id}&username=${username}&token=$token"
                                     )
                                 }
                             }) {
@@ -742,6 +758,9 @@ fun HomeScreen(
                                     fontWeight = if (selectedTabIndex == 0) FontWeight.Bold else FontWeight.Normal
                                 )
                             },
+//                            colors = NavigationBarItemDefaults.colors(
+//                                indicatorColor = Color(0xFFBEC7EF)
+//                            ),
                             selected = selectedTabIndex == 0,
                             onClick = { selectedTabIndex = 0 }
                         )
@@ -932,23 +951,25 @@ fun HomeScreen(
                     navController = navController,
                     username = username,
                     id = id,
-                    password = password,
+                    token = token,
                     isFavorite = isFavorite,
                     listAllDevice = listAllDevice,
                     listDeviceFeatured = listDeviceFeatured,
                     listDeviceSale = listDeviceSale,
                     listDeviceLiked = listLiked,
-                    categories = listCategories
+                    categories = listCategories,
                 )
                 2 -> if (username != null) NotificationScreen(navController = navController, idUser = id)
                 else NotificationScreen(navController = navController, idUser = "")
                 3 -> if(username != null && id != null)
-                    PersonalScreen(
-                        navController = navController,
-                        username = username,
-                        id = id,
-                        password = password
-                    )
+                    token?.let {
+                        PersonalScreen(
+                            navController = navController,
+                            username = username,
+                            id = id,
+                            token = it
+                        )
+                    }
             }
         }
     }
@@ -964,7 +985,7 @@ fun HomeContent(
     navController: NavController,
     username: String?,
     id: String?,
-    password: String?,
+    token: String?,
     isFavorite: Boolean,
     listAllDevice: List<Device>,
     listDeviceFeatured: List<Device>,
@@ -975,24 +996,34 @@ fun HomeContent(
     val coroutineScope = rememberCoroutineScope()
     var isRefreshing by remember { mutableStateOf(false) }
 
-    val likedViewModel: LikedViewModel = viewModel()
+    val slideShowViewModel: SlideShowViewModel = viewModel()
+    val categoryViewModel: CategoryViewModel = viewModel()
+    val isLoadingDeviceAll by deviceViewModel.isLoadingAll.collectAsState()
+    val isLoadSlideShow by slideShowViewModel.isLoadingAll.collectAsState()
+    val isLoadDeviceFeatured by deviceViewModel.isLoadingFeatured.collectAsState()
+    val isLoadDeviceSale by deviceViewModel.isLoadingSale.collectAsState()
+    val isLoadCategory by categoryViewModel.isLoading.collectAsState()
     // Hàm xử lý refresh
     fun onRefresh() {
         isRefreshing = true
         coroutineScope.launch {
-            // Load lại dữ liệu
             deviceViewModel.getAllDevice()
-//            deviceViewModel.getDeviceFeatured()
-            if (username != null) {
-                if (id != null) {
-                    likedViewModel.getLikedByIdCustomer(id)
-                }
-            }
+            deviceViewModel.getDeviceSale()
+            deviceViewModel.getDeviceFeatured()
+            slideShowViewModel.getAllSlideShow()
+            categoryViewModel.getCategories()
+//            if (username != null) {
+//                if (id != null) {
+//                    likedViewModel.getLikedByIdCustomer(id)
+//                }
+//            }
             // Giả lập thời gian load (có thể bỏ nếu API nhanh)
-            delay(1000)
+            //delay(1000)
             isRefreshing = false
         }
     }
+    val screenWidth = LocalContext.current.resources.displayMetrics.widthPixels
+    val cardWidth = with(LocalDensity.current) { (screenWidth / 2 - 20.dp.toPx()).toDp() } // Tính chiều rộng mỗi card dựa trên màn hình
 
     PullToRefreshBox(
         isRefreshing = isRefreshing,
@@ -1031,7 +1062,10 @@ fun HomeContent(
                         )
                         .padding(bottom = 8.dp) // Đảm bảo không ảnh hưởng đến nội dung bên dưới
                 ) {
-                    if (listSlideShow.isNotEmpty()) {
+                    if (isLoadSlideShow || listSlideShow.isEmpty()) {
+                        // Placeholder cho SlideShow
+                        PlaceholderSlideShow()
+                    } else {
                         val realPageCount = listSlideShow.size
                         val fakePageCount = Int.MAX_VALUE
                         val initialPage = fakePageCount / 2 - (fakePageCount / 2 % realPageCount)
@@ -1066,7 +1100,14 @@ fun HomeContent(
                                     .shadow(4.dp, RoundedCornerShape(16.dp))
                             ) { page ->
                                 val realIndex = page % realPageCount
-                                SlideImage(base64String = listSlideShow[realIndex].image)
+                                SlideImage(
+                                    base64String = listSlideShow[realIndex].image,
+                                    link = listSlideShow[realIndex].link,
+                                    navController = navController,
+                                    username = username,
+                                    idCustomer = id,
+                                    token = token
+                                )
                             }
                             Row(
                                 modifier = Modifier
@@ -1102,79 +1143,102 @@ fun HomeContent(
                                 }
                             }
                         }
-                    } else {
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(16.dp),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            CircularProgressIndicator(
-                                color = Color(0xFF5D9EFF),
-                                strokeWidth = 4.dp,
-                                modifier = Modifier.size(48.dp)
+                    } //{
+//                        Box(
+//                            modifier = Modifier
+//                                .fillMaxWidth()
+//                                .padding(16.dp),
+//                            contentAlignment = Alignment.Center
+//                        ) {
+//                            CircularProgressIndicator(
+//                                color = Color(0xFF5D9EFF),
+//                                strokeWidth = 4.dp,
+//                                modifier = Modifier.size(48.dp)
+//                            )
+//                        }
+                    //}
+                }
+            }
+            item {
+                SectionTitle("Danh mục sản phẩm")
+                if (isLoadCategory || categories.isEmpty()) {
+                    PlaceholderCategory()
+                } else {
+                    LazyRow(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 12.dp, vertical = 8.dp),
+                        horizontalArrangement = Arrangement.spacedBy(16.dp)
+                    ) {
+                        items(categories) { category ->
+                            CategoryItem(
+                                category = category,
+                                navController = navController,
+                                username = username,
+                                idCustomer = id,
+                                token = token
                             )
                         }
                     }
                 }
             }
             item {
-                SectionTitle("Danh mục sản phẩm")
-                LazyRow(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 12.dp, vertical = 8.dp),
-                    horizontalArrangement = Arrangement.spacedBy(16.dp)
-                ) {
-                    items(categories) { category ->
-                        CategoryItem(
-                            category = category,
-                            navController = navController,
-                            username = username,
-                            idCustomer = id
-                        )
-                    }
-                }
-            }
-            item {
                 SectionTitle("Sản phẩm khuyến mãi")
-                LazyRow(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 12.dp),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    items(listDeviceSale) { device ->
-                        CardDevice(
-                            device = device,
-                            isFavorite = isFavorite,
-                            idCustomer = id,
-                            username = username,
-                            password = password,
-                            deviceViewModel = deviceViewModel,
-                            navController = navController
-                        )
+                if (isLoadDeviceSale || listDeviceSale.isEmpty()) {
+                    PlaceholderDevice()
+                } else {
+                    LazyRow(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 12.dp, vertical = 4.dp),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        items(listDeviceSale) { device ->
+                            Box(
+                                modifier = Modifier
+                                    .width(cardWidth)
+                            ) {
+                                CardDevice(
+                                    device = device,
+                                    isFavorite = isFavorite,
+                                    idCustomer = id,
+                                    username = username,
+                                    token = token,
+                                    deviceViewModel = deviceViewModel,
+                                    navController = navController
+                                )
+                            }
+                        }
                     }
                 }
             }
             item {
                 SectionTitle("Sản phẩm nổi bật")
-                LazyRow(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 12.dp),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    items(listDeviceFeatured) { device ->
-                        CardDevice(
-                            device = device,
-                            isFavorite = isFavorite,
-                            idCustomer = id,
-                            username = username,
-                            password = password,
-                            deviceViewModel = deviceViewModel,
-                            navController = navController
-                        )
+                if (isLoadDeviceFeatured || listDeviceFeatured.isEmpty()) {
+                    PlaceholderDevice()
+                } else {
+                    LazyRow(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 12.dp),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        items(listDeviceFeatured) { device ->
+                            Box(
+                                modifier = Modifier
+                                    .width(cardWidth)
+                            ) {
+                                CardDevice(
+                                    device = device,
+                                    isFavorite = isFavorite,
+                                    idCustomer = id,
+                                    username = username,
+                                    token = token,
+                                    deviceViewModel = deviceViewModel,
+                                    navController = navController
+                                )
+                            }
+                        }
                     }
                 }
             }
@@ -1240,31 +1304,47 @@ fun HomeContent(
             item {
                 SectionTitle("Tất cả sản phẩm")
             }
-            val pairedDevices = listAllDevice.chunked(2)
-            items(pairedDevices) { pair ->
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 12.dp, vertical = 4.dp),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    pair.forEach { device ->
-                        Box(
-                            modifier = Modifier
-                                .weight(1f)
-                        ) {
-                            CardDevice(
-                                device = device,
-                                isFavorite = isFavorite,
-                                idCustomer = id,
-                                username = username,
-                                password = password,
-                                deviceViewModel = deviceViewModel,
-                                navController = navController
-                            )
-                        }
-                        if (pair.size == 1) {
-                            Box(modifier = Modifier.weight(1f))
+            if (isLoadingDeviceAll) {
+                items(2) {
+                    PlaceholderAllDevices()
+                }
+            } else if (listAllDevice.isEmpty()) {
+                item {
+                    Text(
+                        text = "Không có sản phẩm nào",
+                        color = Color.Red ,
+                        fontSize = 16.sp,
+                        modifier = Modifier.fillMaxWidth().padding(16.dp),
+                        textAlign = TextAlign.Center
+                    )
+                }
+            } else {
+                val pairedDevices = listAllDevice.chunked(2)
+                items(pairedDevices) { pair ->
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 12.dp, vertical = 4.dp),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        pair.forEach { device ->
+                            Box(
+                                modifier = Modifier
+                                    .weight(1f)
+                            ) {
+                                CardDevice(
+                                    device = device,
+                                    isFavorite = isFavorite,
+                                    idCustomer = id,
+                                    username = username,
+                                    token = token,
+                                    deviceViewModel = deviceViewModel,
+                                    navController = navController
+                                )
+                            }
+                            if (pair.size == 1) {
+                                Box(modifier = Modifier.weight(1f))
+                            }
                         }
                     }
                 }
@@ -1438,7 +1518,7 @@ fun CardDevice(
     isFavorite: Boolean,
     idCustomer: String?,
     username: String?,
-    password: String?,
+    token: String?,
     deviceViewModel: DeviceViewModel,
     navController: NavController
 ) {
@@ -1465,14 +1545,14 @@ fun CardDevice(
 
     Card(
         modifier = Modifier
-            .width(200.dp)
+            .fillMaxWidth()
             .height(250.dp)
             .padding(4.dp), // Tăng padding để tạo khoảng cách giữa các card
         onClick = {
             if (username != null) {
                 navController.navigate(
                     Screen.ProductDetailsScreen.route +
-                            "?id=${device.idDevice}&idCustomer=${idCustomer}&username=${username}&password=$password"
+                            "?id=${device.idDevice}&idCustomer=${idCustomer}&username=${username}&token=$token"
                 )
             } else {
                 navController.navigate(Screen.ProductDetailsScreen.route + "?id=${device.idDevice}")
@@ -1593,7 +1673,7 @@ fun CardDevice(
 }
 
 @Composable
-fun CategoryItem(category: Category, navController: NavController, username: String?, idCustomer: String?) {
+fun CategoryItem(category: Category, navController: NavController, username: String?, idCustomer: String?, token: String?) {
     val deviceViewModel: DeviceViewModel = viewModel()
     var bitmap by remember { mutableStateOf<Bitmap?>(null) }
     // Tải hình ảnh
@@ -1606,7 +1686,7 @@ fun CategoryItem(category: Category, navController: NavController, username: Str
             .width(100.dp)
             .clickable {
                 val route = if (username != null && idCustomer != null)
-                    Screen.Category_Screen.route + "?category=${category.name}&username=${username}&idCustomer=$idCustomer"
+                    Screen.Category_Screen.route + "?category=${category.name}&username=${username}&idCustomer=$idCustomer&token=$token"
                 else
                     Screen.Category_Screen.route + "?category=${category.name}"
                 navController.navigate(route)
@@ -1649,15 +1729,38 @@ fun CategoryItem(category: Category, navController: NavController, username: Str
 }
 
 @Composable
-fun SlideImage(base64String: String) {
+fun SlideImage(
+    base64String: String,
+    link: String,
+    navController: NavController,
+    username: String?,
+    idCustomer: String?,
+    token: String?
+) {
     val deviceViewModel: DeviceViewModel = viewModel()
     var bitmap by remember { mutableStateOf<Bitmap?>(null) }
+    // Trích xuất ID sản phẩm từ link với định dạng /product/{slug}/{id}
+    val productId = remember(link) {
+        val regex = Regex("/product/[^/]+/(\\d+)")
+        regex.find(link)?.groupValues?.getOrNull(1)?.toIntOrNull()
+    }
     LaunchedEffect (Unit){
         bitmap = deviceViewModel.getDeviceImageBitmapImage(base64String)
     }
     AnimatedContent(
         targetState = bitmap,
-        modifier = Modifier.fillMaxSize(),
+        modifier = Modifier
+            .fillMaxSize()
+            .clickable {
+                productId?.let { id ->
+                    val route = if (username != null && idCustomer != null) {
+                        "${Screen.ProductDetailsScreen.route}?id=$id&idCustomer=$idCustomer&username=$username&token=$token"
+                    } else {
+                        "${Screen.ProductDetailsScreen.route}?id=$id"
+                    }
+                    navController.navigate(route)
+                }
+            },
         transitionSpec = { fadeIn() togetherWith fadeOut() }, label = ""
     ) { targetBitmap ->
         Image(

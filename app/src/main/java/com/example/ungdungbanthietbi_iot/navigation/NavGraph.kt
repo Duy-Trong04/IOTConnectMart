@@ -54,6 +54,7 @@ import com.example.ungdungbanthietbi_iot.views.rating.RatingHistoryScreen
 import com.example.ungdungbanthietbi_iot.views.rating.RatingScreen
 import com.example.ungdungbanthietbi_iot.views.rating.UpdateRatingScreen
 import com.example.ungdungbanthietbi_iot.ui.theme.parseSelectedProducts
+import com.example.ungdungbanthietbi_iot.views.personal.EmailVerificationScreen
 import com.example.ungdungbanthietbi_iot.views.personal.VerifiedEmailScreen
 import com.example.ungdungbanthietbi_iot.views.search.CategoriesScreen
 
@@ -133,17 +134,17 @@ fun NavGraph(
         }
 
         //Home đã có tài khoản đăng nhập
-        composable(route = Screen.HomeScreen.route + "?username={username}&id={id}&password={password}",
+        composable(route = Screen.HomeScreen.route + "?username={username}&id={id}&token={token}",
             arguments = listOf(
                 navArgument("username"){type = NavType.StringType },
                 navArgument("id"){type = NavType.StringType },
-                navArgument("password"){type = NavType.StringType }
+                navArgument("token"){type = NavType.StringType }
             )
         ){
             val username = it.arguments?.getString("username")
             val id = it.arguments?.getString("id")
-            val password = it.arguments?.getString("password")
-            HomeScreen(navController, deviceViewModel, slideShowViewModel, username, id, password)
+            val token = it.arguments?.getString("token")
+            HomeScreen(navController, deviceViewModel, slideShowViewModel, username, id, token)
         }
 
         //Màn hình đăng nhập
@@ -153,13 +154,13 @@ fun NavGraph(
 
         //Màn hình thanh toán
         composable(
-            route = Screen.Check_Out.route + "?selectedProducts={selectedProducts}&tongtien={tongtien}&username={username}&id={id}&password={password}",
+            route = Screen.Check_Out.route + "?selectedProducts={selectedProducts}&tongtien={tongtien}&username={username}&id={id}&token={token}",
             arguments = listOf(
                 navArgument("selectedProducts") {type = NavType.StringType },
                 navArgument("tongtien") { type = NavType.StringType},
                 navArgument("username") {type = NavType.StringType },
                 navArgument("id") {type = NavType.StringType },
-                navArgument("password") {type = NavType.StringType }
+                navArgument("token") {type = NavType.StringType }
             )
         ){ backStackEntry ->
             // Lấy chuỗi selectedProducts từ tham số điều hướng
@@ -172,9 +173,9 @@ fun NavGraph(
             val tongtien = backStackEntry.arguments?.getString("tongtien")?.toDoubleOrNull() ?: 0.0
             val username = backStackEntry.arguments?.getString("username") ?: ""
             val id = backStackEntry.arguments?.getString("id") ?: ""
-            val password = backStackEntry.arguments?.getString("password") ?: ""
+            val token = backStackEntry.arguments?.getString("token") ?: ""
 
-            CheckoutScreen(navController, selectedProducts, tongtien = tongtien, username = username, idCustomer = id, password)
+            CheckoutScreen(navController, selectedProducts, tongtien = tongtien, username = username, idCustomer = id, token)
         }
         //Màn hình đăng ký
         composable(route = Screen.RegisterScreen.route){
@@ -260,25 +261,25 @@ fun NavGraph(
         }
         //Màn hình chi tiêt sản phẩm
         composable(
-            route = Screen.ProductDetailsScreen.route + "?id={idDevice}&idCustomer={idCustomer}&username={username}&password={password}",
+            route = Screen.ProductDetailsScreen.route + "?id={idDevice}&idCustomer={idCustomer}&username={username}&token={token}",
             arguments = listOf(
                 navArgument("idDevice"){nullable = true},
                 navArgument("idCustomer"){nullable = true},
                 navArgument("username"){nullable = true},
-                navArgument("password"){nullable = true}
+                navArgument("token"){nullable = true}
             )
         ) {
             val idDevice = it.arguments?.getString("idDevice")
             val idCustomer = it.arguments?.getString("idCustomer")
             val username = it.arguments?.getString("username")
-            val password = it.arguments?.getString("password")
+            val token = it.arguments?.getString("token")
             if(idDevice != null){
                 ProductDetailsScreen(
                     navController,
                     idDevice,
                     idCustomer,
                     username,
-                    password,
+                    token,
                     deviceViewModel,
                     imageViewModel,
                     reviewViewModel
@@ -286,7 +287,7 @@ fun NavGraph(
             }
         }
         //Màn hình giỏ hàng
-        composable(route = Screen.Cart_Screen.route + "?idCustomer={idCustomer}&username={username}&password={password}",
+        composable(route = Screen.Cart_Screen.route + "?idCustomer={idCustomer}&username={username}&token={token}",
             arguments = listOf(
                 navArgument("idCustomer"){
                     type = NavType.StringType
@@ -295,7 +296,7 @@ fun NavGraph(
                     type = NavType.StringType
                     defaultValue = ""
                 },
-                navArgument("password") {
+                navArgument("token") {
                     type = NavType.StringType
                     defaultValue = ""
                 }
@@ -303,8 +304,8 @@ fun NavGraph(
         ) {
             val idCustomer = it.arguments?.getString("idCustomer") ?: ""
             val username = it.arguments?.getString("username") ?: ""
-            val password = it.arguments?.getString("password") ?: ""
-            CartScreen(navController, idCustomer, username, password)
+            val token = it.arguments?.getString("token") ?: ""
+            CartScreen(navController, idCustomer, username, token)
         }
         //Màn hình tất cả đánh giá, bình luận
         composable(route = Screen.Product_Reviews.route+ "?idDevice={idDevice}",
@@ -318,14 +319,14 @@ fun NavGraph(
 
         //màn hình thanh toán
         composable(
-            route = Screen.CheckOutSuccess.route  + "?username={username}&id={id}&orderId={orderId}&totalMoney={totalMoney}&createdAt={createdAt}&password={password}",
+            route = Screen.CheckOutSuccess.route  + "?username={username}&id={id}&orderId={orderId}&totalMoney={totalMoney}&createdAt={createdAt}&token={token}",
             arguments = listOf(
                 navArgument("username") {type = NavType.StringType},
                 navArgument("id") {type = NavType.StringType},
                 navArgument("orderId") {type = NavType.StringType},
                 navArgument("totalMoney") {type = NavType.IntType},
                 navArgument("createdAt") {type = NavType.StringType},
-                navArgument("password") {type = NavType.StringType},
+                navArgument("token") {type = NavType.StringType}
             )
         ){
             val username = it.arguments?.getString("username") ?: ""
@@ -333,19 +334,21 @@ fun NavGraph(
             val orderId = it.arguments?.getString("orderId") ?: ""
             val totalMoney = it.arguments?.getInt("totalMoney") ?: 0
             val createdAt = it.arguments?.getString("createdAt") ?: ""
-            val password = it.arguments?.getString("password") ?: ""
-            CheckOutSuccessScreen(navController, username, id, orderId, totalMoney, createdAt, password)
+            val token = it.arguments?.getString("token") ?: ""
+            CheckOutSuccessScreen(navController, username, id, orderId, totalMoney, createdAt, token)
         }
         //Màn hình lịch sử đánh giá, bình luận
-        composable(route = Screen.Rating_History.route + "?idCustomer={idCustomer}&username={username}",
+        composable(route = Screen.Rating_History.route + "?idCustomer={idCustomer}&username={username}&token={token}",
             arguments = listOf(
                 navArgument("idCustomer") {type = NavType.StringType },
-                navArgument("username") {type = NavType.StringType }
+                navArgument("username") {type = NavType.StringType },
+                navArgument("token") {type = NavType.StringType }
             )
         ) {
             val idCustomer = it.arguments?.getString("idCustomer") ?: ""
             val username = it.arguments?.getString("username") ?: ""
-            RatingHistoryScreen(navController, idCustomer, username)
+            val token = it.arguments?.getString("token") ?: ""
+            RatingHistoryScreen(navController, idCustomer, username, token)
         }
 
         //Màn hình thêm đánh giá, bình luận
@@ -389,7 +392,7 @@ fun NavGraph(
         }
         //Màn hình tìm kiếm đã đăng nhập
         composable(
-            route = Screen.Search_Screen.route + "?username={username}&idCustomer={idCustomer}&password={password}",
+            route = Screen.Search_Screen.route + "?username={username}&idCustomer={idCustomer}&token={token}",
             arguments = listOf(
                 navArgument("username") {
                     type = NavType.StringType
@@ -399,7 +402,7 @@ fun NavGraph(
                     type = NavType.StringType
                     nullable = true
                 },
-                navArgument("password") {
+                navArgument("token") {
                     type = NavType.StringType
                     nullable = true
                 }
@@ -407,13 +410,13 @@ fun NavGraph(
         ){
             val username = it.arguments?.getString("username") ?: ""
             val idCustomer = it.arguments?.getString("idCustomer") ?: ""
-            val password = it.arguments?.getString("password") ?: ""
-            SearchScreen(navController, username, idCustomer, password)
+            val token = it.arguments?.getString("token") ?: ""
+            SearchScreen(navController, username, idCustomer, token)
         }
 
         //Màn hình kết quả tìm kiếm
         composable(
-            route = Screen.Search_Results.route + "?query={query}&username={username}&idCustomer={idCustomer}&password={password}",
+            route = Screen.Search_Results.route + "?query={query}&username={username}&idCustomer={idCustomer}&token={token}",
             arguments = listOf(
                 navArgument("query") {
                     type = NavType.StringType
@@ -426,7 +429,7 @@ fun NavGraph(
                     type = NavType.StringType
                     nullable = true
                 },
-                navArgument("password") {
+                navArgument("token") {
                     type = NavType.StringType
                     nullable = true
                 }
@@ -435,23 +438,23 @@ fun NavGraph(
             val query = it.arguments?.getString("query") ?: ""
             val username = it.arguments?.getString("username") ?: ""
             val idCustomer = it.arguments?.getString("idCustomer") ?: ""
-            val password = it.arguments?.getString("password") ?: ""
-            SearchResultsScreen(navController, query, username, idCustomer, password)
+            val token = it.arguments?.getString("token") ?: ""
+            SearchResultsScreen(navController, query, username, idCustomer, token)
         }
 
         //Màn hình sản phẩm yêu thích
         composable(
-            route = Screen.Favorites_Screen.route + "?idCustomer={idCustomer}&username={username}&password={password}",
+            route = Screen.Favorites_Screen.route + "?idCustomer={idCustomer}&username={username}&token={token}",
             arguments = listOf(
                 navArgument("idCustomer"){type = NavType.StringType },
                 navArgument("username") {type = NavType.StringType },
-                navArgument("password") {type = NavType.StringType }
+                navArgument("token") {type = NavType.StringType }
             )
         ){
             val idCustomer = it.arguments?.getString("idCustomer") ?: ""
             val username = it.arguments?.getString("username") ?: ""
-            val password = it.arguments?.getString("password") ?: ""
-            FavoritesScreen(navController, idCustomer, username, password)
+            val token = it.arguments?.getString("token") ?: ""
+            FavoritesScreen(navController, idCustomer, username, token)
         }
 
         //Đến màn Chỉnh sửa thông tin cá nhân
@@ -474,60 +477,60 @@ fun NavGraph(
             OrderListScreen(navController, idCustomer)
         }
 
-        //Dẫn đến màn chọn(chỉnh sửa) Username
-        composable(Screen.EditUsernamScreen.route + "/{id}/{username}") {
-            backStackEntry ->
-            val username = backStackEntry.arguments?.getString("username") ?: ""
-            val id = backStackEntry.arguments?.getString("id") ?: ""
-            EditUsername(onBack = { navController.popBackStack()},id,username)
-        }
-        //Dẫn đến màn chọn(chỉnh sửa) SỐ ĐIỆN THOẠI
-        composable(Screen.EditPhoneScreen.route + "/{id}/{phoneNumber}") {
-            backStackEntry ->
-            val id = backStackEntry.arguments?.getString("id") ?: ""
-            val phoneNumber = backStackEntry.arguments?.getString("phoneNumber") ?: ""
-            EditPhoneScreen(id,onBack = { navController.popBackStack()}, phoneNumber)
-        }
-        //Dẫn đến màn chọn(chỉnh sửa) Email cá nhân
-        composable(Screen.EditEmailScreen.route + "/{id}/{email}") {
-            backStackEntry ->
-            val id = backStackEntry.arguments?.getString("id") ?: ""
-            val email = backStackEntry.arguments?.getString("email") ?: ""
-            EditEmailScreen(id,onBack = { navController.popBackStack()},email)
-        }
-        //Dẫn đến Man hinh Setting
-        composable(Screen.SettingScreen.route +"/{idPerson}/{password}") {
-            backStackEntry ->
-            val idPerson = backStackEntry.arguments?.getString("idPerson") ?: ""
-            val password = backStackEntry.arguments?.getString("password") ?: ""
-            AccountSettingsScreen(navController,onBack = { navController.popBackStack()},idPerson,password)
-        }
-        //Dẫn đến màn hình liên hệ
-        composable(Screen.ContactScreen.route) {
-            ContactScreen(onBack = { navController.popBackStack() })
-        }
-        //Dẫn đến màn hình chỉnh sửa Mật khẩu
-        composable(Screen.ChangePassword.route+ "/{id}/{password}") {
-            backStackEntry ->
-            val id = backStackEntry.arguments?.getString("id") ?: ""
-            val password = backStackEntry.arguments?.getString("password") ?: ""
-            AccountSettingsScreen(navController,onBack = { navController.popBackStack()},id,password)
-            ChangePassword(onBack = { navController.popBackStack()},id,password)
-        }
+//        //Dẫn đến màn chọn(chỉnh sửa) Username
+//        composable(Screen.EditUsernamScreen.route + "/{id}/{username}") {
+//            backStackEntry ->
+//            val username = backStackEntry.arguments?.getString("username") ?: ""
+//            val id = backStackEntry.arguments?.getString("id") ?: ""
+//            EditUsername(onBack = { navController.popBackStack()},id,username)
+//        }
+//        //Dẫn đến màn chọn(chỉnh sửa) SỐ ĐIỆN THOẠI
+//        composable(Screen.EditPhoneScreen.route + "/{id}/{phoneNumber}") {
+//            backStackEntry ->
+//            val id = backStackEntry.arguments?.getString("id") ?: ""
+//            val phoneNumber = backStackEntry.arguments?.getString("phoneNumber") ?: ""
+//            EditPhoneScreen(id,onBack = { navController.popBackStack()}, phoneNumber)
+//        }
+//        //Dẫn đến màn chọn(chỉnh sửa) Email cá nhân
+//        composable(Screen.EditEmailScreen.route + "/{id}/{email}") {
+//            backStackEntry ->
+//            val id = backStackEntry.arguments?.getString("id") ?: ""
+//            val email = backStackEntry.arguments?.getString("email") ?: ""
+//            EditEmailScreen(id,onBack = { navController.popBackStack()},email)
+//        }
+//        //Dẫn đến Man hinh Setting
+//        composable(Screen.SettingScreen.route +"/{idPerson}/{password}") {
+//            backStackEntry ->
+//            val idPerson = backStackEntry.arguments?.getString("idPerson") ?: ""
+//            val password = backStackEntry.arguments?.getString("password") ?: ""
+//            AccountSettingsScreen(navController,onBack = { navController.popBackStack()},idPerson,password)
+//        }
+//        //Dẫn đến màn hình liên hệ
+//        composable(Screen.ContactScreen.route) {
+//            ContactScreen(onBack = { navController.popBackStack() })
+//        }
+//        //Dẫn đến màn hình chỉnh sửa Mật khẩu
+//        composable(Screen.ChangePassword.route+ "/{id}/{password}") {
+//            backStackEntry ->
+//            val id = backStackEntry.arguments?.getString("id") ?: ""
+//            val password = backStackEntry.arguments?.getString("password") ?: ""
+//            AccountSettingsScreen(navController,onBack = { navController.popBackStack()},id,password)
+//            ChangePassword(onBack = { navController.popBackStack()},id,password)
+//        }
 
         //màn hình thông tin cá nhân
         composable(
-            Screen.PersonalScreen.route + "?username={username}&id={id}&password={password}",
+            Screen.PersonalScreen.route + "?username={username}&id={id}&token={token}",
             arguments = listOf(
                 navArgument("username") {type = NavType.StringType },
                 navArgument("id") {type = NavType.StringType },
-                navArgument("password") {type = NavType.StringType }
+                navArgument("token") {type = NavType.StringType }
             )
         ) {
             val username = it.arguments?.getString("username") ?: ""
             val id = it.arguments?.getString("id") ?: ""
-            val password = it.arguments?.getString("password") ?: ""
-            PersonalScreen(navController, username, id, password)
+            val token = it.arguments?.getString("token") ?: ""
+            PersonalScreen(navController, username, id, token)
         }
 
         //màn hình thông báo
@@ -545,32 +548,52 @@ fun NavGraph(
 
         //màn hình danh mục
         composable(
-            Screen.Category_Screen.route +"?category={category}&username={username}&idCustomer={idCustomer}&password={password}",
+            Screen.Category_Screen.route +"?category={category}&username={username}&idCustomer={idCustomer}&token={token}",
             arguments = listOf(
                 navArgument("category") { type = NavType.StringType; nullable = true },
                 navArgument("username") { type = NavType.StringType; nullable = true },
                 navArgument("idCustomer") { type = NavType.StringType; nullable = true },
-                navArgument("password") { type = NavType.StringType; nullable = true }
+                navArgument("token") { type = NavType.StringType; nullable = true }
             )
         ) { backStackEntry ->
             val category = backStackEntry.arguments?.getString("category")
             val username = backStackEntry.arguments?.getString("username")
             val idCustomer = backStackEntry.arguments?.getString("idCustomer")
-            val password = backStackEntry.arguments?.getString("password")
-            CategoriesScreen(navController, deviceViewModel, category, username, idCustomer, password)
+            val token = backStackEntry.arguments?.getString("token")
+            CategoriesScreen(navController, deviceViewModel, category, username, idCustomer, token)
         }
 
 
         composable(
-            Screen.VerifiedEmailScreen.route + "?id={id}&email={email}",
+            Screen.VerifiedEmailScreen.route + "?id={id}&email={email}&username={username}&token={token}",
             arguments = listOf(
                 navArgument("email") { type = NavType.StringType },
-                navArgument("id") { type = NavType.StringType}
+                navArgument("id") { type = NavType.StringType},
+                navArgument("username") { type = NavType.StringType},
+                navArgument("token") { type = NavType.StringType}
             )
         ) {
             val id = it.arguments?.getString("id") ?: ""
             val email = it.arguments?.getString("email") ?: ""
-            VerifiedEmailScreen(navController, id, email)
+            val username = it.arguments?.getString("username") ?: ""
+            val token = it.arguments?.getString("token") ?: ""
+            VerifiedEmailScreen(navController, id, email, username, token)
+        }
+
+        composable(
+            Screen.EmailVerificationScreen.route + "?id={id}&email={email}&username={username}&token={token}",
+            arguments = listOf(
+                navArgument("email") { type = NavType.StringType },
+                navArgument("id") { type = NavType.StringType},
+                navArgument("username") { type = NavType.StringType},
+                navArgument("token") { type = NavType.StringType}
+            )
+        ) {
+            val id = it.arguments?.getString("id") ?: ""
+            val email = it.arguments?.getString("email") ?: ""
+            val username = it.arguments?.getString("username") ?: ""
+            val token = it.arguments?.getString("token") ?: ""
+            EmailVerificationScreen(navController, id, email, username, token)
         }
     }
 }

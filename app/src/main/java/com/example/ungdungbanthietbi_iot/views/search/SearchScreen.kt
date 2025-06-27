@@ -158,7 +158,7 @@ fun SearchScreen(
     navController: NavController,
     username: String?,
     idCustomer: String?,
-    password: String?
+    token: String?
 ) {
     val deviceViewModel: DeviceViewModel = viewModel()
     // Lấy từ khóa tìm kiếm từ ViewModel
@@ -256,7 +256,7 @@ fun SearchScreen(
                             // Điều hướng sang SearchResultsScreen
                             if (username != null) {
                                 navController.navigate(
-                                    Screen.Search_Results.route + "?query=${searchQuery}&username=${username}&idCustomer=$idCustomer&password=$password"
+                                    Screen.Search_Results.route + "?query=${searchQuery}&username=${username}&idCustomer=$idCustomer&token=$token"
                                 )
                             }
                         }
@@ -336,7 +336,7 @@ fun SearchScreen(
                                     // Điều hướng sang SearchResultsScreen
                                     if (username != null) {
                                         navController.navigate(
-                                            Screen.Search_Results.route + "?query=${historyItem}&username=${username}&idCustomer=$idCustomer"
+                                            Screen.Search_Results.route + "?query=${historyItem}&username=${username}&idCustomer=$idCustomer&token=$token"
                                         )
                                     } else {
                                         navController.navigate(

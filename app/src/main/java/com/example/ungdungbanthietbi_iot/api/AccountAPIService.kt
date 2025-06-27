@@ -1,10 +1,12 @@
 package com.example.ungdungbanthietbi_iot.api
 
+import com.example.ungdungbanthietbi_iot.models.AccountData
 import com.example.ungdungbanthietbi_iot.models.AddAccount
 import com.example.ungdungbanthietbi_iot.models.LoginRequest
 import com.example.ungdungbanthietbi_iot.models.LoginResponse
 import retrofit2.Response
 import retrofit2.http.Body
+import retrofit2.http.Header
 import retrofit2.http.PATCH
 import retrofit2.http.POST
 
@@ -112,6 +114,7 @@ interface AccountAPIService {
 
     @PATCH("auth/account/changed-password")
     suspend fun changePassword(
+        @Header("Authorization") token: String,
         @Body request: ChangePasswordRequest
     ): Response<ChangePasswordResponse>
 
@@ -134,4 +137,54 @@ interface AccountAPIService {
     suspend fun resetPassword(
         @Body request: ResetPasswordRequest
     ): Response<ResetPasswordResponse>
+}
+
+data class LoginIOTRequest(
+    val username: String,
+    val password: String,
+    val rememberMe: Boolean,
+    val deviceName: String,
+    val deviceId: String,
+    val deviceUuid: String
+)
+
+data class LoginIOTResponse(
+    val accessToken: String,
+    val customer_id: String,
+    val username: String,
+    val userId: String,
+    val refreshToken: String,
+    val deviceUuid: String,
+    val deviceInfo: DeviceInfo,
+    val devices: List<Devices>
+)
+
+data class DeviceInfo(
+    val current: Current,
+    val total: Total
+)
+
+data class Current(
+    val deviceId: String,
+    val deviceName: String,
+    val lastLogin: String,
+    val ipAddress: String,
+    val userAgent: String
+)
+
+data class Total(
+    val active: Int,
+    val limit: Int,
+    val remaining: Int
+)
+
+data class Devices(
+    val deviceId: String,
+    val deviceName: String,
+    val lastLogin: String,
+    val isCurrentDevice: Boolean
+)
+interface AccountAPIServiceIOT {
+    @POST("auth/login")
+    suspend fun loginIOT(@Body request: LoginIOTRequest): LoginIOTResponse
 }

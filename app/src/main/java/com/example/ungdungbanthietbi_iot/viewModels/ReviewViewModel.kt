@@ -94,6 +94,7 @@ class ReviewViewModel:ViewModel() {
 
     fun addReview(request: ReviewRequestCreate) {
         viewModelScope.launch {
+            _isLoading.value = true
             try {
                 val response = RetrofitClient.reviewAPIService.addReview(request)
                 if(response.status_code == 201){
