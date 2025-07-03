@@ -81,6 +81,7 @@ fun AddressSelectionScreen(
 ) {
     val addressViewModel: AddressViewModel = viewModel()
     val listAddress by addressViewModel::addressDatas
+    val isLoading by addressViewModel.isLoading.collectAsState()
     // Khởi tạo trạng thái chọn với selectedAddressId từ CheckoutScreen
     var currentSelectedAddressId by remember { mutableStateOf(selectedAddressId) }
 
@@ -120,6 +121,14 @@ fun AddressSelectionScreen(
             )
         }
     ) { paddingValues ->
+        if(isLoading){
+            Box(modifier = Modifier.fillMaxWidth().background(Color.White), contentAlignment = Alignment.Center) {
+                CircularProgressIndicator1(
+                    color = Color(0xFF5F9EFF)
+                )
+            }
+        }
+        else {
             LazyColumn(modifier = Modifier.padding(paddingValues).padding(horizontal = 5.dp, vertical = 5.dp).fillMaxSize()
                 .background(Color.White)
             ) {
@@ -163,7 +172,7 @@ fun AddressSelectionScreen(
                     }
                 }
             }
-
+        }
     }
 }
 
@@ -191,16 +200,6 @@ fun AddressItem(
     selectedAddressId: Int?, // ID của địa chỉ đang được chọn
     onSelectClick: (Int) -> Unit // Callback khi chọn địa chỉ
 ) {
-
-    val addressViewModel: AddressViewModel = viewModel()
-    val isLoading by addressViewModel.isLoading.collectAsState()
-    if(isLoading){
-        Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
-            CircularProgressIndicator1(
-                color = Color(0xFF5F9EFF)
-            )
-        }
-    }
     Card(
         modifier = Modifier
             .fillMaxWidth()

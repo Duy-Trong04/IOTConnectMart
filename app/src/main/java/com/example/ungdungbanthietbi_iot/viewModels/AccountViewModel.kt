@@ -34,6 +34,10 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import android.provider.Settings
+import androidx.datastore.preferences.core.stringPreferencesKey
+import com.example.ungdungbanthietbi_iot.api.RefreshRequest
+import com.example.ungdungbanthietbi_iot.api.RefreshResponse
+import com.google.firebase.messaging.FirebaseMessaging
 import retrofit2.HttpException
 import retrofit2.Response
 import java.util.UUID
@@ -61,16 +65,29 @@ class AccountViewModel:ViewModel() {
                 _loginUiState.value = LoginUiState(
                     isLoading = false,
                     accessToken = null,
+                    refreshToken = null,
                     customer_id = null,
                     error = null,
                     result = false
                 )
+                // Làm mới FCM Token
+                FirebaseMessaging.getInstance().deleteToken().addOnCompleteListener {
+                    if (it.isSuccessful) {
+                        Log.d("FCM Token", "FCM Token deleted")
+                        FirebaseMessaging.getInstance().token.addOnCompleteListener { task ->
+                            if (task.isSuccessful) {
+                                Log.d("FCM Token", "New FCM Token: ${task.result}")
+                            }
+                        }
+                    }
+                }
                 // Ghi log để debug
                 Log.d("AccountViewModel", "Đăng xuất thành công")
             } catch (e: Exception) {
                 _loginUiState.value = LoginUiState(
                     isLoading = false,
                     accessToken = null,
+                    refreshToken = null,
                     customer_id = null,
                     error = "Lỗi khi đăng xuất: ${e.message}",
                     result = false
@@ -134,11 +151,25 @@ class AccountViewModel:ViewModel() {
                         error = null,
                         result = true
                     )
+                    Log.d("ChangePasswordViewModel", "Đổi mật khẩu thành công")
                 } else {
+                    // Xử lý lỗi (mã 400 hoặc khác)
+                    val errorBody = response.errorBody()?.string()
+                    val errorResponse = try {
+                        Gson().fromJson(errorBody, ChangePasswordResponse::class.java)
+                    } catch (e: Exception) {
+                        null
+                    }
+                    val error = errorResponse?.errors?.firstOrNull()
+                    val errorMessage = when (error?.code) {
+                        1603 -> "Mật khẩu cũ không chính xác"
+                        1620 -> "Xác nhận mật khẩu không trùng khớp"
+                        else -> error?.message ?: "Đổi mật khẩu thất bại: Mã trạng thái ${response.code()}"
+                    }
                     _uiState.value = ChangePasswordUiState(
                         isLoading = false,
-                        statusCode = response.body()?.status_code,
-                        error = "Đổi mật khẩu thất bại: Mã trạng thái ${response.code()}",
+                        statusCode = response.body()?.status_code ?: response.code(),
+                        error = errorMessage,
                         result = false
                     )
                 }
@@ -223,11 +254,19 @@ class AccountViewModel:ViewModel() {
                 _loginUiState.value = LoginUiState(
                     isLoading = false,
                     accessToken = response.accessToken,
+                    refreshToken = response.refreshToken,
                     customer_id = response.customer_id,
                     error = null,
                     result = true
                 )
                 Log.d("Login", "Thành công - accessToken: ${response.accessToken}")
+                context.dataStore.edit { preferences ->
+                    preferences[stringPreferencesKey("username")] = username
+                    preferences[stringPreferencesKey("password")] = password
+                    preferences[stringPreferencesKey("access_token")] = response.accessToken
+                    preferences[stringPreferencesKey("refresh_token")] = response.refreshToken
+                    preferences[stringPreferencesKey("customer_id")] = response.customer_id
+                }
             } catch (e: Exception) {
                 Log.e("Login", "Lỗi: ${e.message}", e)
                 if (e is HttpException) {
@@ -242,6 +281,51 @@ class AccountViewModel:ViewModel() {
                     result = false
                 )
                 Log.d("Login", "Thất bại - error: ${e.message}")
+            }
+        }
+    }
+    fun refreshToken(context: Context, request: RefreshRequest) {
+        viewModelScope.launch {
+            _loginUiState.value = LoginUiState(isLoading = true)
+            Log.d("RefreshToken", "Bắt đầu làm mới token - refreshToken: $request")
+
+            try {
+                val response: RefreshResponse = RetrofitClient.accountAPIServiceIOT.refreshToken(request)
+                Log.d("RefreshToken", "Response: $response")
+
+                _loginUiState.value = LoginUiState(
+                    isLoading = false,
+                    accessToken = response.accessToken,
+                    refreshToken = request.refreshToken,
+                    customer_id = _loginUiState.value.customer_id,
+                    error = null,
+                    result = true
+                )
+                Log.d("RefreshToken", "Thành công - accessToken: ${response.accessToken}")
+
+                context.dataStore.edit { preferences ->
+                    preferences[stringPreferencesKey("access_token")] = response.accessToken
+
+                }
+            } catch (e: Exception) {
+                Log.e("RefreshToken", "Lỗi: ${e.message}", e)
+                _loginUiState.value = LoginUiState(
+                    isLoading = false,
+                    accessToken = null,
+                    customer_id = null,
+                    error = e.message ?: "Đã xảy ra lỗi khi làm mới token",
+                    result = false
+                )
+                // Xử lý lỗi 401 (refresh token hết hạn)
+                if (e is HttpException && e.code() == 401) {
+                    context.dataStore.edit { preferences ->
+                        preferences.remove(stringPreferencesKey("username"))
+                        preferences.remove(stringPreferencesKey("password"))
+                        preferences.remove(stringPreferencesKey("refresh_token"))
+                        preferences.remove(stringPreferencesKey("access_token"))
+                        preferences.remove(stringPreferencesKey("customer_id"))
+                    }
+                }
             }
         }
     }
@@ -386,6 +470,7 @@ class AccountViewModel:ViewModel() {
 data class LoginUiState(
     val isLoading: Boolean = false,
     val accessToken: String? = null,
+    val refreshToken: String? = null,
     val customer_id: String? = null,
     val error: String? = null,
     val result: Boolean? = null

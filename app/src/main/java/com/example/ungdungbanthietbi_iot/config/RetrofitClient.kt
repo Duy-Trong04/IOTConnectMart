@@ -24,7 +24,8 @@ import java.util.concurrent.TimeUnit
 
 
 object Constant{
-    const val BASE_URL = "http://192.168.2.129:8081/api/" //10.0.2.2
+    const val BASE_URL = "https://sns-e-com-backend.up.railway.app/api/" //10.0.2.2
+    //const val BASE_URL = "http://10.0.2.2:8081/api/" //10.0.2.2
     const val BASE_URL_ADDRESS_PUBLIC = "https://online-gateway.ghn.vn/"
     const val BASE_URL_IOT = "https://iothomeconnectapiv2-production.up.railway.app/api/"
 }

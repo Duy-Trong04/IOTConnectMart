@@ -103,7 +103,9 @@ fun LoginScreen(navController: NavController, accountViewModel: AccountViewModel
     // Key cho DataStore
     val usernameKey = stringPreferencesKey("username")
     val passwordKey = stringPreferencesKey("password")
+    val customerIDKey = stringPreferencesKey("customer_id")
     val accessTokenKey = stringPreferencesKey("access_token")
+    val refreshTokenKey = stringPreferencesKey("refresh_token")
     Scaffold {
         Column(
             verticalArrangement = Arrangement.Top,
@@ -204,12 +206,12 @@ fun LoginScreen(navController: NavController, accountViewModel: AccountViewModel
                             openDialog = true
                         }
                         else {
-//                            accountViewModel.login(
-//                                context = context,
-//                                username = username,
-//                                password = password
-//                            )
-                            accountViewModel.checkLogin(username, password)
+                            accountViewModel.login(
+                                context = context,
+                                username = username,
+                                password = password
+                            )
+                            //accountViewModel.checkLogin(username, password)
                             scope.launch {
                                 // Lắng nghe kết quả từ loginResult
                                 accountViewModel.loginUiState.collect { state ->
@@ -219,6 +221,8 @@ fun LoginScreen(navController: NavController, accountViewModel: AccountViewModel
                                             preferences[usernameKey] = username
                                             preferences[passwordKey] = password
                                             preferences[accessTokenKey] = state.accessToken ?: ""
+                                            preferences[refreshTokenKey] = state.refreshToken ?: ""
+                                            preferences[customerIDKey] = state.customer_id ?: ""
                                         }
                                         // Lấy FCM token và gửi lên server
                                         FirebaseMessaging.getInstance().token.addOnCompleteListener { task ->

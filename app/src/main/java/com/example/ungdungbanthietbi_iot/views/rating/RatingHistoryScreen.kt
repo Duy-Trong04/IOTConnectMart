@@ -159,6 +159,7 @@ fun ReviewItem(review: Reviews, idCustomer: String, idDevice: String, username:S
 
     val deviceViewModel: DeviceViewModel = viewModel()
     val device = deviceViewModel.deviceMap[idDevice] // Lấy thiết bị theo ID
+    val isLoading by deviceViewModel.isLoading.collectAsState()
     val customerName = "${review.surname} ${review.lastname}".trim()
     // Gọi API lấy device khi idDevice thay đổi
     LaunchedEffect(idDevice) {
@@ -168,8 +169,10 @@ fun ReviewItem(review: Reviews, idCustomer: String, idDevice: String, username:S
     }
     var bitmap by remember { mutableStateOf<Bitmap?>(null) }
     // Tải hình ảnh
-    LaunchedEffect(review) {
-        bitmap = review.image?.let { deviceViewModel.getDeviceImageBitmapImage(it) }
+    LaunchedEffect(idDevice) {
+        if (device != null) {
+            bitmap = device.image?.let { deviceViewModel.getDeviceImageBitmapImage(it) }
+        }
     }
     // Tính số ngày kể từ khi tạo đánh giá
     val daysSinceReviewCreated = remember(review.created_at) {
@@ -233,38 +236,50 @@ fun ReviewItem(review: Reviews, idCustomer: String, idDevice: String, username:S
                 fontSize = 12.sp,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
-            Row(
-                modifier = Modifier.fillMaxWidth().clickable {
-                    navController.navigate(Screen.ProductDetailsScreen.route + "?id=${idDevice}&idCustomer=${idCustomer}&username=${username}&token=${token}")
-                },
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                bitmap?.let {
-                    Image(
-                        bitmap = it.asImageBitmap(),
-                        contentDescription = customerName.ifEmpty { "Hình ảnh sản phẩm" },
-                        modifier = Modifier
-                            .width(50.dp)
-                            .height(50.dp),
-                        contentScale = ContentScale.Fit
-                    )
-                } ?: run {
-                    Image(
-                        painter = painterResource(id = android.R.drawable.ic_menu_gallery),
-                        contentDescription = "Product Image",
-                        modifier = Modifier
-                            .width(50.dp)
-                            .height(50.dp),
-                        contentScale = ContentScale.Fit
+            if(isLoading){
+                Box(
+                    contentAlignment = Alignment.Center,
+                    modifier = Modifier.fillMaxSize().background(Color.White),
+                ) {
+                    CircularProgressIndicator(
+                        color = Color(0xFF5D9EFF)
                     )
                 }
-                Spacer(modifier = Modifier.width(8.dp))
-                if (device != null) {
-                    Text(
-                        text = device.name,
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 16.sp
-                    )
+            }
+            else {
+                Row(
+                    modifier = Modifier.fillMaxWidth().clickable {
+                        navController.navigate(Screen.ProductDetailsScreen.route + "?id=${idDevice}&idCustomer=${idCustomer}&username=${username}&token=${token}")
+                    },
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    bitmap?.let {
+                        Image(
+                            bitmap = it.asImageBitmap(),
+                            contentDescription = customerName.ifEmpty { "Hình ảnh sản phẩm" },
+                            modifier = Modifier
+                                .width(50.dp)
+                                .height(50.dp),
+                            contentScale = ContentScale.Fit
+                        )
+                    } ?: run {
+                        Image(
+                            painter = painterResource(id = android.R.drawable.ic_menu_gallery),
+                            contentDescription = "Product Image",
+                            modifier = Modifier
+                                .width(50.dp)
+                                .height(50.dp),
+                            contentScale = ContentScale.Fit
+                        )
+                    }
+                    Spacer(modifier = Modifier.width(8.dp))
+                    if (device != null) {
+                        Text(
+                            text = device.name,
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 16.sp
+                        )
+                    }
                 }
             }
         }

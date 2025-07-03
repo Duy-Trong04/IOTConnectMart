@@ -638,7 +638,15 @@ fun HomeScreen(
                                 fontSize = 20.sp,
                                 color = Color.White
                             )
-                        } else {
+                        } else if(selectedTabIndex == 2){
+                            Text(
+                                text = "Thông báo",
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 20.sp,
+                                color = Color.White
+                            )
+                        }
+                        else {
                             Text(
                                 text = "SNS Store",
                                 fontWeight = FontWeight.Bold,

@@ -1,5 +1,6 @@
 package com.example.ungdungbanthietbi_iot.views.signUp_signIn
 
+import android.util.Log
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
@@ -31,6 +32,7 @@ import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.navigation.NavController
 import com.example.ungdungbanthietbi_iot.R
+import com.example.ungdungbanthietbi_iot.api.RefreshRequest
 import com.example.ungdungbanthietbi_iot.dataStore
 import com.example.ungdungbanthietbi_iot.viewModels.AccountViewModel
 import com.example.ungdungbanthietbi_iot.navigation.Screen
@@ -82,11 +84,16 @@ fun IntroScreen(accountViewModel: AccountViewModel, navController: NavController
         val preferences = context.dataStore.data.first()
         val usernameKey = stringPreferencesKey("username")
         val passwordKey = stringPreferencesKey("password")
+        val accessTokenKey = stringPreferencesKey("access_token")
+        val refreshTokenKey = stringPreferencesKey("refresh_token")
+        val customerIdKey = stringPreferencesKey("customer_id")
         val isFirstLaunchKey = booleanPreferencesKey("is_first_launch")
 
         val savedUsername = preferences[usernameKey]
         val savedPassword = preferences[passwordKey]
-        val accessToken = preferences[stringPreferencesKey("access_token")]
+        val savedAccessToken = preferences[accessTokenKey]
+        val savedRefreshToken = preferences[refreshTokenKey]
+        val savedCustomerId = preferences[customerIdKey]
         val isFirstLaunch = preferences[isFirstLaunchKey] ?: true
 
         // Nếu là lần đầu mở ứng dụng, lưu trạng thái
@@ -95,20 +102,41 @@ fun IntroScreen(accountViewModel: AccountViewModel, navController: NavController
                 prefs[isFirstLaunchKey] = false
             }
         }
-
+        Log.d("IntroScreen", "DataStore: username=$savedUsername, refreshToken=$savedRefreshToken")
         // Kiểm tra đăng nhập với thời gian chờ tối đa
-        if (!savedUsername.isNullOrEmpty() && !savedPassword.isNullOrEmpty()) {
-            accountViewModel.checkLogin(savedUsername, savedPassword)
-            //accountViewModel.login(context, savedUsername, savedPassword)
-            withTimeoutOrNull(2000L) { // Chờ tối đa 5 giây
+        if (!savedRefreshToken.isNullOrEmpty()) {
+            val request = RefreshRequest(
+                refreshToken = savedRefreshToken
+            )
+            accountViewModel.refreshToken(context, request)
+            withTimeoutOrNull(2000L) {
                 accountViewModel.loginUiState.collect { loginState ->
-                    if (!loginState.isLoading && loginState.result == true && loginState.customer_id != null) {
-                        destination = "${Screen.HomeScreen.route}?username=$savedUsername&id=${loginState.customer_id}&token=$accessToken"
+                    if (!loginState.isLoading) {
+                        if (loginState.result == true && loginState.accessToken != null) {
+                            destination = "${Screen.HomeScreen.route}?username=$savedUsername&id=$savedCustomerId&token=${loginState.accessToken}"
+                            shouldNavigate = true
+                        } else if (!savedUsername.isNullOrEmpty() && !savedPassword.isNullOrEmpty()) {
+                            accountViewModel.login(context, savedUsername, savedPassword)
+                            accountViewModel.loginUiState.collect { retryState ->
+                                if (!retryState.isLoading && retryState.result == true && retryState.accessToken != null) {
+                                    destination = "${Screen.HomeScreen.route}?username=$savedUsername&id=${savedCustomerId}&token=${retryState.accessToken}"
+                                }else {
+                                    destination = Screen.LoginScreen.route
+                                }
+                                shouldNavigate = true
+                            }
+                        } else {
+                            destination = Screen.LoginScreen.route
+                            shouldNavigate = true
+                        }
                     }
-                    shouldNavigate = true
                 }
+            }?: run {
+                destination = Screen.LoginScreen.route
+                shouldNavigate = true
             }
         } else {
+            destination = Screen.LoginScreen.route
             shouldNavigate = true
         }
         // Đảm bảo chờ đủ thời gian splash nếu chưa có kết quả đăng nhập

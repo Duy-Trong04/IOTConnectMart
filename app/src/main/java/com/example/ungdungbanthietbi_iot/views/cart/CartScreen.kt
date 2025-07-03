@@ -22,6 +22,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
@@ -120,7 +121,9 @@ fun CartItem(
     val deviceViewModel: DeviceViewModel = viewModel()
     var bitmap by remember { mutableStateOf<Bitmap?>(null) }
     var soLuong by remember { mutableIntStateOf(product.quantity) }
-
+    // Kiểm tra trạng thái hết hàng
+    val stock = product.stock.toIntOrNull() ?: 0
+    val isOutOfStock = soLuong > stock
     // Tải hình ảnh
     LaunchedEffect(product) {
         bitmap = product.image?.let { deviceViewModel.getDeviceImageBitmapImage(it) }
@@ -130,16 +133,20 @@ fun CartItem(
         modifier = Modifier
             .fillMaxWidth()
             .padding(paddingValue)
-            .height(120.dp),
+            .height(120.dp)
+            .alpha(if (isOutOfStock) 0.5f else 1f),
         elevation = CardDefaults.cardElevation(1.dp),
         shape = RoundedCornerShape(8.dp),
         colors = CardDefaults.cardColors(containerColor = Color.White),
         onClick = {
-            navController.navigate(
-                Screen.ProductDetailsScreen.route +
-                        "?id=${product.id}&idCustomer=${idCustomer}&username=${username}&token=${token}"
-            )
-        }
+            if (!isOutOfStock) { // Chỉ cho phép nhấp nếu không hết hàng
+                navController.navigate(
+                    Screen.ProductDetailsScreen.route +
+                            "?id=${product.id}&idCustomer=${idCustomer}&username=${username}&token=${token}"
+                )
+            }
+        },
+        enabled = !isOutOfStock
     ) {
         Row(
             modifier = Modifier
@@ -156,16 +163,19 @@ fun CartItem(
                     uncheckedColor = Color.Gray,
                 ),
                 onCheckedChange = { isChecked ->
-                    selectedItems[product.id] = isChecked
-                    if (isChecked) {
-                        selectedProducts.removeAll { it.first == product.id }
-                        selectedProducts.add(Triple(product.id, soLuong, product.id.toInt()))
-                    } else {
-                        selectedProducts.removeAll { it.first == product.id }
+                    if (!isOutOfStock) { // Chỉ cho phép chọn nếu không hết hàng
+                        selectedItems[product.id] = isChecked
+                        if (isChecked) {
+                            selectedProducts.removeAll { it.first == product.id }
+                            selectedProducts.add(Triple(product.id, soLuong, product.id.toInt()))
+                        } else {
+                            selectedProducts.removeAll { it.first == product.id }
+                        }
+                        onCalculateTotalPrice()
                     }
-                    onCalculateTotalPrice()
                 },
-                modifier = Modifier.size(buttonSize)
+                modifier = Modifier.size(buttonSize),
+                enabled = !isOutOfStock
             )
             if(product.image?.isEmpty() == true){
                 Image(
@@ -239,7 +249,7 @@ fun CartItem(
                     // Nút giảm số lượng
                     IconButton(
                         onClick = {
-                            if (soLuong > 1) {
+                            if (soLuong > 1 && !isOutOfStock) {
                                 soLuong--
                                 //product.quantity = soLuong
                                 val updateQuantity = AddCartRequest(
@@ -262,7 +272,8 @@ fun CartItem(
                             .background(
                                 color = Color.Transparent,
                                 shape = RoundedCornerShape(6.dp)
-                            )
+                            ),
+                        enabled = !isOutOfStock
                     ) {
                         Icon(
                             imageVector = Icons.Filled.Remove,
@@ -296,7 +307,7 @@ fun CartItem(
                     // Nút tăng số lượng
                     IconButton(
                         onClick = {
-                            if (soLuong < 500) {
+                            if (soLuong < stock) {
                                 soLuong++
                                 //product.quantity = soLuong
                                 val updateQuantity = AddCartRequest(
@@ -319,7 +330,8 @@ fun CartItem(
                             .background(
                                 color = Color.Transparent,
                                 shape = RoundedCornerShape(6.dp)
-                            )
+                            ),
+                        enabled = !isOutOfStock
                     ) {
                         Icon(
                             imageVector = Icons.Filled.Add,
@@ -328,6 +340,23 @@ fun CartItem(
                         )
                     }
                 }
+            }
+        }
+        // Hiển thị dòng chữ "Hết hàng" nếu số lượng vượt quá tồn kho
+        if (isOutOfStock) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(Color.Black.copy(alpha = 0.3f)), // Lớp phủ mờ
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = "Hết hàng",
+                    color = Color.Red,
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.Bold,
+                    textAlign = TextAlign.Center
+                )
             }
         }
     }
@@ -485,18 +514,33 @@ fun CartScreen(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Checkbox(
-                            checked = selectedItems.isNotEmpty() && selectedItems.values.all { it } && listProductCart.isNotEmpty(),
+                            //checked = selectedItems.isNotEmpty() && selectedItems.values.all { it } && listProductCart.isNotEmpty(),
+                            checked = selectedItems.isNotEmpty() && listProductCart.all { product ->
+                                selectedItems[product.id] == true || product.quantity > (product.stock.toIntOrNull() ?: 0)
+                            },
                             onCheckedChange = { isChecked ->
                                 // Cập nhật trạng thái chọn tất cả sản phẩm
                                 listProductCart.forEach { cart ->
-                                    selectedItems[cart.id] = isChecked
-                                    if (isChecked) {
-                                        // Thêm sản phẩm vào danh sách selectedProducts
-                                        selectedProducts.add(Triple(cart.id, cart.quantity, cart.id.toInt()))
-                                    } else {
-                                        // Xóa sản phẩm khỏi danh sách selectedProducts
-                                        selectedProducts.removeAll { it.first == cart.id }
+                                    val isOutOfStock = cart.quantity > (cart.stock.toIntOrNull() ?: 0)
+                                    if (!isOutOfStock) {
+                                        selectedItems[cart.id] = isChecked
+                                        if (isChecked) {
+                                            // Thêm sản phẩm vào danh sách selectedProducts
+                                            //selectedProducts.removeAll { it.first == cart.id }
+                                            selectedProducts.add(Triple(cart.id, cart.quantity, cart.id.toInt()))
+                                        } else {
+                                            // Xóa sản phẩm khỏi danh sách selectedProducts
+                                            selectedProducts.removeAll { it.first == cart.id }
+                                        }
                                     }
+//                                    selectedItems[cart.id] = isChecked
+//                                    if (isChecked) {
+//                                        // Thêm sản phẩm vào danh sách selectedProducts
+//                                        selectedProducts.add(Triple(cart.id, cart.quantity, cart.id.toInt()))
+//                                    } else {
+//                                        // Xóa sản phẩm khỏi danh sách selectedProducts
+//                                        selectedProducts.removeAll { it.first == cart.id }
+//                                    }
                                 }
                                 calculateTotalPrice(listProductCart) // Tính lại tổng tiền
                             },
@@ -583,16 +627,17 @@ fun CartScreen(
             AlertDialog(
                 onDismissRequest = { showDialog = false },
                 title = { Text(text = "Thông báo") },
-                text = { Text(text = "Vui lòng chọn sản phẩm để mua.") },
+                text = { Text(text = "Vui lòng chọn sản phẩm để mua") },
                 confirmButton = {
                     Button(
                         onClick = { showDialog = false },
                         colors = ButtonDefaults.buttonColors(
                             containerColor = Color(0xFF5D9EFF)
                         ),
-                        shape = RoundedCornerShape(10.dp)
+                        shape = RoundedCornerShape(10.dp),
+                        modifier = Modifier.fillMaxWidth()
                     ) {
-                        Text("OK")
+                        Text("Xác nhận")
                     }
                 },
                 containerColor = Color.White
@@ -603,16 +648,17 @@ fun CartScreen(
                 onDismissRequest = { showDialogDelete = false },
                 containerColor = Color.White,
                 title = { Text(text = "Thông báo") },
-                text = { Text(text = "Vui lòng chọn sản phẩm để xóa.") },
+                text = { Text(text = "Vui lòng chọn sản phẩm để xóa") },
                 confirmButton = {
                     Button(
                         onClick = { showDialogDelete = false },
                         colors = ButtonDefaults.buttonColors(
                             containerColor = Color(0xFF5D9EFF)
                         ),
-                        shape = RoundedCornerShape(10.dp)
+                        shape = RoundedCornerShape(10.dp),
+                        modifier = Modifier.fillMaxWidth()
                     ) {
-                        Text("OK")
+                        Text("Xác nhận")
                     }
                 }
             )
