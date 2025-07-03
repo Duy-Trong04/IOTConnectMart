@@ -12,7 +12,6 @@ import retrofit2.http.POST
 
 // ChangePasswordRequest.kt
 data class ChangePasswordRequest(
-    val username: String,
     val password: String,
     val newPassword: String,
     val confirmPassword: String
@@ -20,7 +19,8 @@ data class ChangePasswordRequest(
 
 // ChangePasswordResponse.kt
 data class ChangePasswordResponse(
-    val status_code: Int
+    val status_code: Int,
+    val errors: List<ErrorResponse>? = null
 )
 
 // ChangePasswordUiState.kt
@@ -184,7 +184,17 @@ data class Devices(
     val lastLogin: String,
     val isCurrentDevice: Boolean
 )
+
+data class RefreshResponse(
+    val accessToken: String
+)
+data class RefreshRequest(
+    val refreshToken: String
+)
 interface AccountAPIServiceIOT {
     @POST("auth/login")
     suspend fun loginIOT(@Body request: LoginIOTRequest): LoginIOTResponse
+
+    @POST("auth/refresh")
+    suspend fun refreshToken(@Body request: RefreshRequest): RefreshResponse
 }

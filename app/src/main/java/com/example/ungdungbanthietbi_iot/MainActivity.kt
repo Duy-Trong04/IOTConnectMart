@@ -23,6 +23,7 @@ import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
+import com.example.ungdungbanthietbi_iot.api.RefreshRequest
 import com.example.ungdungbanthietbi_iot.api.SendTokenRequest
 import com.example.ungdungbanthietbi_iot.viewModels.AccountViewModel
 import com.example.ungdungbanthietbi_iot.viewModels.DeviceViewModel
@@ -89,52 +90,80 @@ class MainActivity : ComponentActivity() {
                     val status = preferences[stringPreferencesKey("payment_status")]
                     val usernameKey = stringPreferencesKey("username")
                     val passwordKey = stringPreferencesKey("password")
+                    val refreshTokenKey = stringPreferencesKey("refresh_token")
+                    val accessTokenKey = stringPreferencesKey("access_token")
+                    val customerIdKey = stringPreferencesKey("customer_id")
                     val savedUsername = preferences[usernameKey]
                     val savedPassword = preferences[passwordKey]
-                    val accessToken = preferences[stringPreferencesKey("access_token")]
-
-//                    FirebaseMessaging.getInstance().token
-//                        .addOnCompleteListener(OnCompleteListener { task ->
-//                            if (!task.isSuccessful) {
-//                                Log.d("FCM Notify", "Fetching FCM registration token failed", task.exception)
-//                                return@OnCompleteListener
-//                            }
-//
-//                            //Get new FCM registration token
-//                            val token: String? = task.result
-//                            Log.d("FCM Token", token, task.exception)
-//                            //Toast.makeText(context, token, Toast.LENGTH_SHORT).show()
-//                        })
-                    // Lấy FCM token và gửi lên server nếu đã đăng nhập
-                    FirebaseMessaging.getInstance().token.addOnCompleteListener(OnCompleteListener { task ->
-                        if (task.isSuccessful) {
-                            val fcmToken = task.result
-                            Log.d("FCM Token", "FCM Token: $fcmToken")
-                            val tokenFCM = SendTokenRequest(
-                                deviceToken = fcmToken
-                            )
-                            if (!savedUsername.isNullOrEmpty() && !savedPassword.isNullOrEmpty() && !accessToken.isNullOrEmpty()) {
-                                noticeViewModel.sendTokenToServer(tokenFCM, context)
-                            }
-                        } else {
-                            Log.d("FCM Notify", "Fetching FCM registration token failed", task.exception)
-                        }
-                    })
-
-                    if (status == "success") {
-
-                        if (!savedUsername.isNullOrEmpty() && !savedPassword.isNullOrEmpty()) {
-                            accountViewModel.checkLogin(savedUsername, savedPassword)
-                            //accountViewModel.login(context, savedUsername, savedPassword)
-                            accountViewModel.loginUiState.collect { loginState ->
-                                if (loginState.isLoading) return@collect
-                                if (loginState.result == true && loginState.customer_id != null) {
+                    val savedRefreshToken = preferences[refreshTokenKey]
+                    val accessToken = preferences[accessTokenKey]
+                    val savedCustomerId = preferences[customerIdKey]
+                    if (!savedRefreshToken.isNullOrEmpty()) {
+                        val request = RefreshRequest(
+                            refreshToken = savedRefreshToken
+                        )
+                        accountViewModel.refreshToken(context, request)
+                        accountViewModel.loginUiState.collect { loginState ->
+                            if (loginState.isLoading) return@collect
+                            if (loginState.result == true && loginState.accessToken != null) {
+                                if (status == "success") {
                                     val encodedCreatedAt = URLEncoder.encode(createdAt, "UTF-8")
-                                    paymentNavigation = "${Screen.CheckOutSuccess.route}?username=$savedUsername&id=${loginState.customer_id}&orderId=$orderId&totalMoney=$totalMoney&createdAt=$encodedCreatedAt&token=${accessToken}"
+                                    paymentNavigation = "${Screen.CheckOutSuccess.route}?username=$savedUsername&id=${savedCustomerId}&orderId=$orderId&totalMoney=$totalMoney&createdAt=$encodedCreatedAt&token=${loginState.accessToken}"
+                                } else {
+                                    paymentNavigation = "${Screen.HomeScreen.route}?username=$savedUsername&id=${savedCustomerId}&token=${loginState.accessToken}"
                                 }
+                            } else if (!savedUsername.isNullOrEmpty() && !savedPassword.isNullOrEmpty()) {
+                                accountViewModel.login(context, savedUsername, savedPassword)
+                                accountViewModel.loginUiState.collect { retryState ->
+                                    if (!retryState.isLoading && retryState.result == true && retryState.accessToken != null) {
+                                        if (status == "success") {
+                                            val encodedCreatedAt = URLEncoder.encode(createdAt, "UTF-8")
+                                            paymentNavigation = "${Screen.CheckOutSuccess.route}?username=$savedUsername&id=${savedCustomerId}&orderId=$orderId&totalMoney=$totalMoney&createdAt=$encodedCreatedAt&token=${retryState.accessToken}"
+                                        } else {
+                                            paymentNavigation = "${Screen.HomeScreen.route}?username=$savedUsername&id=${savedCustomerId}&token=${retryState.accessToken}"
+                                        }
+                                    } else {
+                                        // Nếu đăng nhập thất bại, điều hướng về LoginScreen
+                                        paymentNavigation = Screen.LoginScreen.route
+                                    }
+                                }
+                            }else {
+                                // Nếu không có thông tin đăng nhập, điều hướng về LoginScreen
+                                paymentNavigation = Screen.LoginScreen.route
+                            }
+                        }
+                    }else {
+                        // Nếu không có thông tin đăng nhập, điều hướng về LoginScreen
+                        paymentNavigation = Screen.LoginScreen.route
+                    }
+                    // Gửi FCM Token chỉ khi đã đăng nhập
+                    if (!savedUsername.isNullOrEmpty() && !accessToken.isNullOrEmpty()) {
+                        FirebaseMessaging.getInstance().token.addOnCompleteListener { task ->
+                            if (task.isSuccessful) {
+                                val fcmToken = task.result
+                                Log.d("FCM Token", "FCM Token: $fcmToken")
+                                val tokenFCM = SendTokenRequest(deviceToken = fcmToken)
+                                noticeViewModel.sendTokenToServer(tokenFCM, context)
+                            } else {
+                                Log.d("FCM Notify", "Fetching FCM registration token failed", task.exception)
                             }
                         }
                     }
+
+//                    if (status == "success") {
+//
+//                        if (!savedUsername.isNullOrEmpty() && !savedPassword.isNullOrEmpty()) {
+//                            accountViewModel.checkLogin(savedUsername, savedPassword)
+//                            //accountViewModel.login(context, savedUsername, savedPassword)
+//                            accountViewModel.loginUiState.collect { loginState ->
+//                                if (loginState.isLoading) return@collect
+//                                if (loginState.result == true && loginState.customer_id != null) {
+//                                    val encodedCreatedAt = URLEncoder.encode(createdAt, "UTF-8")
+//                                    paymentNavigation = "${Screen.CheckOutSuccess.route}?username=$savedUsername&id=${loginState.customer_id}&orderId=$orderId&totalMoney=$totalMoney&createdAt=$encodedCreatedAt&token=${accessToken}"
+//                                }
+//                            }
+//                        }
+//                    }
                 }
                 // Điều hướng đến CheckOutSuccessScreen sau khi NavGraph được thiết lập
                 LaunchedEffect(paymentNavigation) {

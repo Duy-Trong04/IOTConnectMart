@@ -124,7 +124,7 @@ enum class DialogType {
 @Composable
 fun ProductDetailsScreen(
     navController: NavController,
-    id:String,
+    id: String,
     idCustomer:String?,
     username:String?,
     token: String?,
@@ -200,6 +200,8 @@ fun ProductDetailsScreen(
     val snackbarHostState = remember { SnackbarHostState() }
     val showSnackbar = remember { mutableStateOf(false) }
     val snackbarMessage = remember { mutableStateOf("") }
+    // Biến lưu trữ trạng thái hiển thị dialog lỗi tồn kho
+    var showInventoryErrorDialog by remember { mutableStateOf(false) }
     // Hiển thị Snackbar cho "Thêm vào giỏ hàng"
     LaunchedEffect(showSnackbar.value) {
         if (showSnackbar.value) {
@@ -513,43 +515,52 @@ fun ProductDetailsScreen(
                                     Spacer(modifier = Modifier.height(16.dp))
                                     Button(
                                         onClick = {
+//                                            if (idCustomer == null) {
+//                                                navController.navigate(Screen.LoginScreen.route)
+//                                            } else {
+////                                                val cartNew: CartEntity?
+////                                                var isProductFound = false
+////
+////                                                for (cart in listCart) {
+////                                                    if (device != null) {
+////                                                        if (device.idDevice == cart.idDevice) {
+////                                                            cart.stock += quantity
+////                                                            cartViewModel.updateCart(cart)
+////                                                            isProductFound = true
+////                                                            quantity = 1
+////                                                            break
+////                                                        }
+////                                                    }
+////                                                }
+//                                                    val addToCart = AddCartRequest(
+//                                                        customer_id = idCustomer,
+//                                                        product_id = device!!.idDevice,
+//                                                        quantity = quantity
+//                                                    )
+////                                                    cartViewModel.addToCart(cartNew)
+//                                                    cartViewModel.addCart(idCustomer, addToCart)
+//                                                    quantity = 1
+////                                                }
+//                                            }
+//                                            showDialog = false
+//                                            snackbarMessage.value = "Thêm thành công!"
+//                                            showSnackbar.value = true
                                             if (idCustomer == null) {
                                                 navController.navigate(Screen.LoginScreen.route)
+                                            } else if (device != null && quantity <= device.stock) {
+                                                val addToCart = AddCartRequest(
+                                                    customer_id = idCustomer,
+                                                    product_id = device.idDevice,
+                                                    quantity = quantity
+                                                )
+                                                cartViewModel.addCart(idCustomer, addToCart)
+                                                quantity = 1
+                                                showDialog = false
+                                                snackbarMessage.value = "Thêm thành công!"
+                                                showSnackbar.value = true
                                             } else {
-//                                                val cartNew: CartEntity?
-//                                                var isProductFound = false
-//
-//                                                for (cart in listCart) {
-//                                                    if (device != null) {
-//                                                        if (device.idDevice == cart.idDevice) {
-//                                                            cart.stock += quantity
-//                                                            cartViewModel.updateCart(cart)
-//                                                            isProductFound = true
-//                                                            quantity = 1
-//                                                            break
-//                                                        }
-//                                                    }
-//                                                }
-//
-//                                                if (!isProductFound) {
-//                                                    cartNew = CartEntity(
-//                                                        idCustomer = idCustomer,
-//                                                        idDevice = device!!.idDevice,
-//                                                        stock = quantity
-//                                                    )
-                                                    val addToCart = AddCartRequest(
-                                                        customer_id = idCustomer,
-                                                        product_id = device!!.idDevice,
-                                                        quantity = quantity
-                                                    )
-//                                                    cartViewModel.addToCart(cartNew)
-                                                    cartViewModel.addCart(idCustomer, addToCart)
-                                                    quantity = 1
-//                                                }
+                                                showInventoryErrorDialog = true
                                             }
-                                            showDialog = false
-                                            snackbarMessage.value = "Thêm thành công!"
-                                            showSnackbar.value = true
                                         },
                                         colors = ButtonDefaults.buttonColors(
                                             containerColor = Color(0xFF5D9EFF),
@@ -698,7 +709,7 @@ fun ProductDetailsScreen(
                                             } else if (addressViewModel.addressDatas?.address_books?.isEmpty() == true) {
                                                 showDialog = true
                                                 dialogType = DialogType.AddressRequired
-                                            } else {
+                                            } else if (device != null && buyNowQuantity <= device.stock) {
                                                 selectedProducts.clear()
                                                 selectedProducts.add(Triple(device!!.idDevice, buyNowQuantity, 0))
                                                 val totalPrice = device.sellingPrice * buyNowQuantity
@@ -713,6 +724,9 @@ fun ProductDetailsScreen(
                                                 showSnackbar.value = true
                                                 buyNowQuantity = 1
                                                 showDialog = false
+                                            }
+                                            else {
+                                                showInventoryErrorDialog = true
                                             }
                                         },
                                         colors = ButtonDefaults.buttonColors(
@@ -736,6 +750,34 @@ fun ProductDetailsScreen(
                         }
                     }
                 }
+            }
+            // Dialog thông báo lỗi số lượng tồn kho
+            if (showInventoryErrorDialog) {
+                AlertDialog(
+                    onDismissRequest = { showInventoryErrorDialog = false },
+                    containerColor = Color.White,
+                    title = { Text(text = "Thông báo") },
+                    text = {
+                        Text(
+                            text = if (device != null)
+                                "Số lượng tồn kho không đủ."
+                            else "Lỗi: Không thể kiểm tra tồn kho."
+                        )
+                    },
+                    confirmButton = {
+                        Button(
+                            onClick = { showInventoryErrorDialog = false },
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = Color(0xFF5D9EFF),
+                                contentColor = Color.White
+                            ),
+                            shape = RoundedCornerShape(10.dp),
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Text("Xác nhận", fontSize = 16.sp)
+                        }
+                    }
+                )
             }
             if(!isLoadingDevice) {
                 LazyColumn(
@@ -929,7 +971,7 @@ fun ProductDetailsScreen(
 //                                    }
 //                                }
 //                            }
-                                Spacer(modifier = Modifier.height(12.dp))
+                                Spacer(modifier = Modifier.height(10.dp))
                                 Text(
                                     "Mô tả sản phẩm",
                                     fontWeight = FontWeight.Bold,
@@ -1089,7 +1131,7 @@ fun ProductDetailsScreen(
                                     CardDevice(
                                         device = device,
                                         isFavorite = isFavorite,
-                                        idCustomer = id,
+                                        idCustomer = idCustomer,
                                         username = username,
                                         token = token,
                                         deviceViewModel = deviceViewModel,

@@ -190,7 +190,7 @@ fun PersonalScreen(
                     modifier = Modifier.padding(start = 16.dp, end = 16.dp, top = 16.dp)
                 ){
                     when (currentTab) {
-                        "accountInfo" -> AccountInfoSection(id, snackbarHostState, navController, username, token)
+                        "accountInfo" -> AccountInfoSection(id, navController, username, token)
                         "changePassword" -> ChangePasswordSection(
                             username = username,
                             token = token,
@@ -220,7 +220,6 @@ fun PersonalScreen(
 @Composable
 fun AccountInfoSection(
     id: String?,
-    snackbarHostState: SnackbarHostState,
     navController: NavController,
     username: String,
     token: String,
@@ -228,10 +227,13 @@ fun AccountInfoSection(
 ){
     var selectedImageUri by remember { mutableStateOf<Uri?>(null) }
     var showDialog by remember { mutableStateOf(false) }
+    var dialogMessage by remember { mutableStateOf("") } // Lưu thông điệp cho dialog
 
     var originalBitmap by remember { mutableStateOf<Bitmap?>(null) }
     var compressedBitmap by remember { mutableStateOf<Bitmap?>(null) }
     var base64String by remember { mutableStateOf<String?>(null) }
+    var isImageChanged by remember { mutableStateOf(false) } // Theo dõi thay đổi hình ảnh
+
     val maxLength = 10
     val customerViewModel: CustomerViewModel = viewModel()
 
@@ -251,6 +253,28 @@ fun AccountInfoSection(
             customerViewModel.getCustomerById(id)
         }
     }
+    // Dialog để hiển thị thông báo
+    if (showDialog) {
+        AlertDialog(
+            onDismissRequest = { showDialog = false },
+            containerColor = Color.White,
+            title = { Text(text = "Thông báo") },
+            text = { Text(text = dialogMessage) },
+            confirmButton = {
+                Button(
+                    onClick = { showDialog = false },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color(0xFF5F9EFF)
+                    ),
+                    shape = RoundedCornerShape(10.dp),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text("Xác nhận", color = Color.White)
+                }
+            }
+        )
+    }
+
     Card(
         shape = RoundedCornerShape(5.dp),
         elevation = CardDefaults.cardElevation(1.dp),
@@ -278,6 +302,7 @@ fun AccountInfoSection(
                     ){
                         LaunchedEffect(customer) {
                             selectedImageUri = null // Reset để ưu tiên customer.image
+                            isImageChanged = false // Reset trạng thái thay đổi hình ảnh
                             if (customer.image != null && isValidBase64(customer.image)) {
                                 originalBitmap = base64ToBitmap(customer.image)
                                 Log.d("ImagePicker", "Bitmap from customer.image: ${originalBitmap != null}")
@@ -294,10 +319,11 @@ fun AccountInfoSection(
                                 val byteArray = uriToByteArray(context, it)
                                 byteArray?.let {
                                     originalBitmap = BitmapFactory.decodeByteArray(it, 0, it.size)
-                                    compressedBitmap = compressImage(it, 80, 200)?.let { compressedBytes ->
+                                    compressedBitmap = compressImage(it, 80, 200)?. let { compressedBytes ->
                                         BitmapFactory.decodeByteArray(compressedBytes, 0, compressedBytes.size)
                                     }
                                     base64String = originalBitmap?.let { bitmapToBase64(it) }
+                                    isImageChanged = true // Đánh dấu hình ảnh đã thay đổi
                                 }
                                 Log.d("ImagePicker", "Uri: $uri")
                                 Log.d("ImagePicker", "ByteArray: ${byteArray?.size ?: "null"}")
@@ -425,10 +451,10 @@ fun AccountInfoSection(
                                 selectedDay.value != initialBirthdate.value.split("-")[2] ||
                                 selectedMonth.value != initialBirthdate.value.split("-")[1].padStart(2, '0') ||
                                 selectedYear.value != initialBirthdate.value.split("-")[0] ||
-                                selectedImageUri != null // Kiểm tra nếu ảnh thay đổi
+                                isImageChanged
                     }
 
-                    LaunchedEffect(fullName.value, phone.value, email.value, gender.value, selectedDay.value, selectedMonth.value, selectedYear.value) {
+                    LaunchedEffect(fullName.value, phone.value, email.value, gender.value, selectedDay.value, selectedMonth.value, selectedYear.value, isImageChanged) {
                         isButtonEnabled = checkIfChanged()
                     }
 
@@ -598,12 +624,8 @@ fun AccountInfoSection(
                                         selectedYear.value
                                     )
                                 ) {
-                                    scope.launch {
-                                        snackbarHostState.showSnackbar(
-                                            message = "Ngày sinh không hợp lệ!",
-                                            duration = SnackbarDuration.Short
-                                        )
-                                    }
+                                    dialogMessage = "Ngày sinh không hợp lệ!"
+                                    showDialog = true
                                     return@Button
                                 }
 
@@ -617,35 +639,20 @@ fun AccountInfoSection(
                                         )
                                     )
                                 ) {
-                                    scope.launch {
-                                        snackbarHostState.showSnackbar(
-                                            message = "Họ và tên không hợp lệ",
-                                            duration = SnackbarDuration.Short
-                                        )
-                                    }
+                                    dialogMessage = "Họ và tên không hợp lệ"
+                                    showDialog = true
                                     return@Button
                                 } else if (!regexPhone.matches(phone.value)) {
-                                    scope.launch {
-                                        snackbarHostState.showSnackbar(
-                                            message = "Số điện thoại phải có 10 số."
-                                        )
-                                    }
+                                    dialogMessage = "Số điện thoại phải có 10 số."
+                                    showDialog = true
                                     return@Button
                                 } else if (email.value.isBlank()) {
-                                    scope.launch {
-                                        snackbarHostState.showSnackbar(
-                                            message = "Email không được để trống.",
-                                            duration = SnackbarDuration.Short
-                                        )
-                                    }
+                                    dialogMessage = "Email không được để trống."
+                                    showDialog = true
                                     return@Button
                                 } else if (!email.value.contains("@")) {
-                                    scope.launch {
-                                        snackbarHostState.showSnackbar(
-                                            message = "Email phải chứa ký tự '@'.",
-                                            duration = SnackbarDuration.Short
-                                        )
-                                    }
+                                    dialogMessage = "Email phải chứa ký tự '@'."
+                                    showDialog = true
                                     return@Button
                                 } else {
                                     // Tách họ và tên từ fullName
@@ -695,10 +702,8 @@ fun AccountInfoSection(
                                             if (!state.isLoading) {
                                                 isUpdating = false
                                                 if (state.isSuccess) {
-                                                    snackbarHostState.showSnackbar(
-                                                        message = "Cập nhật thông tin thành công",
-                                                        duration = SnackbarDuration.Short
-                                                    )
+                                                    dialogMessage = "Cập nhật thông tin thành công"
+                                                    showDialog = true
                                                     selectedImageUri = null
                                                     if (id != null) {
                                                         customerViewModel.getCustomerById(id)
@@ -709,11 +714,6 @@ fun AccountInfoSection(
                                             }
                                         }
                                     }
-//                                selectedImageUri?.let {
-//                                    // TODO: Gọi hàm trong ViewModel để lưu ảnh, ví dụ:
-//                                    // customerViewModel.updateAvatar(uri)
-//                                }
-//                                selectedImageUri = null // Reset ảnh sau khi lưu
                                 }
                             },
                             modifier = Modifier.fillMaxWidth(),
@@ -1027,6 +1027,25 @@ fun ChangePasswordSection(
     var isPasswordVisible by remember { mutableStateOf(false) }
     var isPasswordVisible1 by remember { mutableStateOf(false) }
     var isPasswordVisible2 by remember { mutableStateOf(false) }
+
+    val uiState by accountViewModel.uiState.collectAsState()
+    val isLoading = uiState.isLoading
+    var showDialog by remember { mutableStateOf(false) }
+    var dialogMessage by remember { mutableStateOf("") }
+
+    // Xử lý phản hồi từ ViewModel
+    LaunchedEffect(uiState) {
+        when {
+            uiState.result == true -> {
+                dialogMessage = "Đổi mật khẩu thành công!"
+                showDialog = true
+            }
+            uiState.error != null -> {
+                dialogMessage = uiState.error ?: "Đã xảy ra lỗi"
+                showDialog = true
+            }
+        }
+    }
     Card(
         shape = RoundedCornerShape(5.dp),
         elevation = CardDefaults.cardElevation(1.dp),
@@ -1121,66 +1140,58 @@ fun ChangePasswordSection(
             //Log.d("Thành công", "trướt BUTTON${password} va ${username} va ${kiemtramkmoi}")
             Button(
                 onClick = {
-                        if(matkhaucu == "password"){
-                            if(matkhaumoi.isEmpty() || kiemtramkmoi.isEmpty()){
-                                scope.launch {
-                                    snackbarHostState.showSnackbar(
-                                        message = "Vui lòng nhập đày đủ thông tin!"
-                                    )
-                                }
-                            }
-                            else if (matkhaumoi.contains(" ")){
-                                scope.launch {
-                                    snackbarHostState.showSnackbar(
-                                        message = "Mật khẩu mới không được chứa khoảng trắng!"
-                                    )
-                                }
-                            }
-                            else if(matkhaumoi == matkhaucu){
-                                scope.launch {
-                                    snackbarHostState.showSnackbar(
-                                        message = "Mật khẩu mới không được trùng với mật khẩu cũ!"
-                                    )
-                                }
-                            }
-                            else if(matkhaumoi != kiemtramkmoi){
-                                scope.launch {
-                                    snackbarHostState.showSnackbar(
-                                        message = "Xác nhận mật khẩu không khớp!"
-                                    )
-                                }
-                            }
-                            else{
-                                scope.launch {
-                                    snackbarHostState.showSnackbar(
-                                        message = "Đổi mật khẩu thành công!"
-                                    )
-                                }
-                                val request = ChangePasswordRequest(
-                                    username = username,
-                                    password = matkhaucu,
-                                    newPassword = matkhaumoi,
-                                    confirmPassword = kiemtramkmoi
-                                )
-                                accountViewModel.changePassword(token, request)
-                                onPasswordChanged()
-                            }
-                        }
-                        else{
-                            scope.launch {
-                                snackbarHostState.showSnackbar(
-                                    message = "Mật khẩu cũ không chính xác!"
-                                )
-                            }
-                        }
+                    if (matkhaumoi.isEmpty() || kiemtramkmoi.isEmpty() || matkhaucu.isEmpty()) {
+                        dialogMessage = "Vui lòng nhập đầy đủ thông tin!"
+                        showDialog = true
+                    } else if (matkhaumoi.contains(" ")) {
+                        dialogMessage = "Mật khẩu mới không được chứa khoảng trắng!"
+                        showDialog = true
+                    } else if (matkhaumoi == matkhaucu) {
+                        dialogMessage = "Mật khẩu mới không được trùng với mật khẩu cũ!"
+                        showDialog = true
+                    } else {
+                        val request = ChangePasswordRequest(
+                            password = matkhaucu,
+                            newPassword = matkhaumoi,
+                            confirmPassword = kiemtramkmoi
+                        )
+                        accountViewModel.changePassword(token, request)
+                    }
                 },
 
                 colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF5F9EFF)),
                 shape = RoundedCornerShape(5.dp),
                 modifier = Modifier.fillMaxWidth()
             ) {
-                Text("ĐỔI MẬT KHẨU", color = Color.White, fontSize = 16.sp)
+                if (isLoading) {
+                    CircularProgressIndicator(color = Color.White, modifier = Modifier.size(22.dp))
+                } else {
+                    Text("ĐỔI MẬT KHẨU", color = Color.White, fontSize = 16.sp)
+                }
             }
         }
+    }
+    if (showDialog) {
+        AlertDialog(
+            onDismissRequest = { showDialog = false },
+            title = { Text("Thông báo") },
+            containerColor = Color.White,
+            text = { Text(dialogMessage) },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        showDialog = false
+                        if (uiState.result == true) {
+                            onPasswordChanged() // Chuyển tab khi thành công
+                        }
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF5F9EFF)),
+                    shape = RoundedCornerShape(10.dp),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text("Xác nhận")
+                }
+            }
+        )
     }
 }

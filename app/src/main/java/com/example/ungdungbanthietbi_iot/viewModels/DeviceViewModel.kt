@@ -60,6 +60,7 @@ class DeviceViewModel:ViewModel() {
 
     fun getDeviceBySlug2(id: String) {
         viewModelScope.launch(Dispatchers.IO) {
+            _isLoading.value = true
             try {
                 val response = RetrofitClient.deviceAPIService.getDeviceById(id)
                 Log.d("DeviceViewModel", "Lấy dữ liệu thiết bị: $response")
@@ -74,6 +75,8 @@ class DeviceViewModel:ViewModel() {
             } catch (e: Exception) {
                 _device.value = null
                 Log.e("DeviceViewModel", "Lỗi khi lấy thiết bị", e)
+            } finally {
+                _isLoading.value = false
             }
         }
     }

@@ -903,7 +903,7 @@ fun ChoXacNhanScreen(navController: NavController, idCustomer: String?) {
                 listOrder?.data?.let { orderData ->
                     // Filter orders with status == 1
                     val pendingOrders = orderData.data
-                        .filter { it.status == OrderStatus.CHO_XAC_NHAN.value }
+                        .filter { it.status == OrderStatus.CHO_XAC_NHAN.value || it.status == 9 }
                         .sortedByDescending { OffsetDateTime.parse(it.created_at) }
                     Log.d("ChoXacNhanScreen", "Filtered ${pendingOrders.size} orders with status == 1")
                     if (pendingOrders.isEmpty()) {
