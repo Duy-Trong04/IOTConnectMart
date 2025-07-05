@@ -40,8 +40,8 @@ class DeviceViewModel:ViewModel() {
     private val _listDevice = MutableStateFlow<List<Device>>(emptyList())
     val listDevice: StateFlow<List<Device>> get() = _listDevice.asStateFlow()
 
-    var deviceMap = mutableStateMapOf<String, Device>()
-        private set
+    private val _deviceMap = MutableStateFlow<Map<String, Device>>(emptyMap())
+    val deviceMap: StateFlow<Map<String, Device>> = _deviceMap.asStateFlow()
 
     private val _listDeviceSearch = MutableStateFlow<List<Device>>(emptyList())
     val listDeviceSearch: StateFlow<List<Device>> get() = _listDeviceSearch.asStateFlow()
@@ -58,7 +58,7 @@ class DeviceViewModel:ViewModel() {
     private val _isLoadingSale = MutableStateFlow(false)
     val isLoadingSale: StateFlow<Boolean> = _isLoadingSale.asStateFlow()
 
-    fun getDeviceBySlug2(id: String) {
+    fun getDeviceReview(id: String) {
         viewModelScope.launch(Dispatchers.IO) {
             _isLoading.value = true
             try {
@@ -67,8 +67,12 @@ class DeviceViewModel:ViewModel() {
                 if (response.statusCode == 200) {
                     val fetchedDevice = response.data.data.firstOrNull()
                     _device.value = fetchedDevice
-                    fetchedDevice?.let { deviceMap[id] = it } // Lưu vào deviceMap nếu không null
-                    Log.d("DeviceViewModel", "Đã lấy thiết bị: ${fetchedDevice?.name}")
+                    fetchedDevice?.let {
+                        _deviceMap.update { currentMap ->
+                            currentMap.toMutableMap().apply { put(id, it) }
+                        }
+                        Log.d("DeviceViewModel", "Đã lấy thiết bị: ${fetchedDevice.name}")
+                    }
                 } else {
                     Log.e("DeviceViewModel", "Lấy thiết bị thất bại: $response")
                 }

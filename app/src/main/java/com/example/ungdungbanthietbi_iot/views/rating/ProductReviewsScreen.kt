@@ -176,9 +176,14 @@ fun ReviewListScreen(reviews: List<Reviews>, navController: NavController) {
 fun ReviewCard(review: Reviews) {
     val deviceViewModel: DeviceViewModel = viewModel()
     var bitmap by remember { mutableStateOf<Bitmap?>(null) }
+    var bitmapReviewImage by remember { mutableStateOf<Bitmap?>(null) }
+
     // Tải hình ảnh
-    LaunchedEffect(review) {
+    LaunchedEffect(review.customer_image) {
         bitmap = review.customer_image?.let { deviceViewModel.getDeviceImageBitmapImage(it) }
+    }
+    LaunchedEffect(review.image) {
+        bitmapReviewImage = review.image?.let { deviceViewModel.getDeviceImageBitmapImage(it) }
     }
     val customerName = "${review.surname} ${review.lastname}".trim()
     Card(
@@ -243,14 +248,33 @@ fun ReviewCard(review: Reviews) {
                 )
             }
         }
-        // Nội dung bình luận
-        review.comment?.let {
+        if(review.comment != null) {
+            // Nội dung bình luận
             Text(
-                text = it,
+                text = review.comment,
                 fontSize = 16.sp,
                 overflow = TextOverflow.Ellipsis,
                 modifier = Modifier.padding(start = 5.dp, end = 5.dp)
             )
+        }
+        if(review.image != null) {
+            // Hình ảnh bình luận
+            bitmapReviewImage?.let {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 8.dp, horizontal = 5.dp)
+                ) {
+                    Image(
+                        bitmap = it.asImageBitmap(),
+                        contentDescription = "Hình ảnh bình luận",
+                        modifier = Modifier
+                            .size(70.dp)
+                            .clip(RoundedCornerShape(4.dp)),
+                        contentScale = ContentScale.Crop
+                    )
+                }
+            }
         }
         // Ngày đánh giá
         Text(
