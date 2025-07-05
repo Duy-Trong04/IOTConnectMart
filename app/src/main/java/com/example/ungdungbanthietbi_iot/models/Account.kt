@@ -2,16 +2,6 @@ package com.example.ungdungbanthietbi_iot.models
 
 import com.google.gson.annotations.SerializedName
 
-data class Account(
-    @SerializedName("idPerson") var idPerson:String?,
-    @SerializedName("idRole") var idRole:String,
-    @SerializedName("username") var username:String,
-    @SerializedName("password") var password:String,
-    @SerializedName("report") var report:Int,
-    @SerializedName("isNew") var isNew:Int,
-    @SerializedName("status") var status:Int
-)
-
 data class AddAccount(
     @SerializedName("account_id") val accountId: String?,
     @SerializedName("customer_id") val customerId: String?,
@@ -50,7 +40,7 @@ data class AccountData(
     val account_id: String,
     val customer_id: String?,
     val employee_id: String?,
-    val role_id: Int,
+    val role_id: Int?,
     val username: String,
     val password: String,
     val verification_code: String?,

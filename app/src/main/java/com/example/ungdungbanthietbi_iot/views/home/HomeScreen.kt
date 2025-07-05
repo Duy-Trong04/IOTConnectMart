@@ -1336,28 +1336,30 @@ fun HomeContent(
                         horizontalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
                         pair.forEach { device ->
-                            Box(
-                                modifier = Modifier
-                                    .weight(1f)
-                            ) {
-                                CardDevice(
-                                    device = device,
-                                    isFavorite = isFavorite,
-                                    idCustomer = id,
-                                    username = username,
-                                    token = token,
-                                    deviceViewModel = deviceViewModel,
-                                    navController = navController
-                                )
-                            }
-                            if (pair.size == 1) {
-                                Box(modifier = Modifier.weight(1f))
+                            if(device.status == 1 || device.status == 2 || device.status == 3 || device.status == 4 || device.status == 5) {
+                                Box(
+                                    modifier = Modifier
+                                        .weight(1f)
+                                ) {
+                                    CardDevice(
+                                        device = device,
+                                        isFavorite = isFavorite,
+                                        idCustomer = id,
+                                        username = username,
+                                        token = token,
+                                        deviceViewModel = deviceViewModel,
+                                        navController = navController
+                                    )
+                                }
+                                if (pair.size == 1) {
+                                    Box(modifier = Modifier.weight(1f))
+                                }
                             }
                         }
                     }
                 }
             }
-            item { Spacer(modifier = Modifier.height(40.dp)) }
+            //item { Spacer(modifier = Modifier.height(40.dp)) }
         }
     }
 }

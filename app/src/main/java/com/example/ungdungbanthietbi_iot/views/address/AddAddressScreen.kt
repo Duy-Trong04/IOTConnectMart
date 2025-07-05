@@ -92,7 +92,7 @@ fun AddAddressScreen(
     var phone by remember { mutableStateOf("") }// Số điện thoại
     var street by remember { mutableStateOf("") }// Địa chỉ chi tiết
     var detail by remember { mutableStateOf("") }// Địa chỉ chi tiết
-    var isDefault by remember { mutableStateOf(false) } // Trạng thái của Switch đặt làm địa chỉ mặc định
+    var isDefault by remember { mutableStateOf(true) } // Trạng thái của Switch đặt làm địa chỉ mặc định
     val validatePhone by remember { mutableStateOf(false) }
 
     // Biến trạng thái cho dropdown
