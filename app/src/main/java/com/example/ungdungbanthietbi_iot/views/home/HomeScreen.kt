@@ -1327,16 +1327,21 @@ fun HomeContent(
                     )
                 }
             } else {
-                val pairedDevices = listAllDevice.chunked(2)
-                items(pairedDevices) { pair ->
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 12.dp, vertical = 4.dp),
-                        horizontalArrangement = Arrangement.spacedBy(12.dp)
-                    ) {
-                        pair.forEach { device ->
-                            if(device.status == 1 || device.status == 2 || device.status == 3 || device.status == 4 || device.status == 5) {
+                val validDevices = listAllDevice.filter { it.status in 1..5 } // Lọc sản phẩm hợp lệ
+                val evenDeviceCount = validDevices.size - (validDevices.size % 2) // Tính số phần tử chẵn
+                val evenDeviceList = validDevices.take(evenDeviceCount) // Lấy số chẵn, bỏ sản phẩm lẻ cuối
+                if (evenDeviceList.isNotEmpty()) {
+                    val pairedDevices = evenDeviceList.chunked(2)
+                    items(
+                        pairedDevices,
+                        key = { pair -> pair.map { it.idDevice }.joinToString() }) { pair ->
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 12.dp, vertical = 4.dp),
+                            horizontalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            pair.forEach { device ->
                                 Box(
                                     modifier = Modifier
                                         .weight(1f)
@@ -1350,9 +1355,6 @@ fun HomeContent(
                                         deviceViewModel = deviceViewModel,
                                         navController = navController
                                     )
-                                }
-                                if (pair.size == 1) {
-                                    Box(modifier = Modifier.weight(1f))
                                 }
                             }
                         }
