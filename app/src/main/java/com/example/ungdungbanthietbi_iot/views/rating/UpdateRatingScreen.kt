@@ -73,7 +73,7 @@ import java.io.ByteArrayOutputStream
 /** Hàm chuyển Bitmap thành chuỗi Base64 */
 fun bitmapToBase64(bitmap: Bitmap): String {
     val byteArrayOutputStream = ByteArrayOutputStream()
-    bitmap.compress(Bitmap.CompressFormat.JPEG, 80, byteArrayOutputStream)
+    bitmap.compress(Bitmap.CompressFormat.JPEG, 90, byteArrayOutputStream) // Tăng chất lượng lên 90
     val byteArray = byteArrayOutputStream.toByteArray()
     return Base64.encodeToString(byteArray, Base64.DEFAULT)
 }
@@ -140,7 +140,7 @@ fun UpdateRatingScreen(navController: NavController, idReview: Int, idCustomer: 
             try {
                 val byteArray = uriToByteArray(context, it)
                 byteArray?.let { bytes ->
-                    val compressedBytes = compressImage(bytes, 80, 200)
+                    val compressedBytes = compressImage(bytes, 90, 1024)
                     base64Image = compressedBytes?.let { compressed ->
                         BitmapFactory.decodeByteArray(compressed, 0, compressed.size)
                     }?.let { bitmap ->
@@ -178,7 +178,7 @@ fun UpdateRatingScreen(navController: NavController, idReview: Int, idCustomer: 
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Chỉnh sửa đánh giá", fontWeight = FontWeight.Bold) },
+                title = { Text("Chỉnh sửa đánh giá") },
                 navigationIcon = {
                     IconButton(onClick = { navController.popBackStack() }) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
@@ -192,63 +192,71 @@ fun UpdateRatingScreen(navController: NavController, idReview: Int, idCustomer: 
             )
         },
         bottomBar = {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(10.dp)
-            ) {
-                if (showSnackbar.value) {
-                    LaunchedEffect(Unit) {
-                        delay(3000)
-                        showSnackbar.value = false
-                    }
-                    Snackbar(
-                        modifier = Modifier.padding(16.dp),
-                        containerColor = Color.White,
-                        contentColor = Color.Gray
-                    ) {
-                        Text(snackbarMessage.value)
-                    }
-                }
-                if (error != null) {
-                    Text(
-                        text = "Lỗi: $error",
-                        color = MaterialTheme.colorScheme.error,
-                        modifier = Modifier.padding(8.dp)
-                    )
-                }
-                Spacer(modifier = Modifier.height(8.dp))
-                Button(
-                    onClick = {
-                        if (!isLoading && idCustomer != null) {
-                            review?.let {
-                                val updatedReview = ReviewRequestUpdate(
-                                    id = idReview,
-                                    customer_id = idCustomer,
-                                    comment = comment,
-                                    image = base64Image,
-                                    rating = rating
-                                )
-                                reviewViewModel.updateReview(updatedReview)
-                                showSnackbar.value = true
-                                snackbarMessage.value = "Đánh giá của bạn đã được cập nhật thành công!"
-                                navController.previousBackStackEntry
-                                    ?.savedStateHandle
-                                    ?.set("needRefreshReviews", true)
-                                navController.popBackStack()
-                            }
-                        }
-                    },
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(10.dp),
-                    elevation = ButtonDefaults.buttonElevation(1.dp),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = Color(0xFF5D9EFF),
-                        contentColor = Color.White
-                    ),
-                    enabled = !isLoading
+            if(review != null){
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(10.dp)
                 ) {
-                    Text(text = if (isLoading) "Đang gửi..." else "Cập nhật đánh giá", fontSize = 20.sp)
+                    if (showSnackbar.value) {
+                        LaunchedEffect(Unit) {
+                            delay(3000)
+                            showSnackbar.value = false
+                        }
+                        Snackbar(
+                            modifier = Modifier.padding(16.dp),
+                            containerColor = Color.White,
+                            contentColor = Color.Gray
+                        ) {
+                            Text(snackbarMessage.value)
+                        }
+                    }
+                    if (error != null) {
+                        Text(
+                            text = "Lỗi: $error",
+                            color = MaterialTheme.colorScheme.error,
+                            modifier = Modifier.padding(8.dp)
+                        )
+                    }
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Button(
+                        onClick = {
+                            if (!isLoading && idCustomer != null) {
+                                review.let {
+                                    val updatedReview = ReviewRequestUpdate(
+                                        id = idReview,
+                                        customer_id = idCustomer,
+                                        comment = comment,
+                                        image = base64Image,
+                                        rating = rating
+                                    )
+                                    reviewViewModel.updateReview(updatedReview)
+                                    showSnackbar.value = true
+                                    snackbarMessage.value =
+                                        "Đánh giá của bạn đã được cập nhật thành công!"
+                                }
+                            }
+                        },
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(10.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = Color(0xFF5D9EFF),
+                            contentColor = Color.White
+                        )
+                    ) {
+                        if (isLoading) {
+                            CircularProgressIndicator(
+                                color = Color.White,
+                                strokeWidth = 4.dp,
+                                modifier = Modifier.size(22.dp)
+                            )
+                        } else {
+                            Text(
+                                text = "Cập nhật đánh giá",
+                                fontSize = 20.sp
+                            )
+                        }
+                    }
                 }
             }
         }

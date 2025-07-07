@@ -733,9 +733,8 @@ fun CartScreen(
             is CartViewModel.UiState.Initial, is CartViewModel.UiState.Loading -> {
                 Box(
                     modifier = Modifier
-                        .fillMaxWidth()
-                        .background(Color.White)
-                        .padding(16.dp),
+                        .fillMaxSize()
+                        .background(Color.White),
                     contentAlignment = Alignment.Center
                 ) {
                     CircularProgressIndicator(

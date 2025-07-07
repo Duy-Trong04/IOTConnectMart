@@ -967,8 +967,8 @@ fun HomeScreen(
                     listDeviceLiked = listLiked,
                     categories = listCategories,
                 )
-                2 -> if (username != null) NotificationScreen(navController = navController, idUser = id)
-                else NotificationScreen(navController = navController, idUser = "")
+                2 -> if (username != null) NotificationScreen(navController = navController, idCustomer = id)
+                else NotificationScreen(navController = navController, idCustomer = "")
                 3 -> if(username != null && id != null)
                     token?.let {
                         PersonalScreen(

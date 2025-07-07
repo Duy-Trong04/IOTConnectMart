@@ -251,7 +251,7 @@ fun ProductDetailsScreen(
                         // Icon Tìm kiếm
                         IconButton(onClick = {
                             if(username != null){
-                                navController.navigate( Screen.Search_Screen.route + "?username=${username}&idCustomer=$id&token=$token")
+                                navController.navigate( Screen.Search_Screen.route + "?username=${username}&idCustomer=$idCustomer&token=$token")
                             }
                             else{
                                 navController.navigate(Screen.Search_Screen.route)
