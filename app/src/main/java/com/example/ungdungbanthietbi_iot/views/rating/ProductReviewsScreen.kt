@@ -3,6 +3,7 @@ package com.example.ungdungbanthietbi_iot.views.rating
 import android.graphics.Bitmap
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -39,6 +40,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.example.ungdungbanthietbi_iot.viewModels.ReviewViewModel
@@ -176,9 +179,14 @@ fun ReviewListScreen(reviews: List<Reviews>, navController: NavController) {
 fun ReviewCard(review: Reviews) {
     val deviceViewModel: DeviceViewModel = viewModel()
     var bitmap by remember { mutableStateOf<Bitmap?>(null) }
+    var bitmapReviewImage by remember { mutableStateOf<Bitmap?>(null) }
+    var showImageDialog by remember { mutableStateOf(false) }
     // Tải hình ảnh
-    LaunchedEffect(review) {
+    LaunchedEffect(review.customer_image) {
         bitmap = review.customer_image?.let { deviceViewModel.getDeviceImageBitmapImage(it) }
+    }
+    LaunchedEffect(review.image) {
+        bitmapReviewImage = review.image?.let { deviceViewModel.getDeviceImageBitmapImage(it) }
     }
     val customerName = "${review.surname} ${review.lastname}".trim()
     Card(
@@ -243,14 +251,34 @@ fun ReviewCard(review: Reviews) {
                 )
             }
         }
-        // Nội dung bình luận
-        review.comment?.let {
+        if(review.comment != null) {
+            // Nội dung bình luận
             Text(
-                text = it,
+                text = review.comment,
                 fontSize = 16.sp,
                 overflow = TextOverflow.Ellipsis,
                 modifier = Modifier.padding(start = 5.dp, end = 5.dp)
             )
+        }
+        if(review.image != null) {
+            // Hình ảnh bình luận
+            bitmapReviewImage?.let {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 8.dp, horizontal = 5.dp)
+                        .clickable { showImageDialog = true }
+                ) {
+                    Image(
+                        bitmap = it.asImageBitmap(),
+                        contentDescription = "Hình ảnh bình luận",
+                        modifier = Modifier
+                            .size(70.dp)
+                            .clip(RoundedCornerShape(4.dp)),
+                        contentScale = ContentScale.Crop
+                    )
+                }
+            }
         }
         // Ngày đánh giá
         Text(
@@ -259,5 +287,30 @@ fun ReviewCard(review: Reviews) {
             color = Color.Gray,
             modifier = Modifier.padding(start = 5.dp, end = 5.dp)
         )
+        // Dialog hiển thị hình ảnh toàn màn hình
+        if (showImageDialog && bitmapReviewImage != null) {
+            Dialog(
+                onDismissRequest = { showImageDialog = false },
+                properties = DialogProperties(usePlatformDefaultWidth = false) // Chiếm toàn màn hình
+            ) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(Color.Black.copy(alpha = 0.3f)) // Nền tối
+                        .clickable { showImageDialog = false }, // Đóng dialog khi nhấn ngoài ảnh
+                    contentAlignment = Alignment.Center
+                ) {
+                    Image(
+                        bitmap = bitmapReviewImage!!.asImageBitmap(),
+                        contentDescription = "Hình ảnh bình luận toàn màn hình",
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .fillMaxHeight(0.8f) // Giới hạn chiều cao để không che toàn bộ màn hình
+                            .clip(RoundedCornerShape(8.dp)),
+                        contentScale = ContentScale.Fit // Hiển thị toàn bộ ảnh mà không bị cắt
+                    )
+                }
+            }
+        }
     }
 }

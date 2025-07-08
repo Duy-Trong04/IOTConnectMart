@@ -66,7 +66,6 @@ import coil.compose.AsyncImage
 import com.example.ungdungbanthietbi_iot.R
 import com.example.ungdungbanthietbi_iot.api.ReviewRequestCreate
 import com.example.ungdungbanthietbi_iot.viewModels.ReviewViewModel
-import com.example.ungdungbanthietbi_iot.views.components.bitmapToBase64
 import com.example.ungdungbanthietbi_iot.views.components.compressImage
 import com.example.ungdungbanthietbi_iot.views.components.uriToByteArray
 import kotlinx.coroutines.delay
@@ -96,7 +95,7 @@ fun RatingScreen(navController: NavController, idCustomer: String, idDevice: Str
                 val byteArray = uriToByteArray(context, it)
                 byteArray?.let { bytes ->
                     val originalBitmap = BitmapFactory.decodeByteArray(bytes, 0, bytes.size)
-                    val compressedBytes = compressImage(bytes, 80, 200)
+                    val compressedBytes = compressImage(bytes, 90, 1024)
                     base64String = compressedBytes?.let { bitmapToBase64(BitmapFactory.decodeByteArray(it, 0, it.size)) }
                     Log.d("ImagePicker", "Uri: $it")
                     Log.d("ImagePicker", "ByteArray size: ${bytes.size}")
@@ -118,7 +117,7 @@ fun RatingScreen(navController: NavController, idCustomer: String, idDevice: Str
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Đánh giá sản phẩm", fontWeight = FontWeight.Bold) },
+                title = { Text("Đánh giá sản phẩm") },
                 navigationIcon = {
                     IconButton(onClick = { navController.popBackStack() }) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
@@ -172,12 +171,10 @@ fun RatingScreen(navController: NavController, idCustomer: String, idDevice: Str
                             reviewViewModel.addReview(createReview)
                             showSnackbar.value = true
                             snackbarMessage.value = "Đánh giá của bạn đã được gửi thành công!"
-                            navController.popBackStack()
                         }
                     },
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(10.dp),
-                    elevation = ButtonDefaults.buttonElevation(1.dp),
                     colors = ButtonDefaults.buttonColors(
                         containerColor = Color(0xFF5D9EFF),
                         contentColor = Color.White

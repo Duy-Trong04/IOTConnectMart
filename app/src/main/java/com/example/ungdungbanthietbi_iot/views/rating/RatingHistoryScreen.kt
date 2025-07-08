@@ -22,6 +22,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
@@ -82,7 +83,6 @@ fun RatingHistoryScreen(navController: NavController, idCustomer: String, userna
                 ),
                 title = {
                     Text(text = "Đánh giá của tôi (${reviewsOfCustomer.size})",
-                        fontWeight = FontWeight.Bold,
                         modifier = Modifier.fillMaxWidth()
                     )
                 },
@@ -158,20 +158,29 @@ fun RatingHistoryScreen(navController: NavController, idCustomer: String, userna
 fun ReviewItem(review: Reviews, idCustomer: String, idDevice: String, username:String, token: String,navController: NavController) {
 
     val deviceViewModel: DeviceViewModel = viewModel()
-    val device = deviceViewModel.deviceMap[idDevice] // Lấy thiết bị theo ID
+    val deviceMap by deviceViewModel.deviceMap.collectAsState()
     val isLoading by deviceViewModel.isLoading.collectAsState()
     val customerName = "${review.surname} ${review.lastname}".trim()
-    // Gọi API lấy device khi idDevice thay đổi
-    LaunchedEffect(idDevice) {
-        if (device == null) {
-            deviceViewModel.getDeviceBySlug2(idDevice)
+    var bitmap by remember { mutableStateOf<Bitmap?>(null) }
+    var bitmapReviewImage by remember { mutableStateOf<Bitmap?>(null) }
+    LaunchedEffect(idDevice, deviceMap[idDevice]) {
+        try {
+            if (deviceMap[idDevice] == null) {
+                Log.d("ReviewItem", "Calling getDeviceReview for idDevice: $idDevice")
+                deviceViewModel.getDeviceReview(idDevice)
+            }
+            deviceMap[idDevice]?.image?.takeIf { it.isNotEmpty() }?.let { imageUrl ->
+                Log.d("ReviewItem", "Loading image for idDevice: $idDevice, URL: $imageUrl")
+                bitmap = deviceViewModel.getDeviceImageBitmapImage(imageUrl)
+            }
+        } catch (e: Exception) {
+            Log.e("ReviewItem", "Error loading device or image for idDevice: $idDevice", e)
+            bitmap = null
         }
     }
-    var bitmap by remember { mutableStateOf<Bitmap?>(null) }
-    // Tải hình ảnh
-    LaunchedEffect(idDevice) {
-        if (device != null) {
-            bitmap = device.image?.let { deviceViewModel.getDeviceImageBitmapImage(it) }
+    LaunchedEffect(review.image) {
+        if (review.image != null) {
+            bitmapReviewImage = review.image.let { deviceViewModel.getDeviceImageBitmapImage(it) }
         }
     }
     // Tính số ngày kể từ khi tạo đánh giá
@@ -218,25 +227,48 @@ fun ReviewItem(review: Reviews, idCustomer: String, idDevice: String, username:S
                 }
             }
 
-            Spacer(modifier = Modifier.height(4.dp))
+            //Spacer(modifier = Modifier.height(4.dp))
             // Hiển thị thanh đánh giá
             RatingBar(rating = review.rating)
-            Spacer(modifier = Modifier.height(8.dp))
-            // Bình luận
-            review.comment?.let {
-                Text(
-                    text = it,
-                    fontSize = 14.sp
-                )
+            if(review.comment != null) {
+                Spacer(modifier = Modifier.height(8.dp))
+                // Bình luận
+                review.comment?.let {
+                    Text(
+                        text = it,
+                        fontSize = 14.sp
+                    )
+                }
             }
-            Spacer(modifier = Modifier.height(4.dp))
+            if(review.image != null) {
+                //Spacer(modifier = Modifier.height(4.dp))
+                // Box chứa một hình ảnh bình luận
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 8.dp)
+                ) {
+                    bitmapReviewImage?.let {
+                        Image(
+                            bitmap = it.asImageBitmap(),
+                            contentDescription = customerName.ifEmpty { "Hình ảnh sản phẩm" },
+                            modifier = Modifier
+                                .size(70.dp)
+                                .clip(RoundedCornerShape(4.dp)),
+                            contentScale = ContentScale.Crop
+                        )
+                    } ?: run {}
+                }
+            }
+
+            //Spacer(modifier = Modifier.height(4.dp))
             // Ngày đánh giá
             Text(
                 text = formatDateTimeZone(review.created_at),
                 fontSize = 12.sp,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
-            if(isLoading){
+            if(isLoading && deviceMap[idDevice] == null){
                 Box(
                     contentAlignment = Alignment.Center,
                     modifier = Modifier.fillMaxSize().background(Color.White),
@@ -263,19 +295,14 @@ fun ReviewItem(review: Reviews, idCustomer: String, idDevice: String, username:S
                             contentScale = ContentScale.Fit
                         )
                     } ?: run {
-                        Image(
-                            painter = painterResource(id = android.R.drawable.ic_menu_gallery),
-                            contentDescription = "Product Image",
-                            modifier = Modifier
-                                .width(50.dp)
-                                .height(50.dp),
-                            contentScale = ContentScale.Fit
+                        CircularProgressIndicator(
+                            color = Color(0xFF5D9EFF)
                         )
                     }
                     Spacer(modifier = Modifier.width(8.dp))
-                    if (device != null) {
+                    deviceMap[idDevice]?.name?.let { name ->
                         Text(
-                            text = device.name,
+                            text = name,
                             fontWeight = FontWeight.Bold,
                             fontSize = 16.sp
                         )

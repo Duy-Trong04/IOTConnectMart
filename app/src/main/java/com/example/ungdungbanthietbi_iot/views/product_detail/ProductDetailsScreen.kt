@@ -251,7 +251,7 @@ fun ProductDetailsScreen(
                         // Icon Tìm kiếm
                         IconButton(onClick = {
                             if(username != null){
-                                navController.navigate( Screen.Search_Screen.route + "?username=${username}&idCustomer=$id&token=$token")
+                                navController.navigate( Screen.Search_Screen.route + "?username=${username}&idCustomer=$idCustomer&token=$token")
                             }
                             else{
                                 navController.navigate(Screen.Search_Screen.route)
@@ -1188,9 +1188,11 @@ fun ProductDetailsScreen(
 fun CardReview(review: Reviews, onClick:() -> Unit){
     val deviceViewModel: DeviceViewModel = viewModel()
     var bitmap by remember { mutableStateOf<Bitmap?>(null) }
+    var bitmapReviewImage by remember { mutableStateOf<Bitmap?>(null) }
     // Tải hình ảnh
     LaunchedEffect(review) {
         bitmap = review.customer_image?.let { deviceViewModel.getDeviceImageBitmapImage(it) }
+        bitmapReviewImage = review.image?.let { deviceViewModel.getDeviceImageBitmapImage(it) }
     }
     // Lấy thông tin customer từ review
     val customerName = "${review.surname} ${review.lastname}".trim()
@@ -1267,6 +1269,24 @@ fun CardReview(review: Reviews, onClick:() -> Unit){
                     text = it,
                     fontSize = 16.sp,
                 )
+            }
+            // Hiển thị hình ảnh bình luận nếu có
+            if (bitmapReviewImage != null) {
+                Spacer(modifier = Modifier.height(8.dp))
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 8.dp)
+                ) {
+                    Image(
+                        bitmap = bitmapReviewImage!!.asImageBitmap(),
+                        contentDescription = "Hình ảnh bình luận",
+                        modifier = Modifier
+                            .size(70.dp)
+                            .clip(RoundedCornerShape(4.dp)),
+                        contentScale = ContentScale.Crop
+                    )
+                }
             }
             Text(
                 text = formatDateTimeZone(review.created_at),

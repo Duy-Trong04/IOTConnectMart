@@ -967,8 +967,8 @@ fun HomeScreen(
                     listDeviceLiked = listLiked,
                     categories = listCategories,
                 )
-                2 -> if (username != null) NotificationScreen(navController = navController, idUser = id)
-                else NotificationScreen(navController = navController, idUser = "")
+                2 -> if (username != null) NotificationScreen(navController = navController, idCustomer = id)
+                else NotificationScreen(navController = navController, idCustomer = "")
                 3 -> if(username != null && id != null)
                     token?.let {
                         PersonalScreen(
@@ -1327,37 +1327,41 @@ fun HomeContent(
                     )
                 }
             } else {
-                val pairedDevices = listAllDevice.chunked(2)
-                items(pairedDevices) { pair ->
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 12.dp, vertical = 4.dp),
-                        horizontalArrangement = Arrangement.spacedBy(12.dp)
-                    ) {
-                        pair.forEach { device ->
-                            Box(
-                                modifier = Modifier
-                                    .weight(1f)
-                            ) {
-                                CardDevice(
-                                    device = device,
-                                    isFavorite = isFavorite,
-                                    idCustomer = id,
-                                    username = username,
-                                    token = token,
-                                    deviceViewModel = deviceViewModel,
-                                    navController = navController
-                                )
-                            }
-                            if (pair.size == 1) {
-                                Box(modifier = Modifier.weight(1f))
+                val validDevices = listAllDevice.filter { it.status in 1..5 } // Lọc sản phẩm hợp lệ
+                val evenDeviceCount = validDevices.size - (validDevices.size % 2) // Tính số phần tử chẵn
+                val evenDeviceList = validDevices.take(evenDeviceCount) // Lấy số chẵn, bỏ sản phẩm lẻ cuối
+                if (evenDeviceList.isNotEmpty()) {
+                    val pairedDevices = evenDeviceList.chunked(2)
+                    items(
+                        pairedDevices,
+                        key = { pair -> pair.map { it.idDevice }.joinToString() }) { pair ->
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 12.dp, vertical = 4.dp),
+                            horizontalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            pair.forEach { device ->
+                                Box(
+                                    modifier = Modifier
+                                        .weight(1f)
+                                ) {
+                                    CardDevice(
+                                        device = device,
+                                        isFavorite = isFavorite,
+                                        idCustomer = id,
+                                        username = username,
+                                        token = token,
+                                        deviceViewModel = deviceViewModel,
+                                        navController = navController
+                                    )
+                                }
                             }
                         }
                     }
                 }
             }
-            item { Spacer(modifier = Modifier.height(40.dp)) }
+            //item { Spacer(modifier = Modifier.height(40.dp)) }
         }
     }
 }

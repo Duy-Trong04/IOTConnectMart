@@ -269,19 +269,21 @@ fun SearchResultsScreen(
                     }
                 } else {
                     LazyVerticalGrid(
-                        modifier = Modifier.fillMaxSize().background(Color.White),
+                        modifier = Modifier.fillMaxSize().background(Color.White).padding(6.dp).padding(horizontal = 8.dp, vertical = 6.dp),
                         columns = GridCells.Fixed(2),
                     ) {
                         items(sortedDevices) { device ->
-                            CardDevice(
-                                device = device,
-                                isFavorite = false,
-                                idCustomer = idCustomer,
-                                username = username,
-                                token = token,
-                                deviceViewModel = deviceViewModel,
-                                navController = navController
-                            )
+                            if(device.deleted_at == null && device.status in 1..5) {
+                                CardDevice(
+                                    device = device,
+                                    isFavorite = false,
+                                    idCustomer = idCustomer,
+                                    username = username,
+                                    token = token,
+                                    deviceViewModel = deviceViewModel,
+                                    navController = navController
+                                )
+                            }
                         }
                     }
                 }

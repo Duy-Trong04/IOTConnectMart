@@ -267,22 +267,24 @@ fun CategoriesScreen(
                                 horizontalArrangement = Arrangement.spacedBy(12.dp)
                             ) {
                                 pair.forEach { device ->
-                                    Box(
-                                        modifier = Modifier
-                                            .weight(1f)
-                                    ) {
-                                        CardDevice(
-                                            device = device,
-                                            isFavorite = false,
-                                            idCustomer = idCustomer,
-                                            username = username,
-                                            token = token,
-                                            deviceViewModel = deviceViewModel,
-                                            navController = navController
-                                        )
-                                    }
-                                    if (pair.size == 1) {
-                                        Box(modifier = Modifier.weight(1f))
+                                    if(device.deleted_at == null && device.status in 1..5) {
+                                        Box(
+                                            modifier = Modifier
+                                                .weight(1f)
+                                        ) {
+                                            CardDevice(
+                                                device = device,
+                                                isFavorite = false,
+                                                idCustomer = idCustomer,
+                                                username = username,
+                                                token = token,
+                                                deviceViewModel = deviceViewModel,
+                                                navController = navController
+                                            )
+                                        }
+                                        if (pair.size == 1) {
+                                            Box(modifier = Modifier.weight(1f))
+                                        }
                                     }
                                 }
                             }

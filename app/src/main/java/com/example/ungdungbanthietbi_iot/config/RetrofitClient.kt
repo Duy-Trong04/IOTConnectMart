@@ -48,8 +48,16 @@ object RetrofitClient {
     }
 
     val slideshowAPIService: SlideShowAPIService by lazy {
+        // Tạo OkHttpClient với các thiết lập timeout
+        val okHttpClient = OkHttpClient.Builder()
+            .connectTimeout(60, TimeUnit.SECONDS) // Timeout khi kết nối, ví dụ: 30 giây
+            .readTimeout(60, TimeUnit.SECONDS)   // Timeout khi đọc dữ liệu
+            .writeTimeout(60, TimeUnit.SECONDS)  // Timeout khi ghi dữ liệu
+            .build()
+
         Retrofit.Builder()
             .baseUrl(Constant.BASE_URL)
+            .client(okHttpClient)
             .addConverterFactory(GsonConverterFactory.create(GsonBuilder().create()))
             .build()
             .create(SlideShowAPIService::class.java)

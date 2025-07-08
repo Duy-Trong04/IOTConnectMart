@@ -32,61 +32,13 @@ import androidx.navigation.NavController
 import com.example.ungdungbanthietbi_iot.models.Notice
 import com.example.ungdungbanthietbi_iot.viewModels.NoticeViewModel
 import com.example.ungdungbanthietbi_iot.models.Order
-import com.example.ungdungbanthietbi_iot.viewModels.OrderViewModel
 import com.example.ungdungbanthietbi_iot.navigation.Screen
 import com.example.ungdungbanthietbi_iot.utils.formatDate
-import com.example.ungdungbanthietbi_iot.utils.getCurrentTimestampEX
 import kotlinx.coroutines.launch
-import java.text.SimpleDateFormat
-import java.util.Locale
 
-// Mock data for notices
-val mockNotices = listOf(
-    Notice(
-        id = 1,
-        idUser = "user123",
-        type = "admin_order_confirmation",
-        text = "Đơn hàng #1 đang chờ xác nhận",
-        created_at = "2025-06-10T10:05:00Z",
-        status = 1
-    ),
-    Notice(
-        id = 2,
-        idUser = "user123",
-        type = "order_status_change",
-        text = "Đơn hàng #1 đã được xác nhận",
-        created_at = "2025-06-10T10:10:00Z",
-        status = 0
-    ),
-    Notice(
-        id = 3,
-        idUser = "user123",
-        type = "order_status_change",
-        text = "Đơn hàng #2 đang xử lý",
-        created_at = "2025-06-09T15:35:00Z",
-        status = 1
-    ),
-    Notice(
-        id = 4,
-        idUser = "user123",
-        type = "promotion",
-        text = "Khuyến mãi 20% cho đơn hàng tiếp theo!",
-        created_at = "2025-06-09T08:00:00Z",
-        status = 1
-    )
-)
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun NotificationScreen(navController: NavController, idUser: String?) {
-    val coroutineScope = rememberCoroutineScope()
-    var notices by remember { mutableStateOf(mockNotices) }
-    var selectedTab by remember { mutableStateOf(0) }
-    val tabs = listOf("Tôi", "Admin")
-
-    // Filter notices for each tab
-    val userNotices = notices.filter { it.type == "order_status_change" }
-    val adminNotices = notices.filter { it.type != "order_status_change" }
-
+fun NotificationScreen(navController: NavController, idCustomer: String?) {
     Scaffold(
         topBar = {
             TopAppBar(
@@ -98,114 +50,27 @@ fun NotificationScreen(navController: NavController, idUser: String?) {
             )
         },
         bottomBar = {
-            BottomAppBar (
+            BottomAppBar(
                 containerColor = Color.White,
                 contentColor = Color.Black,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .offset(y = 16.dp) // Dịch chuyển BottomAppBar xuống 16dp
-            ){
-
-            }
+                    .offset(y = 16.dp)
+            ) {}
         }
     ) { paddingValues ->
-        Column(
+        Box(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
-                .background(Color(0xFFF5F5F5))
+                .background(Color.White),
+            contentAlignment = Alignment.Center
         ) {
-            // Tab Row
-            TabRow(
-                selectedTabIndex = selectedTab,
-                containerColor = Color.White,
-                contentColor = Color(0xFF5D9EFF)
-            ) {
-                tabs.forEachIndexed { index, title ->
-                    Tab(
-                        text = { Text(title) },
-                        selected = selectedTab == index,
-                        onClick = { selectedTab = index },
-                        selectedContentColor = Color(0xFF5D9EFF),
-                    )
-                }
-            }
-
-            // Tab Content
-            when (selectedTab) {
-                0 -> { // Tôi (User) Tab
-                    if (idUser == "" || userNotices.isEmpty()) {
-                        Box(
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .padding(16.dp),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Text(
-                                text = "Không có thông báo đơn hàng",
-                                color = Color.Gray,
-                                fontSize = 16.sp
-                            )
-                        }
-                    } else {
-                        LazyColumn(
-                            modifier = Modifier.fillMaxSize(),
-                            contentPadding = PaddingValues(16.dp),
-                            verticalArrangement = Arrangement.spacedBy(8.dp)
-                        ) {
-                            items(userNotices) { notice ->
-                                NotificationItem(
-                                    navController = navController,
-                                    notice = notice,
-                                    isAdminTab = false,
-                                    onNoticeUpdated = { updatedNotice ->
-                                        notices = notices.map { if (it.id == updatedNotice.id) updatedNotice else it }
-                                    },
-                                    onNoticeRemoved = { noticeId ->
-                                        notices = notices.filter { it.id != noticeId }
-                                    }
-                                )
-                            }
-                        }
-                    }
-                }
-                1 -> { // Admin Tab
-                    if (adminNotices.isEmpty()) {
-                        Box(
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .padding(16.dp),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Text(
-                                text = "Không có thông báo từ admin",
-                                color = Color.Gray,
-                                fontSize = 16.sp
-                            )
-                        }
-                    } else {
-                        LazyColumn(
-                            modifier = Modifier.fillMaxSize(),
-                            contentPadding = PaddingValues(16.dp),
-                            verticalArrangement = Arrangement.spacedBy(8.dp)
-                        ) {
-                            items(adminNotices) { notice ->
-                                NotificationItem(
-                                    navController = navController,
-                                    notice = notice,
-                                    isAdminTab = true,
-                                    onNoticeUpdated = { updatedNotice ->
-                                        notices = notices.map { if (it.id == updatedNotice.id) updatedNotice else it }
-                                    },
-                                    onNoticeRemoved = { noticeId ->
-                                        notices = notices.filter { it.id != noticeId }
-                                    }
-                                )
-                            }
-                        }
-                    }
-                }
-            }
+            Text(
+                text = "Không có thông báo nào",
+                color = Color.Gray,
+                fontSize = 16.sp
+            )
         }
     }
 }

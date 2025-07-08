@@ -109,8 +109,8 @@ fun UpdateAddress(
         if (address != null && uiState.provinces.isNotEmpty() && !isInitialized) {
             hoten = address.receiver_name
             phone = address.phone
-            street = address.street
-            detail = address.detail
+            street = address.street.toString()
+            detail = address.detail.toString()
             isDefault = address.is_default
             stateSwitch = !address.is_default
 
