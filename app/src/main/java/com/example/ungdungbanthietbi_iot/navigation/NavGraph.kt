@@ -535,15 +535,22 @@ fun NavGraph(
 
         //màn hình thông báo
         composable(
-            Screen.Notification_Screen.route +"?idUser={idUser}",
-            arguments = listOf(navArgument("idUser") {
+            Screen.Notification_Screen.route +"?idUser={idUser}&token={token}",
+            arguments = listOf(
+                navArgument("idUser") {
                 type = NavType.StringType
                 nullable = true
-                defaultValue = ""
-            })
+                defaultValue = "" },
+                navArgument("token") {
+                    type = NavType.StringType
+                    nullable = true
+                    defaultValue = ""
+                }
+            )
         ) {
             val idUser = it.arguments?.getString("idUser") ?: ""
-            NotificationScreen(navController, idUser)
+            val token = it.arguments?.getString("token") ?: ""
+            NotificationScreen(navController, idUser, token)
         }
 
         //màn hình danh mục

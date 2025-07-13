@@ -389,7 +389,6 @@ fun VerifiedEmailScreen(
                 }
             }
             is CustomerState.Success -> {
-                val customer = state.customer
                 Column(
                     verticalArrangement = Arrangement.Top,
                     horizontalAlignment = Alignment.CenterHorizontally,

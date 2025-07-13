@@ -25,23 +25,45 @@ class NoticeViewModel : ViewModel(){
     private val _listNotice = MutableStateFlow<List<Notice>>(emptyList())
     val listNotice: StateFlow<List<Notice>> = _listNotice.asStateFlow()
 
-    var noticeUpdateResult by mutableStateOf("")
-        private set
+    private val _isLoading = MutableStateFlow(false)
+    val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
 
-    fun updateNotice(notice: Notice) {
-        viewModelScope.launch {
+    private val _isLoadingRead = MutableStateFlow(false)
+    val isLoadingRead: StateFlow<Boolean> = _isLoadingRead.asStateFlow()
+
+    fun getNotifications(token: String, type: String) {
+        viewModelScope.launch(Dispatchers.IO) {
+            _isLoading.value = true
             try {
-                val response = withContext(Dispatchers.IO) {
-                    RetrofitClient.noticeAPIService.updateNotice(notice)
-                }
-                noticeUpdateResult = if (response.success) {
-                    "Cập nhật thành công: ${response.message}"
+                val authToken = "Bearer $token"
+                val response = RetrofitClient.noticeAPIServiceEcom.getNotifications(authToken, type)
+                _listNotice.value = response.data
+                Log.d("NoticeViewModel","Fetched all notice: ${response.data.size}")
+            } catch (e: Exception) {
+                _listNotice.value = emptyList()
+                Log.e("NoticeViewModel","Failed to fetch all notice: $e")
+                e.printStackTrace() // Xử lý lỗi
+            } finally {
+                _isLoading.value = false
+            }
+        }
+    }
+
+    fun readNotification(token: String, id: Int) {
+        viewModelScope.launch(Dispatchers.IO) {
+            _isLoadingRead.value = true
+            try {
+                val authToken = "Bearer $token"
+                val response = RetrofitClient.noticeAPIServiceEcom.readNotification(authToken, id)
+                if (response.isSuccessful) {
+                    Log.i("NoticeViewModel", "Đã đọc thông báo thành công")
                 } else {
-                    "Cập nhật thất bại: ${response.message}"
+                    Log.e("NoticeViewModel", "Đọc thông báo thất bại: ${response.code()} - ${response.errorBody()?.string()}")
                 }
             } catch (e: Exception) {
-                noticeUpdateResult = "Lỗi khi cập nhật notice: ${e.message}"
-                Log.e("Notice Error", "Lỗi khi cập nhật notice: ${e.message}")
+                Log.e("NoticeViewModel", "Lỗi đọc thông báo: ${e.message}")
+            } finally {
+                _isLoadingRead.value = false
             }
         }
     }

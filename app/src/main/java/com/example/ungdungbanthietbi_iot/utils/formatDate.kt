@@ -2,10 +2,13 @@ package com.example.ungdungbanthietbi_iot.utils
 
 import android.icu.text.SimpleDateFormat
 import android.icu.util.TimeZone
+import android.os.Build
 import android.util.Log
+import androidx.annotation.RequiresApi
 import androidx.compose.runtime.Composable
 import java.util.Locale
 
+@RequiresApi(Build.VERSION_CODES.N)
 @Composable
 fun formatDate(inputDate: String): String {
     return try {
@@ -17,6 +20,7 @@ fun formatDate(inputDate: String): String {
         "Ngày không hợp lệ"
     }
 }
+@RequiresApi(Build.VERSION_CODES.N)
 @Composable
 fun formatDateTimeZone(dateString: String?): String {
     if (dateString.isNullOrBlank()) {

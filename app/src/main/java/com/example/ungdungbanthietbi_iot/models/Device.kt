@@ -6,18 +6,18 @@ data class Device(
     @SerializedName("id") val idDevice: String,
     val name: String,
     val slug: String,
-    val description: String,
+    val description: String?,
     @SerializedName("description_normal") val descriptionNormal: String?,
     @SerializedName("selling_price") val sellingPrice: Double,
     val sold: Int,
-    val views: Int,
+    val views: Int?,
     val status: Int?,
-    @SerializedName("is_hide") val isHide: Int,
-    @SerializedName("category_id") val categoryId: Int,
+    @SerializedName("is_hide") val isHide: Int?,
+    @SerializedName("category_id") val categoryId: Int?,
     val categories: String?,
     @SerializedName("unit_id") val unitId: Int,
     @SerializedName("unit_name") val unitName: String,
-    val stock: Int,
+    val stock: String,
     @SerializedName("average_rating") val averageRating: String,
     @SerializedName("total_liked") val totalLiked: String,
     @SerializedName("total_review") val totalReview: String,
@@ -45,6 +45,6 @@ data class Attribute(
 
 data class Images(
     val id: Int,
-    val product_id: Int,
+    val product_id: String,
     @SerializedName("image") val image: String
 )

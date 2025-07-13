@@ -253,6 +253,20 @@ fun AccountInfoSection(
             customerViewModel.getCustomerById(id)
         }
     }
+
+    LaunchedEffect(customerState) {
+        if (customerState is CustomerState.Success) {
+            val customer = (customerState as CustomerState.Success).customer
+            if (!isImageChanged) { // Chỉ gán nếu chưa thay đổi hình ảnh
+                base64String = customer.image
+                if (customer.image != null && isValidBase64(customer.image)) {
+                    originalBitmap = base64ToBitmap(customer.image)
+                } else {
+                    originalBitmap = null
+                }
+            }
+        }
+    }
     // Dialog để hiển thị thông báo
     if (showDialog) {
         AlertDialog(
@@ -305,8 +319,11 @@ fun AccountInfoSection(
                             isImageChanged = false // Reset trạng thái thay đổi hình ảnh
                             if (customer.image != null && isValidBase64(customer.image)) {
                                 originalBitmap = base64ToBitmap(customer.image)
+                                base64String = customer.image
                                 Log.d("ImagePicker", "Bitmap from customer.image: ${originalBitmap != null}")
                             } else {
+                                originalBitmap = null
+                                base64String = null
                                 Log.d("ImagePicker", "Invalid or null Base64 string: ${customer.image?.take(100)}")
                             }
                         }
@@ -542,7 +559,6 @@ fun AccountInfoSection(
                                 color = Color.Red,
                                 modifier = Modifier
                                     .clickable {
-                                        //accountViewModel.sendOtp(email.value)
                                         navController.navigate(Screen.EmailVerificationScreen.route + "?id=$id&email=${email.value}&username=$username&token=$token")
                                     }
                             )
@@ -566,7 +582,7 @@ fun AccountInfoSection(
                             unfocusedBorderColor = if (!customer.email_verified) Color.Red else Color(0xFF5F9EFF),
                             focusedLabelColor = Color(0xFF5F9EFF)
                         ),
-                        readOnly = true,
+                        readOnly = if (!customer.email_verified) false else true,
                         shape = RoundedCornerShape(17.dp),
                     )
 
@@ -681,7 +697,7 @@ fun AccountInfoSection(
                                         id = customer.id,
                                         surname = surnameValue,
                                         lastname = lastnameValue,
-                                        image = base64String,
+                                        image = if (isImageChanged) base64String else customer.image,
                                         email = email.value,
                                         email_verified = customer.email_verified,
                                         phone = phone.value,
@@ -1016,8 +1032,6 @@ fun ChangePasswordSection(
     snackbarHostState: SnackbarHostState, // Thêm tham số SnackbarHostState
     onPasswordChanged: () -> Unit // Callback để chuyển tab
 ) {
-    val scope = rememberCoroutineScope()
-
     var matkhaucu by remember { mutableStateOf("") }
     var matkhaumoi by remember { mutableStateOf("") }
     var kiemtramkmoi by remember { mutableStateOf("") }

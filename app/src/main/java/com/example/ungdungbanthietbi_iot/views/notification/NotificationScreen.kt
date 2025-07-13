@@ -1,5 +1,7 @@
 package com.example.ungdungbanthietbi_iot.views.notification
 
+import android.os.Build
+import androidx.annotation.RequiresApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -7,9 +9,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowDropDown
-import androidx.compose.material.icons.filled.ArrowDropUp
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -31,14 +30,24 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.example.ungdungbanthietbi_iot.models.Notice
 import com.example.ungdungbanthietbi_iot.viewModels.NoticeViewModel
-import com.example.ungdungbanthietbi_iot.models.Order
-import com.example.ungdungbanthietbi_iot.navigation.Screen
 import com.example.ungdungbanthietbi_iot.utils.formatDate
+import com.example.ungdungbanthietbi_iot.utils.formatDateTimeZone
 import kotlinx.coroutines.launch
 
+@RequiresApi(Build.VERSION_CODES.N)
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun NotificationScreen(navController: NavController, idCustomer: String?) {
+fun NotificationScreen(navController: NavController, idCustomer: String?, token: String?) {
+    val noticeViewModel: NoticeViewModel = viewModel()
+
+    val listNotices by noticeViewModel.listNotice.collectAsState()
+    val isLoading by noticeViewModel.isLoading.collectAsState()
+
+    LaunchedEffect (idCustomer){
+        if (token != null) {
+            noticeViewModel.getNotifications(token, "order")
+        }
+    }
     Scaffold(
         topBar = {
             TopAppBar(
@@ -48,207 +57,85 @@ fun NotificationScreen(navController: NavController, idCustomer: String?) {
                     titleContentColor = Color.White
                 )
             )
-        },
-        bottomBar = {
-            BottomAppBar(
-                containerColor = Color.White,
-                contentColor = Color.Black,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .offset(y = 16.dp)
-            ) {}
         }
     ) { paddingValues ->
         Box(
             modifier = Modifier
+                .padding(paddingValues) // Áp dụng padding từ Scaffold
                 .fillMaxSize()
-                .padding(paddingValues)
-                .background(Color.White),
-            contentAlignment = Alignment.Center
+                .background(Color.White)
         ) {
-            Text(
-                text = "Không có thông báo nào",
-                color = Color.Gray,
-                fontSize = 16.sp
-            )
-        }
-    }
-}
-
-@Composable
-fun NotificationGroupItem(
-    navController: NavController,
-    order: Order,
-    notices: List<Notice>,
-    noticeViewModel: NoticeViewModel,
-    onNoticesUpdated: () -> Unit
-) {
-    var expanded by remember { mutableStateOf(false) }
-    val hasUnread = notices.any { it.status == 1 }
-    val latestNotice = notices.maxByOrNull { it.created_at } // Thông báo mới nhất
-    val coroutineScope = rememberCoroutineScope()
-
-    // Xác định tiêu đề dựa trên trạng thái đơn hàng
-    val title = when (order.status) {
-        1 -> "Chờ xác nhận"
-        2 -> "Đang xử lý"
-        3 -> "Đang vận chuyển"
-        4 -> "Xác nhận đã nhận hàng"
-        5 -> "Giao hàng thành công"
-        6 -> "Đã hủy"
-        else -> "Đơn hàng #${order.id} - Cập nhật trạng thái"
-    }
-
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable {
-                // Cập nhật tất cả thông báo thành đã đọc
-                coroutineScope.launch {
-                    notices.forEach { notice ->
-                        if (notice.status == 1) {
-                            val noticeUpdate = notice.copy(status = 0)
-                            noticeViewModel.updateNotice(noticeUpdate)
-                        }
-                    }
-                    // Làm mới danh sách thông báo
-                    onNoticesUpdated()
-                    // Chuyển hướng đến màn hình chi tiết đơn hàng
-                    navController.navigate("${Screen.Order_Detail.route}?id=${order.id}&totalAmount=${order.totalAmount}") {
-                        // Gửi sự kiện làm mới khi quay lại
-                        navController.currentBackStackEntry?.savedStateHandle?.set("refresh", "true")
-                    }
+            if (isLoading) {
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    CircularProgressIndicator(color = Color(0xFF5D9EFF))
                 }
-            },
-        shape = RoundedCornerShape(5.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = if (hasUnread) Color(0xFFE3F2FD) else Color.White
-        ),
-        elevation = CardDefaults.cardElevation(1.dp)
-    ) {
-        Column {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Column(modifier = Modifier.weight(1f)) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ){
-                        Text(
-                            text = title,
-                            fontWeight = if (hasUnread) FontWeight.Bold else FontWeight.Normal,
-                            fontSize = 16.sp,
-                            color = MaterialTheme.colorScheme.onSurface
-                        )
-                        if (hasUnread) {
-                            Box(
-                                modifier = Modifier
-                                    .size(12.dp)
-                                    .clip(CircleShape)
-                                    .background(Color.Red)
-                            )
-                        }
-                    }
-                    Spacer(modifier = Modifier.height(4.dp))
+            } else if (listNotices.isEmpty()) {
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
                     Text(
-                        text = latestNotice?.text ?: "Cập nhật trạng thái đơn hàng",
-                        fontSize = 14.sp,
+                        text = "Không có thông báo nào",
                         color = Color.Gray,
-                        maxLines = 2
-                    )
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Text(
-                        text = formatDate(latestNotice?.created_at ?: order.created_at),
-                        fontSize = 12.sp,
-                        color = Color.Gray
+                        fontSize = 16.sp
                     )
                 }
-                Spacer(modifier = Modifier.width(8.dp))
-                Icon(
-                    imageVector = if (expanded) Icons.Default.ArrowDropUp else Icons.Default.ArrowDropDown,
-                    contentDescription = "Toggle dropdown",
-                    modifier = Modifier
-                        .size(24.dp)
-                        .clickable {
-                            expanded = !expanded
-                            // Cập nhật tất cả thông báo thành đã đọc khi nhấn dropdown
-                            coroutineScope.launch {
-                                notices.forEach { notice ->
-                                    if (notice.status == 1) {
-                                        val noticeUpdate = notice.copy(status = 0)
-                                        noticeViewModel.updateNotice(noticeUpdate)
-                                    }
-                                }
-                                // Làm mới danh sách thông báo
-                                onNoticesUpdated()
-                            }
-                        }
-                )
-            }
-            // Dropdown hiển thị danh sách thông báo
-            if (expanded) {
-                Column(
+            } else {
+                LazyColumn(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(start = 16.dp, end = 16.dp, bottom = 16.dp)
+                        .background(Color.White)
+                        .padding(horizontal = 8.dp, vertical = 4.dp) // Padding ngang để tránh sát mép
                 ) {
-                    notices.sortedByDescending { it.created_at }.forEach { notice ->
-                        Text(
-                            text = notice.text,
-                            fontSize = 14.sp,
-                            color = Color.Black,
-                            modifier = Modifier.padding(top = 8.dp)
-                        )
-                        Text(
-                            text = formatDate(notice.created_at),
-                            fontSize = 14.sp,
-                            color = Color.Black,
-                            modifier = Modifier.padding(top = 8.dp)
-                        )
-                        Divider()
+                    items(listNotices) { notice ->
+                        NotificationItem(navController, notice, token, noticeViewModel)
                     }
                 }
             }
         }
+        Spacer(modifier = Modifier.height(4.dp))
     }
 }
 
+
+@RequiresApi(Build.VERSION_CODES.N)
 @Composable
 fun NotificationItem(
     navController: NavController,
     notice: Notice,
-    isAdminTab: Boolean,
-    onNoticeUpdated: (Notice) -> Unit,
-    onNoticeRemoved: (Int) -> Unit
+    token: String?,
+    noticeViewModel: NoticeViewModel
 ) {
     val coroutineScope = rememberCoroutineScope()
-    var expanded by remember { mutableStateOf(false) }
+    var isReadUpdated by remember { mutableStateOf(false) }
+
+    // Theo dõi trạng thái cập nhật is_read và reload danh sách
+    LaunchedEffect(isReadUpdated) {
+        if (isReadUpdated && token != null) {
+            noticeViewModel.getNotifications(token, "order") // Load lại danh sách
+            isReadUpdated = false // Reset trạng thái
+        }
+    }
 
     Card(
         modifier = Modifier
             .fillMaxWidth()
             .clickable {
-                coroutineScope.launch {
-//                    if (notice.status == 1) {
-//                        val updatedNotice = notice.copy(status = 0)
-//                        onNoticeUpdated(updatedNotice)
-//                    }
-//                    if (notice.type == "order_status_change") {
-//                        val orderId = notice.text.substringAfter("#").substringBefore(" ")
-//                        navController.navigate("${Screen.Order_Detail.route}?id=${orderId}&totalAmount=0")
-//                    }
+                if (notice.is_read == false && token != null) {
+                    coroutineScope.launch {
+                        noticeViewModel.readNotification(token, notice.id)
+                        isReadUpdated = true // Đánh dấu đã cập nhật để trigger reload
+                    }
                 }
             },
-        shape = RoundedCornerShape(12.dp),
+        shape = RoundedCornerShape(10.dp),
         colors = CardDefaults.cardColors(
-            containerColor = if (notice.status == 1) Color(0xFFE3F2FD) else Color.White
+            containerColor = if (notice.is_read == false) Color(0xFFE3F2FD) else Color.White
         ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
     ) {
         Column(
             modifier = Modifier
@@ -266,12 +153,12 @@ fun NotificationItem(
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
                         Text(
-                            text = if (notice.type == "order_status_change") "Đơn hàng #${notice.text.substringAfter("#").substringBefore(" ")}" else notice.type,
-                            fontWeight = if (notice.status == 1) FontWeight.Bold else FontWeight.Normal,
+                            text = if(notice.type == "order") "Đơn hàng" else "Khuyến mãi",
+                            fontWeight = if (notice.is_read == true) FontWeight.Bold else FontWeight.Normal,
                             fontSize = 16.sp,
                             color = MaterialTheme.colorScheme.onSurface
                         )
-                        if (notice.status == 1) {
+                        if (notice.is_read == false) {
                             Box(
                                 modifier = Modifier
                                     .size(12.dp)
@@ -281,81 +168,19 @@ fun NotificationItem(
                         }
                     }
                     Spacer(modifier = Modifier.height(4.dp))
-                    Text(
-                        text = notice.text,
-                        fontSize = 14.sp,
-                        color = Color.Gray,
-                        maxLines = if (expanded) Int.MAX_VALUE else 2
-                    )
+                    notice.text?.let {
+                        Text(
+                            text = it,
+                            fontSize = 14.sp,
+                            color = Color.Gray
+                        )
+                    }
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(
-                        text = formatDate(notice.created_at),
+                        text = formatDateTimeZone(notice.created_at!!),
                         fontSize = 12.sp,
                         color = Color.Gray
                     )
-                    // Confirmation button only for admin tab with "đang chờ xác nhận"
-                    if (isAdminTab && notice.type == "admin_order_confirmation" && notice.text.contains("đang chờ xác nhận")) {
-                        Spacer(modifier = Modifier.height(8.dp))
-                        Button(
-                            onClick = {
-                                coroutineScope.launch {
-                                    if (notice.status == 1) {
-                                        val updatedNotice = notice.copy(status = 0)
-                                        onNoticeUpdated(updatedNotice)
-                                    }
-                                    onNoticeRemoved(notice.id)
-                                }
-                            },
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = Color(0xFF5D9EFF),
-                                contentColor = Color.White
-                            ),
-                            shape = RoundedCornerShape(10.dp),
-                            modifier = Modifier.align(Alignment.End)
-                        ) {
-                            Text("Xác nhận đơn hàng")
-                        }
-                    }
-                }
-                // Dropdown icon only for user tab (order_status_change)
-                if (notice.type == "order_status_change" && !isAdminTab) {
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Icon(
-                        imageVector = if (expanded) Icons.Default.ArrowDropUp else Icons.Default.ArrowDropDown,
-                        contentDescription = "Toggle dropdown",
-                        modifier = Modifier
-                            .size(24.dp)
-                            .clickable {
-                                expanded = !expanded
-                                coroutineScope.launch {
-                                    if (notice.status == 1) {
-                                        val updatedNotice = notice.copy(status = 0)
-                                        onNoticeUpdated(updatedNotice)
-                                    }
-                                }
-                            }
-                    )
-                }
-            }
-            // Dropdown content only for user tab
-            if (expanded && notice.type == "order_status_change" && !isAdminTab) {
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(top = 8.dp)
-                ) {
-                    Text(
-                        text = notice.text,
-                        fontSize = 14.sp,
-                        color = Color.Black
-                    )
-                    Text(
-                        text = formatDate(notice.created_at),
-                        fontSize = 14.sp,
-                        color = Color.Black,
-                        modifier = Modifier.padding(top = 8.dp)
-                    )
-                    HorizontalDivider()
                 }
             }
         }
