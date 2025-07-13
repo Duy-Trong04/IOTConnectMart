@@ -83,9 +83,7 @@ import androidx.navigation.NavController
 import com.example.ungdungbanthietbi_iot.api.AddCartRequest
 import com.example.ungdungbanthietbi_iot.api.AddLikedRequest
 import com.example.ungdungbanthietbi_iot.viewModels.AddressViewModel
-import com.example.ungdungbanthietbi_iot.models.CartEntity
 import com.example.ungdungbanthietbi_iot.viewModels.CartViewModel
-import com.example.ungdungbanthietbi_iot.models.Device
 import com.example.ungdungbanthietbi_iot.viewModels.DeviceViewModel
 import com.example.ungdungbanthietbi_iot.viewModels.ImageViewModel
 import com.example.ungdungbanthietbi_iot.viewModels.LikedViewModel
@@ -547,7 +545,7 @@ fun ProductDetailsScreen(
 //                                            showSnackbar.value = true
                                             if (idCustomer == null) {
                                                 navController.navigate(Screen.LoginScreen.route)
-                                            } else if (device != null && quantity <= device.stock) {
+                                            } else if (device != null && quantity <= device.stock.toInt()) {
                                                 val addToCart = AddCartRequest(
                                                     customer_id = idCustomer,
                                                     product_id = device.idDevice,
@@ -709,9 +707,9 @@ fun ProductDetailsScreen(
                                             } else if (addressViewModel.addressDatas?.address_books?.isEmpty() == true) {
                                                 showDialog = true
                                                 dialogType = DialogType.AddressRequired
-                                            } else if (device != null && buyNowQuantity <= device.stock) {
+                                            } else if (device != null && buyNowQuantity <= device.stock.toInt()) {
                                                 selectedProducts.clear()
-                                                selectedProducts.add(Triple(device!!.idDevice, buyNowQuantity, 0))
+                                                selectedProducts.add(Triple(device.idDevice, buyNowQuantity, 0))
                                                 val totalPrice = device.sellingPrice * buyNowQuantity
                                                 val selectedProductsString = selectedProducts.joinToString(",") { "${it.first}:${it.second}:${it.third}" }
                                                 navController.navigate(

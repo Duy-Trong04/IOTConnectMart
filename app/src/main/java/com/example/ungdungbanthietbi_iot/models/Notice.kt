@@ -1,10 +1,13 @@
 package com.example.ungdungbanthietbi_iot.models
 
 data class Notice(
-    var id: Int,
-    var idUser: String,
-    var text:String,
-    var type:String,
-    var created_at: String,
-    var status: Int
+    val id: Int,
+    val account_id: String,
+    val role_id: Int?,
+    val text:String?,
+    val type:String?,
+    val is_read: Boolean?,
+    val id_reference: String?,
+    val created_at: String?,
+    val deleted_at: String?
 )

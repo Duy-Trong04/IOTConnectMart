@@ -144,14 +144,15 @@ fun EmailVerificationScreen(
                             Icon(
                                 imageVector = if(customer.email_verified) Icons.Default.Done else Icons.Default.Close,
                                 contentDescription = "",
-                                tint = if( customer.email_verified) Color(0xFF02C92C) else Color.Red
+                                tint = if(customer.email_verified) Color(0xFF02C92C) else Color.Red
                             )
                         },
                         colors = OutlinedTextFieldDefaults.colors(
-                            disabledBorderColor = if(customer.email_verified) Color(0xFF02C92C) else Color.Red,
+                            focusedBorderColor = if (!customer.email_verified) Color.Red else Color(0xFF02C92C),
+                            unfocusedBorderColor = if (!customer.email_verified) Color.Red else Color(0xFF02C92C)
                         ),
                         modifier = Modifier.fillMaxWidth(),
-                        enabled = false, // Vô hiệu hóa chỉnh sửa
+                        readOnly = true, // Vô hiệu hóa chỉnh sửa
                         textStyle = TextStyle(fontSize = 16.sp)
                     )
                     Spacer(modifier = Modifier.height(16.dp))
@@ -176,7 +177,7 @@ fun EmailVerificationScreen(
                         }
                         else {
                             if(customer.email_verified){
-                                Text("Email đã xác thực", fontSize = 18.sp)
+                                Text("Email đã được xác thực", fontSize = 18.sp)
                                 return@Button
                             }
                             else {
