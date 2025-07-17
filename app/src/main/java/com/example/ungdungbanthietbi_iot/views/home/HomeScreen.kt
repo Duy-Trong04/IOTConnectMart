@@ -1192,8 +1192,17 @@ fun HomeContent(
             }
             item {
                 SectionTitle("Sản phẩm khuyến mãi")
-                if (isLoadDeviceSale || listDeviceSale.isEmpty()) {
+                val listSale = listAllDevice.filter { it.status == 2 }
+                if (isLoadingDeviceAll) {
                     PlaceholderDevice()
+                } else if (listSale.isEmpty()) {
+                    Text(
+                        text = "Không có sản phẩm nào",
+                        color = Color.Red ,
+                        fontSize = 16.sp,
+                        modifier = Modifier.fillMaxWidth().padding(16.dp),
+                        textAlign = TextAlign.Center
+                    )
                 } else {
                     LazyRow(
                         modifier = Modifier
@@ -1201,7 +1210,7 @@ fun HomeContent(
                             .padding(horizontal = 12.dp, vertical = 4.dp),
                         horizontalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
-                        items(listDeviceSale) { device ->
+                        items(listSale) { device ->
                             Box(
                                 modifier = Modifier
                                     .width(cardWidth)
@@ -1222,8 +1231,17 @@ fun HomeContent(
             }
             item {
                 SectionTitle("Sản phẩm nổi bật")
-                if (isLoadDeviceFeatured || listDeviceFeatured.isEmpty()) {
+                val listFeatured = listAllDevice.filter { it.status == 3 }
+                if (isLoadingDeviceAll) {
                     PlaceholderDevice()
+                } else if (listFeatured.isEmpty()) {
+                    Text(
+                        text = "Không có sản phẩm nào",
+                        color = Color.Red ,
+                        fontSize = 16.sp,
+                        modifier = Modifier.fillMaxWidth().padding(16.dp),
+                        textAlign = TextAlign.Center
+                    )
                 } else {
                     LazyRow(
                         modifier = Modifier
@@ -1231,7 +1249,7 @@ fun HomeContent(
                             .padding(horizontal = 12.dp),
                         horizontalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
-                        items(listDeviceFeatured) { device ->
+                        items(listFeatured) { device ->
                             Box(
                                 modifier = Modifier
                                     .width(cardWidth)
@@ -1250,65 +1268,6 @@ fun HomeContent(
                     }
                 }
             }
-//            item {
-//                Row(
-//                    modifier = Modifier
-//                        .fillMaxWidth(),
-//                    horizontalArrangement = Arrangement.SpaceBetween,
-//                    verticalAlignment = Alignment.CenterVertically
-//                ) {
-//                    SectionTitle("Sản phẩm yêu thích")
-//                    Text(
-//                        text = "Xem tất cả",
-//                        fontSize = 14.sp,
-//                        color = Color(0xFF1E88E5),
-//                        fontWeight = FontWeight.SemiBold,
-//                        modifier = Modifier
-//                            .clickable {
-//                                if (username == null) {
-//                                    navController.navigate(Screen.LoginScreen.route)
-//                                } else {
-//                                    navController.navigate(
-//                                        Screen.Favorites_Screen.route +
-//                                                "?idCustomer=${id}&username=${username}&password=$password"
-//                                    )
-//                                }
-//                            }
-//                            .padding(end = 20.dp)
-//                    )
-//                }
-//                if (listDeviceLiked.isEmpty()) {
-//                    Text(
-//                        text = "Chưa có sản phẩm yêu thích",
-//                        color = Color(0xFF616161),
-//                        fontSize = 14.sp,
-//                        modifier = Modifier
-//                            .fillMaxWidth()
-//                            .padding(16.dp),
-//                        textAlign = TextAlign.Center
-//                    )
-//                } else {
-//                    LazyRow(
-//                        modifier = Modifier
-//                            .fillMaxWidth()
-//                            .padding(horizontal = 16.dp),
-//                        horizontalArrangement = Arrangement.spacedBy(16.dp)
-//                    ) {
-//                        items(listDeviceLiked) { device ->
-//                            if (username != null) {
-//                                CardFavorites(
-//                                    device = device,
-//                                    isFavorite = isFavorite,
-//                                    idCustomer = id,
-//                                    username = username,
-//                                    password = password,
-//                                    navController = navController
-//                                )
-//                            }
-//                        }
-//                    }
-//                }
-//            }
             item {
                 SectionTitle("Tất cả sản phẩm")
             }
